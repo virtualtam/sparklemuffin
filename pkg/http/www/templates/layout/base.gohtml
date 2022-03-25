@@ -2,14 +2,17 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>YAWBE</title>
+    <title>Bookmarks | YAWBE</title>
+    <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
   </head>
   <body>
+    {{template "nav" .}}
+
     <main>
-      <div class="container-fluid">
-        {{template "content" .Content}}
-      </div>
+      {{template "content" .Content}}
     </main>
+
+    {{template "footer"}}
   </body>
 </html>
 {{end}}

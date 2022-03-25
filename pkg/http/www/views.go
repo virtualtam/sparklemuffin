@@ -5,22 +5,14 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/fs"
 	"net/http"
-	"path/filepath"
-)
 
-const (
-	// LayoutDir points to the location of the templates that will be used when
-	// rendering views.
-	LayoutDir = "pkg/http/www/templates/layout/"
-
-	// TemplateExt defines which file types will be looked for when auto-adding
-	// layout templates.
-	TemplateExt = ".gohtml"
+	"github.com/virtualtam/yawbe/pkg/http/www/templates"
 )
 
 var (
-	HomeView = NewView("pkg/http/www/templates/static/home.gohtml")
+	HomeView = NewView("static/home.gohtml")
 )
 
 // Data holds the data that can be rendered by views.
@@ -64,7 +56,7 @@ func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func layoutTemplateFiles() []string {
-	files, err := filepath.Glob(LayoutDir + "*" + TemplateExt)
+	files, err := fs.Glob(templates.FS, "layout/*.gohtml")
 	if err != nil {
 		panic(err)
 	}
@@ -76,7 +68,7 @@ func layoutTemplateFiles() []string {
 func NewView(templateFiles ...string) *View {
 	templateFiles = append(templateFiles, layoutTemplateFiles()...)
 
-	t, err := template.New("base").ParseFiles(templateFiles...)
+	t, err := template.New("base").ParseFS(templates.FS, templateFiles...)
 	if err != nil {
 		panic(err)
 	}

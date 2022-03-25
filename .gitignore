@@ -1,0 +1,7 @@
+bench/
+build/
+
+yawbe.test
+
+coverage.out
+coverage.html

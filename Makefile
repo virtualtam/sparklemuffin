@@ -24,3 +24,8 @@ coverhtml: cover
 test:
 	go test ./...
 .PHONY: test
+
+live:
+	@echo "== Watching for changes... (hit Ctrl+C when done)"
+	@watchexec --restart --exts go,gohtml -- go run ./cmd/yawbe-srv/
+.PHONY: live

@@ -5,15 +5,17 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/virtualtam/yawbe/pkg/http/www/static"
+	"github.com/virtualtam/yawbe/pkg/user"
 )
 
 // AddRoutes registers all HTTP handlers for the Web interface.
-func AddRoutes(r *mux.Router) {
+func AddRoutes(r *mux.Router, userService *user.Service) {
 	// static pages
 	r.Handle("/", HomeView)
 
 	// authentication
-	r.Handle("/login", LoginView).Methods("GET")
+	r.Handle("/login", loginView).Methods("GET")
+	r.HandleFunc("/login", login(userService)).Methods("POST")
 
 	// static assets
 	r.HandleFunc("/static/", http.NotFound)

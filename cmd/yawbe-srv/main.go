@@ -11,6 +11,8 @@ import (
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/yawbe/pkg/http/www"
+	"github.com/virtualtam/yawbe/pkg/storage/memory"
+	"github.com/virtualtam/yawbe/pkg/user"
 )
 
 const (
@@ -27,9 +29,11 @@ func main() {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 
-	router := mux.NewRouter()
+	userRepository := &memory.Repository{}
+	userService := user.NewService(userRepository)
 
-	www.AddRoutes(router)
+	router := mux.NewRouter()
+	www.AddRoutes(router, userService)
 
 	// Structured loging
 	chain := alice.New(hlog.NewHandler(log.Logger), hlog.AccessHandler(accessLogger))

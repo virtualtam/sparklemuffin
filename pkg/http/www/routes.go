@@ -11,6 +11,14 @@ func AddRoutes(r *mux.Router) {
 	r.Handle("/", HomeView)
 	r.HandleFunc("/static/", http.NotFound)
 
-	// TODO Cache-Control
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.FS(static.FS))))
+	r.PathPrefix("/static/").Handler(http.StripPrefix(
+		"/static/",
+		cacheControlWrapper(http.FileServer(http.FS(static.FS)))))
+}
+
+func cacheControlWrapper(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "max-age=2592000") // 30 days
+		h.ServeHTTP(w, r)
+	})
 }

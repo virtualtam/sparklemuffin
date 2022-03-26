@@ -9,8 +9,13 @@ import (
 
 // AddRoutes registers all HTTP handlers for the Web interface.
 func AddRoutes(r *mux.Router) {
+	// static pages
 	r.Handle("/", HomeView)
 
+	// authentication
+	r.Handle("/login", LoginView).Methods("GET")
+
+	// static assets
 	r.HandleFunc("/static/", http.NotFound)
 	r.PathPrefix("/static/").Handler(http.StripPrefix(
 		"/static/",

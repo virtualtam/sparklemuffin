@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	HomeView = NewView("static/home.gohtml")
+	HomeView  = NewView("static/home.gohtml")
+	LoginView = NewView("user/login.gohtml")
 )
 
 // Data holds the data that can be rendered by views.

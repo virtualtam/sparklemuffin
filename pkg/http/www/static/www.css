@@ -7,9 +7,24 @@ body {
 }
 
 body > header {
+  display: grid;
   grid-column-start: 2;
   grid-column-end: 3;
   padding: 0;
+  text-align: left;
+}
+
+body > header > h3 {
+  grid-column-start: 1;
+  grid-column-end: 2;
+  line-height: 1.2;
+  margin-bottom: 0;
+  margin-top: 1.1rem;
+}
+
+body > header > nav {
+  grid-column-start: 3;
+  grid-column-end: 3;
   text-align: right;
 }
 

@@ -1,0 +1,16 @@
+:root {
+  --reading-width: min(45rem, 90%);
+}
+
+body {
+  grid-template-columns: 1fr 4fr 1fr;
+}
+
+body > header {
+  padding: 0;
+}
+
+body > footer {
+  grid-column-start: 1;
+  grid-column-end: -1;
+}

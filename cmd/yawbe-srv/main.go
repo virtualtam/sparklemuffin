@@ -30,6 +30,7 @@ func main() {
 	}
 
 	userRepository := &memory.Repository{}
+
 	userService := user.NewService(userRepository)
 
 	router := mux.NewRouter()

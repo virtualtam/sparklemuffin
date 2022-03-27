@@ -32,3 +32,23 @@ body > footer {
   grid-column-start: 2;
   grid-column-end: 3;
 }
+
+.alert {
+  margin: 0;
+}
+
+.alert-error {
+  color: #bf616a;
+}
+
+.alert-info {
+  color: #4c566a;
+}
+
+.alert-success {
+  color: #a3be8c;
+}
+
+.alert-warning {
+  color: #d08770;
+}

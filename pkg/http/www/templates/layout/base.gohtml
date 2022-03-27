@@ -14,6 +14,9 @@
     {{template "nav" .}}
 
     <main>
+      {{if .Alert}}
+        {{template "alert" .Alert}}
+      {{end}}
       {{template "content" .Content}}
     </main>
 

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
@@ -42,20 +41,20 @@ func main() {
 		// Password: "test",
 	})
 
-	router := mux.NewRouter()
-	www.AddRoutes(router, userService)
+	server := www.NewServer(userService)
 
 	// Structured loging
 	chain := alice.New(hlog.NewHandler(log.Logger), hlog.AccessHandler(accessLogger))
 
-	server := &http.Server{
+	httpServer := &http.Server{
 		Addr:         *listenAddr,
-		Handler:      chain.Then(router),
+		Handler:      chain.Then(server),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 	}
+
 	log.Info().Msgf("Listening to http://%s", *listenAddr)
-	if err := server.ListenAndServe(); err != nil {
+	if err := httpServer.ListenAndServe(); err != nil {
 		log.Fatal().Err(err).Msg("ListenAndServe")
 	}
 }

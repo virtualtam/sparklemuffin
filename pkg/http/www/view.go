@@ -11,11 +11,6 @@ import (
 	"github.com/virtualtam/yawbe/pkg/http/www/templates"
 )
 
-var (
-	HomeView  = NewView("static/home.gohtml")
-	loginView = NewView("user/login.gohtml")
-)
-
 // Data holds the data that can be rendered by views.
 type Data struct {
 	Alert   *Alert
@@ -67,15 +62,32 @@ type Alert struct {
 	Message string
 }
 
-// View represents a Web view that will be rendered by the server in response to
+// view represents a Web view that will be rendered by the server in response to
 // an HTTP client request.
-type View struct {
+type view struct {
 	Template *template.Template
 }
 
-// View represents a Web view that will be rendered by the server in response to
-// an HTTP client request.
-func (v *View) Render(w http.ResponseWriter, r *http.Request, data interface{}) {
+// newView returns an initialized View, preconfigured with the default
+// application templates and page-specific templates.
+func newView(templateFiles ...string) *view {
+	templateFiles = append(templateFiles, layoutTemplateFiles()...)
+
+	t, err := template.New("base").ParseFS(templates.FS, templateFiles...)
+	if err != nil {
+		panic(err)
+	}
+
+	return &view{
+		Template: t,
+	}
+}
+
+func (v *view) handle(w http.ResponseWriter, r *http.Request) {
+	v.render(w, r, nil)
+}
+
+func (v *view) render(w http.ResponseWriter, r *http.Request, data interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 
 	var vd Data
@@ -98,29 +110,10 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request, data interface{}) 
 	_, _ = io.Copy(w, &buf)
 }
 
-func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	v.Render(w, r, nil)
-}
-
 func layoutTemplateFiles() []string {
 	files, err := fs.Glob(templates.FS, "layout/*.gohtml")
 	if err != nil {
 		panic(err)
 	}
 	return files
-}
-
-// NewView returns an initialized View, preconfigured with the default
-// application templates and page-specific templates.
-func NewView(templateFiles ...string) *View {
-	templateFiles = append(templateFiles, layoutTemplateFiles()...)
-
-	t, err := template.New("base").ParseFS(templates.FS, templateFiles...)
-	if err != nil {
-		panic(err)
-	}
-
-	return &View{
-		Template: t,
-	}
 }

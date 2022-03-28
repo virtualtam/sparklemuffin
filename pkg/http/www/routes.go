@@ -15,7 +15,7 @@ func AddRoutes(r *mux.Router, userService *user.Service) {
 
 	// authentication
 	r.Handle("/login", loginView).Methods("GET")
-	r.HandleFunc("/login", login(userService)).Methods("POST")
+	r.HandleFunc("/login", handleUserLogin(userService)).Methods("POST")
 
 	// static assets
 	r.HandleFunc("/static/", http.NotFound)

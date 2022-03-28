@@ -33,6 +33,13 @@ func main() {
 
 	userService := user.NewService(userRepository)
 
+	// FIXME: add fixtures
+	_ = userRepository.AddUser(user.User{
+		Email:        "test@dev.local",
+		PasswordHash: "$2y$10$JWIOiD1v77jKe2Q46tCWBelJCr/mwlQJS3kLJMPLKmwwVQssALR76",
+		// Password: "test",
+	})
+
 	router := mux.NewRouter()
 	www.AddRoutes(router, userService)
 

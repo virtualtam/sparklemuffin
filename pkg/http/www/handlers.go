@@ -1,13 +1,12 @@
 package www
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/virtualtam/yawbe/pkg/user"
 )
 
-func login(userService *user.Service) func(w http.ResponseWriter, r *http.Request) {
+func handleUserLogin(userService *user.Service) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var viewData Data
 
@@ -18,7 +17,7 @@ func login(userService *user.Service) func(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		user, err := userService.AuthenticateUser(form.email, form.password)
+		user, err := userService.Authenticate(form.Email, form.Password)
 		if err != nil {
 			viewData.AlertError(err)
 			loginView.Render(w, r, viewData)
@@ -36,5 +35,5 @@ func login(userService *user.Service) func(w http.ResponseWriter, r *http.Reques
 }
 
 func setUserRememberToken(w http.ResponseWriter, user user.User) error {
-	return errors.New("not implemented")
+	return nil
 }

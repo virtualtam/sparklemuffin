@@ -2,5 +2,7 @@ package user
 
 // User represents an authenticated user.
 type User struct {
-	Email string
+	Email        string
+	Password     string
+	PasswordHash string
 }

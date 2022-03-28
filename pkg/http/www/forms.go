@@ -7,8 +7,8 @@ import (
 )
 
 type loginForm struct {
-	email    string `schema:"email"`
-	password string `schema:"password"`
+	Email    string `schema:"email"`
+	Password string `schema:"password"`
 }
 
 func parseForm(r *http.Request, dst interface{}) error {
@@ -17,7 +17,6 @@ func parseForm(r *http.Request, dst interface{}) error {
 	}
 
 	dec := schema.NewDecoder()
-	dec.IgnoreUnknownKeys(true)
 
 	if err := dec.Decode(dst, r.PostForm); err != nil {
 		return err

@@ -7,4 +7,7 @@ type Repository interface {
 
 	// GetUserByEmail returns the User registered with a given email address.
 	GetUserByEmail(string) (User, error)
+
+	// UpdateUser updates an existing user.
+	UpdateUser(User) error
 }

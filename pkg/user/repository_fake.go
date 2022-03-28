@@ -20,3 +20,14 @@ func (r *fakeRepository) GetUserByEmail(email string) (User, error) {
 
 	return User{}, ErrNotFound
 }
+
+func (r *fakeRepository) UpdateUser(user User) error {
+	for index, existingUser := range r.users {
+		if existingUser.Email == user.Email {
+			r.users[index] = user
+			return nil
+		}
+	}
+
+	return ErrNotFound
+}

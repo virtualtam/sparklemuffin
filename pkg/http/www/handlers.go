@@ -3,6 +3,7 @@ package www
 import (
 	"net/http"
 
+	"github.com/virtualtam/yawbe/pkg/http/www/rand"
 	"github.com/virtualtam/yawbe/pkg/user"
 )
 
@@ -24,7 +25,7 @@ func handleUserLogin(userService *user.Service) func(w http.ResponseWriter, r *h
 			return
 		}
 
-		if err := setUserRememberToken(w, user); err != nil {
+		if err := setUserRememberToken(userService, w, &user); err != nil {
 			viewData.AlertError(err)
 			loginView.Render(w, r, viewData)
 			return
@@ -34,6 +35,32 @@ func handleUserLogin(userService *user.Service) func(w http.ResponseWriter, r *h
 	}
 }
 
-func setUserRememberToken(w http.ResponseWriter, user user.User) error {
+const (
+	UserRememberTokenNBytes     int    = 32
+	UserRememberTokenCookieName string = "remember_me"
+)
+
+func setUserRememberToken(userService *user.Service, w http.ResponseWriter, user *user.User) error {
+	if user.RememberToken == "" {
+		token, err := rand.RandomBase64URLString(UserRememberTokenNBytes)
+		if err != nil {
+			return err
+		}
+
+		user.RememberToken = token
+		err = userService.Update(*user)
+		if err != nil {
+			return err
+		}
+	}
+
+	cookie := http.Cookie{
+		Name:     UserRememberTokenCookieName,
+		Value:    user.RememberToken,
+		HttpOnly: true,
+	}
+
+	http.SetCookie(w, &cookie)
+
 	return nil
 }

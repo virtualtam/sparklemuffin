@@ -17,11 +17,13 @@ import (
 
 const (
 	defaultDebugMode  = false
+	defaultHMACKey    = "hmac-secret-key"
 	defaultListenAddr = "0.0.0.0:8080"
 )
 
 func main() {
 	debugMode := flag.Bool("debug", defaultDebugMode, "Enable debugging")
+	hmacKey := flag.String("hmacKey", defaultHMACKey, "Secret HMAC key")
 	listenAddr := flag.String("listenAddr", defaultListenAddr, "Listen on this address")
 	flag.Parse()
 
@@ -31,7 +33,7 @@ func main() {
 
 	userRepository := &memory.Repository{}
 
-	userService := user.NewService(userRepository)
+	userService := user.NewService(userRepository, *hmacKey)
 
 	// FIXME: add fixtures
 	_ = userRepository.AddUser(user.User{

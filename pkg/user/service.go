@@ -3,18 +3,22 @@ package user
 import (
 	"strings"
 
+	"github.com/virtualtam/yawbe/pkg/hash"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // Service handles operations for the user domain.
 type Service struct {
-	r Repository
+	r    Repository
+	hmac *hash.HMAC
 }
 
 // NewService initializes and returns a User Repository.
-func NewService(r Repository) *Service {
+func NewService(r Repository, hmacKey string) *Service {
+	hmac := hash.NewHMAC(hmacKey)
 	return &Service{
-		r: r,
+		r:    r,
+		hmac: hmac,
 	}
 }
 
@@ -41,13 +45,29 @@ func (s *Service) Authenticate(email, password string) (User, error) {
 	}
 }
 
+// Update  updates an existing user.
+func (s *Service) Update(user User) error {
+	err := s.runValidationFuncs(
+		&user,
+		s.normalizeEmail,
+		s.requireEmail,
+		s.requirePasswordHash,
+		s.hashRememberToken,
+	)
+	if err != nil {
+		return err
+	}
+
+	return s.r.UpdateUser(user)
+}
+
 func (s *Service) getUserByEmail(email string) (User, error) {
 	user := User{Email: email}
 
-	err := runValidationFuncs(
+	err := s.runValidationFuncs(
 		&user,
-		normalizeEmail,
-		requireEmail,
+		s.normalizeEmail,
+		s.requireEmail,
 	)
 	if err != nil {
 		return User{}, err
@@ -62,7 +82,7 @@ type validationFunc func(*User) error
 
 // runValidationFuncs applies User normalization and validation functions and
 // stops at the first encountered error.
-func runValidationFuncs(user *User, fns ...validationFunc) error {
+func (s *Service) runValidationFuncs(user *User, fns ...validationFunc) error {
 	for _, fn := range fns {
 		if err := fn(user); err != nil {
 			return err
@@ -71,16 +91,38 @@ func runValidationFuncs(user *User, fns ...validationFunc) error {
 	return nil
 }
 
-func normalizeEmail(user *User) error {
+func (s *Service) hashRememberToken(user *User) error {
+	if user.RememberToken == "" {
+		return nil
+	}
+
+	hash, err := s.hmac.Hash(user.RememberToken)
+	if err != nil {
+		return err
+	}
+
+	user.RememberTokenHash = hash
+
+	return nil
+}
+
+func (s *Service) normalizeEmail(user *User) error {
 	user.Email = strings.ToLower(user.Email)
 	user.Email = strings.TrimSpace(user.Email)
 
 	return nil
 }
 
-func requireEmail(user *User) error {
+func (s *Service) requireEmail(user *User) error {
 	if user.Email == "" {
 		return ErrEmailRequired
+	}
+	return nil
+}
+
+func (s *Service) requirePasswordHash(user *User) error {
+	if user.PasswordHash == "" {
+		return ErrPasswordHashRequired
 	}
 	return nil
 }

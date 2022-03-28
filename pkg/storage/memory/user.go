@@ -1,6 +1,7 @@
 package memory
 
 type User struct {
-	Email        string
-	PasswordHash string
+	Email             string
+	PasswordHash      string
+	RememberTokenHash string
 }

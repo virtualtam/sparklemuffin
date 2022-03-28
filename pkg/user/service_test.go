@@ -67,7 +67,7 @@ func TestServiceAuthenticate(t *testing.T) {
 			r := &fakeRepository{
 				users: tc.repositoryUsers,
 			}
-			s := NewService(r)
+			s := NewService(r, "hmac-key")
 
 			got, err := s.Authenticate(tc.email, tc.password)
 
@@ -90,6 +90,73 @@ func TestServiceAuthenticate(t *testing.T) {
 	}
 }
 
+func TestServiceUpdate(t *testing.T) {
+	cases := []struct {
+		tname           string
+		repositoryUsers []User
+		user            User
+		wantErr         error
+	}{
+		{
+			tname:   "empty user",
+			wantErr: ErrEmailRequired,
+		},
+		{
+			tname:   "empty (whitespace) email",
+			user:    User{Email: "   "},
+			wantErr: ErrEmailRequired,
+		},
+		{
+			tname: "empty password hash",
+			user: User{
+				Email: "unhashed@domain.tld",
+			},
+			wantErr: ErrPasswordHashRequired,
+		},
+		{
+			tname: "not found",
+			user: User{
+				Email:        "ghost@domain.tld",
+				PasswordHash: "$2b$10$LSH.kwYeRt8msI5.5YJv8eqle6SPcevq848BK2vZ2M5FjXTvU1r.e",
+			},
+			wantErr: ErrNotFound,
+		},
+		{
+			tname: "update user",
+			user: User{
+				Email:        "ghost@domain.tld",
+				PasswordHash: "$2b$10$LSH.kwYeRt8msI5.5YJv8eqle6SPcevq848BK2vZ2M5FjXTvU1r.e",
+			},
+			wantErr: ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{
+				users: tc.repositoryUsers,
+			}
+			s := NewService(r, "hmac-key")
+
+			err := s.Update(tc.user)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+		})
+	}
+}
+
 func assertUsersEqual(t *testing.T, got, want User) {
 	t.Helper()
 
@@ -98,5 +165,8 @@ func assertUsersEqual(t *testing.T, got, want User) {
 	}
 	if got.PasswordHash != want.PasswordHash {
 		t.Errorf("want password hash %q, got %q", want.PasswordHash, got.PasswordHash)
+	}
+	if got.RememberTokenHash != want.RememberTokenHash {
+		t.Errorf("want remember token %q, got %q", want.RememberToken, got.RememberToken)
 	}
 }

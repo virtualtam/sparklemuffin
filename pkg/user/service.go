@@ -45,6 +45,23 @@ func (s *Service) Authenticate(email, password string) (User, error) {
 	}
 }
 
+// ByRememberToken returns the user corresponding to a giver RememberToken.
+func (s *Service) ByRememberToken(rememberToken string) (User, error) {
+	user := User{RememberToken: rememberToken}
+
+	err := s.runValidationFuncs(
+		&user,
+		s.requireRememberToken,
+		s.hashRememberToken,
+		s.requireRememberTokenHash,
+	)
+	if err != nil {
+		return User{}, err
+	}
+
+	return s.r.GetUserByRememberTokenHash(user.RememberTokenHash)
+}
+
 // Update  updates an existing user.
 func (s *Service) Update(user User) error {
 	err := s.runValidationFuncs(
@@ -124,5 +141,21 @@ func (s *Service) requirePasswordHash(user *User) error {
 	if user.PasswordHash == "" {
 		return ErrPasswordHashRequired
 	}
+	return nil
+}
+
+func (s *Service) requireRememberToken(user *User) error {
+	if user.RememberToken == "" {
+		return ErrRememberTokenRequired
+	}
+
+	return nil
+}
+
+func (s *Service) requireRememberTokenHash(user *User) error {
+	if user.RememberToken == "" {
+		return ErrRememberTokenHashRequired
+	}
+
 	return nil
 }

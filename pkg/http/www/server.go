@@ -43,10 +43,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // addRoutes registers all HTTP handlers for the Web interface.
 func (s *Server) addRoutes() {
 	// static pages
-	s.router.HandleFunc("/", s.homeView.handle)
+	s.router.HandleFunc("/", s.rememberUser(s.homeView.handle))
 
 	// authentication
-	s.router.HandleFunc("/login", s.userLoginView.handle).Methods("GET")
+	s.router.HandleFunc("/login", s.rememberUser(s.userLoginView.handle)).Methods("GET")
 	s.router.HandleFunc("/login", s.handleUserLogin()).Methods("POST")
 
 	// static assets
@@ -128,5 +128,29 @@ func (s *Server) staticCacheControl(h http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "max-age=2592000") // 30 days
 		h.ServeHTTP(w, r)
+	})
+}
+
+// rememberUser enriches the request context with a user.User if a valid
+// remember token cookie is set.
+func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie(UserRememberTokenCookieName)
+		if err != nil {
+			h(w, r)
+			return
+		}
+
+		user, err := s.userService.ByRememberToken(cookie.Value)
+		if err != nil {
+			h(w, r)
+			return
+		}
+
+		ctx := r.Context()
+		ctx = withUser(ctx, user)
+		r = r.WithContext(ctx)
+
+		h(w, r)
 	})
 }

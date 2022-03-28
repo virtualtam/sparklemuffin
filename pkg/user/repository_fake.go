@@ -21,6 +21,16 @@ func (r *fakeRepository) GetUserByEmail(email string) (User, error) {
 	return User{}, ErrNotFound
 }
 
+func (r *fakeRepository) GetUserByRememberTokenHash(rememberTokenHash string) (User, error) {
+	for _, user := range r.users {
+		if user.RememberTokenHash == rememberTokenHash {
+			return user, nil
+		}
+	}
+
+	return User{}, ErrNotFound
+}
+
 func (r *fakeRepository) UpdateUser(user User) error {
 	for index, existingUser := range r.users {
 		if existingUser.Email == user.Email {

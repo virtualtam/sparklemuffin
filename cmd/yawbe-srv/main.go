@@ -17,6 +17,7 @@ func main() {
 	rootCommand := command.NewRootCommand()
 
 	commands := []*cobra.Command{
+		command.NewMigrateCommand(),
 		command.NewRunCommand(),
 	}
 

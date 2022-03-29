@@ -106,12 +106,14 @@ func (s *Server) setUserRememberToken(w http.ResponseWriter, user *user.User) er
 	if user.RememberToken == "" {
 		token, err := rand.RandomBase64URLString(UserRememberTokenNBytes)
 		if err != nil {
+			log.Error().Err(err).Msg("failed to generate a remember token")
 			return err
 		}
 
 		user.RememberToken = token
 		err = s.userService.Update(*user)
 		if err != nil {
+			log.Error().Err(err).Msg("failed to update user")
 			return err
 		}
 	}

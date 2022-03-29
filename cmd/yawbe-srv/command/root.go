@@ -1,6 +1,8 @@
 package command
 
 import (
+	"fmt"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -12,8 +14,10 @@ import (
 )
 
 const (
-	defaultDebugMode = false
-	defaultHMACKey   = "hmac-secret-key"
+	defaultDebugMode      bool   = false
+	defaultHMACKey        string = "hmac-secret-key"
+	defaultDatabaseDriver string = "pgx"
+	defaultDatabaseURI    string = "yawbe:yawbe@localhost:15432/yawbe?sslmode=disable"
 )
 
 var (
@@ -32,7 +36,8 @@ func NewRootCommand() *cobra.Command {
 				zerolog.SetGlobalLevel(zerolog.DebugLevel)
 			}
 
-			db, err := sqlx.Connect("pgx", "postgres://yawbe:yawbe@localhost:15432/yawbe")
+			// FIXME hardcoded
+			db, err := sqlx.Connect(defaultDatabaseDriver, fmt.Sprintf("postgresql://%s", defaultDatabaseURI))
 			if err != nil {
 				log.Error().Err(err)
 				return err

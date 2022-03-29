@@ -5,10 +5,16 @@
   <nav>
     <a href="/">Home</a>
     {{if .User}}
-    <a href="/logout">Log out</a>
+      {{template "logoutForm"}}
     {{else}}
     <a href="/login">Login</a>
     {{end}}
   </nav>
 </header>
+{{end}}
+
+{{define "logoutForm"}}
+<form action="/logout" method="POST">
+  <button type=submit>Log out</button>
+</form>
 {{end}}

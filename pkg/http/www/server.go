@@ -2,6 +2,7 @@ package www
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
@@ -48,7 +49,8 @@ func (s *Server) addRoutes() {
 
 	// authentication
 	s.router.HandleFunc("/login", s.rememberUser(s.userLoginView.handle)).Methods("GET")
-	s.router.HandleFunc("/login", s.handleUserLogin()).Methods("POST")
+	s.router.HandleFunc("/login", s.rememberUser(s.handleUserLogin())).Methods("POST")
+	s.router.HandleFunc("/logout", s.rememberUser(s.handleUserLogout())).Methods("POST")
 
 	// static assets
 	s.router.HandleFunc("/static/", http.NotFound)
@@ -88,6 +90,42 @@ func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) 
 			log.Error().Err(err).Msg("failed to set remember token")
 			viewData.AlertError(err)
 			s.userLoginView.render(w, r, viewData)
+			return
+		}
+
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+}
+
+// handleUserLogout logs a user out and clears their session data.
+func (s *Server) handleUserLogout() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cookie := http.Cookie{
+			Name:     UserRememberTokenCookieName,
+			Value:    "",
+			Expires:  time.Now(),
+			HttpOnly: true,
+		}
+		http.SetCookie(w, &cookie)
+
+		user := userValue(r.Context())
+		if user == nil {
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		}
+
+		token, err := rand.RandomBase64URLString(UserRememberTokenNBytes)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to generate a remember token")
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		}
+
+		user.RememberToken = token
+		err = s.userService.Update(*user)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to update user")
+			http.Redirect(w, r, "/", http.StatusFound)
 			return
 		}
 

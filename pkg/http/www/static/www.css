@@ -34,6 +34,24 @@ body > header > nav {
   text-align: right;
 }
 
+body > header > nav > form {
+  display: inline;
+}
+
+body > header > nav > form > button {
+  margin: 0;
+  padding: .5rem .9rem;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  font-family: var(--sans-font);
+  font-weight: normal;
+}
+body > header > nav > form > button:hover {
+  color: #bf616a;
+  border-color: #bf616a;
+}
+
 body > footer {
   grid-column-start: 2;
   grid-column-end: 3;

@@ -25,6 +25,10 @@ test:
 	go test ./...
 .PHONY: test
 
+psql:
+	@PGPASSWORD=yawbe psql -h localhost -p 15432 -U yawbe
+.PHONY: psql
+
 live:
 	@echo "== Starting database"
 	docker-compose up -d

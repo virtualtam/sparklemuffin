@@ -9,4 +9,5 @@ var (
 	ErrPasswordHashRequired      error = errors.New("password hash required")
 	ErrRememberTokenRequired     error = errors.New("remember token required")
 	ErrRememberTokenHashRequired error = errors.New("remember token hash required")
+	ErrUUIDRequired              error = errors.New("UUID required")
 )

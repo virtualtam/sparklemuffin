@@ -99,16 +99,20 @@ func TestServiceUpdate(t *testing.T) {
 	}{
 		{
 			tname:   "empty user",
-			wantErr: ErrEmailRequired,
+			wantErr: ErrUUIDRequired,
 		},
 		{
-			tname:   "empty (whitespace) email",
-			user:    User{Email: "   "},
+			tname: "empty (whitespace) email",
+			user: User{
+				UUID:  "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
+				Email: "   ",
+			},
 			wantErr: ErrEmailRequired,
 		},
 		{
 			tname: "empty password hash",
 			user: User{
+				UUID:  "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
 				Email: "unhashed@domain.tld",
 			},
 			wantErr: ErrPasswordHashRequired,
@@ -116,6 +120,7 @@ func TestServiceUpdate(t *testing.T) {
 		{
 			tname: "not found",
 			user: User{
+				UUID:         "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
 				Email:        "ghost@domain.tld",
 				PasswordHash: "$2b$10$LSH.kwYeRt8msI5.5YJv8eqle6SPcevq848BK2vZ2M5FjXTvU1r.e",
 			},
@@ -124,6 +129,7 @@ func TestServiceUpdate(t *testing.T) {
 		{
 			tname: "update user",
 			user: User{
+				UUID:         "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
 				Email:        "ghost@domain.tld",
 				PasswordHash: "$2b$10$LSH.kwYeRt8msI5.5YJv8eqle6SPcevq848BK2vZ2M5FjXTvU1r.e",
 			},

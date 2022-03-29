@@ -66,6 +66,7 @@ func (s *Service) ByRememberToken(rememberToken string) (User, error) {
 func (s *Service) Update(user User) error {
 	err := s.runValidationFuncs(
 		&user,
+		s.requireUUID,
 		s.normalizeEmail,
 		s.requireEmail,
 		s.requirePasswordHash,
@@ -155,6 +156,14 @@ func (s *Service) requireRememberToken(user *User) error {
 func (s *Service) requireRememberTokenHash(user *User) error {
 	if user.RememberToken == "" {
 		return ErrRememberTokenHashRequired
+	}
+
+	return nil
+}
+
+func (s *Service) requireUUID(user *User) error {
+	if user.UUID == "" {
+		return ErrUUIDRequired
 	}
 
 	return nil

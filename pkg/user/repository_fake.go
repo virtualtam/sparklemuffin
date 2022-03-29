@@ -3,6 +3,7 @@ package user
 var _ Repository = &FakeRepository{}
 
 type FakeRepository struct {
+	// TODO refactor with map[uuid]User
 	Users []User
 }
 
@@ -33,7 +34,7 @@ func (r *FakeRepository) GetUserByRememberTokenHash(rememberTokenHash string) (U
 
 func (r *FakeRepository) UpdateUser(user User) error {
 	for index, existingUser := range r.Users {
-		if existingUser.Email == user.Email {
+		if existingUser.UUID == user.UUID {
 			r.Users[index] = user
 			return nil
 		}

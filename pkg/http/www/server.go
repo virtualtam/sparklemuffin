@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/yawbe/pkg/http/www/rand"
 	"github.com/virtualtam/yawbe/pkg/http/www/static"
 	"github.com/virtualtam/yawbe/pkg/user"
@@ -69,6 +70,7 @@ func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) 
 		var form loginForm
 
 		if err := parseForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse login form")
 			viewData.AlertError(err)
 			s.userLoginView.render(w, r, viewData)
 			return
@@ -76,12 +78,14 @@ func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) 
 
 		user, err := s.userService.Authenticate(form.Email, form.Password)
 		if err != nil {
+			log.Error().Err(err).Msg("failed to authenticate user")
 			viewData.AlertError(err)
 			s.userLoginView.render(w, r, viewData)
 			return
 		}
 
 		if err := s.setUserRememberToken(w, &user); err != nil {
+			log.Error().Err(err).Msg("failed to set remember token")
 			viewData.AlertError(err)
 			s.userLoginView.render(w, r, viewData)
 			return

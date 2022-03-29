@@ -64,8 +64,8 @@ func TestServiceAuthenticate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
-				users: tc.repositoryUsers,
+			r := &FakeRepository{
+				Users: tc.repositoryUsers,
 			}
 			s := NewService(r, "hmac-key")
 
@@ -133,8 +133,8 @@ func TestServiceUpdate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
-				users: tc.repositoryUsers,
+			r := &FakeRepository{
+				Users: tc.repositoryUsers,
 			}
 			s := NewService(r, "hmac-key")
 

@@ -1,18 +1,18 @@
 package user
 
-var _ Repository = &fakeRepository{}
+var _ Repository = &FakeRepository{}
 
-type fakeRepository struct {
-	users []User
+type FakeRepository struct {
+	Users []User
 }
 
-func (r *fakeRepository) AddUser(user User) error {
-	r.users = append(r.users, user)
+func (r *FakeRepository) AddUser(user User) error {
+	r.Users = append(r.Users, user)
 	return nil
 }
 
-func (r *fakeRepository) GetUserByEmail(email string) (User, error) {
-	for _, user := range r.users {
+func (r *FakeRepository) GetUserByEmail(email string) (User, error) {
+	for _, user := range r.Users {
 		if user.Email == email {
 			return user, nil
 		}
@@ -21,8 +21,8 @@ func (r *fakeRepository) GetUserByEmail(email string) (User, error) {
 	return User{}, ErrNotFound
 }
 
-func (r *fakeRepository) GetUserByRememberTokenHash(rememberTokenHash string) (User, error) {
-	for _, user := range r.users {
+func (r *FakeRepository) GetUserByRememberTokenHash(rememberTokenHash string) (User, error) {
+	for _, user := range r.Users {
 		if user.RememberTokenHash == rememberTokenHash {
 			return user, nil
 		}
@@ -31,10 +31,10 @@ func (r *fakeRepository) GetUserByRememberTokenHash(rememberTokenHash string) (U
 	return User{}, ErrNotFound
 }
 
-func (r *fakeRepository) UpdateUser(user User) error {
-	for index, existingUser := range r.users {
+func (r *FakeRepository) UpdateUser(user User) error {
+	for index, existingUser := range r.Users {
 		if existingUser.Email == user.Email {
-			r.users[index] = user
+			r.Users[index] = user
 			return nil
 		}
 	}

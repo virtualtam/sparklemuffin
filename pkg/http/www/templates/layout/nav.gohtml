@@ -1,9 +1,14 @@
 {{define "nav"}}
 <header>
   <h3>Yet Another Web Bookmarking Engine</h3>
+  {{if .User}}<p>{{.User.Email}}</p>{{end}}
   <nav>
     <a href="/">Home</a>
+    {{if .User}}
+    <a href="/logout">Log out</a>
+    {{else}}
     <a href="/login">Login</a>
+    {{end}}
   </nav>
 </header>
 {{end}}

@@ -18,12 +18,12 @@ func withUser(ctx context.Context, user user.User) context.Context {
 }
 
 // userValue retrieves a user.User from a context.Context.
-func userValue(ctx context.Context) user.User {
+func userValue(ctx context.Context) *user.User {
 	if value := ctx.Value(userKey); value != nil {
 		if user, ok := value.(user.User); ok {
-			return user
+			return &user
 		}
 	}
 
-	return user.User{}
+	return nil
 }

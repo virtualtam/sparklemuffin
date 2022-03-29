@@ -9,12 +9,14 @@ import (
 	"net/http"
 
 	"github.com/virtualtam/yawbe/pkg/http/www/templates"
+	"github.com/virtualtam/yawbe/pkg/user"
 )
 
 // Data holds the data that can be rendered by views.
 type Data struct {
 	Alert   *Alert
 	Content any
+	User    *user.User
 }
 
 func (d *Data) alert(level alertLevel, message string) {
@@ -97,6 +99,8 @@ func (v *view) render(w http.ResponseWriter, r *http.Request, data interface{}) 
 	default:
 		vd = Data{Content: data}
 	}
+
+	vd.User = userValue(r.Context())
 
 	var buf bytes.Buffer
 

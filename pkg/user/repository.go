@@ -17,4 +17,7 @@ type Repository interface {
 
 	// UpdateUser updates an existing user.
 	UpdateUser(User) error
+
+	// UpdateUserRememberToken updates an existing user's remember token hash.
+	UpdateUserRememberTokenHash(User) error
 }

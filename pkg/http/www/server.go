@@ -143,7 +143,7 @@ func (s *Server) handleUserLogout() func(w http.ResponseWriter, r *http.Request)
 		}
 
 		user.RememberToken = token
-		err = s.userService.Update(*user)
+		err = s.userService.UpdateRememberToken(*user)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to update user")
 			http.Redirect(w, r, "/", http.StatusFound)
@@ -170,7 +170,7 @@ func (s *Server) setUserRememberToken(w http.ResponseWriter, user *user.User) er
 		}
 
 		user.RememberToken = token
-		err = s.userService.Update(*user)
+		err = s.userService.UpdateRememberToken(*user)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to update user")
 			return err

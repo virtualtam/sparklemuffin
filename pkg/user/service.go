@@ -86,6 +86,22 @@ func (s *Service) Update(user User) error {
 	return s.r.UpdateUser(user)
 }
 
+// UpdateRememberToken updates an existing user's remember token.
+func (s *Service) UpdateRememberToken(user User) error {
+	err := s.runValidationFuncs(
+		&user,
+		s.requireUUID,
+		s.requireRememberToken,
+		s.hashRememberToken,
+		s.requireRememberTokenHash,
+	)
+	if err != nil {
+		return err
+	}
+
+	return s.r.UpdateUserRememberTokenHash(user)
+}
+
 func (s *Service) getUserByEmail(email string) (User, error) {
 	user := User{Email: email}
 

@@ -46,3 +46,14 @@ func (r *FakeRepository) UpdateUser(user User) error {
 
 	return ErrNotFound
 }
+
+func (r *FakeRepository) UpdateUserRememberTokenHash(user User) error {
+	for index, existingUser := range r.Users {
+		if existingUser.UUID == user.UUID {
+			r.Users[index].RememberTokenHash = user.RememberTokenHash
+			return nil
+		}
+	}
+
+	return ErrNotFound
+}

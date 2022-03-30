@@ -175,3 +175,22 @@ WHERE uuid=:uuid`,
 
 	return nil
 }
+
+func (r *Repository) UpdateUserRememberTokenHash(u user.User) error {
+	dbUser := User{
+		UUID:              u.UUID,
+		RememberTokenHash: u.RememberTokenHash,
+	}
+
+	_, err := r.db.NamedExec(`UPDATE users
+SET	remember_token_hash=:remember_token_hash
+WHERE uuid=:uuid`,
+		dbUser,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -2,6 +2,7 @@ package user
 
 import (
 	"strings"
+	"time"
 
 	"github.com/virtualtam/yawbe/pkg/hash"
 	"golang.org/x/crypto/bcrypt"
@@ -67,7 +68,7 @@ func (s *Service) ByRememberToken(rememberToken string) (User, error) {
 	return s.r.GetUserByRememberTokenHash(user.RememberTokenHash)
 }
 
-// Update  updates an existing user.
+// Update updates an existing user.
 func (s *Service) Update(user User) error {
 	err := s.runValidationFuncs(
 		&user,
@@ -76,6 +77,7 @@ func (s *Service) Update(user User) error {
 		s.requireEmail,
 		s.requirePasswordHash,
 		s.hashRememberToken,
+		s.refreshUpdatedAt,
 	)
 	if err != nil {
 		return err
@@ -171,5 +173,10 @@ func (s *Service) requireUUID(user *User) error {
 		return ErrUUIDRequired
 	}
 
+	return nil
+}
+
+func (s *Service) refreshUpdatedAt(user *User) error {
+	user.UpdatedAt = time.Now().UTC()
 	return nil
 }

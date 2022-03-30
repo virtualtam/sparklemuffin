@@ -1,5 +1,7 @@
 package user
 
+import "time"
+
 // User represents an authenticated user.
 type User struct {
 	UUID              string
@@ -9,4 +11,7 @@ type User struct {
 	RememberToken     string
 	RememberTokenHash string
 	IsAdmin           bool
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

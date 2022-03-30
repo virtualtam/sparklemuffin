@@ -29,10 +29,30 @@ func (r *Repository) AddUser(u user.User) error {
 		PasswordHash:      u.PasswordHash,
 		RememberTokenHash: u.RememberTokenHash,
 		IsAdmin:           u.IsAdmin,
+		CreatedAt:         u.CreatedAt,
+		UpdatedAt:         u.UpdatedAt,
 	}
 
 	_, err := r.db.NamedExec(
-		"INSERT INTO users(uuid, email, password_hash, remember_token_hash, is_admin) VALUES(:uuid, :email, :password_hash, :remember_token_hash, :is_admin)",
+		`
+INSERT INTO users(
+	uuid,
+	email,
+	password_hash,
+	remember_token_hash,
+	is_admin,
+	created_at,
+	updated_at,
+)
+VALUES(
+	:uuid,
+	:email,
+	:password_hash,
+	:remember_token_hash,
+	:is_admin,
+	:created_at,
+	:updated_at
+)`,
 		dbUser,
 	)
 
@@ -44,7 +64,7 @@ func (r *Repository) AddUser(u user.User) error {
 }
 
 func (r *Repository) GetAllUsers() ([]user.User, error) {
-	rows, err := r.db.Queryx("SELECT uuid, email, is_admin FROM users")
+	rows, err := r.db.Queryx("SELECT uuid, email, is_admin, created_at, updated_at FROM users")
 	if err != nil {
 		return []user.User{}, err
 	}
@@ -59,9 +79,11 @@ func (r *Repository) GetAllUsers() ([]user.User, error) {
 		}
 
 		user := user.User{
-			UUID:    dbUser.UUID,
-			Email:   dbUser.Email,
-			IsAdmin: dbUser.IsAdmin,
+			UUID:      dbUser.UUID,
+			Email:     dbUser.Email,
+			IsAdmin:   dbUser.IsAdmin,
+			CreatedAt: dbUser.CreatedAt,
+			UpdatedAt: dbUser.UpdatedAt,
 		}
 
 		users = append(users, user)
@@ -74,7 +96,9 @@ func (r *Repository) GetUserByEmail(email string) (user.User, error) {
 	dbUser := &User{}
 
 	err := r.db.QueryRowx(
-		"SELECT uuid, email, password_hash, remember_token_hash, is_admin FROM users WHERE email=$1",
+		`SELECT uuid, email, password_hash, remember_token_hash, is_admin, created_at, updated_at
+FROM users
+WHERE email=$1`,
 		email,
 	).StructScan(dbUser)
 
@@ -91,6 +115,8 @@ func (r *Repository) GetUserByEmail(email string) (user.User, error) {
 		PasswordHash:      dbUser.PasswordHash,
 		RememberTokenHash: dbUser.RememberTokenHash,
 		IsAdmin:           dbUser.IsAdmin,
+		CreatedAt:         dbUser.CreatedAt,
+		UpdatedAt:         dbUser.UpdatedAt,
 	}, nil
 }
 
@@ -98,7 +124,9 @@ func (r *Repository) GetUserByRememberTokenHash(rememberTokenHash string) (user.
 	dbUser := &User{}
 
 	err := r.db.QueryRowx(
-		"SELECT uuid, email, password_hash, remember_token_hash, is_admin FROM users WHERE remember_token_hash=$1",
+		`SELECT uuid, email, password_hash, remember_token_hash, is_admin, created_at, updated_at
+FROM users
+WHERE remember_token_hash=$1`,
 		rememberTokenHash,
 	).StructScan(dbUser)
 
@@ -115,6 +143,8 @@ func (r *Repository) GetUserByRememberTokenHash(rememberTokenHash string) (user.
 		PasswordHash:      dbUser.PasswordHash,
 		RememberTokenHash: dbUser.RememberTokenHash,
 		IsAdmin:           dbUser.IsAdmin,
+		CreatedAt:         dbUser.CreatedAt,
+		UpdatedAt:         dbUser.UpdatedAt,
 	}, nil
 }
 
@@ -125,10 +155,16 @@ func (r *Repository) UpdateUser(u user.User) error {
 		PasswordHash:      u.PasswordHash,
 		RememberTokenHash: u.RememberTokenHash,
 		IsAdmin:           u.IsAdmin,
+		UpdatedAt:         u.UpdatedAt,
 	}
 
 	_, err := r.db.NamedExec(`UPDATE users
-SET email=:email, password_hash=:password_hash, remember_token_hash=:remember_token_hash, is_admin=:is_admin
+SET
+	email=:email,
+	password_hash=:password_hash,
+	remember_token_hash=:remember_token_hash,
+	is_admin=:is_admin,
+	updated_at=:updated_at
 WHERE uuid=:uuid`,
 		dbUser,
 	)

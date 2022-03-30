@@ -28,10 +28,11 @@ func (r *Repository) AddUser(u user.User) error {
 		Email:             u.Email,
 		PasswordHash:      u.PasswordHash,
 		RememberTokenHash: u.RememberTokenHash,
+		IsAdmin:           u.IsAdmin,
 	}
 
 	_, err := r.db.NamedExec(
-		"INSERT INTO users(uuid, email, password_hash, remember_token_hash) VALUES(:uuid, :email, :password_hash, :remember_token_hash)",
+		"INSERT INTO users(uuid, email, password_hash, remember_token_hash, is_admin) VALUES(:uuid, :email, :password_hash, :remember_token_hash, :is_admin)",
 		dbUser,
 	)
 
@@ -46,7 +47,7 @@ func (r *Repository) GetUserByEmail(email string) (user.User, error) {
 	dbUser := &User{}
 
 	err := r.db.QueryRowx(
-		"SELECT uuid, email, password_hash, remember_token_hash FROM users WHERE email=$1",
+		"SELECT uuid, email, password_hash, remember_token_hash, is_admin FROM users WHERE email=$1",
 		email,
 	).StructScan(dbUser)
 
@@ -62,6 +63,7 @@ func (r *Repository) GetUserByEmail(email string) (user.User, error) {
 		Email:             dbUser.Email,
 		PasswordHash:      dbUser.PasswordHash,
 		RememberTokenHash: dbUser.RememberTokenHash,
+		IsAdmin:           dbUser.IsAdmin,
 	}, nil
 }
 
@@ -69,7 +71,7 @@ func (r *Repository) GetUserByRememberTokenHash(rememberTokenHash string) (user.
 	dbUser := &User{}
 
 	err := r.db.QueryRowx(
-		"SELECT uuid, email, password_hash, remember_token_hash FROM users WHERE remember_token_hash=$1",
+		"SELECT uuid, email, password_hash, remember_token_hash, is_admin FROM users WHERE remember_token_hash=$1",
 		rememberTokenHash,
 	).StructScan(dbUser)
 
@@ -85,6 +87,7 @@ func (r *Repository) GetUserByRememberTokenHash(rememberTokenHash string) (user.
 		Email:             dbUser.Email,
 		PasswordHash:      dbUser.PasswordHash,
 		RememberTokenHash: dbUser.RememberTokenHash,
+		IsAdmin:           dbUser.IsAdmin,
 	}, nil
 }
 
@@ -94,10 +97,11 @@ func (r *Repository) UpdateUser(u user.User) error {
 		Email:             u.Email,
 		PasswordHash:      u.PasswordHash,
 		RememberTokenHash: u.RememberTokenHash,
+		IsAdmin:           u.IsAdmin,
 	}
 
 	_, err := r.db.NamedExec(`UPDATE users
-SET email=:email, password_hash=:password_hash, remember_token_hash=:remember_token_hash
+SET email=:email, password_hash=:password_hash, remember_token_hash=:remember_token_hash, is_admin=:is_admin
 WHERE uuid=:uuid`,
 		dbUser,
 	)

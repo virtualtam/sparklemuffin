@@ -8,4 +8,5 @@ type User struct {
 	PasswordHash      string
 	RememberToken     string
 	RememberTokenHash string
+	IsAdmin           bool
 }

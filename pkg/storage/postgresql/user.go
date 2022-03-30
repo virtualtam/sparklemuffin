@@ -5,4 +5,5 @@ type User struct {
 	Email             string `db:"email"`
 	PasswordHash      string `db:"password_hash"`
 	RememberTokenHash string `db:"remember_token_hash"`
+	IsAdmin           bool   `db:"is_admin"`
 }

@@ -15,6 +15,7 @@ func (r *Repository) AddUser(u user.User) error {
 		Email:             u.Email,
 		PasswordHash:      u.PasswordHash,
 		RememberTokenHash: u.RememberTokenHash,
+		IsAdmin:           u.IsAdmin,
 	}
 
 	r.users = append(r.users, newUser)
@@ -29,6 +30,7 @@ func (r *Repository) GetUserByEmail(email string) (user.User, error) {
 				Email:             existingUser.Email,
 				PasswordHash:      existingUser.PasswordHash,
 				RememberTokenHash: existingUser.RememberTokenHash,
+				IsAdmin:           existingUser.IsAdmin,
 			}, nil
 		}
 	}
@@ -43,6 +45,7 @@ func (r *Repository) GetUserByRememberTokenHash(rememberTokenHash string) (user.
 				Email:             existingUser.Email,
 				PasswordHash:      existingUser.PasswordHash,
 				RememberTokenHash: existingUser.RememberTokenHash,
+				IsAdmin:           existingUser.IsAdmin,
 			}, nil
 		}
 	}
@@ -57,6 +60,7 @@ func (r *Repository) UpdateUser(u user.User) error {
 				Email:             u.Email,
 				PasswordHash:      u.PasswordHash,
 				RememberTokenHash: u.RememberTokenHash,
+				IsAdmin:           u.IsAdmin,
 			}
 			return nil
 		}

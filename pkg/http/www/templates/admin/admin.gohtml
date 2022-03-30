@@ -1,0 +1,26 @@
+{{define "content"}}
+<h2>Administration</h2>
+<h3>Users</h3>
+{{template "userTable" .}}
+{{end}}
+
+{{define "userTable"}}
+  <table>
+    <thead>
+      <th>Email</th>
+      <th>Is Admin</th>
+    </thead>
+    <tbody>
+  {{range .}}
+    {{template "userRow" .}}
+  {{end}}
+    </tbody>
+  </table>
+{{end}}
+
+{{define "userRow"}}
+<tr>
+  <th>{{.Email}}</th>
+  <th>{{.IsAdmin}}</th>
+</tr>
+{{end}}

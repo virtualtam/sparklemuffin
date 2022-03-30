@@ -18,6 +18,7 @@ type Server struct {
 	router      *mux.Router
 	userService *user.Service
 
+	adminView     *view
 	homeView      *view
 	userLoginView *view
 }
@@ -28,6 +29,7 @@ func NewServer(userService *user.Service) *Server {
 		router:      mux.NewRouter(),
 		userService: userService,
 
+		adminView:     newView("admin/admin.gohtml"),
 		homeView:      newView("static/home.gohtml"),
 		userLoginView: newView("user/login.gohtml"),
 	}
@@ -47,6 +49,9 @@ func (s *Server) addRoutes() {
 	// static pages
 	s.router.HandleFunc("/", s.rememberUser(s.homeView.handle))
 
+	// administration
+	s.router.HandleFunc("/admin", s.rememberUser(s.requireAdminUser(s.handleAdmin()))).Methods("GET")
+
 	// authentication
 	s.router.HandleFunc("/login", s.rememberUser(s.userLoginView.handle)).Methods("GET")
 	s.router.HandleFunc("/login", s.rememberUser(s.handleUserLogin())).Methods("POST")
@@ -57,6 +62,13 @@ func (s *Server) addRoutes() {
 	s.router.PathPrefix("/static/").Handler(http.StripPrefix(
 		"/static/",
 		s.staticCacheControl(http.FileServer(http.FS(static.FS)))))
+}
+
+// handleAdmin displays the main administration page.
+func (s *Server) handleAdmin() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.adminView.handle(w, r)
+	}
 }
 
 // handleUserLogin processes data submitted through the user login form.
@@ -194,6 +206,26 @@ func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {
 		ctx := r.Context()
 		ctx = withUser(ctx, user)
 		r = r.WithContext(ctx)
+
+		h(w, r)
+	})
+}
+
+// requireAdminUser requires the user to have administration privileges to
+// access content.
+func (s *Server) requireAdminUser(h http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := userValue(r.Context())
+
+		if user == nil {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
+
+		if !user.IsAdmin {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 
 		h(w, r)
 	})

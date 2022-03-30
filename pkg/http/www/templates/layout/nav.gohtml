@@ -5,6 +5,9 @@
   <nav>
     <a href="/">Home</a>
     {{if .User}}
+      {{if .User.IsAdmin}}
+    <a href="/admin">Admin</a>
+      {{end}}
       {{template "logoutForm"}}
     {{else}}
     <a href="/login">Login</a>

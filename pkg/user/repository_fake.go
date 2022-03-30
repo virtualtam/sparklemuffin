@@ -12,6 +12,10 @@ func (r *FakeRepository) AddUser(user User) error {
 	return nil
 }
 
+func (r *FakeRepository) GetAllUsers() ([]User, error) {
+	return r.Users, nil
+}
+
 func (r *FakeRepository) GetUserByEmail(email string) (User, error) {
 	for _, user := range r.Users {
 		if user.Email == email {

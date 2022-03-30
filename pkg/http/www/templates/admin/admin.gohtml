@@ -8,7 +8,8 @@
   <table>
     <thead>
       <th>Email</th>
-      <th>Is Admin</th>
+      <th>Is Admin?</th>
+      <th>Actions</th>
     </thead>
     <tbody>
   {{range .}}
@@ -20,7 +21,11 @@
 
 {{define "userRow"}}
 <tr>
-  <th>{{.Email}}</th>
-  <th>{{.IsAdmin}}</th>
+  <td>{{.Email}}</td>
+  <td>{{.IsAdmin}}</td>
+  <td>
+    <a href="#{{.UUID}}">Edit</a>
+    <a href="#{{.UUID}}">Delete</a>
+  </td>
 </tr>
 {{end}}

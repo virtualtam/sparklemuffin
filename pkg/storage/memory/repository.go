@@ -23,6 +23,23 @@ func (r *Repository) AddUser(u user.User) error {
 	return nil
 }
 
+func (r *Repository) GetAllUsers() ([]user.User, error) {
+	users := make([]user.User, len(r.users))
+
+	for index, u := range r.users {
+		user := user.User{
+			Email:             u.Email,
+			PasswordHash:      u.PasswordHash,
+			RememberTokenHash: u.RememberTokenHash,
+			IsAdmin:           u.IsAdmin,
+		}
+
+		users[index] = user
+	}
+
+	return users, nil
+}
+
 func (r *Repository) GetUserByEmail(email string) (user.User, error) {
 	for _, existingUser := range r.users {
 		if existingUser.Email == email {

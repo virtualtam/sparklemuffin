@@ -5,6 +5,9 @@ type Repository interface {
 	// AddUser saves a new user.
 	AddUser(User) error
 
+	// GetAllUsers returns a list of all User accounts.
+	GetAllUsers() ([]User, error)
+
 	// GetUserByEmail returns the User registered with a given email address.
 	GetUserByEmail(string) (User, error)
 

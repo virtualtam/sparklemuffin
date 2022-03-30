@@ -67,7 +67,16 @@ func (s *Server) addRoutes() {
 // handleAdmin displays the main administration page.
 func (s *Server) handleAdmin() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.adminView.handle(w, r)
+		var viewData Data
+
+		users, err := s.userService.All()
+		if err != nil {
+			viewData.AlertError(err)
+		} else {
+			viewData.Content = users
+		}
+
+		s.adminView.render(w, r, viewData)
 	}
 }
 

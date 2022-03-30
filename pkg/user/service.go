@@ -22,6 +22,11 @@ func NewService(r Repository, hmacKey string) *Service {
 	}
 }
 
+// All returns a list of all users.
+func (s *Service) All() ([]User, error) {
+	return s.r.GetAllUsers()
+}
+
 // Authenticate checks user-submitted credentials to determine whether a user
 // submitted the correct login information.
 func (s *Service) Authenticate(email, password string) (User, error) {

@@ -43,6 +43,33 @@ func (r *Repository) AddUser(u user.User) error {
 	return nil
 }
 
+func (r *Repository) GetAllUsers() ([]user.User, error) {
+	rows, err := r.db.Queryx("SELECT uuid, email, is_admin FROM users")
+	if err != nil {
+		return []user.User{}, err
+	}
+
+	users := []user.User{}
+
+	for rows.Next() {
+		dbUser := User{}
+
+		if err := rows.StructScan(&dbUser); err != nil {
+			return []user.User{}, err
+		}
+
+		user := user.User{
+			UUID:    dbUser.UUID,
+			Email:   dbUser.Email,
+			IsAdmin: dbUser.IsAdmin,
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 func (r *Repository) GetUserByEmail(email string) (user.User, error) {
 	dbUser := &User{}
 

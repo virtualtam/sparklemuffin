@@ -95,6 +95,24 @@ func (r *Repository) GetUserByRememberTokenHash(rememberTokenHash string) (user.
 	return user.User{}, user.ErrNotFound
 }
 
+func (r *Repository) GetUserByUUID(userUUID string) (user.User, error) {
+	for _, existingUser := range r.users {
+		if existingUser.UUID == userUUID {
+			return user.User{
+				UUID:              existingUser.UUID,
+				Email:             existingUser.Email,
+				PasswordHash:      existingUser.PasswordHash,
+				RememberTokenHash: existingUser.RememberTokenHash,
+				IsAdmin:           existingUser.IsAdmin,
+				CreatedAt:         existingUser.CreatedAt,
+				UpdatedAt:         existingUser.UpdatedAt,
+			}, nil
+		}
+	}
+
+	return user.User{}, user.ErrNotFound
+}
+
 func (r *Repository) UpdateUser(u user.User) error {
 	for index, existingUser := range r.users {
 		if existingUser.UUID == u.UUID {

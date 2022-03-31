@@ -36,6 +36,16 @@ func (r *FakeRepository) GetUserByRememberTokenHash(rememberTokenHash string) (U
 	return User{}, ErrNotFound
 }
 
+func (r *FakeRepository) GetUserByUUID(userUUID string) (User, error) {
+	for _, user := range r.Users {
+		if user.UUID == userUUID {
+			return user, nil
+		}
+	}
+
+	return User{}, ErrNotFound
+}
+
 func (r *FakeRepository) IsUserEmailRegistered(email string) (bool, error) {
 	registered := false
 

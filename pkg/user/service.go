@@ -73,7 +73,7 @@ func (s *Service) Authenticate(email, password string) (User, error) {
 	}
 }
 
-// ByRememberToken returns the user corresponding to a giver RememberToken.
+// ByRememberToken returns the user corresponding to a given RememberToken.
 func (s *Service) ByRememberToken(rememberToken string) (User, error) {
 	user := User{RememberToken: rememberToken}
 
@@ -90,6 +90,21 @@ func (s *Service) ByRememberToken(rememberToken string) (User, error) {
 	return s.r.GetUserByRememberTokenHash(user.RememberTokenHash)
 }
 
+// ByUUID returns the user corresponding to a given UUID.
+func (s *Service) ByUUID(userUUID string) (User, error) {
+	user := User{UUID: userUUID}
+
+	err := s.runValidationFuncs(
+		&user,
+		s.requireUUID,
+	)
+	if err != nil {
+		return User{}, err
+	}
+
+	return s.r.GetUserByUUID(user.UUID)
+}
+
 // Update updates an existing user.
 func (s *Service) Update(user User) error {
 	err := s.runValidationFuncs(
@@ -97,6 +112,8 @@ func (s *Service) Update(user User) error {
 		s.requireUUID,
 		s.normalizeEmail,
 		s.requireEmail,
+		s.requirePassword,
+		s.hashPassword,
 		s.requirePasswordHash,
 		s.hashRememberToken,
 		s.refreshUpdatedAt,

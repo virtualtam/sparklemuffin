@@ -19,10 +19,11 @@ type Server struct {
 	router      *mux.Router
 	userService *user.Service
 
-	adminView        *view
-	adminUserAddView *view
-	homeView         *view
-	userLoginView    *view
+	adminView         *view
+	adminUserAddView  *view
+	adminUserEditView *view
+	homeView          *view
+	userLoginView     *view
 }
 
 // NewServer initializes and returns a new Server.
@@ -31,10 +32,11 @@ func NewServer(userService *user.Service) *Server {
 		router:      mux.NewRouter(),
 		userService: userService,
 
-		adminView:        newView("admin/admin.gohtml"),
-		adminUserAddView: newView("admin/user_add.gohtml"),
-		homeView:         newView("static/home.gohtml"),
-		userLoginView:    newView("user/login.gohtml"),
+		adminView:         newView("admin/admin.gohtml"),
+		adminUserAddView:  newView("admin/user_add.gohtml"),
+		adminUserEditView: newView("admin/user_edit.gohtml"),
+		homeView:          newView("static/home.gohtml"),
+		userLoginView:     newView("user/login.gohtml"),
 	}
 
 	s.addRoutes()
@@ -56,6 +58,8 @@ func (s *Server) addRoutes() {
 	s.router.HandleFunc("/admin", s.rememberUser(s.requireAdminUser(s.handleAdmin()))).Methods("GET")
 	s.router.HandleFunc("/admin/users/add", s.rememberUser(s.requireAdminUser(s.adminUserAddView.handle))).Methods("GET")
 	s.router.HandleFunc("/admin/users", s.rememberUser(s.requireAdminUser(s.handleAdminUserAdd()))).Methods("POST")
+	s.router.HandleFunc("/admin/users/{uuid}", s.rememberUser(s.requireAdminUser(s.handleAdminUserEditView()))).Methods("GET")
+	s.router.HandleFunc("/admin/users/{uuid}", s.rememberUser(s.requireAdminUser(s.handleAdminUserEdit()))).Methods("POST")
 
 	// authentication
 	s.router.HandleFunc("/login", s.rememberUser(s.userLoginView.handle)).Methods("GET")
@@ -120,6 +124,70 @@ func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Reques
 
 		viewData.AlertSuccess(fmt.Sprintf("user %q has been successfully created", newUser.Email))
 		s.adminUserAddView.render(w, r, viewData)
+	}
+}
+
+// handleAdminUserEditView displays the user edition form.
+func (s *Server) handleAdminUserEditView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		userUUID := vars["uuid"]
+
+		var viewData Data
+
+		user, err := s.userService.ByUUID(userUUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve user")
+			viewData.AlertError(err)
+			s.adminUserEditView.render(w, r, viewData)
+			return
+		}
+
+		viewData.Content = user
+
+		s.adminUserEditView.render(w, r, viewData)
+	}
+}
+
+// handleAdminUserEdit processes the user edition form.
+func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Request) {
+	var viewData Data
+
+	type userEditForm struct {
+		Email    string `schema:"email"`
+		Password string `schema:"password"`
+		IsAdmin  bool   `schema:"is_admin"`
+	}
+
+	var form userEditForm
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		userUUID := vars["uuid"]
+
+		if err := parseForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse user edition form")
+			viewData.AlertError(err)
+			s.adminUserEditView.render(w, r, viewData)
+			return
+		}
+
+		editedUser := user.User{
+			UUID:     userUUID,
+			Email:    form.Email,
+			Password: form.Password,
+			IsAdmin:  form.IsAdmin,
+		}
+
+		if err := s.userService.Update(editedUser); err != nil {
+			log.Error().Err(err).Msg("failed to update user")
+			viewData.AlertError(err)
+			s.adminUserEditView.render(w, r, viewData)
+			return
+		}
+
+		viewData.AlertSuccess(fmt.Sprintf("user %q has been successfully updated", editedUser.Email))
+		s.adminUserEditView.render(w, r, viewData)
 	}
 }
 

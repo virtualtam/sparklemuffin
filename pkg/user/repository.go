@@ -15,6 +15,9 @@ type Repository interface {
 	// RememberToken hash.
 	GetUserByRememberTokenHash(string) (User, error)
 
+	// GetUserByUUID returns the User corresponding to a given UUID.
+	GetUserByUUID(string) (User, error)
+
 	// IsUserEmailRegistered returns whether there is an existing user
 	// registered with this email address.
 	IsUserEmailRegistered(email string) (bool, error)

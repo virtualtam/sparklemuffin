@@ -145,6 +145,34 @@ WHERE remember_token_hash=$1`,
 	}, nil
 }
 
+func (r *Repository) GetUserByUUID(userUUID string) (user.User, error) {
+	dbUser := &User{}
+
+	err := r.db.QueryRowx(
+		`SELECT uuid, email, password_hash, remember_token_hash, is_admin, created_at, updated_at
+FROM users
+WHERE uuid=$1`,
+		userUUID,
+	).StructScan(dbUser)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return user.User{}, user.ErrNotFound
+	}
+	if err != nil {
+		return user.User{}, err
+	}
+
+	return user.User{
+		UUID:              dbUser.UUID,
+		Email:             dbUser.Email,
+		PasswordHash:      dbUser.PasswordHash,
+		RememberTokenHash: dbUser.RememberTokenHash,
+		IsAdmin:           dbUser.IsAdmin,
+		CreatedAt:         dbUser.CreatedAt,
+		UpdatedAt:         dbUser.UpdatedAt,
+	}, nil
+}
+
 func (r *Repository) IsUserEmailRegistered(email string) (bool, error) {
 	dbUser := &User{}
 

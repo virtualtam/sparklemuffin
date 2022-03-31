@@ -1,0 +1,10 @@
+{{define "content"}}
+<h2>Administration</h2>
+<h3>Delete user: {{.Email}}</h3>
+<form action="/admin/users/{{.UUID}}/delete" method="POST">
+  <p>Delete user <strong>{{.Email}}</strong> and all associated data?
+  <p>
+    <button type="submit">Delete</button>
+  </p>
+</form>
+{{end}}

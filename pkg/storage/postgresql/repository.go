@@ -60,6 +60,24 @@ VALUES(
 	return nil
 }
 
+func (r *Repository) DeleteUserByUUID(userUUID string) error {
+	result, err := r.db.Exec("DELETE FROM users WHERE uuid=$1", userUUID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected != 1 {
+		return user.ErrNotFound
+	}
+
+	return nil
+}
+
 func (r *Repository) GetAllUsers() ([]user.User, error) {
 	rows, err := r.db.Queryx("SELECT uuid, email, is_admin, created_at, updated_at FROM users")
 	if err != nil {

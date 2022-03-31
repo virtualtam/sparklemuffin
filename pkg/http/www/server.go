@@ -19,11 +19,12 @@ type Server struct {
 	router      *mux.Router
 	userService *user.Service
 
-	adminView         *view
-	adminUserAddView  *view
-	adminUserEditView *view
-	homeView          *view
-	userLoginView     *view
+	adminView           *view
+	adminUserAddView    *view
+	adminUserDeleteView *view
+	adminUserEditView   *view
+	homeView            *view
+	userLoginView       *view
 }
 
 // NewServer initializes and returns a new Server.
@@ -32,11 +33,12 @@ func NewServer(userService *user.Service) *Server {
 		router:      mux.NewRouter(),
 		userService: userService,
 
-		adminView:         newView("admin/admin.gohtml"),
-		adminUserAddView:  newView("admin/user_add.gohtml"),
-		adminUserEditView: newView("admin/user_edit.gohtml"),
-		homeView:          newView("static/home.gohtml"),
-		userLoginView:     newView("user/login.gohtml"),
+		adminView:           newView("admin/admin.gohtml"),
+		adminUserAddView:    newView("admin/user_add.gohtml"),
+		adminUserDeleteView: newView("admin/user_delete.gohtml"),
+		adminUserEditView:   newView("admin/user_edit.gohtml"),
+		homeView:            newView("static/home.gohtml"),
+		userLoginView:       newView("user/login.gohtml"),
 	}
 
 	s.addRoutes()
@@ -60,6 +62,8 @@ func (s *Server) addRoutes() {
 	s.router.HandleFunc("/admin/users", s.rememberUser(s.requireAdminUser(s.handleAdminUserAdd()))).Methods("POST")
 	s.router.HandleFunc("/admin/users/{uuid}", s.rememberUser(s.requireAdminUser(s.handleAdminUserEditView()))).Methods("GET")
 	s.router.HandleFunc("/admin/users/{uuid}", s.rememberUser(s.requireAdminUser(s.handleAdminUserEdit()))).Methods("POST")
+	s.router.HandleFunc("/admin/users/{uuid}/delete", s.rememberUser(s.requireAdminUser(s.handleAdminUserDeleteView()))).Methods("GET")
+	s.router.HandleFunc("/admin/users/{uuid}/delete", s.rememberUser(s.requireAdminUser(s.handleAdminUserDelete()))).Methods("POST")
 
 	// authentication
 	s.router.HandleFunc("/login", s.rememberUser(s.userLoginView.handle)).Methods("GET")
@@ -124,6 +128,48 @@ func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Reques
 
 		viewData.AlertSuccess(fmt.Sprintf("user %q has been successfully created", newUser.Email))
 		s.adminUserAddView.render(w, r, viewData)
+	}
+}
+
+// handleAdminUserDeleteView displays the user deletion form.
+func (s *Server) handleAdminUserDeleteView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		userUUID := vars["uuid"]
+
+		var viewData Data
+
+		user, err := s.userService.ByUUID(userUUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve user")
+			viewData.AlertError(err)
+			s.adminUserDeleteView.render(w, r, viewData)
+			return
+		}
+
+		viewData.Content = user
+
+		s.adminUserDeleteView.render(w, r, viewData)
+	}
+}
+
+// handleAdminUserDelete processes the user deletion form.
+func (s *Server) handleAdminUserDelete() func(w http.ResponseWriter, r *http.Request) {
+	var viewData Data
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		userUUID := vars["uuid"]
+
+		if err := s.userService.DeleteByUUID(userUUID); err != nil {
+			log.Error().Err(err).Msg("failed to delete user")
+			viewData.AlertError(err)
+			s.adminUserEditView.render(w, r, viewData)
+			return
+		}
+
+		viewData.AlertSuccess(fmt.Sprintf("user %q has been successfully deleted", userUUID))
+		s.adminView.render(w, r, viewData)
 	}
 }
 

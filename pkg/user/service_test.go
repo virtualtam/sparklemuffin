@@ -177,6 +177,58 @@ func TestServiceAuthenticate(t *testing.T) {
 	}
 }
 
+func TestServiceDeleteByUUID(t *testing.T) {
+	cases := []struct {
+		tname           string
+		repositoryUsers []User
+		userUUID        string
+		wantErr         error
+	}{
+		{
+			tname:   "empty UUID",
+			wantErr: ErrUUIDRequired,
+		},
+		{
+			tname:    "unknown UUID",
+			userUUID: "b52cd2d5-89f7-4489-b023-722896ca3f98",
+			wantErr:  ErrNotFound,
+		},
+		{
+			tname: "delete by UUID",
+			repositoryUsers: []User{
+				{UUID: "ebd1bec1-e15f-4502-ae97-a631f7d7df91"},
+			},
+			userUUID: "ebd1bec1-e15f-4502-ae97-a631f7d7df91",
+			wantErr:  ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Users: tc.repositoryUsers,
+			}
+			s := NewService(r, "hmac-key")
+
+			err := s.DeleteByUUID(tc.userUUID)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+		})
+	}
+}
+
 func TestServiceUpdate(t *testing.T) {
 	cases := []struct {
 		tname           string

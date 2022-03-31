@@ -5,6 +5,9 @@ type Repository interface {
 	// AddUser saves a new user.
 	AddUser(User) error
 
+	// DeleteUser deletes an existing user and all related data.
+	DeleteUserByUUID(string) error
+
 	// GetAllUsers returns a list of all User accounts.
 	GetAllUsers() ([]User, error)
 

@@ -105,6 +105,21 @@ func (s *Service) ByUUID(userUUID string) (User, error) {
 	return s.r.GetUserByUUID(user.UUID)
 }
 
+// DeleteByUUID deletes an existing user and all related data.
+func (s *Service) DeleteByUUID(userUUID string) error {
+	user := User{UUID: userUUID}
+
+	err := s.runValidationFuncs(
+		&user,
+		s.requireUUID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return s.r.DeleteUserByUUID(userUUID)
+}
+
 // Update updates an existing user.
 func (s *Service) Update(user User) error {
 	err := s.runValidationFuncs(

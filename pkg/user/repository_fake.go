@@ -12,6 +12,16 @@ func (r *FakeRepository) AddUser(user User) error {
 	return nil
 }
 
+func (r *FakeRepository) DeleteUserByUUID(userUUID string) error {
+	for index, user := range r.Users {
+		if user.UUID == userUUID {
+			r.Users = append(r.Users[:index], r.Users[index+1:]...)
+		}
+	}
+
+	return ErrNotFound
+}
+
 func (r *FakeRepository) GetAllUsers() ([]User, error) {
 	return r.Users, nil
 }

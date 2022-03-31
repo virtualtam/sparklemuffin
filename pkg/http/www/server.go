@@ -1,6 +1,7 @@
 package www
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -18,9 +19,10 @@ type Server struct {
 	router      *mux.Router
 	userService *user.Service
 
-	adminView     *view
-	homeView      *view
-	userLoginView *view
+	adminView        *view
+	adminUserAddView *view
+	homeView         *view
+	userLoginView    *view
 }
 
 // NewServer initializes and returns a new Server.
@@ -29,9 +31,10 @@ func NewServer(userService *user.Service) *Server {
 		router:      mux.NewRouter(),
 		userService: userService,
 
-		adminView:     newView("admin/admin.gohtml"),
-		homeView:      newView("static/home.gohtml"),
-		userLoginView: newView("user/login.gohtml"),
+		adminView:        newView("admin/admin.gohtml"),
+		adminUserAddView: newView("admin/user_add.gohtml"),
+		homeView:         newView("static/home.gohtml"),
+		userLoginView:    newView("user/login.gohtml"),
 	}
 
 	s.addRoutes()
@@ -51,6 +54,8 @@ func (s *Server) addRoutes() {
 
 	// administration
 	s.router.HandleFunc("/admin", s.rememberUser(s.requireAdminUser(s.handleAdmin()))).Methods("GET")
+	s.router.HandleFunc("/admin/users/add", s.rememberUser(s.requireAdminUser(s.adminUserAddView.handle))).Methods("GET")
+	s.router.HandleFunc("/admin/users", s.rememberUser(s.requireAdminUser(s.handleAdminUserAdd()))).Methods("POST")
 
 	// authentication
 	s.router.HandleFunc("/login", s.rememberUser(s.userLoginView.handle)).Methods("GET")
@@ -77,6 +82,44 @@ func (s *Server) handleAdmin() func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		s.adminView.render(w, r, viewData)
+	}
+}
+
+// handleAdminUserAdd processes data submitted through the user creation form.
+func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Request) {
+	var viewData Data
+
+	type userAddForm struct {
+		Email    string `schema:"email"`
+		Password string `schema:"password"`
+		IsAdmin  bool   `schema:"is_admin"`
+	}
+
+	var form userAddForm
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := parseForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse user creation form")
+			viewData.AlertError(err)
+			s.adminUserAddView.render(w, r, viewData)
+			return
+		}
+
+		newUser := user.User{
+			Email:    form.Email,
+			Password: form.Password,
+			IsAdmin:  form.IsAdmin,
+		}
+
+		if err := s.userService.Add(newUser); err != nil {
+			log.Error().Err(err).Msg("failed to persist user")
+			viewData.AlertError(err)
+			s.adminUserAddView.render(w, r, viewData)
+			return
+		}
+
+		viewData.AlertSuccess(fmt.Sprintf("user %q has been successfully created", newUser.Email))
+		s.adminUserAddView.render(w, r, viewData)
 	}
 }
 

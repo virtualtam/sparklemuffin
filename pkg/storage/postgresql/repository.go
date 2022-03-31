@@ -24,13 +24,12 @@ func NewRepository(db *sqlx.DB) *Repository {
 
 func (r *Repository) AddUser(u user.User) error {
 	dbUser := User{
-		UUID:              u.UUID,
-		Email:             u.Email,
-		PasswordHash:      u.PasswordHash,
-		RememberTokenHash: u.RememberTokenHash,
-		IsAdmin:           u.IsAdmin,
-		CreatedAt:         u.CreatedAt,
-		UpdatedAt:         u.UpdatedAt,
+		UUID:         u.UUID,
+		Email:        u.Email,
+		PasswordHash: u.PasswordHash,
+		IsAdmin:      u.IsAdmin,
+		CreatedAt:    u.CreatedAt,
+		UpdatedAt:    u.UpdatedAt,
 	}
 
 	_, err := r.db.NamedExec(
@@ -39,16 +38,14 @@ INSERT INTO users(
 	uuid,
 	email,
 	password_hash,
-	remember_token_hash,
 	is_admin,
 	created_at,
-	updated_at,
+	updated_at
 )
 VALUES(
 	:uuid,
 	:email,
 	:password_hash,
-	:remember_token_hash,
 	:is_admin,
 	:created_at,
 	:updated_at
@@ -146,6 +143,21 @@ WHERE remember_token_hash=$1`,
 		CreatedAt:         dbUser.CreatedAt,
 		UpdatedAt:         dbUser.UpdatedAt,
 	}, nil
+}
+
+func (r *Repository) IsUserEmailRegistered(email string) (bool, error) {
+	dbUser := &User{}
+
+	err := r.db.QueryRowx("SELECT email FROM users WHERE email=$1", email).StructScan(dbUser)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *Repository) UpdateUser(u user.User) error {

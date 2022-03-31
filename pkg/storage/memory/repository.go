@@ -64,6 +64,19 @@ func (r *Repository) GetUserByEmail(email string) (user.User, error) {
 	return user.User{}, user.ErrNotFound
 }
 
+func (r *Repository) IsUserEmailRegistered(email string) (bool, error) {
+	registered := false
+
+	for _, existingUser := range r.users {
+		if existingUser.Email == email {
+			registered = true
+			break
+		}
+	}
+
+	return registered, nil
+}
+
 func (r *Repository) GetUserByRememberTokenHash(rememberTokenHash string) (user.User, error) {
 	for _, existingUser := range r.users {
 		if existingUser.RememberTokenHash == rememberTokenHash {

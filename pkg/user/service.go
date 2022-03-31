@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/virtualtam/yawbe/pkg/hash"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -21,6 +22,27 @@ func NewService(r Repository, hmacKey string) *Service {
 		r:    r,
 		hmac: hmac,
 	}
+}
+
+// Add adds a new User.
+func (s *Service) Add(user User) error {
+	err := s.runValidationFuncs(
+		&user,
+		s.normalizeEmail,
+		s.requireEmail,
+		s.ensureEmailIsNotRegistered,
+		s.requirePassword,
+		s.hashPassword,
+		s.requirePasswordHash,
+		s.generateUUID,
+		s.requireUUID,
+		s.setCreatedUpdatedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	return s.r.AddUser(user)
 }
 
 // All returns a list of all users.
@@ -132,6 +154,42 @@ func (s *Service) runValidationFuncs(user *User, fns ...validationFunc) error {
 	return nil
 }
 
+func (s *Service) ensureEmailIsNotRegistered(user *User) error {
+	registered, err := s.r.IsUserEmailRegistered(user.Email)
+	if err != nil {
+		return err
+	}
+	if registered {
+		return ErrEmailAlreadyRegistered
+	}
+	return nil
+}
+
+func (s *Service) generateUUID(user *User) error {
+	generatedUUID, err := uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+
+	user.UUID = generatedUUID.String()
+
+	return nil
+}
+
+func (s *Service) hashPassword(user *User) error {
+	h, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	user.PasswordHash = string(h)
+
+	// wipe the clear-text password as soon as it is hashed
+	user.Password = ""
+
+	return nil
+}
+
 func (s *Service) hashRememberToken(user *User) error {
 	if user.RememberToken == "" {
 		return nil
@@ -157,6 +215,13 @@ func (s *Service) normalizeEmail(user *User) error {
 func (s *Service) requireEmail(user *User) error {
 	if user.Email == "" {
 		return ErrEmailRequired
+	}
+	return nil
+}
+
+func (s *Service) requirePassword(user *User) error {
+	if user.Password == "" {
+		return ErrPasswordRequired
 	}
 	return nil
 }
@@ -194,5 +259,13 @@ func (s *Service) requireUUID(user *User) error {
 
 func (s *Service) refreshUpdatedAt(user *User) error {
 	user.UpdatedAt = time.Now().UTC()
+	return nil
+}
+
+func (s *Service) setCreatedUpdatedAt(user *User) error {
+	now := time.Now().UTC()
+	user.CreatedAt = now
+	user.UpdatedAt = now
+
 	return nil
 }

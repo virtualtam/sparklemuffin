@@ -15,6 +15,10 @@ type Repository interface {
 	// RememberToken hash.
 	GetUserByRememberTokenHash(string) (User, error)
 
+	// IsUserEmailRegistered returns whether there is an existing user
+	// registered with this email address.
+	IsUserEmailRegistered(email string) (bool, error)
+
 	// UpdateUser updates an existing user.
 	UpdateUser(User) error
 

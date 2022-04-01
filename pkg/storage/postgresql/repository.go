@@ -234,6 +234,50 @@ WHERE uuid=:uuid`,
 	return nil
 }
 
+func (r *Repository) UpdateUserInfo(info user.InfoUpdate) error {
+	dbUser := User{
+		UUID:      info.UUID,
+		Email:     info.Email,
+		UpdatedAt: info.UpdatedAt,
+	}
+
+	_, err := r.db.NamedExec(`UPDATE users
+SET
+	email=:email,
+	updated_at=:updated_at
+WHERE uuid=:uuid`,
+		dbUser,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Repository) UpdateUserPasswordHash(passwordHash user.PasswordHashUpdate) error {
+	dbUser := User{
+		UUID:         passwordHash.UUID,
+		PasswordHash: passwordHash.PasswordHash,
+		UpdatedAt:    passwordHash.UpdatedAt,
+	}
+
+	_, err := r.db.NamedExec(`UPDATE users
+SET
+	password_hash=:password_hash,
+	updated_at=:updated_at
+WHERE uuid=:uuid`,
+		dbUser,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *Repository) UpdateUserRememberTokenHash(u user.User) error {
 	dbUser := User{
 		UUID:              u.UUID,

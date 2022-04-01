@@ -1,0 +1,65 @@
+{{define "content"}}
+<h2>Account</h2>
+<h3>Personal information</h3>
+{{template "informationUpdateForm" .}}
+
+<h3>Password</h3>
+{{template "passwordUpdateForm" .}}
+{{end}}
+
+{{define "informationUpdateForm"}}
+<form action="/account/info" method="POST">
+  <p>
+    <label for="email">Email address</label>
+    <br>
+    <input
+      type="email"
+      id="email"
+      name="email"
+      placeholder="Email"
+      value="{{.Email}}"
+      required="">
+  </p>
+  <p>
+    <button type="submit">Update information</button>
+  </p>
+</form>
+{{end}}
+
+{{define "passwordUpdateForm"}}
+<form action="/account/password" method="POST">
+  <p>
+    <label for="current_password">Current password</label>
+    <br>
+    <input
+      type="password"
+      id="current_password"
+      name="current_password"
+      placeholder="Current password"
+      required="">
+  </p>
+  <p>
+    <label for="new_password">New password</label>
+    <br>
+    <input
+      type="password"
+      id="new_password"
+      name="new_password"
+      placeholder="New password"
+      required="">
+  </p>
+  <p>
+    <label for="new_password_confirmation">New password (confirmation)</label>
+    <br>
+    <input
+      type="password"
+      id="new_password_confirmation"
+      name="new_password_confirmation"
+      placeholder="New password (confirmation)"
+      required="">
+  </p>
+  <p>
+    <button type="submit">Update password</button>
+  </p>
+</form>
+{{end}}

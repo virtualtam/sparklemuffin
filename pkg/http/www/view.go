@@ -31,6 +31,11 @@ func (d *Data) AlertError(err error) {
 	d.alert(alertLevelError, fmt.Sprintf("Error: %s", err))
 }
 
+// AlertErrorStr sets an Alert that will be rendered as an error message.
+func (d *Data) AlertErrorStr(message string) {
+	d.alert(alertLevelError, fmt.Sprintf("Error: %s", message))
+}
+
 // AlertInfo sets an Alert that will be rendered as an information message.
 func (d *Data) AlertInfo(message string) {
 	d.alert(alertLevelInfo, message)

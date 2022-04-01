@@ -19,12 +19,15 @@ type Server struct {
 	router      *mux.Router
 	userService *user.Service
 
+	accountView *view
+
 	adminView           *view
 	adminUserAddView    *view
 	adminUserDeleteView *view
 	adminUserEditView   *view
-	homeView            *view
-	userLoginView       *view
+
+	homeView      *view
+	userLoginView *view
 }
 
 // NewServer initializes and returns a new Server.
@@ -33,12 +36,15 @@ func NewServer(userService *user.Service) *Server {
 		router:      mux.NewRouter(),
 		userService: userService,
 
+		accountView: newView("account/account.gohtml"),
+
 		adminView:           newView("admin/admin.gohtml"),
 		adminUserAddView:    newView("admin/user_add.gohtml"),
 		adminUserDeleteView: newView("admin/user_delete.gohtml"),
 		adminUserEditView:   newView("admin/user_edit.gohtml"),
-		homeView:            newView("static/home.gohtml"),
-		userLoginView:       newView("user/login.gohtml"),
+
+		homeView:      newView("static/home.gohtml"),
+		userLoginView: newView("user/login.gohtml"),
 	}
 
 	s.addRoutes()
@@ -56,14 +62,19 @@ func (s *Server) addRoutes() {
 	// static pages
 	s.router.HandleFunc("/", s.rememberUser(s.homeView.handle))
 
+	// user account
+	s.router.HandleFunc("/account", s.rememberUser(s.authenticatedUser(s.handleAccountView()))).Methods("GET")
+	s.router.HandleFunc("/account/info", s.rememberUser(s.authenticatedUser(s.handleAccountInfoUpdate()))).Methods("POST")
+	s.router.HandleFunc("/account/password", s.rememberUser(s.authenticatedUser(s.handleAccountPasswordUpdate()))).Methods("POST")
+
 	// administration
-	s.router.HandleFunc("/admin", s.rememberUser(s.requireAdminUser(s.handleAdmin()))).Methods("GET")
-	s.router.HandleFunc("/admin/users/add", s.rememberUser(s.requireAdminUser(s.adminUserAddView.handle))).Methods("GET")
-	s.router.HandleFunc("/admin/users", s.rememberUser(s.requireAdminUser(s.handleAdminUserAdd()))).Methods("POST")
-	s.router.HandleFunc("/admin/users/{uuid}", s.rememberUser(s.requireAdminUser(s.handleAdminUserEditView()))).Methods("GET")
-	s.router.HandleFunc("/admin/users/{uuid}", s.rememberUser(s.requireAdminUser(s.handleAdminUserEdit()))).Methods("POST")
-	s.router.HandleFunc("/admin/users/{uuid}/delete", s.rememberUser(s.requireAdminUser(s.handleAdminUserDeleteView()))).Methods("GET")
-	s.router.HandleFunc("/admin/users/{uuid}/delete", s.rememberUser(s.requireAdminUser(s.handleAdminUserDelete()))).Methods("POST")
+	s.router.HandleFunc("/admin", s.rememberUser(s.adminUser(s.handleAdmin()))).Methods("GET")
+	s.router.HandleFunc("/admin/users/add", s.rememberUser(s.adminUser(s.adminUserAddView.handle))).Methods("GET")
+	s.router.HandleFunc("/admin/users", s.rememberUser(s.adminUser(s.handleAdminUserAdd()))).Methods("POST")
+	s.router.HandleFunc("/admin/users/{uuid}", s.rememberUser(s.adminUser(s.handleAdminUserEditView()))).Methods("GET")
+	s.router.HandleFunc("/admin/users/{uuid}", s.rememberUser(s.adminUser(s.handleAdminUserEdit()))).Methods("POST")
+	s.router.HandleFunc("/admin/users/{uuid}/delete", s.rememberUser(s.adminUser(s.handleAdminUserDeleteView()))).Methods("GET")
+	s.router.HandleFunc("/admin/users/{uuid}/delete", s.rememberUser(s.adminUser(s.handleAdminUserDelete()))).Methods("POST")
 
 	// authentication
 	s.router.HandleFunc("/login", s.rememberUser(s.userLoginView.handle)).Methods("GET")
@@ -75,6 +86,96 @@ func (s *Server) addRoutes() {
 	s.router.PathPrefix("/static/").Handler(http.StripPrefix(
 		"/static/",
 		s.staticCacheControl(http.FileServer(http.FS(static.FS)))))
+}
+
+// handleAccountView displays the user account management page.
+func (s *Server) handleAccountView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := userValue(r.Context())
+		viewData := Data{
+			Content: user,
+		}
+
+		s.accountView.render(w, r, viewData)
+	}
+}
+
+// handleAccountInfoUpdate processes the account information update form.
+func (s *Server) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.Request) {
+	type infoUpdateForm struct {
+		Email string `schema:"email"`
+	}
+
+	var form infoUpdateForm
+	var viewData Data
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := userValue(r.Context())
+
+		if err := parseForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse account information update form")
+			viewData.AlertErrorStr("There was an error processing the form")
+			viewData.User = ctxUser
+			s.accountView.render(w, r, viewData)
+			return
+		}
+
+		userInfo := user.InfoUpdate{
+			UUID:  ctxUser.UUID,
+			Email: form.Email,
+		}
+
+		if err := s.userService.UpdateInfo(userInfo); err != nil {
+			log.Error().Err(err).Msg("failed to update account information")
+			viewData.AlertErrorStr("There was an error updating your information")
+			viewData.User = ctxUser
+			s.accountView.render(w, r, viewData)
+			return
+		}
+
+		http.Redirect(w, r, "/account", http.StatusFound)
+	}
+}
+
+// handleAccountPasswordUpdate processes the user account password update form.
+func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *http.Request) {
+	type passwordUpdateForm struct {
+		CurrentPassword         string `schema:"current_password"`
+		NewPassword             string `schema:"new_password"`
+		NewPasswordConfirmation string `schema:"new_password_confirmation"`
+	}
+
+	var form passwordUpdateForm
+	var viewData Data
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := userValue(r.Context())
+
+		if err := parseForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse account password update form")
+			viewData.AlertErrorStr("There was an error processing the form")
+			viewData.User = ctxUser
+			s.accountView.render(w, r, viewData)
+			return
+		}
+
+		userPassword := user.PasswordUpdate{
+			UUID:                    ctxUser.UUID,
+			CurrentPassword:         form.CurrentPassword,
+			NewPassword:             form.NewPassword,
+			NewPasswordConfirmation: form.NewPasswordConfirmation,
+		}
+
+		if err := s.userService.UpdatePassword(userPassword); err != nil {
+			log.Error().Err(err).Msg("failed to update account password")
+			viewData.AlertErrorStr("There was an error updating your password")
+			viewData.User = ctxUser
+			s.accountView.render(w, r, viewData)
+			return
+		}
+
+		http.Redirect(w, r, "/account", http.StatusFound)
+	}
 }
 
 // handleAdmin displays the main administration page.
@@ -377,9 +478,23 @@ func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-// requireAdminUser requires the user to have administration privileges to
+// authenticatedUser requires the user to be authenticated.
+func (s *Server) authenticatedUser(h http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := userValue(r.Context())
+
+		if user == nil {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
+
+		h(w, r)
+	})
+}
+
+// adminUser requires the user to have administration privileges to
 // access content.
-func (s *Server) requireAdminUser(h http.HandlerFunc) http.HandlerFunc {
+func (s *Server) adminUser(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := userValue(r.Context())
 

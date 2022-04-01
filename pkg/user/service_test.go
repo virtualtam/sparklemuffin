@@ -304,6 +304,198 @@ func TestServiceUpdate(t *testing.T) {
 	}
 }
 
+func TestServiceUpdateInfo(t *testing.T) {
+	cases := []struct {
+		tname           string
+		repositoryUsers []User
+		info            InfoUpdate
+		wantErr         error
+	}{
+		{
+			tname:   "empty update",
+			wantErr: ErrUUIDRequired,
+		},
+		{
+			tname: "empty email",
+			info: InfoUpdate{
+				UUID: "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+			},
+			wantErr: ErrEmailRequired,
+		},
+		{
+			tname: "not found",
+			info: InfoUpdate{
+				UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email: "ghost@domain.tld",
+			},
+			wantErr: ErrNotFound,
+		},
+		{
+			tname: "email already registered",
+			repositoryUsers: []User{
+				{
+					UUID:  "5a347515-e178-4aeb-bf3e-cf1a56b50c02",
+					Email: "mimic@domain.tld",
+				},
+				{
+					UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+					Email: "sleuth@domain.tld",
+				},
+			},
+			info: InfoUpdate{
+				UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email: "mimic@domain.tld",
+			},
+			wantErr: ErrEmailAlreadyRegistered,
+		},
+		{
+			tname: "same email",
+			repositoryUsers: []User{
+				{
+					UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+					Email: "mimic@domain.tld",
+				},
+			},
+			info: InfoUpdate{
+				UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email: "mimic@domain.tld",
+			},
+		},
+		{
+			tname: "new email",
+			repositoryUsers: []User{
+				{
+					UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+					Email: "mimic@domain.tld",
+				},
+			},
+			info: InfoUpdate{
+				UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email: "chest@domain.tld",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Users: tc.repositoryUsers,
+			}
+			s := NewService(r, "hmac-key")
+
+			err := s.UpdateInfo(tc.info)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+		})
+	}
+}
+
+func TestServiceUpdatePassword(t *testing.T) {
+	cases := []struct {
+		tname           string
+		repositoryUsers []User
+		passwordUpdate  PasswordUpdate
+		wantErr         error
+	}{
+		{
+			tname:   "empty update",
+			wantErr: ErrUUIDRequired,
+		},
+		{
+			tname: "empty password",
+			passwordUpdate: PasswordUpdate{
+				UUID: "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+			},
+			wantErr: ErrPasswordRequired,
+		},
+		{
+			tname: "invalid current password",
+			repositoryUsers: []User{
+				{
+					UUID: "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+					// Password: "test"
+					PasswordHash: "$2b$10$AIUHvtnoIppMHkhpoTFdROVwedB9YC.iJvGaHpnIXEUesD6VHTLLK",
+				},
+			},
+			passwordUpdate: PasswordUpdate{
+				UUID:            "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+				CurrentPassword: "isitnottest?",
+			},
+			wantErr: ErrPasswordIncorrect,
+		},
+		{
+			tname: "new password and confirmation mismatch",
+			repositoryUsers: []User{
+				{
+					UUID: "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+					// Password: "test"
+					PasswordHash: "$2b$10$AIUHvtnoIppMHkhpoTFdROVwedB9YC.iJvGaHpnIXEUesD6VHTLLK",
+				},
+			},
+			passwordUpdate: PasswordUpdate{
+				UUID:                    "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+				CurrentPassword:         "test",
+				NewPassword:             "asdf",
+				NewPasswordConfirmation: "qsdf",
+			},
+			wantErr: ErrPasswordConfirmationMismatch,
+		},
+		{
+			tname: "password update",
+			repositoryUsers: []User{
+				{
+					UUID: "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+					// Password: "test"
+					PasswordHash: "$2b$10$AIUHvtnoIppMHkhpoTFdROVwedB9YC.iJvGaHpnIXEUesD6VHTLLK",
+				},
+			},
+			passwordUpdate: PasswordUpdate{
+				UUID:                    "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+				CurrentPassword:         "test",
+				NewPassword:             "asdf",
+				NewPasswordConfirmation: "asdf",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Users: tc.repositoryUsers,
+			}
+			s := NewService(r, "hmac-key")
+
+			err := s.UpdatePassword(tc.passwordUpdate)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+		})
+	}
+}
+
 func assertUsersEqual(t *testing.T, got, want User) {
 	t.Helper()
 

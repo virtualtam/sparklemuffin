@@ -28,6 +28,12 @@ type Repository interface {
 	// UpdateUser updates an existing user.
 	UpdateUser(User) error
 
+	// UpdateInfo updates an existing user's account information.
+	UpdateUserInfo(InfoUpdate) error
+
+	// UpdatePasswordHash updates an existing user's account password hash.
+	UpdateUserPasswordHash(PasswordHashUpdate) error
+
 	// UpdateUserRememberToken updates an existing user's remember token hash.
 	UpdateUserRememberTokenHash(User) error
 }

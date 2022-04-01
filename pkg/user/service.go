@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -127,6 +128,7 @@ func (s *Service) Update(user User) error {
 		s.requireUUID,
 		s.normalizeEmail,
 		s.requireEmail,
+		s.ensureEmailIsNotRegisteredToAnotherUser,
 		s.requirePassword,
 		s.hashPassword,
 		s.requirePasswordHash,
@@ -138,6 +140,108 @@ func (s *Service) Update(user User) error {
 	}
 
 	return s.r.UpdateUser(user)
+}
+
+// UpdateInfo updates an existing user's account information.
+func (s *Service) UpdateInfo(info InfoUpdate) error {
+	user := User{
+		UUID:  info.UUID,
+		Email: info.Email,
+	}
+
+	err := s.runValidationFuncs(
+		&user,
+		s.requireUUID,
+		s.normalizeEmail,
+		s.requireEmail,
+		s.ensureEmailIsNotRegisteredToAnotherUser,
+		s.refreshUpdatedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	info.UpdatedAt = user.UpdatedAt
+
+	return s.r.UpdateUserInfo(info)
+}
+
+// UpdatePassword updates an existing user's password.
+func (s *Service) UpdatePassword(passwordUpdate PasswordUpdate) error {
+	// validate current password
+	user := User{
+		UUID:     passwordUpdate.UUID,
+		Password: passwordUpdate.CurrentPassword,
+	}
+
+	err := s.runValidationFuncs(
+		&user,
+		s.requireUUID,
+		s.requirePassword,
+	)
+	if err != nil {
+		return err
+	}
+
+	existingUser, err := s.ByUUID(user.UUID)
+	if err != nil {
+		return err
+	}
+
+	err = bcrypt.CompareHashAndPassword(
+		[]byte(existingUser.PasswordHash),
+		[]byte(user.Password),
+	)
+	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+		return ErrPasswordIncorrect
+	}
+	if err != nil {
+		return err
+	}
+
+	// validate new password
+	if passwordUpdate.NewPassword != passwordUpdate.NewPasswordConfirmation {
+		return ErrPasswordConfirmationMismatch
+	}
+
+	// hash new password
+	user = User{
+		UUID:     passwordUpdate.UUID,
+		Password: passwordUpdate.NewPassword,
+	}
+
+	err = s.runValidationFuncs(
+		&user,
+		s.requireUUID,
+		s.requirePassword,
+		s.hashPassword,
+		s.requirePasswordHash,
+	)
+	if err != nil {
+		return err
+	}
+
+	return s.UpdatePasswordHash(user)
+}
+
+func (s *Service) UpdatePasswordHash(user User) error {
+	err := s.runValidationFuncs(
+		&user,
+		s.requireUUID,
+		s.requirePasswordHash,
+		s.refreshUpdatedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	passwordHashUpdate := PasswordHashUpdate{
+		UUID:         user.UUID,
+		PasswordHash: user.PasswordHash,
+		UpdatedAt:    user.UpdatedAt,
+	}
+
+	return s.r.UpdateUserPasswordHash(passwordHashUpdate)
 }
 
 // UpdateRememberToken updates an existing user's remember token.
@@ -195,6 +299,19 @@ func (s *Service) ensureEmailIsNotRegistered(user *User) error {
 		return ErrEmailAlreadyRegistered
 	}
 	return nil
+}
+
+func (s *Service) ensureEmailIsNotRegisteredToAnotherUser(user *User) error {
+	existingUser, err := s.r.GetUserByEmail(user.Email)
+	if errors.Is(err, ErrNotFound) {
+		return nil
+	}
+
+	if existingUser.UUID == user.UUID {
+		return nil
+	}
+
+	return ErrEmailAlreadyRegistered
 }
 
 func (s *Service) generateUUID(user *User) error {

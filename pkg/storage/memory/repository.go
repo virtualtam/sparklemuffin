@@ -142,6 +142,30 @@ func (r *Repository) UpdateUser(u user.User) error {
 	return user.ErrNotFound
 }
 
+func (r *Repository) UpdateUserInfo(info user.InfoUpdate) error {
+	for index, existingUser := range r.users {
+		if existingUser.UUID == info.UUID {
+			r.users[index].Email = info.Email
+			r.users[index].UpdatedAt = info.UpdatedAt
+			return nil
+		}
+	}
+
+	return user.ErrNotFound
+}
+
+func (r *Repository) UpdateUserPasswordHash(passwordHash user.PasswordHashUpdate) error {
+	for index, existingUser := range r.users {
+		if existingUser.UUID == passwordHash.UUID {
+			r.users[index].PasswordHash = passwordHash.PasswordHash
+			r.users[index].UpdatedAt = passwordHash.UpdatedAt
+			return nil
+		}
+	}
+
+	return user.ErrNotFound
+}
+
 func (r *Repository) UpdateUserRememberTokenHash(u user.User) error {
 	for index, existingUser := range r.users {
 		if existingUser.UUID == u.UUID {

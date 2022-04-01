@@ -80,6 +80,30 @@ func (r *FakeRepository) UpdateUser(user User) error {
 	return ErrNotFound
 }
 
+func (r *FakeRepository) UpdateUserInfo(info InfoUpdate) error {
+	for index, existingUser := range r.Users {
+		if existingUser.UUID == info.UUID {
+			r.Users[index].Email = info.Email
+			r.Users[index].UpdatedAt = info.UpdatedAt
+			return nil
+		}
+	}
+
+	return ErrNotFound
+}
+
+func (r *FakeRepository) UpdateUserPasswordHash(passwordHash PasswordHashUpdate) error {
+	for index, existingUser := range r.Users {
+		if existingUser.UUID == passwordHash.UUID {
+			r.Users[index].PasswordHash = passwordHash.PasswordHash
+			r.Users[index].UpdatedAt = passwordHash.UpdatedAt
+			return nil
+		}
+	}
+
+	return ErrNotFound
+}
+
 func (r *FakeRepository) UpdateUserRememberTokenHash(user User) error {
 	for index, existingUser := range r.Users {
 		if existingUser.UUID == user.UUID {

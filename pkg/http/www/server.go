@@ -60,32 +60,49 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // addRoutes registers all HTTP handlers for the Web interface.
 func (s *Server) addRoutes() {
 	// static pages
-	s.router.HandleFunc("/", s.rememberUser(s.homeView.handle))
+	s.router.HandleFunc("/", s.homeView.handle)
 
 	// user account
-	s.router.HandleFunc("/account", s.rememberUser(s.authenticatedUser(s.handleAccountView()))).Methods("GET")
-	s.router.HandleFunc("/account/info", s.rememberUser(s.authenticatedUser(s.handleAccountInfoUpdate()))).Methods("POST")
-	s.router.HandleFunc("/account/password", s.rememberUser(s.authenticatedUser(s.handleAccountPasswordUpdate()))).Methods("POST")
+	accountRouter := s.router.PathPrefix("/account").Subrouter()
+
+	accountRouter.HandleFunc("", s.handleAccountView()).Methods(http.MethodGet)
+	accountRouter.HandleFunc("/info", s.handleAccountInfoUpdate()).Methods(http.MethodPost)
+	accountRouter.HandleFunc("/password", s.handleAccountPasswordUpdate()).Methods(http.MethodPost)
+
+	accountRouter.Use(func(h http.Handler) http.Handler {
+		return s.authenticatedUser(h.ServeHTTP)
+	})
 
 	// administration
-	s.router.HandleFunc("/admin", s.rememberUser(s.adminUser(s.handleAdmin()))).Methods("GET")
-	s.router.HandleFunc("/admin/users/add", s.rememberUser(s.adminUser(s.adminUserAddView.handle))).Methods("GET")
-	s.router.HandleFunc("/admin/users", s.rememberUser(s.adminUser(s.handleAdminUserAdd()))).Methods("POST")
-	s.router.HandleFunc("/admin/users/{uuid}", s.rememberUser(s.adminUser(s.handleAdminUserEditView()))).Methods("GET")
-	s.router.HandleFunc("/admin/users/{uuid}", s.rememberUser(s.adminUser(s.handleAdminUserEdit()))).Methods("POST")
-	s.router.HandleFunc("/admin/users/{uuid}/delete", s.rememberUser(s.adminUser(s.handleAdminUserDeleteView()))).Methods("GET")
-	s.router.HandleFunc("/admin/users/{uuid}/delete", s.rememberUser(s.adminUser(s.handleAdminUserDelete()))).Methods("POST")
+	adminRouter := s.router.PathPrefix("/admin").Subrouter()
+
+	adminRouter.HandleFunc("", s.handleAdmin()).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/users/add", s.adminUserAddView.handle).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/users", s.handleAdminUserAdd()).Methods(http.MethodPost)
+	adminRouter.HandleFunc("/users/{uuid}", s.handleAdminUserEditView()).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/users/{uuid}", s.handleAdminUserEdit()).Methods(http.MethodPost)
+	adminRouter.HandleFunc("/users/{uuid}/delete", s.handleAdminUserDeleteView()).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/users/{uuid}/delete", s.handleAdminUserDelete()).Methods(http.MethodPost)
+
+	adminRouter.Use(func(h http.Handler) http.Handler {
+		return s.adminUser(h.ServeHTTP)
+	})
 
 	// authentication
-	s.router.HandleFunc("/login", s.rememberUser(s.userLoginView.handle)).Methods("GET")
-	s.router.HandleFunc("/login", s.rememberUser(s.handleUserLogin())).Methods("POST")
-	s.router.HandleFunc("/logout", s.rememberUser(s.handleUserLogout())).Methods("POST")
+	s.router.HandleFunc("/login", s.userLoginView.handle).Methods(http.MethodGet)
+	s.router.HandleFunc("/login", s.handleUserLogin()).Methods(http.MethodPost)
+	s.router.HandleFunc("/logout", s.handleUserLogout()).Methods(http.MethodPost)
 
 	// static assets
 	s.router.HandleFunc("/static/", http.NotFound)
 	s.router.PathPrefix("/static/").Handler(http.StripPrefix(
 		"/static/",
 		s.staticCacheControl(http.FileServer(http.FS(static.FS)))))
+
+	// global middleware
+	s.router.Use(func(h http.Handler) http.Handler {
+		return s.rememberUser(h.ServeHTTP)
+	})
 }
 
 // handleAccountView displays the user account management page.

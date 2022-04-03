@@ -2,38 +2,38 @@ package user
 
 // Repository provides access to the User repository.
 type Repository interface {
-	// AddUser saves a new user.
-	AddUser(User) error
+	// UserAdd saves a new user.
+	UserAdd(User) error
 
-	// DeleteUser deletes an existing user and all related data.
-	DeleteUserByUUID(string) error
+	// UserDelete deletes an existing user and all related data.
+	UserDeleteByUUID(string) error
 
-	// GetAllUsers returns a list of all User accounts.
-	GetAllUsers() ([]User, error)
+	// UserGetAll returns a list of all User accounts.
+	UserGetAll() ([]User, error)
 
-	// GetUserByEmail returns the User registered with a given email address.
-	GetUserByEmail(string) (User, error)
+	// UserGetByEmail returns the User registered with a given email address.
+	UserGetByEmail(string) (User, error)
 
-	// GetUserByRememberTokenHash returns the User corresponding to a given
+	// UserGetByRememberTokenHash returns the User corresponding to a given
 	// RememberToken hash.
-	GetUserByRememberTokenHash(string) (User, error)
+	UserGetByRememberTokenHash(string) (User, error)
 
-	// GetUserByUUID returns the User corresponding to a given UUID.
-	GetUserByUUID(string) (User, error)
+	// UserGetByUUID returns the User corresponding to a given UUID.
+	UserGetByUUID(string) (User, error)
 
-	// IsUserEmailRegistered returns whether there is an existing user
+	// UserIsEmailRegistered returns whether there is an existing user
 	// registered with this email address.
-	IsUserEmailRegistered(email string) (bool, error)
+	UserIsEmailRegistered(email string) (bool, error)
 
-	// UpdateUser updates an existing user.
-	UpdateUser(User) error
+	// UserUpdate updates an existing user.
+	UserUpdate(User) error
 
-	// UpdateInfo updates an existing user's account information.
-	UpdateUserInfo(InfoUpdate) error
+	// UserUpdateInfo updates an existing user's account information.
+	UserUpdateInfo(InfoUpdate) error
 
-	// UpdatePasswordHash updates an existing user's account password hash.
-	UpdateUserPasswordHash(PasswordHashUpdate) error
+	// UserUpdatePasswordHash updates an existing user's account password hash.
+	UserUpdatePasswordHash(PasswordHashUpdate) error
 
-	// UpdateUserRememberToken updates an existing user's remember token hash.
-	UpdateUserRememberTokenHash(User) error
+	// UserUpdateRememberTokenHash updates an existing user's remember token hash.
+	UserUpdateRememberTokenHash(User) error
 }

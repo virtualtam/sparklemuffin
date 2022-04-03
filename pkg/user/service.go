@@ -43,12 +43,12 @@ func (s *Service) Add(user User) error {
 		return err
 	}
 
-	return s.r.AddUser(user)
+	return s.r.UserAdd(user)
 }
 
 // All returns a list of all users.
 func (s *Service) All() ([]User, error) {
-	return s.r.GetAllUsers()
+	return s.r.UserGetAll()
 }
 
 // Authenticate checks user-submitted credentials to determine whether a user
@@ -88,7 +88,7 @@ func (s *Service) ByRememberToken(rememberToken string) (User, error) {
 		return User{}, err
 	}
 
-	return s.r.GetUserByRememberTokenHash(user.RememberTokenHash)
+	return s.r.UserGetByRememberTokenHash(user.RememberTokenHash)
 }
 
 // ByUUID returns the user corresponding to a given UUID.
@@ -103,7 +103,7 @@ func (s *Service) ByUUID(userUUID string) (User, error) {
 		return User{}, err
 	}
 
-	return s.r.GetUserByUUID(user.UUID)
+	return s.r.UserGetByUUID(user.UUID)
 }
 
 // DeleteByUUID deletes an existing user and all related data.
@@ -118,7 +118,7 @@ func (s *Service) DeleteByUUID(userUUID string) error {
 		return err
 	}
 
-	return s.r.DeleteUserByUUID(userUUID)
+	return s.r.UserDeleteByUUID(userUUID)
 }
 
 // Update updates an existing user.
@@ -139,7 +139,7 @@ func (s *Service) Update(user User) error {
 		return err
 	}
 
-	return s.r.UpdateUser(user)
+	return s.r.UserUpdate(user)
 }
 
 // UpdateInfo updates an existing user's account information.
@@ -163,7 +163,7 @@ func (s *Service) UpdateInfo(info InfoUpdate) error {
 
 	info.UpdatedAt = user.UpdatedAt
 
-	return s.r.UpdateUserInfo(info)
+	return s.r.UserUpdateInfo(info)
 }
 
 // UpdatePassword updates an existing user's password.
@@ -241,7 +241,7 @@ func (s *Service) UpdatePasswordHash(user User) error {
 		UpdatedAt:    user.UpdatedAt,
 	}
 
-	return s.r.UpdateUserPasswordHash(passwordHashUpdate)
+	return s.r.UserUpdatePasswordHash(passwordHashUpdate)
 }
 
 // UpdateRememberToken updates an existing user's remember token.
@@ -257,7 +257,7 @@ func (s *Service) UpdateRememberToken(user User) error {
 		return err
 	}
 
-	return s.r.UpdateUserRememberTokenHash(user)
+	return s.r.UserUpdateRememberTokenHash(user)
 }
 
 func (s *Service) getUserByEmail(email string) (User, error) {
@@ -272,7 +272,7 @@ func (s *Service) getUserByEmail(email string) (User, error) {
 		return User{}, err
 	}
 
-	return s.r.GetUserByEmail(user.Email)
+	return s.r.UserGetByEmail(user.Email)
 }
 
 // validationFunc defines a function that can be applied to normalize or
@@ -291,7 +291,7 @@ func (s *Service) runValidationFuncs(user *User, fns ...validationFunc) error {
 }
 
 func (s *Service) ensureEmailIsNotRegistered(user *User) error {
-	registered, err := s.r.IsUserEmailRegistered(user.Email)
+	registered, err := s.r.UserIsEmailRegistered(user.Email)
 	if err != nil {
 		return err
 	}
@@ -302,7 +302,7 @@ func (s *Service) ensureEmailIsNotRegistered(user *User) error {
 }
 
 func (s *Service) ensureEmailIsNotRegisteredToAnotherUser(user *User) error {
-	existingUser, err := s.r.GetUserByEmail(user.Email)
+	existingUser, err := s.r.UserGetByEmail(user.Email)
 	if errors.Is(err, ErrNotFound) {
 		return nil
 	}

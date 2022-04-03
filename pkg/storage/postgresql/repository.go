@@ -22,7 +22,7 @@ func NewRepository(db *sqlx.DB) *Repository {
 	}
 }
 
-func (r *Repository) AddUser(u user.User) error {
+func (r *Repository) UserAdd(u user.User) error {
 	dbUser := User{
 		UUID:         u.UUID,
 		Email:        u.Email,
@@ -60,7 +60,7 @@ VALUES(
 	return nil
 }
 
-func (r *Repository) DeleteUserByUUID(userUUID string) error {
+func (r *Repository) UserDeleteByUUID(userUUID string) error {
 	result, err := r.db.Exec("DELETE FROM users WHERE uuid=$1", userUUID)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (r *Repository) DeleteUserByUUID(userUUID string) error {
 	return nil
 }
 
-func (r *Repository) GetAllUsers() ([]user.User, error) {
+func (r *Repository) UserGetAll() ([]user.User, error) {
 	rows, err := r.db.Queryx("SELECT uuid, email, is_admin, created_at, updated_at FROM users")
 	if err != nil {
 		return []user.User{}, err
@@ -107,7 +107,7 @@ func (r *Repository) GetAllUsers() ([]user.User, error) {
 	return users, nil
 }
 
-func (r *Repository) GetUserByEmail(email string) (user.User, error) {
+func (r *Repository) UserGetByEmail(email string) (user.User, error) {
 	dbUser := &User{}
 
 	err := r.db.QueryRowx(
@@ -135,7 +135,7 @@ WHERE email=$1`,
 	}, nil
 }
 
-func (r *Repository) GetUserByRememberTokenHash(rememberTokenHash string) (user.User, error) {
+func (r *Repository) UserGetByRememberTokenHash(rememberTokenHash string) (user.User, error) {
 	dbUser := &User{}
 
 	err := r.db.QueryRowx(
@@ -163,7 +163,7 @@ WHERE remember_token_hash=$1`,
 	}, nil
 }
 
-func (r *Repository) GetUserByUUID(userUUID string) (user.User, error) {
+func (r *Repository) UserGetByUUID(userUUID string) (user.User, error) {
 	dbUser := &User{}
 
 	err := r.db.QueryRowx(
@@ -191,7 +191,7 @@ WHERE uuid=$1`,
 	}, nil
 }
 
-func (r *Repository) IsUserEmailRegistered(email string) (bool, error) {
+func (r *Repository) UserIsEmailRegistered(email string) (bool, error) {
 	dbUser := &User{}
 
 	err := r.db.QueryRowx("SELECT email FROM users WHERE email=$1", email).StructScan(dbUser)
@@ -206,7 +206,7 @@ func (r *Repository) IsUserEmailRegistered(email string) (bool, error) {
 	return true, nil
 }
 
-func (r *Repository) UpdateUser(u user.User) error {
+func (r *Repository) UserUpdate(u user.User) error {
 	dbUser := User{
 		UUID:              u.UUID,
 		Email:             u.Email,
@@ -234,7 +234,7 @@ WHERE uuid=:uuid`,
 	return nil
 }
 
-func (r *Repository) UpdateUserInfo(info user.InfoUpdate) error {
+func (r *Repository) UserUpdateInfo(info user.InfoUpdate) error {
 	dbUser := User{
 		UUID:      info.UUID,
 		Email:     info.Email,
@@ -256,7 +256,7 @@ WHERE uuid=:uuid`,
 	return nil
 }
 
-func (r *Repository) UpdateUserPasswordHash(passwordHash user.PasswordHashUpdate) error {
+func (r *Repository) UserUpdatePasswordHash(passwordHash user.PasswordHashUpdate) error {
 	dbUser := User{
 		UUID:         passwordHash.UUID,
 		PasswordHash: passwordHash.PasswordHash,
@@ -278,7 +278,7 @@ WHERE uuid=:uuid`,
 	return nil
 }
 
-func (r *Repository) UpdateUserRememberTokenHash(u user.User) error {
+func (r *Repository) UserUpdateRememberTokenHash(u user.User) error {
 	dbUser := User{
 		UUID:              u.UUID,
 		RememberTokenHash: u.RememberTokenHash,

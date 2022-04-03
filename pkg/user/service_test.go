@@ -74,7 +74,7 @@ func TestServiceAdd(t *testing.T) {
 				t.Fatalf("want no error, got %q", err)
 			}
 
-			got, err := r.GetUserByEmail(tc.user.Email)
+			got, err := r.UserGetByEmail(tc.user.Email)
 			if err != nil {
 				t.Fatalf("want no error, got %q", err)
 			}

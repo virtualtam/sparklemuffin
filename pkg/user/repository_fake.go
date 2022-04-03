@@ -7,12 +7,12 @@ type FakeRepository struct {
 	Users []User
 }
 
-func (r *FakeRepository) AddUser(user User) error {
+func (r *FakeRepository) UserAdd(user User) error {
 	r.Users = append(r.Users, user)
 	return nil
 }
 
-func (r *FakeRepository) DeleteUserByUUID(userUUID string) error {
+func (r *FakeRepository) UserDeleteByUUID(userUUID string) error {
 	for index, user := range r.Users {
 		if user.UUID == userUUID {
 			r.Users = append(r.Users[:index], r.Users[index+1:]...)
@@ -22,11 +22,11 @@ func (r *FakeRepository) DeleteUserByUUID(userUUID string) error {
 	return ErrNotFound
 }
 
-func (r *FakeRepository) GetAllUsers() ([]User, error) {
+func (r *FakeRepository) UserGetAll() ([]User, error) {
 	return r.Users, nil
 }
 
-func (r *FakeRepository) GetUserByEmail(email string) (User, error) {
+func (r *FakeRepository) UserGetByEmail(email string) (User, error) {
 	for _, user := range r.Users {
 		if user.Email == email {
 			return user, nil
@@ -36,7 +36,7 @@ func (r *FakeRepository) GetUserByEmail(email string) (User, error) {
 	return User{}, ErrNotFound
 }
 
-func (r *FakeRepository) GetUserByRememberTokenHash(rememberTokenHash string) (User, error) {
+func (r *FakeRepository) UserGetByRememberTokenHash(rememberTokenHash string) (User, error) {
 	for _, user := range r.Users {
 		if user.RememberTokenHash == rememberTokenHash {
 			return user, nil
@@ -46,7 +46,7 @@ func (r *FakeRepository) GetUserByRememberTokenHash(rememberTokenHash string) (U
 	return User{}, ErrNotFound
 }
 
-func (r *FakeRepository) GetUserByUUID(userUUID string) (User, error) {
+func (r *FakeRepository) UserGetByUUID(userUUID string) (User, error) {
 	for _, user := range r.Users {
 		if user.UUID == userUUID {
 			return user, nil
@@ -56,7 +56,7 @@ func (r *FakeRepository) GetUserByUUID(userUUID string) (User, error) {
 	return User{}, ErrNotFound
 }
 
-func (r *FakeRepository) IsUserEmailRegistered(email string) (bool, error) {
+func (r *FakeRepository) UserIsEmailRegistered(email string) (bool, error) {
 	registered := false
 
 	for _, user := range r.Users {
@@ -69,7 +69,7 @@ func (r *FakeRepository) IsUserEmailRegistered(email string) (bool, error) {
 	return registered, nil
 }
 
-func (r *FakeRepository) UpdateUser(user User) error {
+func (r *FakeRepository) UserUpdate(user User) error {
 	for index, existingUser := range r.Users {
 		if existingUser.UUID == user.UUID {
 			r.Users[index] = user
@@ -80,7 +80,7 @@ func (r *FakeRepository) UpdateUser(user User) error {
 	return ErrNotFound
 }
 
-func (r *FakeRepository) UpdateUserInfo(info InfoUpdate) error {
+func (r *FakeRepository) UserUpdateInfo(info InfoUpdate) error {
 	for index, existingUser := range r.Users {
 		if existingUser.UUID == info.UUID {
 			r.Users[index].Email = info.Email
@@ -92,7 +92,7 @@ func (r *FakeRepository) UpdateUserInfo(info InfoUpdate) error {
 	return ErrNotFound
 }
 
-func (r *FakeRepository) UpdateUserPasswordHash(passwordHash PasswordHashUpdate) error {
+func (r *FakeRepository) UserUpdatePasswordHash(passwordHash PasswordHashUpdate) error {
 	for index, existingUser := range r.Users {
 		if existingUser.UUID == passwordHash.UUID {
 			r.Users[index].PasswordHash = passwordHash.PasswordHash
@@ -104,7 +104,7 @@ func (r *FakeRepository) UpdateUserPasswordHash(passwordHash PasswordHashUpdate)
 	return ErrNotFound
 }
 
-func (r *FakeRepository) UpdateUserRememberTokenHash(user User) error {
+func (r *FakeRepository) UserUpdateRememberTokenHash(user User) error {
 	for index, existingUser := range r.Users {
 		if existingUser.UUID == user.UUID {
 			r.Users[index].RememberTokenHash = user.RememberTokenHash

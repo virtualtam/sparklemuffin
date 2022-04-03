@@ -124,16 +124,14 @@ func (s *Server) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.R
 	}
 
 	var form infoUpdateForm
-	var viewData Data
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := userValue(r.Context())
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account information update form")
-			viewData.PutFlashError("There was an error processing the form")
-			viewData.User = ctxUser
-			s.accountView.render(w, r, viewData)
+			s.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.URL.Path, http.StatusBadRequest)
 			return
 		}
 
@@ -144,12 +142,12 @@ func (s *Server) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.R
 
 		if err := s.userService.UpdateInfo(userInfo); err != nil {
 			log.Error().Err(err).Msg("failed to update account information")
-			viewData.PutFlashError("There was an error updating your information")
-			viewData.User = ctxUser
-			s.accountView.render(w, r, viewData)
+			s.PutFlashError(w, "There was an error updating your information")
+			http.Redirect(w, r, r.URL.Path, http.StatusBadRequest)
 			return
 		}
 
+		s.PutFlashSuccess(w, "Your account information has been successfully updated")
 		http.Redirect(w, r, "/account", http.StatusFound)
 	}
 }
@@ -163,16 +161,14 @@ func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *ht
 	}
 
 	var form passwordUpdateForm
-	var viewData Data
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := userValue(r.Context())
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account password update form")
-			viewData.PutFlashError("There was an error processing the form")
-			viewData.User = ctxUser
-			s.accountView.render(w, r, viewData)
+			s.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.URL.Path, http.StatusBadRequest)
 			return
 		}
 
@@ -185,13 +181,13 @@ func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *ht
 
 		if err := s.userService.UpdatePassword(userPassword); err != nil {
 			log.Error().Err(err).Msg("failed to update account password")
-			viewData.PutFlashError("There was an error updating your password")
-			viewData.User = ctxUser
-			s.accountView.render(w, r, viewData)
+			s.PutFlashError(w, fmt.Sprintf("There was an error updating your password: %s", err))
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
 			return
 		}
 
-		http.Redirect(w, r, "/account", http.StatusFound)
+		s.PutFlashSuccess(w, "Your account password has been successfully updated")
+		http.Redirect(w, r, r.URL.Path, http.StatusFound)
 	}
 }
 
@@ -202,7 +198,7 @@ func (s *Server) handleAdmin() func(w http.ResponseWriter, r *http.Request) {
 
 		users, err := s.userService.All()
 		if err != nil {
-			viewData.PutFlashError(err.Error())
+			s.PutFlashError(w, err.Error())
 		} else {
 			viewData.Content = users
 		}
@@ -213,8 +209,6 @@ func (s *Server) handleAdmin() func(w http.ResponseWriter, r *http.Request) {
 
 // handleAdminUserAdd processes data submitted through the user creation form.
 func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Request) {
-	var viewData Data
-
 	type userAddForm struct {
 		Email    string `schema:"email"`
 		Password string `schema:"password"`
@@ -226,8 +220,8 @@ func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Reques
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user creation form")
-			viewData.PutFlashError(err.Error())
-			s.adminUserAddView.render(w, r, viewData)
+			s.PutFlashError(w, err.Error())
+			http.Redirect(w, r, r.URL.Path, http.StatusBadRequest)
 			return
 		}
 
@@ -239,13 +233,13 @@ func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Reques
 
 		if err := s.userService.Add(newUser); err != nil {
 			log.Error().Err(err).Msg("failed to persist user")
-			viewData.PutFlashError(err.Error())
-			s.adminUserAddView.render(w, r, viewData)
+			s.PutFlashError(w, err.Error())
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
 			return
 		}
 
-		viewData.PutFlashSuccess(fmt.Sprintf("user %q has been successfully created", newUser.Email))
-		s.adminUserAddView.render(w, r, viewData)
+		s.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully created", newUser.Email))
+		http.Redirect(w, r, "/admin", http.StatusFound)
 	}
 }
 
@@ -260,8 +254,8 @@ func (s *Server) handleAdminUserDeleteView() func(w http.ResponseWriter, r *http
 		user, err := s.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
-			viewData.PutFlashError(err.Error())
-			s.adminUserDeleteView.render(w, r, viewData)
+			s.PutFlashError(w, err.Error())
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
 			return
 		}
 
@@ -273,21 +267,21 @@ func (s *Server) handleAdminUserDeleteView() func(w http.ResponseWriter, r *http
 
 // handleAdminUserDelete processes the user deletion form.
 func (s *Server) handleAdminUserDelete() func(w http.ResponseWriter, r *http.Request) {
-	var viewData Data
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		userUUID := vars["uuid"]
 
+		// TODO retrieve the user to display their email in the deletion message
+
 		if err := s.userService.DeleteByUUID(userUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete user")
-			viewData.PutFlashError(err.Error())
-			s.adminUserEditView.render(w, r, viewData)
+			s.PutFlashError(w, err.Error())
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
 			return
 		}
 
-		viewData.PutFlashSuccess(fmt.Sprintf("user %q has been successfully deleted", userUUID))
-		s.adminView.render(w, r, viewData)
+		s.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully deleted", userUUID))
+		http.Redirect(w, r, "/admin", http.StatusFound)
 	}
 }
 
@@ -297,26 +291,23 @@ func (s *Server) handleAdminUserEditView() func(w http.ResponseWriter, r *http.R
 		vars := mux.Vars(r)
 		userUUID := vars["uuid"]
 
-		var viewData Data
-
 		user, err := s.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
-			viewData.PutFlashError(err.Error())
-			s.adminUserEditView.render(w, r, viewData)
+			s.PutFlashError(w, err.Error())
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
 			return
 		}
 
-		viewData.Content = user
-
+		viewData := Data{
+			Content: user,
+		}
 		s.adminUserEditView.render(w, r, viewData)
 	}
 }
 
 // handleAdminUserEdit processes the user edition form.
 func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Request) {
-	var viewData Data
-
 	type userEditForm struct {
 		Email    string `schema:"email"`
 		Password string `schema:"password"`
@@ -331,8 +322,8 @@ func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Reque
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user edition form")
-			viewData.PutFlashError(err.Error())
-			s.adminUserEditView.render(w, r, viewData)
+			s.PutFlashError(w, err.Error())
+			http.Redirect(w, r, r.URL.Path, http.StatusBadRequest)
 			return
 		}
 
@@ -345,20 +336,18 @@ func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Reque
 
 		if err := s.userService.Update(editedUser); err != nil {
 			log.Error().Err(err).Msg("failed to update user")
-			viewData.PutFlashError(err.Error())
-			s.adminUserEditView.render(w, r, viewData)
+			s.PutFlashError(w, err.Error())
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
 			return
 		}
 
-		viewData.PutFlashSuccess(fmt.Sprintf("user %q has been successfully updated", editedUser.Email))
-		s.adminUserEditView.render(w, r, viewData)
+		s.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully updated", editedUser.Email))
+		http.Redirect(w, r, r.URL.Path, http.StatusFound)
 	}
 }
 
 // handleUserLogin processes data submitted through the user login form.
 func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) {
-	var viewData Data
-
 	type loginForm struct {
 		Email    string `schema:"email"`
 		Password string `schema:"password"`
@@ -369,23 +358,23 @@ func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) 
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse login form")
-			viewData.PutFlashError(err.Error())
-			s.userLoginView.render(w, r, viewData)
+			s.PutFlashError(w, err.Error())
+			http.Redirect(w, r, r.URL.Path, http.StatusBadRequest)
 			return
 		}
 
 		user, err := s.userService.Authenticate(form.Email, form.Password)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to authenticate user")
-			viewData.PutFlashError(err.Error())
-			s.userLoginView.render(w, r, viewData)
+			s.PutFlashError(w, "invalid email or password")
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
 			return
 		}
 
 		if err := s.setUserRememberToken(w, &user); err != nil {
 			log.Error().Err(err).Msg("failed to set remember token")
-			viewData.PutFlashError(err.Error())
-			s.userLoginView.render(w, r, viewData)
+			s.PutFlashError(w, "failed to save session cookie")
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
 			return
 		}
 
@@ -527,4 +516,46 @@ func (s *Server) adminUser(h http.HandlerFunc) http.HandlerFunc {
 
 		h(w, r)
 	})
+}
+
+func (s *Server) putFlash(w http.ResponseWriter, level flashLevel, message string) {
+	flash := Flash{
+		Level:   level,
+		Message: message,
+	}
+
+	encoded, err := flash.base64URLEncode()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to put flash cookie")
+		return
+	}
+
+	cookie := &http.Cookie{
+		Name:     flashCookieName,
+		Path:     "/",
+		Value:    encoded,
+		HttpOnly: true,
+	}
+
+	http.SetCookie(w, cookie)
+}
+
+// PutFlashError sets a Flash that will be rendered as an error message.
+func (s *Server) PutFlashError(w http.ResponseWriter, message string) {
+	s.putFlash(w, flashLevelError, fmt.Sprintf("Error: %s", message))
+}
+
+// PutFlashInfo sets a Flash that will be rendered as an information message.
+func (s *Server) PutFlashInfo(w http.ResponseWriter, message string) {
+	s.putFlash(w, flashLevelInfo, message)
+}
+
+// PutFlashSuccess sets a Flash that will be rendered as a success message.
+func (s *Server) PutFlashSuccess(w http.ResponseWriter, message string) {
+	s.putFlash(w, flashLevelSuccess, message)
+}
+
+// PutFlashWarning sets a Flash that will be rendered as a warning message.
+func (s *Server) PutFlashWarning(w http.ResponseWriter, message string) {
+	s.putFlash(w, flashLevelWarning, fmt.Sprintf("Warning: %s", message))
 }

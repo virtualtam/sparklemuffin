@@ -14,59 +14,36 @@ import (
 
 // Data holds the data that can be rendered by views.
 type Data struct {
-	Alert   *Alert
 	Content any
+	Flash   *Flash
 	User    *user.User
 }
 
-func (d *Data) alert(level alertLevel, message string) {
-	d.Alert = &Alert{
+func (d *Data) putFlash(level flashLevel, message string) {
+	d.Flash = &Flash{
 		Level:   level,
 		Message: message,
 	}
 }
 
-// AlertError sets an Alert that will be rendered as an error message.
-func (d *Data) AlertError(err error) {
-	d.alert(alertLevelError, fmt.Sprintf("Error: %s", err))
+// PutFlashError sets a Flash that will be rendered as an error message.
+func (d *Data) PutFlashError(message string) {
+	d.putFlash(flashLevelError, fmt.Sprintf("Error: %s", message))
 }
 
-// AlertErrorStr sets an Alert that will be rendered as an error message.
-func (d *Data) AlertErrorStr(message string) {
-	d.alert(alertLevelError, fmt.Sprintf("Error: %s", message))
+// PutFlashInfo sets a Flash that will be rendered as an information message.
+func (d *Data) PutFlashInfo(message string) {
+	d.putFlash(flashLevelInfo, message)
 }
 
-// AlertInfo sets an Alert that will be rendered as an information message.
-func (d *Data) AlertInfo(message string) {
-	d.alert(alertLevelInfo, message)
+// PutFlashSuccess sets a Flash that will be rendered as a success message.
+func (d *Data) PutFlashSuccess(message string) {
+	d.putFlash(flashLevelSuccess, message)
 }
 
-// AlertSuccess sets an Alert that will be rendered as a success message.
-func (d *Data) AlertSuccess(message string) {
-	d.alert(alertLevelSuccess, message)
-}
-
-// AlertWarning sets an Alert that will be rendered as a warning message.
-func (d *Data) AlertWarning(message string) {
-	d.alert(alertLevelWarning, fmt.Sprintf("Warning: %s", message))
-}
-
-// alertLevel represents the severity level of an Alert that will be displayed
-// to the user.
-type alertLevel string
-
-const (
-	alertLevelError   alertLevel = "error"
-	alertLevelInfo    alertLevel = "info"
-	alertLevelSuccess alertLevel = "success"
-	alertLevelWarning alertLevel = "warning"
-)
-
-// Alert represents an alert message that will be displayed to the user when
-// rendering a View.
-type Alert struct {
-	Level   alertLevel
-	Message string
+// PutFlashWarning sets a Flash that will be rendered as a warning message.
+func (d *Data) PutFlashWarning(message string) {
+	d.putFlash(flashLevelWarning, fmt.Sprintf("Warning: %s", message))
 }
 
 // view represents a Web view that will be rendered by the server in response to

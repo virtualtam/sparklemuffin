@@ -14,8 +14,8 @@
     {{template "nav" .}}
 
     <main>
-      {{if .Alert}}
-        {{template "alert" .Alert}}
+      {{if .Flash}}
+        {{template "flash" .Flash}}
       {{end}}
       {{template "content" .Content}}
     </main>

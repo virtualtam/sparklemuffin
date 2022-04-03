@@ -131,7 +131,7 @@ func (s *Server) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.R
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account information update form")
-			viewData.AlertErrorStr("There was an error processing the form")
+			viewData.PutFlashError("There was an error processing the form")
 			viewData.User = ctxUser
 			s.accountView.render(w, r, viewData)
 			return
@@ -144,7 +144,7 @@ func (s *Server) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.R
 
 		if err := s.userService.UpdateInfo(userInfo); err != nil {
 			log.Error().Err(err).Msg("failed to update account information")
-			viewData.AlertErrorStr("There was an error updating your information")
+			viewData.PutFlashError("There was an error updating your information")
 			viewData.User = ctxUser
 			s.accountView.render(w, r, viewData)
 			return
@@ -170,7 +170,7 @@ func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *ht
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account password update form")
-			viewData.AlertErrorStr("There was an error processing the form")
+			viewData.PutFlashError("There was an error processing the form")
 			viewData.User = ctxUser
 			s.accountView.render(w, r, viewData)
 			return
@@ -185,7 +185,7 @@ func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *ht
 
 		if err := s.userService.UpdatePassword(userPassword); err != nil {
 			log.Error().Err(err).Msg("failed to update account password")
-			viewData.AlertErrorStr("There was an error updating your password")
+			viewData.PutFlashError("There was an error updating your password")
 			viewData.User = ctxUser
 			s.accountView.render(w, r, viewData)
 			return
@@ -202,7 +202,7 @@ func (s *Server) handleAdmin() func(w http.ResponseWriter, r *http.Request) {
 
 		users, err := s.userService.All()
 		if err != nil {
-			viewData.AlertError(err)
+			viewData.PutFlashError(err.Error())
 		} else {
 			viewData.Content = users
 		}
@@ -226,7 +226,7 @@ func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Reques
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user creation form")
-			viewData.AlertError(err)
+			viewData.PutFlashError(err.Error())
 			s.adminUserAddView.render(w, r, viewData)
 			return
 		}
@@ -239,12 +239,12 @@ func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Reques
 
 		if err := s.userService.Add(newUser); err != nil {
 			log.Error().Err(err).Msg("failed to persist user")
-			viewData.AlertError(err)
+			viewData.PutFlashError(err.Error())
 			s.adminUserAddView.render(w, r, viewData)
 			return
 		}
 
-		viewData.AlertSuccess(fmt.Sprintf("user %q has been successfully created", newUser.Email))
+		viewData.PutFlashSuccess(fmt.Sprintf("user %q has been successfully created", newUser.Email))
 		s.adminUserAddView.render(w, r, viewData)
 	}
 }
@@ -260,7 +260,7 @@ func (s *Server) handleAdminUserDeleteView() func(w http.ResponseWriter, r *http
 		user, err := s.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
-			viewData.AlertError(err)
+			viewData.PutFlashError(err.Error())
 			s.adminUserDeleteView.render(w, r, viewData)
 			return
 		}
@@ -281,12 +281,12 @@ func (s *Server) handleAdminUserDelete() func(w http.ResponseWriter, r *http.Req
 
 		if err := s.userService.DeleteByUUID(userUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete user")
-			viewData.AlertError(err)
+			viewData.PutFlashError(err.Error())
 			s.adminUserEditView.render(w, r, viewData)
 			return
 		}
 
-		viewData.AlertSuccess(fmt.Sprintf("user %q has been successfully deleted", userUUID))
+		viewData.PutFlashSuccess(fmt.Sprintf("user %q has been successfully deleted", userUUID))
 		s.adminView.render(w, r, viewData)
 	}
 }
@@ -302,7 +302,7 @@ func (s *Server) handleAdminUserEditView() func(w http.ResponseWriter, r *http.R
 		user, err := s.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
-			viewData.AlertError(err)
+			viewData.PutFlashError(err.Error())
 			s.adminUserEditView.render(w, r, viewData)
 			return
 		}
@@ -331,7 +331,7 @@ func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Reque
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user edition form")
-			viewData.AlertError(err)
+			viewData.PutFlashError(err.Error())
 			s.adminUserEditView.render(w, r, viewData)
 			return
 		}
@@ -345,12 +345,12 @@ func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Reque
 
 		if err := s.userService.Update(editedUser); err != nil {
 			log.Error().Err(err).Msg("failed to update user")
-			viewData.AlertError(err)
+			viewData.PutFlashError(err.Error())
 			s.adminUserEditView.render(w, r, viewData)
 			return
 		}
 
-		viewData.AlertSuccess(fmt.Sprintf("user %q has been successfully updated", editedUser.Email))
+		viewData.PutFlashSuccess(fmt.Sprintf("user %q has been successfully updated", editedUser.Email))
 		s.adminUserEditView.render(w, r, viewData)
 	}
 }
@@ -369,7 +369,7 @@ func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) 
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse login form")
-			viewData.AlertError(err)
+			viewData.PutFlashError(err.Error())
 			s.userLoginView.render(w, r, viewData)
 			return
 		}
@@ -377,14 +377,14 @@ func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) 
 		user, err := s.userService.Authenticate(form.Email, form.Password)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to authenticate user")
-			viewData.AlertError(err)
+			viewData.PutFlashError(err.Error())
 			s.userLoginView.render(w, r, viewData)
 			return
 		}
 
 		if err := s.setUserRememberToken(w, &user); err != nil {
 			log.Error().Err(err).Msg("failed to set remember token")
-			viewData.AlertError(err)
+			viewData.PutFlashError(err.Error())
 			s.userLoginView.render(w, r, viewData)
 			return
 		}

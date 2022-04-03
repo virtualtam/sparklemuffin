@@ -57,22 +57,22 @@ body > footer {
   grid-column-end: 3;
 }
 
-.alert {
+.flash {
   margin: 0;
 }
 
-.alert-error {
+.flash-error {
   color: #bf616a;
 }
 
-.alert-info {
+.flash-info {
   color: #4c566a;
 }
 
-.alert-success {
+.flash-success {
   color: #a3be8c;
 }
 
-.alert-warning {
+.flash-warning {
   color: #d08770;
 }

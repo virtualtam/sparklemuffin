@@ -271,7 +271,13 @@ func (s *Server) handleAdminUserDelete() func(w http.ResponseWriter, r *http.Req
 		vars := mux.Vars(r)
 		userUUID := vars["uuid"]
 
-		// TODO retrieve the user to display their email in the deletion message
+		user, err := s.userService.ByUUID(userUUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve user")
+			s.PutFlashError(w, err.Error())
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			return
+		}
 
 		if err := s.userService.DeleteByUUID(userUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete user")
@@ -280,7 +286,7 @@ func (s *Server) handleAdminUserDelete() func(w http.ResponseWriter, r *http.Req
 			return
 		}
 
-		s.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully deleted", userUUID))
+		s.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully deleted", user.Email))
 		http.Redirect(w, r, "/admin", http.StatusFound)
 	}
 }

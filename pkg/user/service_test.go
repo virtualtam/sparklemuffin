@@ -56,7 +56,7 @@ func TestServiceAdd(t *testing.T) {
 			r := &FakeRepository{
 				Users: tc.repositoryUsers,
 			}
-			s := NewService(r, "hmac-key")
+			s := NewService(r)
 
 			err := s.Add(tc.user)
 
@@ -154,7 +154,7 @@ func TestServiceAuthenticate(t *testing.T) {
 			r := &FakeRepository{
 				Users: tc.repositoryUsers,
 			}
-			s := NewService(r, "hmac-key")
+			s := NewService(r)
 
 			got, err := s.Authenticate(tc.email, tc.password)
 
@@ -208,7 +208,7 @@ func TestServiceDeleteByUUID(t *testing.T) {
 			r := &FakeRepository{
 				Users: tc.repositoryUsers,
 			}
-			s := NewService(r, "hmac-key")
+			s := NewService(r)
 
 			err := s.DeleteByUUID(tc.userUUID)
 
@@ -283,7 +283,7 @@ func TestServiceUpdate(t *testing.T) {
 			r := &FakeRepository{
 				Users: tc.repositoryUsers,
 			}
-			s := NewService(r, "hmac-key")
+			s := NewService(r)
 
 			err := s.Update(tc.user)
 
@@ -381,7 +381,7 @@ func TestServiceUpdateInfo(t *testing.T) {
 			r := &FakeRepository{
 				Users: tc.repositoryUsers,
 			}
-			s := NewService(r, "hmac-key")
+			s := NewService(r)
 
 			err := s.UpdateInfo(tc.info)
 
@@ -475,7 +475,7 @@ func TestServiceUpdatePassword(t *testing.T) {
 			r := &FakeRepository{
 				Users: tc.repositoryUsers,
 			}
-			s := NewService(r, "hmac-key")
+			s := NewService(r)
 
 			err := s.UpdatePassword(tc.passwordUpdate)
 
@@ -502,10 +502,10 @@ func assertUsersEqual(t *testing.T, got, want User) {
 	if got.Email != want.Email {
 		t.Errorf("want email %q, got %q", want.Email, got.Email)
 	}
+	if got.IsAdmin != want.IsAdmin {
+		t.Errorf("want admin %t, got %t", want.IsAdmin, got.IsAdmin)
+	}
 	if got.PasswordHash != want.PasswordHash {
 		t.Errorf("want password hash %q, got %q", want.PasswordHash, got.PasswordHash)
-	}
-	if got.RememberTokenHash != want.RememberTokenHash {
-		t.Errorf("want remember token %q, got %q", want.RememberToken, got.RememberToken)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/yawbe/pkg/http/www/rand"
 	"github.com/virtualtam/yawbe/pkg/http/www/static"
+	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/user"
 )
 
@@ -16,8 +17,9 @@ var _ http.Handler = &Server{}
 
 // Server represents the Web service.
 type Server struct {
-	router      *mux.Router
-	userService *user.Service
+	router         *mux.Router
+	sessionService *session.Service
+	userService    *user.Service
 
 	accountView *view
 
@@ -31,10 +33,12 @@ type Server struct {
 }
 
 // NewServer initializes and returns a new Server.
-func NewServer(userService *user.Service) *Server {
+func NewServer(sessionService *session.Service, userService *user.Service) *Server {
 	s := &Server{
-		router:      mux.NewRouter(),
-		userService: userService,
+		router: mux.NewRouter(),
+
+		sessionService: sessionService,
+		userService:    userService,
 
 		accountView: newView("account/account.gohtml"),
 
@@ -377,7 +381,7 @@ func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		if err := s.setUserRememberToken(w, &user); err != nil {
+		if err := s.setUserRememberToken(w, user.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to set remember token")
 			s.PutFlashError(w, "failed to save session cookie")
 			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
@@ -394,7 +398,8 @@ func (s *Server) handleUserLogout() func(w http.ResponseWriter, r *http.Request)
 		cookie := http.Cookie{
 			Name:     UserRememberTokenCookieName,
 			Value:    "",
-			Expires:  time.Now(),
+			Path:     "/",
+			Expires:  time.Unix(0, 1),
 			HttpOnly: true,
 		}
 		http.SetCookie(w, &cookie)
@@ -412,10 +417,14 @@ func (s *Server) handleUserLogout() func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		user.RememberToken = token
-		err = s.userService.UpdateRememberToken(*user)
+		userSession := session.Session{
+			UserUUID:      user.UUID,
+			RememberToken: token,
+		}
+
+		err = s.sessionService.Add(userSession)
 		if err != nil {
-			log.Error().Err(err).Msg("failed to update user")
+			log.Error().Err(err).Msg("failed to save user session")
 			http.Redirect(w, r, "/", http.StatusFound)
 			return
 		}
@@ -431,25 +440,33 @@ const (
 
 // setUserRememberToken creates and persists a new RememberToken if needed, and
 // sets it as a session cookie.
-func (s *Server) setUserRememberToken(w http.ResponseWriter, user *user.User) error {
-	if user.RememberToken == "" {
-		token, err := rand.RandomBase64URLString(UserRememberTokenNBytes)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to generate a remember token")
-			return err
-		}
+func (s *Server) setUserRememberToken(w http.ResponseWriter, userUUID string) error {
+	token, err := rand.RandomBase64URLString(UserRememberTokenNBytes)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to generate a remember token")
+		return err
+	}
 
-		user.RememberToken = token
-		err = s.userService.UpdateRememberToken(*user)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to update user")
-			return err
-		}
+	// expires after one month
+	expiresAt := time.Now().UTC().AddDate(0, 1, 0)
+
+	userSession := session.Session{
+		UserUUID:               userUUID,
+		RememberToken:          token,
+		RememberTokenExpiresAt: expiresAt,
+	}
+
+	err = s.sessionService.Add(userSession)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to update user")
+		return err
 	}
 
 	cookie := http.Cookie{
 		Name:     UserRememberTokenCookieName,
-		Value:    user.RememberToken,
+		Value:    userSession.RememberToken,
+		Expires:  expiresAt,
+		Path:     "/",
 		HttpOnly: true,
 	}
 
@@ -476,7 +493,13 @@ func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		user, err := s.userService.ByRememberToken(cookie.Value)
+		session, err := s.sessionService.ByRememberToken(cookie.Value)
+		if err != nil {
+			h(w, r)
+			return
+		}
+
+		user, err := s.userService.ByUUID(session.UserUUID)
 		if err != nil {
 			h(w, r)
 			return

@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/storage/postgresql"
 	"github.com/virtualtam/yawbe/pkg/user"
 
@@ -21,9 +22,10 @@ const (
 )
 
 var (
-	debugMode   bool
-	hmacKey     string
-	userService *user.Service
+	debugMode      bool
+	hmacKey        string
+	sessionService *session.Service
+	userService    *user.Service
 )
 
 // NewRootCommand initializes the main CLI entrypoint and common command flags.
@@ -44,8 +46,9 @@ func NewRootCommand() *cobra.Command {
 			}
 			log.Info().Msg("Successfully connected to PostgreSQL")
 
-			userRepository := postgresql.NewRepository(db)
-			userService = user.NewService(userRepository, hmacKey)
+			repository := postgresql.NewRepository(db)
+			sessionService = session.NewService(repository, hmacKey)
+			userService = user.NewService(repository)
 
 			return nil
 		},

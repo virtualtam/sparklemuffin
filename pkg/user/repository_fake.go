@@ -36,16 +36,6 @@ func (r *FakeRepository) UserGetByEmail(email string) (User, error) {
 	return User{}, ErrNotFound
 }
 
-func (r *FakeRepository) UserGetByRememberTokenHash(rememberTokenHash string) (User, error) {
-	for _, user := range r.Users {
-		if user.RememberTokenHash == rememberTokenHash {
-			return user, nil
-		}
-	}
-
-	return User{}, ErrNotFound
-}
-
 func (r *FakeRepository) UserGetByUUID(userUUID string) (User, error) {
 	for _, user := range r.Users {
 		if user.UUID == userUUID {
@@ -97,17 +87,6 @@ func (r *FakeRepository) UserUpdatePasswordHash(passwordHash PasswordHashUpdate)
 		if existingUser.UUID == passwordHash.UUID {
 			r.Users[index].PasswordHash = passwordHash.PasswordHash
 			r.Users[index].UpdatedAt = passwordHash.UpdatedAt
-			return nil
-		}
-	}
-
-	return ErrNotFound
-}
-
-func (r *FakeRepository) UserUpdateRememberTokenHash(user User) error {
-	for index, existingUser := range r.Users {
-		if existingUser.UUID == user.UUID {
-			r.Users[index].RememberTokenHash = user.RememberTokenHash
 			return nil
 		}
 	}

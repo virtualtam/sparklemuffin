@@ -1,28 +1,35 @@
 package memory
 
 import (
+	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/user"
 )
 
+var _ session.Repository = &Repository{}
 var _ user.Repository = &Repository{}
 
 type Repository struct {
-	users []User
+	sessions []session.Session
+	users    []user.User
+}
+
+func (r *Repository) SessionAdd(session session.Session) error {
+	r.sessions = append(r.sessions, session)
+	return nil
+}
+
+func (r *Repository) SessionGetByRememberTokenHash(hash string) (session.Session, error) {
+	for _, s := range r.sessions {
+		if s.RememberTokenHash == hash {
+			return s, nil
+		}
+	}
+
+	return session.Session{}, session.ErrNotFound
 }
 
 func (r *Repository) UserAdd(u user.User) error {
-	newUser := User{
-		UUID:              u.UUID,
-		Email:             u.Email,
-		PasswordHash:      u.PasswordHash,
-		RememberTokenHash: u.RememberTokenHash,
-		IsAdmin:           u.IsAdmin,
-		CreatedAt:         u.CreatedAt,
-		UpdatedAt:         u.UpdatedAt,
-	}
-
-	r.users = append(r.users, newUser)
-
+	r.users = append(r.users, u)
 	return nil
 }
 
@@ -37,37 +44,13 @@ func (r *Repository) UserDeleteByUUID(userUUID string) error {
 }
 
 func (r *Repository) UserGetAll() ([]user.User, error) {
-	users := make([]user.User, len(r.users))
-
-	for index, u := range r.users {
-		user := user.User{
-			UUID:              u.UUID,
-			Email:             u.Email,
-			PasswordHash:      u.PasswordHash,
-			RememberTokenHash: u.RememberTokenHash,
-			IsAdmin:           u.IsAdmin,
-			CreatedAt:         u.CreatedAt,
-			UpdatedAt:         u.UpdatedAt,
-		}
-
-		users[index] = user
-	}
-
-	return users, nil
+	return r.users, nil
 }
 
 func (r *Repository) UserGetByEmail(email string) (user.User, error) {
 	for _, existingUser := range r.users {
 		if existingUser.Email == email {
-			return user.User{
-				UUID:              existingUser.UUID,
-				Email:             existingUser.Email,
-				PasswordHash:      existingUser.PasswordHash,
-				RememberTokenHash: existingUser.RememberTokenHash,
-				IsAdmin:           existingUser.IsAdmin,
-				CreatedAt:         existingUser.CreatedAt,
-				UpdatedAt:         existingUser.UpdatedAt,
-			}, nil
+			return existingUser, nil
 		}
 	}
 
@@ -87,36 +70,10 @@ func (r *Repository) UserIsEmailRegistered(email string) (bool, error) {
 	return registered, nil
 }
 
-func (r *Repository) UserGetByRememberTokenHash(rememberTokenHash string) (user.User, error) {
-	for _, existingUser := range r.users {
-		if existingUser.RememberTokenHash == rememberTokenHash {
-			return user.User{
-				UUID:              existingUser.UUID,
-				Email:             existingUser.Email,
-				PasswordHash:      existingUser.PasswordHash,
-				RememberTokenHash: existingUser.RememberTokenHash,
-				IsAdmin:           existingUser.IsAdmin,
-				CreatedAt:         existingUser.CreatedAt,
-				UpdatedAt:         existingUser.UpdatedAt,
-			}, nil
-		}
-	}
-
-	return user.User{}, user.ErrNotFound
-}
-
 func (r *Repository) UserGetByUUID(userUUID string) (user.User, error) {
 	for _, existingUser := range r.users {
 		if existingUser.UUID == userUUID {
-			return user.User{
-				UUID:              existingUser.UUID,
-				Email:             existingUser.Email,
-				PasswordHash:      existingUser.PasswordHash,
-				RememberTokenHash: existingUser.RememberTokenHash,
-				IsAdmin:           existingUser.IsAdmin,
-				CreatedAt:         existingUser.CreatedAt,
-				UpdatedAt:         existingUser.UpdatedAt,
-			}, nil
+			return existingUser, nil
 		}
 	}
 
@@ -126,15 +83,7 @@ func (r *Repository) UserGetByUUID(userUUID string) (user.User, error) {
 func (r *Repository) UserUpdate(u user.User) error {
 	for index, existingUser := range r.users {
 		if existingUser.UUID == u.UUID {
-			r.users[index] = User{
-				UUID:              u.UUID,
-				Email:             u.Email,
-				PasswordHash:      u.PasswordHash,
-				RememberTokenHash: u.RememberTokenHash,
-				IsAdmin:           u.IsAdmin,
-				CreatedAt:         u.CreatedAt,
-				UpdatedAt:         u.UpdatedAt,
-			}
+			r.users[index] = u
 			return nil
 		}
 	}
@@ -159,17 +108,6 @@ func (r *Repository) UserUpdatePasswordHash(passwordHash user.PasswordHashUpdate
 		if existingUser.UUID == passwordHash.UUID {
 			r.users[index].PasswordHash = passwordHash.PasswordHash
 			r.users[index].UpdatedAt = passwordHash.UpdatedAt
-			return nil
-		}
-	}
-
-	return user.ErrNotFound
-}
-
-func (r *Repository) UserUpdateRememberTokenHash(u user.User) error {
-	for index, existingUser := range r.users {
-		if existingUser.UUID == u.UUID {
-			r.users[index].RememberTokenHash = u.RememberTokenHash
 			return nil
 		}
 	}

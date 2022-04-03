@@ -5,9 +5,11 @@ import (
 	"errors"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/user"
 )
 
+var _ session.Repository = &Repository{}
 var _ user.Repository = &Repository{}
 
 // Repository provides a PostgreSQL persistence layer.
@@ -20,6 +22,54 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{
 		db: db,
 	}
+}
+
+func (r *Repository) SessionAdd(sess session.Session) error {
+	dbSession := Session{
+		UserUUID:               sess.UserUUID,
+		RememberTokenHash:      sess.RememberTokenHash,
+		RememberTokenExpiresAt: sess.RememberTokenExpiresAt,
+	}
+
+	_, err := r.db.NamedExec(
+		`
+INSERT INTO sessions(
+	user_uuid,
+	remember_token_hash,
+	remember_token_expires_at
+)
+VALUES(
+	:user_uuid,
+	:remember_token_hash,
+	:remember_token_expires_at
+)`,
+		dbSession,
+	)
+
+	return err
+}
+
+func (r *Repository) SessionGetByRememberTokenHash(hash string) (session.Session, error) {
+	dbSession := &Session{}
+
+	err := r.db.QueryRowx(
+		`SELECT user_uuid, remember_token_hash
+FROM sessions
+WHERE remember_token_hash=$1`,
+		hash,
+	).StructScan(dbSession)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return session.Session{}, session.ErrNotFound
+	}
+	if err != nil {
+		return session.Session{}, err
+	}
+
+	return session.Session{
+		UserUUID:          dbSession.UserUUID,
+		RememberTokenHash: dbSession.RememberTokenHash,
+	}, nil
 }
 
 func (r *Repository) UserAdd(u user.User) error {
@@ -53,11 +103,7 @@ VALUES(
 		dbUser,
 	)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (r *Repository) UserDeleteByUUID(userUUID string) error {
@@ -111,7 +157,7 @@ func (r *Repository) UserGetByEmail(email string) (user.User, error) {
 	dbUser := &User{}
 
 	err := r.db.QueryRowx(
-		`SELECT uuid, email, password_hash, remember_token_hash, is_admin, created_at, updated_at
+		`SELECT uuid, email, password_hash, is_admin, created_at, updated_at
 FROM users
 WHERE email=$1`,
 		email,
@@ -125,41 +171,12 @@ WHERE email=$1`,
 	}
 
 	return user.User{
-		UUID:              dbUser.UUID,
-		Email:             dbUser.Email,
-		PasswordHash:      dbUser.PasswordHash,
-		RememberTokenHash: dbUser.RememberTokenHash,
-		IsAdmin:           dbUser.IsAdmin,
-		CreatedAt:         dbUser.CreatedAt,
-		UpdatedAt:         dbUser.UpdatedAt,
-	}, nil
-}
-
-func (r *Repository) UserGetByRememberTokenHash(rememberTokenHash string) (user.User, error) {
-	dbUser := &User{}
-
-	err := r.db.QueryRowx(
-		`SELECT uuid, email, password_hash, remember_token_hash, is_admin, created_at, updated_at
-FROM users
-WHERE remember_token_hash=$1`,
-		rememberTokenHash,
-	).StructScan(dbUser)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return user.User{}, user.ErrNotFound
-	}
-	if err != nil {
-		return user.User{}, err
-	}
-
-	return user.User{
-		UUID:              dbUser.UUID,
-		Email:             dbUser.Email,
-		PasswordHash:      dbUser.PasswordHash,
-		RememberTokenHash: dbUser.RememberTokenHash,
-		IsAdmin:           dbUser.IsAdmin,
-		CreatedAt:         dbUser.CreatedAt,
-		UpdatedAt:         dbUser.UpdatedAt,
+		UUID:         dbUser.UUID,
+		Email:        dbUser.Email,
+		PasswordHash: dbUser.PasswordHash,
+		IsAdmin:      dbUser.IsAdmin,
+		CreatedAt:    dbUser.CreatedAt,
+		UpdatedAt:    dbUser.UpdatedAt,
 	}, nil
 }
 
@@ -167,7 +184,7 @@ func (r *Repository) UserGetByUUID(userUUID string) (user.User, error) {
 	dbUser := &User{}
 
 	err := r.db.QueryRowx(
-		`SELECT uuid, email, password_hash, remember_token_hash, is_admin, created_at, updated_at
+		`SELECT uuid, email, password_hash, is_admin, created_at, updated_at
 FROM users
 WHERE uuid=$1`,
 		userUUID,
@@ -181,13 +198,12 @@ WHERE uuid=$1`,
 	}
 
 	return user.User{
-		UUID:              dbUser.UUID,
-		Email:             dbUser.Email,
-		PasswordHash:      dbUser.PasswordHash,
-		RememberTokenHash: dbUser.RememberTokenHash,
-		IsAdmin:           dbUser.IsAdmin,
-		CreatedAt:         dbUser.CreatedAt,
-		UpdatedAt:         dbUser.UpdatedAt,
+		UUID:         dbUser.UUID,
+		Email:        dbUser.Email,
+		PasswordHash: dbUser.PasswordHash,
+		IsAdmin:      dbUser.IsAdmin,
+		CreatedAt:    dbUser.CreatedAt,
+		UpdatedAt:    dbUser.UpdatedAt,
 	}, nil
 }
 
@@ -208,19 +224,17 @@ func (r *Repository) UserIsEmailRegistered(email string) (bool, error) {
 
 func (r *Repository) UserUpdate(u user.User) error {
 	dbUser := User{
-		UUID:              u.UUID,
-		Email:             u.Email,
-		PasswordHash:      u.PasswordHash,
-		RememberTokenHash: u.RememberTokenHash,
-		IsAdmin:           u.IsAdmin,
-		UpdatedAt:         u.UpdatedAt,
+		UUID:         u.UUID,
+		Email:        u.Email,
+		PasswordHash: u.PasswordHash,
+		IsAdmin:      u.IsAdmin,
+		UpdatedAt:    u.UpdatedAt,
 	}
 
 	_, err := r.db.NamedExec(`UPDATE users
 SET
 	email=:email,
 	password_hash=:password_hash,
-	remember_token_hash=:remember_token_hash,
 	is_admin=:is_admin,
 	updated_at=:updated_at
 WHERE uuid=:uuid`,
@@ -267,25 +281,6 @@ func (r *Repository) UserUpdatePasswordHash(passwordHash user.PasswordHashUpdate
 SET
 	password_hash=:password_hash,
 	updated_at=:updated_at
-WHERE uuid=:uuid`,
-		dbUser,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *Repository) UserUpdateRememberTokenHash(u user.User) error {
-	dbUser := User{
-		UUID:              u.UUID,
-		RememberTokenHash: u.RememberTokenHash,
-	}
-
-	_, err := r.db.NamedExec(`UPDATE users
-SET	remember_token_hash=:remember_token_hash
 WHERE uuid=:uuid`,
 		dbUser,
 	)

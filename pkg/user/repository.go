@@ -14,10 +14,6 @@ type Repository interface {
 	// UserGetByEmail returns the User registered with a given email address.
 	UserGetByEmail(string) (User, error)
 
-	// UserGetByRememberTokenHash returns the User corresponding to a given
-	// RememberToken hash.
-	UserGetByRememberTokenHash(string) (User, error)
-
 	// UserGetByUUID returns the User corresponding to a given UUID.
 	UserGetByUUID(string) (User, error)
 
@@ -33,7 +29,4 @@ type Repository interface {
 
 	// UserUpdatePasswordHash updates an existing user's account password hash.
 	UserUpdatePasswordHash(PasswordHashUpdate) error
-
-	// UserUpdateRememberTokenHash updates an existing user's remember token hash.
-	UserUpdateRememberTokenHash(User) error
 }

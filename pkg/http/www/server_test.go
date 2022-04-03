@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/user"
 )
 
@@ -35,7 +36,7 @@ func TestServerAuthenticatedUser(t *testing.T) {
 		},
 	}
 
-	s := NewServer(nil)
+	s := NewServer(nil, nil)
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
@@ -93,7 +94,7 @@ func TestServerAdminUser(t *testing.T) {
 		},
 	}
 
-	s := NewServer(nil)
+	s := NewServer(nil, nil)
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
@@ -128,7 +129,7 @@ func TestServerAdminUser(t *testing.T) {
 func TestServerStaticCacheControl(t *testing.T) {
 	want := "max-age=2592000"
 
-	s := NewServer(nil)
+	s := NewServer(nil, nil)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	handler = s.staticCacheControl(handler)
 
@@ -146,6 +147,7 @@ func TestServerStaticCacheControl(t *testing.T) {
 func TestServerRememberUser(t *testing.T) {
 	cases := []struct {
 		tname               string
+		repositorySessions  []session.Session
 		repositoryUsers     []user.User
 		rememberTokenCookie *http.Cookie
 		wantUser            *user.User
@@ -163,10 +165,16 @@ func TestServerRememberUser(t *testing.T) {
 		},
 		{
 			tname: "remember token cookie set, corresponding user found",
+			repositorySessions: []session.Session{
+				{
+					UserUUID:          "9c9903c3-d583-4d42-9687-dccdfc77fc3a",
+					RememberTokenHash: "W3o3hteHwgT5EGSxhpyotYHNtBhEYlzfkVxViAglBuk=",
+				},
+			},
 			repositoryUsers: []user.User{
 				{
-					Email:             "cookie@domain.tld",
-					RememberTokenHash: "W3o3hteHwgT5EGSxhpyotYHNtBhEYlzfkVxViAglBuk=",
+					UUID:  "9c9903c3-d583-4d42-9687-dccdfc77fc3a",
+					Email: "cookie@domain.tld",
 				},
 			},
 			rememberTokenCookie: &http.Cookie{
@@ -175,20 +183,24 @@ func TestServerRememberUser(t *testing.T) {
 				HttpOnly: true,
 			},
 			wantUser: &user.User{
-				Email:             "cookie@domain.tld",
-				RememberTokenHash: "W3o3hteHwgT5EGSxhpyotYHNtBhEYlzfkVxViAglBuk=",
+				Email: "cookie@domain.tld",
 			},
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
+			sessionRepository := &session.FakeRepository{
+				Sessions: tc.repositorySessions,
+			}
+			sessionService := session.NewService(sessionRepository, "ugotcookies")
+
 			userRepository := &user.FakeRepository{
 				Users: tc.repositoryUsers,
 			}
-			userService := user.NewService(userRepository, "ugotcookies")
+			userService := user.NewService(userRepository)
 
-			s := NewServer(userService)
+			s := NewServer(sessionService, userService)
 
 			var gotContext context.Context
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

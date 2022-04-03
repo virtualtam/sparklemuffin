@@ -6,22 +6,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/virtualtam/yawbe/pkg/hash"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // Service handles operations for the user domain.
 type Service struct {
-	r    Repository
-	hmac *hash.HMAC
+	r Repository
 }
 
-// NewService initializes and returns a User Repository.
-func NewService(r Repository, hmacKey string) *Service {
-	hmac := hash.NewHMAC(hmacKey)
+// NewService initializes and returns a User Service.
+func NewService(r Repository) *Service {
 	return &Service{
-		r:    r,
-		hmac: hmac,
+		r: r,
 	}
 }
 
@@ -74,23 +70,6 @@ func (s *Service) Authenticate(email, password string) (User, error) {
 	}
 }
 
-// ByRememberToken returns the user corresponding to a given RememberToken.
-func (s *Service) ByRememberToken(rememberToken string) (User, error) {
-	user := User{RememberToken: rememberToken}
-
-	err := s.runValidationFuncs(
-		&user,
-		s.requireRememberToken,
-		s.hashRememberToken,
-		s.requireRememberTokenHash,
-	)
-	if err != nil {
-		return User{}, err
-	}
-
-	return s.r.UserGetByRememberTokenHash(user.RememberTokenHash)
-}
-
 // ByUUID returns the user corresponding to a given UUID.
 func (s *Service) ByUUID(userUUID string) (User, error) {
 	user := User{UUID: userUUID}
@@ -132,7 +111,6 @@ func (s *Service) Update(user User) error {
 		s.requirePassword,
 		s.hashPassword,
 		s.requirePasswordHash,
-		s.hashRememberToken,
 		s.refreshUpdatedAt,
 	)
 	if err != nil {
@@ -244,22 +222,6 @@ func (s *Service) UpdatePasswordHash(user User) error {
 	return s.r.UserUpdatePasswordHash(passwordHashUpdate)
 }
 
-// UpdateRememberToken updates an existing user's remember token.
-func (s *Service) UpdateRememberToken(user User) error {
-	err := s.runValidationFuncs(
-		&user,
-		s.requireUUID,
-		s.requireRememberToken,
-		s.hashRememberToken,
-		s.requireRememberTokenHash,
-	)
-	if err != nil {
-		return err
-	}
-
-	return s.r.UserUpdateRememberTokenHash(user)
-}
-
 func (s *Service) getUserByEmail(email string) (User, error) {
 	user := User{Email: email}
 
@@ -339,21 +301,6 @@ func (s *Service) hashPassword(user *User) error {
 	return nil
 }
 
-func (s *Service) hashRememberToken(user *User) error {
-	if user.RememberToken == "" {
-		return nil
-	}
-
-	hash, err := s.hmac.Hash(user.RememberToken)
-	if err != nil {
-		return err
-	}
-
-	user.RememberTokenHash = hash
-
-	return nil
-}
-
 func (s *Service) normalizeEmail(user *User) error {
 	user.Email = strings.ToLower(user.Email)
 	user.Email = strings.TrimSpace(user.Email)
@@ -379,22 +326,6 @@ func (s *Service) requirePasswordHash(user *User) error {
 	if user.PasswordHash == "" {
 		return ErrPasswordHashRequired
 	}
-	return nil
-}
-
-func (s *Service) requireRememberToken(user *User) error {
-	if user.RememberToken == "" {
-		return ErrRememberTokenRequired
-	}
-
-	return nil
-}
-
-func (s *Service) requireRememberTokenHash(user *User) error {
-	if user.RememberToken == "" {
-		return ErrRememberTokenHashRequired
-	}
-
 	return nil
 }
 

@@ -6,6 +6,8 @@ import "time"
 type User struct {
 	UUID         string
 	Email        string
+	NickName     string
+	DisplayName  string
 	Password     string
 	PasswordHash string
 	IsAdmin      bool
@@ -17,9 +19,11 @@ type User struct {
 // InfoUpdate represents an account information update for an authenticated
 // user.
 type InfoUpdate struct {
-	UUID      string
-	Email     string
-	UpdatedAt time.Time
+	UUID        string
+	Email       string
+	NickName    string
+	DisplayName string
+	UpdatedAt   time.Time
 }
 
 // PasswordHashUpdate represents a password change for an authenticated user.

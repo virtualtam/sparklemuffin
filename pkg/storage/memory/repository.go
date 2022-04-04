@@ -47,6 +47,16 @@ func (r *Repository) UserGetAll() ([]user.User, error) {
 	return r.users, nil
 }
 
+func (r *Repository) UserGetByNickName(nick string) (user.User, error) {
+	for _, existingUser := range r.users {
+		if existingUser.NickName == nick {
+			return existingUser, nil
+		}
+	}
+
+	return user.User{}, user.ErrNotFound
+}
+
 func (r *Repository) UserGetByEmail(email string) (user.User, error) {
 	for _, existingUser := range r.users {
 		if existingUser.Email == email {
@@ -62,6 +72,19 @@ func (r *Repository) UserIsEmailRegistered(email string) (bool, error) {
 
 	for _, existingUser := range r.users {
 		if existingUser.Email == email {
+			registered = true
+			break
+		}
+	}
+
+	return registered, nil
+}
+
+func (r *Repository) UserIsNickNameRegistered(nick string) (bool, error) {
+	registered := false
+
+	for _, existingUser := range r.users {
+		if existingUser.NickName == nick {
 			registered = true
 			break
 		}

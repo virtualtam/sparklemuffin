@@ -22,7 +22,7 @@ func TestServiceAdd(t *testing.T) {
 			wantErr: ErrEmailRequired,
 		},
 		{
-			tname: "already registered",
+			tname: "email already registered",
 			repositoryUsers: []User{
 				{Email: "registered@domain.tld"},
 			},
@@ -30,23 +30,61 @@ func TestServiceAdd(t *testing.T) {
 			wantErr: ErrEmailAlreadyRegistered,
 		},
 		{
-			tname:   "empty password",
-			user:    User{Email: "nopass@domain.tld"},
+			tname: "empty nick (whitespace)",
+			user: User{
+				Email:    "nickless@domain.tld",
+				NickName: "   ",
+			},
+			wantErr: ErrNickNameRequired,
+		},
+		{
+			tname: "nick already registered",
+			repositoryUsers: []User{
+				{
+					Email:    "registered@domain.tld",
+					NickName: "regis33",
+				},
+			},
+			user: User{
+				Email:    "regis33@domain.tld",
+				NickName: "regis33",
+			},
+			wantErr: ErrNickNameAlreadyRegistered,
+		},
+		{
+			tname: "empty display name",
+			user: User{
+				Email:    "noname@domain.tld",
+				NickName: "noname",
+			},
+			wantErr: ErrDisplayNameRequired,
+		},
+		{
+			tname: "empty password",
+			user: User{
+				Email:       "nopass@domain.tld",
+				NickName:    "nopass",
+				DisplayName: "No Pass",
+			},
 			wantErr: ErrPasswordRequired,
 		},
 		{
 			tname: "valid user",
 			user: User{
-				Email:    "new@domain.tld",
-				Password: "ImN3w!",
+				Email:       "new@domain.tld",
+				NickName:    "new",
+				DisplayName: "The New Pal",
+				Password:    "ImN3w!",
 			},
 		},
 		{
 			tname: "valid adminuser",
 			user: User{
-				Email:    "new@domain.tld",
-				Password: "ImN3w!",
-				IsAdmin:  true,
+				Email:       "newadmin@domain.tld",
+				NickName:    "newadmin",
+				DisplayName: "PID One",
+				Password:    "ImN3w!",
+				IsAdmin:     true,
 			},
 		},
 	}
@@ -249,10 +287,31 @@ func TestServiceUpdate(t *testing.T) {
 			wantErr: ErrEmailRequired,
 		},
 		{
+			tname: "empty (whitespace) nick",
+			user: User{
+				UUID:     "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
+				Email:    "nonick@domain.tld",
+				NickName: "   ",
+			},
+			wantErr: ErrNickNameRequired,
+		},
+		{
+			tname: "empty (whitespace) display name",
+			user: User{
+				UUID:        "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
+				Email:       "noname@domain.tld",
+				NickName:    "noname",
+				DisplayName: "   ",
+			},
+			wantErr: ErrDisplayNameRequired,
+		},
+		{
 			tname: "empty password",
 			user: User{
-				UUID:  "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
-				Email: "nopass@domain.tld",
+				UUID:        "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
+				NickName:    "nopass",
+				DisplayName: "No Pass",
+				Email:       "nopass@domain.tld",
 			},
 			wantErr: ErrPasswordRequired,
 		},
@@ -261,6 +320,8 @@ func TestServiceUpdate(t *testing.T) {
 			user: User{
 				UUID:         "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
 				Email:        "ghost@domain.tld",
+				NickName:     "ghost",
+				DisplayName:  "Busted Ghost",
 				Password:     "test",
 				PasswordHash: "$2b$10$LSH.kwYeRt8msI5.5YJv8eqle6SPcevq848BK2vZ2M5FjXTvU1r.e",
 			},
@@ -271,6 +332,8 @@ func TestServiceUpdate(t *testing.T) {
 			user: User{
 				UUID:         "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
 				Email:        "valid@domain.tld",
+				NickName:     "valid",
+				DisplayName:  "Valid User",
 				Password:     "test",
 				PasswordHash: "$2b$10$LSH.kwYeRt8msI5.5YJv8eqle6SPcevq848BK2vZ2M5FjXTvU1r.e",
 			},
@@ -323,14 +386,6 @@ func TestServiceUpdateInfo(t *testing.T) {
 			wantErr: ErrEmailRequired,
 		},
 		{
-			tname: "not found",
-			info: InfoUpdate{
-				UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
-				Email: "ghost@domain.tld",
-			},
-			wantErr: ErrNotFound,
-		},
-		{
 			tname: "email already registered",
 			repositoryUsers: []User{
 				{
@@ -349,7 +404,7 @@ func TestServiceUpdateInfo(t *testing.T) {
 			wantErr: ErrEmailAlreadyRegistered,
 		},
 		{
-			tname: "same email",
+			tname: "empty nick (whitespace)",
 			repositoryUsers: []User{
 				{
 					UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
@@ -357,21 +412,70 @@ func TestServiceUpdateInfo(t *testing.T) {
 				},
 			},
 			info: InfoUpdate{
-				UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
-				Email: "mimic@domain.tld",
+				UUID:     "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email:    "mimic@domain.tld",
+				NickName: "    ",
+			},
+			wantErr: ErrNickNameRequired,
+		},
+		{
+			tname: "empty display name (whitespace)",
+			repositoryUsers: []User{
+				{
+					UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+					Email: "empty@domain.tld",
+				},
+			},
+			info: InfoUpdate{
+				UUID:        "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email:       "empty@domain.tld",
+				NickName:    "empty",
+				DisplayName: "   ",
+			},
+			wantErr: ErrDisplayNameRequired,
+		},
+		{
+			tname: "not found",
+			info: InfoUpdate{
+				UUID:        "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email:       "ghost@domain.tld",
+				NickName:    "ghost",
+				DisplayName: "Busted Ghost",
+			},
+			wantErr: ErrNotFound,
+		},
+		{
+			tname: "update with no change",
+			repositoryUsers: []User{
+				{
+					UUID:        "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+					Email:       "mimic@domain.tld",
+					NickName:    "mimic",
+					DisplayName: "Mimic",
+				},
+			},
+			info: InfoUpdate{
+				UUID:        "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email:       "mimic@domain.tld",
+				NickName:    "Mimic",
+				DisplayName: "Mimic",
 			},
 		},
 		{
-			tname: "new email",
+			tname: "update with new information",
 			repositoryUsers: []User{
 				{
-					UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
-					Email: "mimic@domain.tld",
+					UUID:        "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+					Email:       "mimic@domain.tld",
+					NickName:    "mimic",
+					DisplayName: "Mimic",
 				},
 			},
 			info: InfoUpdate{
-				UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
-				Email: "chest@domain.tld",
+				UUID:        "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email:       "chest@domain.tld",
+				NickName:    "chester",
+				DisplayName: "Chester",
 			},
 		},
 	}

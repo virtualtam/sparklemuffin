@@ -36,6 +36,16 @@ func (r *FakeRepository) UserGetByEmail(email string) (User, error) {
 	return User{}, ErrNotFound
 }
 
+func (r *FakeRepository) UserGetByNickName(nick string) (User, error) {
+	for _, user := range r.Users {
+		if user.NickName == nick {
+			return user, nil
+		}
+	}
+
+	return User{}, ErrNotFound
+}
+
 func (r *FakeRepository) UserGetByUUID(userUUID string) (User, error) {
 	for _, user := range r.Users {
 		if user.UUID == userUUID {
@@ -51,6 +61,19 @@ func (r *FakeRepository) UserIsEmailRegistered(email string) (bool, error) {
 
 	for _, user := range r.Users {
 		if user.Email == email {
+			registered = true
+			break
+		}
+	}
+
+	return registered, nil
+}
+
+func (r *FakeRepository) UserIsNickNameRegistered(nick string) (bool, error) {
+	registered := false
+
+	for _, user := range r.Users {
+		if user.NickName == nick {
 			registered = true
 			break
 		}

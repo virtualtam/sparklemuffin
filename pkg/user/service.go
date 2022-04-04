@@ -28,6 +28,11 @@ func (s *Service) Add(user User) error {
 		s.normalizeEmail,
 		s.requireEmail,
 		s.ensureEmailIsNotRegistered,
+		s.normalizeNickName,
+		s.requireNickName,
+		s.ensureNickNameIsNotRegistered,
+		s.normalizeDisplayName,
+		s.requireDisplayName,
 		s.requirePassword,
 		s.hashPassword,
 		s.requirePasswordHash,
@@ -108,6 +113,11 @@ func (s *Service) Update(user User) error {
 		s.normalizeEmail,
 		s.requireEmail,
 		s.ensureEmailIsNotRegisteredToAnotherUser,
+		s.normalizeNickName,
+		s.requireNickName,
+		s.ensureNickNameIsNotRegisteredToAnotherUser,
+		s.normalizeDisplayName,
+		s.requireDisplayName,
 		s.requirePassword,
 		s.hashPassword,
 		s.requirePasswordHash,
@@ -123,8 +133,10 @@ func (s *Service) Update(user User) error {
 // UpdateInfo updates an existing user's account information.
 func (s *Service) UpdateInfo(info InfoUpdate) error {
 	user := User{
-		UUID:  info.UUID,
-		Email: info.Email,
+		UUID:        info.UUID,
+		Email:       info.Email,
+		NickName:    info.NickName,
+		DisplayName: info.DisplayName,
 	}
 
 	err := s.runValidationFuncs(
@@ -133,6 +145,11 @@ func (s *Service) UpdateInfo(info InfoUpdate) error {
 		s.normalizeEmail,
 		s.requireEmail,
 		s.ensureEmailIsNotRegisteredToAnotherUser,
+		s.normalizeNickName,
+		s.requireNickName,
+		s.ensureNickNameIsNotRegisteredToAnotherUser,
+		s.normalizeDisplayName,
+		s.requireDisplayName,
 		s.refreshUpdatedAt,
 	)
 	if err != nil {
@@ -252,6 +269,30 @@ func (s *Service) runValidationFuncs(user *User, fns ...validationFunc) error {
 	return nil
 }
 
+func (s *Service) ensureNickNameIsNotRegistered(user *User) error {
+	registered, err := s.r.UserIsNickNameRegistered(user.NickName)
+	if err != nil {
+		return err
+	}
+	if registered {
+		return ErrNickNameAlreadyRegistered
+	}
+	return nil
+}
+
+func (s *Service) ensureNickNameIsNotRegisteredToAnotherUser(user *User) error {
+	existingUser, err := s.r.UserGetByNickName(user.NickName)
+	if errors.Is(err, ErrNotFound) {
+		return nil
+	}
+
+	if existingUser.UUID == user.UUID {
+		return nil
+	}
+
+	return ErrNickNameAlreadyRegistered
+}
+
 func (s *Service) ensureEmailIsNotRegistered(user *User) error {
 	registered, err := s.r.UserIsEmailRegistered(user.Email)
 	if err != nil {
@@ -301,16 +342,40 @@ func (s *Service) hashPassword(user *User) error {
 	return nil
 }
 
+func (s *Service) normalizeDisplayName(user *User) error {
+	user.DisplayName = strings.TrimSpace(user.DisplayName)
+	return nil
+}
+
 func (s *Service) normalizeEmail(user *User) error {
 	user.Email = strings.ToLower(user.Email)
 	user.Email = strings.TrimSpace(user.Email)
+	return nil
+}
 
+func (s *Service) normalizeNickName(user *User) error {
+	user.NickName = strings.ToLower(user.NickName)
+	user.NickName = strings.TrimSpace(user.NickName)
+	return nil
+}
+
+func (s *Service) requireDisplayName(user *User) error {
+	if user.DisplayName == "" {
+		return ErrDisplayNameRequired
+	}
 	return nil
 }
 
 func (s *Service) requireEmail(user *User) error {
 	if user.Email == "" {
 		return ErrEmailRequired
+	}
+	return nil
+}
+
+func (s *Service) requireNickName(user *User) error {
+	if user.NickName == "" {
+		return ErrNickNameRequired
 	}
 	return nil
 }

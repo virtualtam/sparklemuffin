@@ -5,6 +5,8 @@ import "time"
 type User struct {
 	UUID         string `db:"uuid"`
 	Email        string `db:"email"`
+	NickName     string `db:"nick_name"`
+	DisplayName  string `db:"display_name"`
 	PasswordHash string `db:"password_hash"`
 	IsAdmin      bool   `db:"is_admin"`
 

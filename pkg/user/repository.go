@@ -6,13 +6,16 @@ type Repository interface {
 	UserAdd(User) error
 
 	// UserDelete deletes an existing user and all related data.
-	UserDeleteByUUID(string) error
+	UserDeleteByUUID(uuid string) error
 
 	// UserGetAll returns a list of all User accounts.
 	UserGetAll() ([]User, error)
 
 	// UserGetByEmail returns the User registered with a given email address.
-	UserGetByEmail(string) (User, error)
+	UserGetByEmail(email string) (User, error)
+
+	// UserGetByNickName returns the User registered with a given nickname.
+	UserGetByNickName(nick string) (User, error)
 
 	// UserGetByUUID returns the User corresponding to a given UUID.
 	UserGetByUUID(string) (User, error)
@@ -20,6 +23,10 @@ type Repository interface {
 	// UserIsEmailRegistered returns whether there is an existing user
 	// registered with this email address.
 	UserIsEmailRegistered(email string) (bool, error)
+
+	// UserIsNickNameRegistered returns whether there is an existing user
+	// registered with this nickname.
+	UserIsNickNameRegistered(nick string) (bool, error)
 
 	// UserUpdate updates an existing user.
 	UserUpdate(User) error

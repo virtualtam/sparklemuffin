@@ -4,7 +4,9 @@ CREATE TABLE IF NOT EXISTS users (
 
     uuid                UUID NOT NULL PRIMARY KEY,
     email               TEXT UNIQUE NOT NULL,
-    password_hash       TEXT NOT NULL DEFAULT '',
+    nick_name           TEXT UNIQUE NOT NULL,
+    display_name        TEXT NOT NULL,
+    password_hash       TEXT NOT NULL,
     is_admin            BOOLEAN NOT NULL DEFAULT FALSE
 );
 

@@ -76,6 +76,8 @@ func (r *Repository) UserAdd(u user.User) error {
 	dbUser := User{
 		UUID:         u.UUID,
 		Email:        u.Email,
+		NickName:     u.NickName,
+		DisplayName:  u.DisplayName,
 		PasswordHash: u.PasswordHash,
 		IsAdmin:      u.IsAdmin,
 		CreatedAt:    u.CreatedAt,
@@ -87,6 +89,8 @@ func (r *Repository) UserAdd(u user.User) error {
 INSERT INTO users(
 	uuid,
 	email,
+	nick_name,
+	display_name,
 	password_hash,
 	is_admin,
 	created_at,
@@ -95,6 +99,8 @@ INSERT INTO users(
 VALUES(
 	:uuid,
 	:email,
+	:nick_name,
+	:display_name,
 	:password_hash,
 	:is_admin,
 	:created_at,
@@ -125,7 +131,7 @@ func (r *Repository) UserDeleteByUUID(userUUID string) error {
 }
 
 func (r *Repository) UserGetAll() ([]user.User, error) {
-	rows, err := r.db.Queryx("SELECT uuid, email, is_admin, created_at, updated_at FROM users")
+	rows, err := r.db.Queryx("SELECT uuid, email, nick_name, display_name, is_admin, created_at, updated_at FROM users")
 	if err != nil {
 		return []user.User{}, err
 	}
@@ -140,11 +146,13 @@ func (r *Repository) UserGetAll() ([]user.User, error) {
 		}
 
 		user := user.User{
-			UUID:      dbUser.UUID,
-			Email:     dbUser.Email,
-			IsAdmin:   dbUser.IsAdmin,
-			CreatedAt: dbUser.CreatedAt,
-			UpdatedAt: dbUser.UpdatedAt,
+			UUID:        dbUser.UUID,
+			Email:       dbUser.Email,
+			NickName:    dbUser.NickName,
+			DisplayName: dbUser.DisplayName,
+			IsAdmin:     dbUser.IsAdmin,
+			CreatedAt:   dbUser.CreatedAt,
+			UpdatedAt:   dbUser.UpdatedAt,
 		}
 
 		users = append(users, user)
@@ -157,7 +165,7 @@ func (r *Repository) UserGetByEmail(email string) (user.User, error) {
 	dbUser := &User{}
 
 	err := r.db.QueryRowx(
-		`SELECT uuid, email, password_hash, is_admin, created_at, updated_at
+		`SELECT uuid, email, nick_name, display_name, password_hash, is_admin, created_at, updated_at
 FROM users
 WHERE email=$1`,
 		email,
@@ -173,6 +181,37 @@ WHERE email=$1`,
 	return user.User{
 		UUID:         dbUser.UUID,
 		Email:        dbUser.Email,
+		NickName:     dbUser.NickName,
+		DisplayName:  dbUser.DisplayName,
+		PasswordHash: dbUser.PasswordHash,
+		IsAdmin:      dbUser.IsAdmin,
+		CreatedAt:    dbUser.CreatedAt,
+		UpdatedAt:    dbUser.UpdatedAt,
+	}, nil
+}
+
+func (r *Repository) UserGetByNickName(nick string) (user.User, error) {
+	dbUser := &User{}
+
+	err := r.db.QueryRowx(
+		`SELECT uuid, email, nick_name, display_name, password_hash, is_admin, created_at, updated_at
+FROM users
+WHERE nick_name=$1`,
+		nick,
+	).StructScan(dbUser)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return user.User{}, user.ErrNotFound
+	}
+	if err != nil {
+		return user.User{}, err
+	}
+
+	return user.User{
+		UUID:         dbUser.UUID,
+		Email:        dbUser.Email,
+		NickName:     dbUser.NickName,
+		DisplayName:  dbUser.DisplayName,
 		PasswordHash: dbUser.PasswordHash,
 		IsAdmin:      dbUser.IsAdmin,
 		CreatedAt:    dbUser.CreatedAt,
@@ -184,7 +223,7 @@ func (r *Repository) UserGetByUUID(userUUID string) (user.User, error) {
 	dbUser := &User{}
 
 	err := r.db.QueryRowx(
-		`SELECT uuid, email, password_hash, is_admin, created_at, updated_at
+		`SELECT uuid, email, nick_name, display_name, password_hash, is_admin, created_at, updated_at
 FROM users
 WHERE uuid=$1`,
 		userUUID,
@@ -200,6 +239,8 @@ WHERE uuid=$1`,
 	return user.User{
 		UUID:         dbUser.UUID,
 		Email:        dbUser.Email,
+		NickName:     dbUser.NickName,
+		DisplayName:  dbUser.DisplayName,
 		PasswordHash: dbUser.PasswordHash,
 		IsAdmin:      dbUser.IsAdmin,
 		CreatedAt:    dbUser.CreatedAt,
@@ -222,10 +263,27 @@ func (r *Repository) UserIsEmailRegistered(email string) (bool, error) {
 	return true, nil
 }
 
+func (r *Repository) UserIsNickNameRegistered(nick string) (bool, error) {
+	dbUser := &User{}
+
+	err := r.db.QueryRowx("SELECT email FROM users WHERE nick_name=$1", nick).StructScan(dbUser)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (r *Repository) UserUpdate(u user.User) error {
 	dbUser := User{
 		UUID:         u.UUID,
 		Email:        u.Email,
+		NickName:     u.NickName,
+		DisplayName:  u.DisplayName,
 		PasswordHash: u.PasswordHash,
 		IsAdmin:      u.IsAdmin,
 		UpdatedAt:    u.UpdatedAt,
@@ -234,6 +292,8 @@ func (r *Repository) UserUpdate(u user.User) error {
 	_, err := r.db.NamedExec(`UPDATE users
 SET
 	email=:email,
+	nick_name=:nick_name,
+	display_name=:display_name,
 	password_hash=:password_hash,
 	is_admin=:is_admin,
 	updated_at=:updated_at
@@ -250,14 +310,18 @@ WHERE uuid=:uuid`,
 
 func (r *Repository) UserUpdateInfo(info user.InfoUpdate) error {
 	dbUser := User{
-		UUID:      info.UUID,
-		Email:     info.Email,
-		UpdatedAt: info.UpdatedAt,
+		UUID:        info.UUID,
+		Email:       info.Email,
+		NickName:    info.NickName,
+		DisplayName: info.DisplayName,
+		UpdatedAt:   info.UpdatedAt,
 	}
 
 	_, err := r.db.NamedExec(`UPDATE users
 SET
 	email=:email,
+	nick_name=:nick_name,
+	display_name=:display_name,
 	updated_at=:updated_at
 WHERE uuid=:uuid`,
 		dbUser,

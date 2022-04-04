@@ -17,7 +17,8 @@ var _ http.Handler = &Server{}
 
 // Server represents the Web service.
 type Server struct {
-	router         *mux.Router
+	router *mux.Router
+
 	sessionService *session.Service
 	userService    *user.Service
 

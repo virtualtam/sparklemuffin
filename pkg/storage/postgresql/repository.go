@@ -5,10 +5,12 @@ import (
 	"errors"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/virtualtam/yawbe/pkg/bookmark"
 	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/user"
 )
 
+var _ bookmark.Repository = &Repository{}
 var _ session.Repository = &Repository{}
 var _ user.Repository = &Repository{}
 
@@ -22,6 +24,157 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{
 		db: db,
 	}
+}
+
+func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
+	dbBookmark := Bookmark{
+		UID:         b.UID,
+		UserUUID:    b.UserUUID,
+		URL:         b.URL,
+		Title:       b.Title,
+		Description: b.Description,
+		CreatedAt:   b.CreatedAt,
+		UpdatedAt:   b.UpdatedAt,
+	}
+
+	_, err := r.db.NamedExec(
+		`
+INSERT INTO bookmarks(
+	uid,
+	user_uuid,
+	url,
+	title,
+	description,
+	created_at,
+	updated_at
+)
+VALUES(
+	:uid,
+	:user_uuid,
+	:url,
+	:title,
+	:description,
+	:created_at,
+	:updated_at
+)
+`,
+		dbBookmark,
+	)
+
+	return err
+}
+
+func (r *Repository) BookmarkDelete(userUUID, uid string) error {
+	result, err := r.db.Exec("DELETE FROM bookmarks WHERE user_uuid=$1 AND uid=$2", userUUID, uid)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected != 1 {
+		return user.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r *Repository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error) {
+	rows, err := r.db.Queryx(
+		`
+SELECT user_uuid, uid, url, title, description, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+ORDER BY created_at DESC`,
+		userUUID,
+	)
+	if err != nil {
+		return []bookmark.Bookmark{}, err
+	}
+
+	bookmarks := []bookmark.Bookmark{}
+
+	for rows.Next() {
+		dbBookmark := Bookmark{}
+
+		if err := rows.StructScan(&dbBookmark); err != nil {
+			return []bookmark.Bookmark{}, err
+		}
+
+		bookmark := bookmark.Bookmark{
+			UserUUID:    dbBookmark.UserUUID,
+			UID:         dbBookmark.UID,
+			URL:         dbBookmark.URL,
+			Title:       dbBookmark.Title,
+			Description: dbBookmark.Description,
+			CreatedAt:   dbBookmark.CreatedAt,
+			UpdatedAt:   dbBookmark.UpdatedAt,
+		}
+
+		bookmarks = append(bookmarks, bookmark)
+	}
+
+	return bookmarks, nil
+}
+
+func (r *Repository) BookmarkGetByURL(userUUID, url string) (bookmark.Bookmark, error) {
+	dbBookmark := &Bookmark{}
+
+	err := r.db.QueryRowx(
+		`
+SELECT user_uuid, uid, url, title, description, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+AND url=$2`,
+		userUUID,
+		url,
+	).StructScan(dbBookmark)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return bookmark.Bookmark{}, bookmark.ErrNotFound
+	}
+	if err != nil {
+		return bookmark.Bookmark{}, err
+	}
+
+	return bookmark.Bookmark{
+		UserUUID:    dbBookmark.UserUUID,
+		UID:         dbBookmark.UID,
+		URL:         dbBookmark.URL,
+		Title:       dbBookmark.Title,
+		Description: dbBookmark.Description,
+		CreatedAt:   dbBookmark.CreatedAt,
+		UpdatedAt:   dbBookmark.UpdatedAt,
+	}, nil
+}
+
+func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
+	dbBookmark := Bookmark{
+		UserUUID:    b.UserUUID,
+		UID:         b.UID,
+		URL:         b.URL,
+		Title:       b.Title,
+		Description: b.Description,
+		UpdatedAt:   b.UpdatedAt,
+	}
+
+	_, err := r.db.NamedExec(
+		`
+UPDATE bookmarks
+SET
+	url=:url,
+	title=:title,
+	description=:description,
+	updated_at=:updated_at
+WHERE user_uuid=:user_uuid
+AND uid=:uid
+		`,
+		dbBookmark,
+	)
+	return err
 }
 
 func (r *Repository) SessionAdd(sess session.Session) error {

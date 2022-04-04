@@ -28,6 +28,9 @@ type Server struct {
 	adminUserDeleteView *view
 	adminUserEditView   *view
 
+	bookmarkListView *view
+	bookmarkAddView  *view
+
 	homeView      *view
 	userLoginView *view
 }
@@ -46,6 +49,9 @@ func NewServer(sessionService *session.Service, userService *user.Service) *Serv
 		adminUserAddView:    newView("admin/user_add.gohtml"),
 		adminUserDeleteView: newView("admin/user_delete.gohtml"),
 		adminUserEditView:   newView("admin/user_edit.gohtml"),
+
+		bookmarkListView: newView("bookmark/list.gohtml"),
+		bookmarkAddView:  newView("bookmark/add.gohtml"),
 
 		homeView:      newView("static/home.gohtml"),
 		userLoginView: newView("user/login.gohtml"),
@@ -96,6 +102,16 @@ func (s *Server) addRoutes() {
 	s.router.HandleFunc("/login", s.userLoginView.handle).Methods(http.MethodGet)
 	s.router.HandleFunc("/login", s.handleUserLogin()).Methods(http.MethodPost)
 	s.router.HandleFunc("/logout", s.handleUserLogout()).Methods(http.MethodPost)
+
+	// bookmarks
+	bookmarkRouter := s.router.PathPrefix("/b").Subrouter()
+
+	bookmarkRouter.HandleFunc("", s.handleBookmarkListView()).Methods(http.MethodGet)
+	bookmarkRouter.HandleFunc("/add", s.handleBookmarkAddView()).Methods(http.MethodGet)
+
+	bookmarkRouter.Use(func(h http.Handler) http.Handler {
+		return s.authenticatedUser(h.ServeHTTP)
+	})
 
 	// static assets
 	s.router.HandleFunc("/static/", http.NotFound)
@@ -365,6 +381,18 @@ func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Reque
 
 		s.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully updated", editedUser.Email))
 		http.Redirect(w, r, r.URL.Path, http.StatusFound)
+	}
+}
+
+func (s *Server) handleBookmarkAddView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.bookmarkAddView.render(w, r, nil)
+	}
+}
+
+func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.bookmarkListView.render(w, r, nil)
 	}
 }
 

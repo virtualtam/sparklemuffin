@@ -1,0 +1,39 @@
+{{define "content"}}
+<h2>Bookmarks</h2>
+<h3>Add bookmark</h3>
+<form action="/b/add" method="POST">
+  <p>
+    <label for="url">URL</label>
+    <br>
+    <input
+      type="url"
+      id="url"
+      name="url"
+      placeholder="URL"
+      required="">
+  </p>
+  <p>
+    <label for="title">Title</label>
+    <br>
+    <input
+      type="text"
+      id="title"
+      name="title"
+      placeholder="Title"
+      required="">
+  </p>
+  <p>
+    <label for="description">Description</label>
+    <br>
+    <textarea
+      id="description"
+      name="description"
+      placeholder="Description"
+      rows="10"
+      cols="80">
+    </textarea>
+  </p>
+  <p>
+    <button type="submit">Add</button>
+  </p>
+{{end}}

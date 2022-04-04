@@ -1,0 +1,21 @@
+{{define "content"}}
+  {{template "bookmarkAddForm"}}
+  <hr>
+  {{range .}}
+    {{template "bookmark" .}}
+  {{end}}
+{{end}}
+
+{{define "bookmarkAddForm"}}
+<p>
+  <a href="/b/add">Add bookmark</a>
+</p>
+{{end}}
+
+{{define "bookmark"}}
+<p>
+  <a href="{{.URL}}">{{.Title}}</a>
+  <hr>
+  {{.Description}}
+</p>
+{{end}}

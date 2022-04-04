@@ -9,6 +9,8 @@
   <table>
     <thead>
       <th>Email</th>
+      <th>Nickname</th>
+      <th>Display Name</th>
       <th>Is Admin?</th>
       <th>Actions</th>
     </thead>
@@ -23,6 +25,8 @@
 {{define "userRow"}}
 <tr>
   <td>{{.Email}}</td>
+  <td>{{.NickName}}</td>
+  <td>{{.DisplayName}}</td>
   <td>{{.IsAdmin}}</td>
   <td>
     <a href="/admin/users/{{.UUID}}">Edit</a>

@@ -124,7 +124,9 @@ func (s *Server) handleAccountView() func(w http.ResponseWriter, r *http.Request
 // handleAccountInfoUpdate processes the account information update form.
 func (s *Server) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type infoUpdateForm struct {
-		Email string `schema:"email"`
+		Email       string `schema:"email"`
+		NickName    string `schema:"nick_name"`
+		DisplayName string `schema:"display_name"`
 	}
 
 	var form infoUpdateForm
@@ -140,8 +142,10 @@ func (s *Server) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.R
 		}
 
 		userInfo := user.InfoUpdate{
-			UUID:  ctxUser.UUID,
-			Email: form.Email,
+			UUID:        ctxUser.UUID,
+			Email:       form.Email,
+			NickName:    form.NickName,
+			DisplayName: form.DisplayName,
 		}
 
 		if err := s.userService.UpdateInfo(userInfo); err != nil {
@@ -214,9 +218,11 @@ func (s *Server) handleAdmin() func(w http.ResponseWriter, r *http.Request) {
 // handleAdminUserAdd processes data submitted through the user creation form.
 func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Request) {
 	type userAddForm struct {
-		Email    string `schema:"email"`
-		Password string `schema:"password"`
-		IsAdmin  bool   `schema:"is_admin"`
+		Email       string `schema:"email"`
+		NickName    string `schema:"nick_name"`
+		DisplayName string `schema:"display_name"`
+		Password    string `schema:"password"`
+		IsAdmin     bool   `schema:"is_admin"`
 	}
 
 	var form userAddForm
@@ -230,9 +236,11 @@ func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Reques
 		}
 
 		newUser := user.User{
-			Email:    form.Email,
-			Password: form.Password,
-			IsAdmin:  form.IsAdmin,
+			Email:       form.Email,
+			NickName:    form.NickName,
+			DisplayName: form.DisplayName,
+			Password:    form.Password,
+			IsAdmin:     form.IsAdmin,
 		}
 
 		if err := s.userService.Add(newUser); err != nil {
@@ -319,9 +327,11 @@ func (s *Server) handleAdminUserEditView() func(w http.ResponseWriter, r *http.R
 // handleAdminUserEdit processes the user edition form.
 func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Request) {
 	type userEditForm struct {
-		Email    string `schema:"email"`
-		Password string `schema:"password"`
-		IsAdmin  bool   `schema:"is_admin"`
+		Email       string `schema:"email"`
+		NickName    string `schema:"nick_name"`
+		DisplayName string `schema:"display_name"`
+		Password    string `schema:"password"`
+		IsAdmin     bool   `schema:"is_admin"`
 	}
 
 	var form userEditForm
@@ -338,10 +348,12 @@ func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Reque
 		}
 
 		editedUser := user.User{
-			UUID:     userUUID,
-			Email:    form.Email,
-			Password: form.Password,
-			IsAdmin:  form.IsAdmin,
+			UUID:        userUUID,
+			Email:       form.Email,
+			NickName:    form.NickName,
+			DisplayName: form.DisplayName,
+			Password:    form.Password,
+			IsAdmin:     form.IsAdmin,
 		}
 
 		if err := s.userService.Update(editedUser); err != nil {

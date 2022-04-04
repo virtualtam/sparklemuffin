@@ -1,9 +1,13 @@
 {{define "content"}}
   {{template "bookmarkAddForm"}}
   <hr>
+  <ol>
   {{range .}}
+    <li>
     {{template "bookmark" .}}
+    </li>
   {{end}}
+  </ul>
 {{end}}
 
 {{define "bookmarkAddForm"}}
@@ -13,9 +17,22 @@
 {{end}}
 
 {{define "bookmark"}}
-<p>
-  <a href="{{.URL}}">{{.Title}}</a>
-  <hr>
-  {{.Description}}
-</p>
+<div class="bookmark">
+  <p>
+    <a href="{{.URL}}">{{.Title}}</a>
+    <br>
+    <span class="details">
+      {{.UpdatedAt.Format "Mon, 02 Jan 2006 15:04:05 MST"}}
+    </span>
+    {{with .Description}}
+      <br>
+      {{.}}
+    {{end}}
+  </p>
+  <p>
+    <a href="/b/{{.UID}}/edit">Edit</a>
+    <br>
+    <a href="/b/{{.UID}}/delete">Delete</a>
+  </p>
+</div>
 {{end}}

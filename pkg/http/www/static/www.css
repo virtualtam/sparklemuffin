@@ -57,6 +57,15 @@ body > footer {
   grid-column-end: 3;
 }
 
+.bookmark {
+  display: grid;
+  grid-template-columns: auto 7rem;
+}
+
+.bookmark .details {
+  font-size: .8rem;
+}
+
 .flash {
   margin: 0;
 }

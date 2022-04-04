@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
+	"github.com/virtualtam/yawbe/pkg/bookmark"
 	"github.com/virtualtam/yawbe/pkg/http/www/rand"
 	"github.com/virtualtam/yawbe/pkg/http/www/static"
 	"github.com/virtualtam/yawbe/pkg/session"
@@ -19,8 +20,9 @@ var _ http.Handler = &Server{}
 type Server struct {
 	router *mux.Router
 
-	sessionService *session.Service
-	userService    *user.Service
+	bookmarkService *bookmark.Service
+	sessionService  *session.Service
+	userService     *user.Service
 
 	accountView *view
 
@@ -29,20 +31,21 @@ type Server struct {
 	adminUserDeleteView *view
 	adminUserEditView   *view
 
-	bookmarkListView *view
 	bookmarkAddView  *view
+	bookmarkListView *view
 
 	homeView      *view
 	userLoginView *view
 }
 
 // NewServer initializes and returns a new Server.
-func NewServer(sessionService *session.Service, userService *user.Service) *Server {
+func NewServer(bookmarkService *bookmark.Service, sessionService *session.Service, userService *user.Service) *Server {
 	s := &Server{
 		router: mux.NewRouter(),
 
-		sessionService: sessionService,
-		userService:    userService,
+		bookmarkService: bookmarkService,
+		sessionService:  sessionService,
+		userService:     userService,
 
 		accountView: newView("account/account.gohtml"),
 
@@ -51,8 +54,8 @@ func NewServer(sessionService *session.Service, userService *user.Service) *Serv
 		adminUserDeleteView: newView("admin/user_delete.gohtml"),
 		adminUserEditView:   newView("admin/user_edit.gohtml"),
 
-		bookmarkListView: newView("bookmark/list.gohtml"),
 		bookmarkAddView:  newView("bookmark/add.gohtml"),
+		bookmarkListView: newView("bookmark/list.gohtml"),
 
 		homeView:      newView("static/home.gohtml"),
 		userLoginView: newView("user/login.gohtml"),
@@ -109,6 +112,7 @@ func (s *Server) addRoutes() {
 
 	bookmarkRouter.HandleFunc("", s.handleBookmarkListView()).Methods(http.MethodGet)
 	bookmarkRouter.HandleFunc("/add", s.handleBookmarkAddView()).Methods(http.MethodGet)
+	bookmarkRouter.HandleFunc("/add", s.handleBookmarkAdd()).Methods(http.MethodPost)
 
 	bookmarkRouter.Use(func(h http.Handler) http.Handler {
 		return s.authenticatedUser(h.ServeHTTP)
@@ -391,9 +395,59 @@ func (s *Server) handleBookmarkAddView() func(w http.ResponseWriter, r *http.Req
 	}
 }
 
+func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request) {
+	type bookmarkAddForm struct {
+		URL         string `schema:"url"`
+		Title       string `schema:"title"`
+		Description string `schema:"description"`
+	}
+
+	var form bookmarkAddForm
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := parseForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse bookmark creation form")
+			s.PutFlashError(w, "failed to process form")
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			return
+		}
+
+		user := userValue(r.Context())
+
+		newBookmark := bookmark.Bookmark{
+			UserUUID:    user.UUID,
+			URL:         form.URL,
+			Title:       form.Title,
+			Description: form.Description,
+		}
+
+		if err := s.bookmarkService.Add(newBookmark); err != nil {
+			log.Error().Err(err).Msg("failed to add bookmark")
+			s.PutFlashError(w, "failed to add bookmark")
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/b", http.StatusFound)
+	}
+}
+
 func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.bookmarkListView.render(w, r, nil)
+		var viewData Data
+		user := userValue(r.Context())
+
+		bookmarks, err := s.bookmarkService.All(user.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve bookmarks")
+			s.PutFlashError(w, "failed to retrieve bookmarks")
+			http.Redirect(w, r, "/", http.StatusInternalServerError)
+			return
+		}
+
+		viewData.Content = bookmarks
+
+		s.bookmarkListView.render(w, r, viewData)
 	}
 }
 

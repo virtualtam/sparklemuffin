@@ -32,6 +32,8 @@ func (s *Service) Add(bookmark Bookmark) error {
 		s.normalizeTitle,
 		s.requireTitle,
 		s.normalizeDescription,
+		s.normalizeTagNames,
+		s.deduplicateTagNames,
 		s.generateUID,
 		s.validateUID,
 		s.setCreatedUpdatedAt,
@@ -98,6 +100,8 @@ func (s *Service) Update(bookmark Bookmark) error {
 		s.normalizeTitle,
 		s.requireTitle,
 		s.normalizeDescription,
+		s.normalizeTagNames,
+		s.deduplicateTagNames,
 		s.refreshUpdatedAt,
 	)
 	if err != nil {
@@ -105,6 +109,24 @@ func (s *Service) Update(bookmark Bookmark) error {
 	}
 
 	return s.r.BookmarkUpdate(bookmark)
+}
+func (s *Service) deduplicateTagNames(bookmark *Bookmark) error {
+	tagNames := map[string]bool{}
+	tags := []string{}
+
+	for _, tag := range bookmark.Tags {
+		_, exists := tagNames[tag]
+
+		if exists {
+			continue
+		}
+
+		tagNames[tag] = true
+		tags = append(tags, tag)
+	}
+
+	bookmark.Tags = tags
+	return nil
 }
 
 func (s *Service) ensureURLIsParseable(bookmark *Bookmark) error {
@@ -147,6 +169,21 @@ func (s *Service) generateUID(bookmark *Bookmark) error {
 
 func (s *Service) normalizeDescription(bookmark *Bookmark) error {
 	bookmark.Description = strings.TrimSpace(bookmark.Description)
+	return nil
+}
+
+func (s *Service) normalizeTagNames(bookmark *Bookmark) error {
+	tags := []string{}
+
+	for _, tag := range bookmark.Tags {
+		tag := strings.TrimSpace(tag)
+		if tag == "" {
+			continue
+		}
+		tags = append(tags, tag)
+	}
+
+	bookmark.Tags = tags
 	return nil
 }
 

@@ -10,8 +10,10 @@ func TestServiceAdd(t *testing.T) {
 		tname               string
 		repositoryBookmarks []Bookmark
 		bookmark            Bookmark
+		want                Bookmark
 		wantErr             error
 	}{
+		// error cases
 		{
 			tname:   "empty bookmark",
 			wantErr: ErrUserUUIDRequired,
@@ -78,9 +80,16 @@ func TestServiceAdd(t *testing.T) {
 			},
 			wantErr: ErrTitleRequired,
 		},
+
+		// nominal cases
 		{
 			tname: "add bookmark",
 			bookmark: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://domain.tld",
+				Title:    "Example Domain",
+			},
+			want: Bookmark{
 				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
 				URL:      "https://domain.tld",
 				Title:    "Example Domain",
@@ -93,6 +102,91 @@ func TestServiceAdd(t *testing.T) {
 				URL:         "https://domain.tld",
 				Title:       "Example Domain",
 				Description: "Hello,\nThis bookmark has a longer description!",
+			},
+			want: Bookmark{
+				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:         "https://domain.tld",
+				Title:       "Example Domain",
+				Description: "Hello,\nThis bookmark has a longer description!",
+			},
+		},
+		{
+			tname: "add bookmark with tags",
+			bookmark: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://domain.tld",
+				Title:    "Example Domain",
+				Tags: []string{
+					"example",
+					"test",
+				},
+			},
+			want: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://domain.tld",
+				Title:    "Example Domain",
+				Tags: []string{
+					"example",
+					"test",
+				},
+			},
+		},
+		{
+			tname: "add bookmark with empty (whitespace) tags",
+			bookmark: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://domain.tld",
+				Title:    "Example Domain",
+				Tags: []string{
+					"   ", // spaces
+					"	", // tab
+					" 	  ", // spaces, tab, spaces
+				},
+			},
+			want: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://domain.tld",
+				Title:    "Example Domain",
+			},
+		},
+		{
+			tname: "add bookmark with duplicate tags",
+			bookmark: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://domain.tld",
+				Title:    "Example Domain",
+				Tags: []string{
+					"dupe",
+					"dupe",
+				},
+			},
+			want: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://domain.tld",
+				Title:    "Example Domain",
+				Tags: []string{
+					"dupe",
+				},
+			},
+		},
+		{
+			tname: "add bookmark with duplicate tags containing spaces",
+			bookmark: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://domain.tld",
+				Title:    "Example Domain",
+				Tags: []string{
+					"   dupe",
+					"dupe   ",
+				},
+			},
+			want: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://domain.tld",
+				Title:    "Example Domain",
+				Tags: []string{
+					"dupe",
+				},
 			},
 		},
 	}
@@ -119,6 +213,10 @@ func TestServiceAdd(t *testing.T) {
 			if err != nil {
 				t.Fatalf("want no error, got %q", err)
 			}
+
+			got := r.Bookmarks[len(r.Bookmarks)-1]
+
+			assertBookmarksEqual(t, got, tc.want)
 		})
 	}
 }
@@ -285,8 +383,10 @@ func TestServiceUpdate(t *testing.T) {
 		tname               string
 		repositoryBookmarks []Bookmark
 		bookmark            Bookmark
+		want                Bookmark
 		wantErr             error
 	}{
+		// error cases
 		{
 			tname:   "empty bookmark",
 			wantErr: ErrUIDRequired,
@@ -362,6 +462,8 @@ func TestServiceUpdate(t *testing.T) {
 			},
 			wantErr: ErrNotFound,
 		},
+
+		// nominal cases
 		{
 			tname: "update bookmark",
 			repositoryBookmarks: []Bookmark{
@@ -377,6 +479,10 @@ func TestServiceUpdate(t *testing.T) {
 				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
 				URL:      "https://domain.tld",
 				Title:    "Example Domain",
+			},
+			want: Bookmark{
+				URL:   "https://domain.tld",
+				Title: "Example Domain",
 			},
 		},
 		{
@@ -395,6 +501,46 @@ func TestServiceUpdate(t *testing.T) {
 				URL:         "https://domain.tld",
 				Title:       "Example Domain",
 				Description: "Hello,\nThis bookmark has a longer description!",
+			},
+			want: Bookmark{
+				URL:         "https://domain.tld",
+				Title:       "Example Domain",
+				Description: "Hello,\nThis bookmark has a longer description!",
+			},
+		},
+		{
+			tname: "update bookmark with tags",
+			repositoryBookmarks: []Bookmark{
+				{
+					UID:      "27L4DoEZaRASKhQKygRCrvVAwkr",
+					UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+					URL:      "https://domain.tld",
+					Title:    "Example Doma",
+				},
+			},
+			bookmark: Bookmark{
+				UID:      "27L4DoEZaRASKhQKygRCrvVAwkr",
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://domain.tld",
+				Title:    "Example Domain",
+				Tags: []string{
+					"  dupe",
+					"  ", // spaces
+					"	 ", // tab and spaces
+					"example",
+					"test",
+					"dupe",
+					"dupe  ",
+				},
+			},
+			want: Bookmark{
+				URL:   "https://domain.tld",
+				Title: "Example Domain",
+				Tags: []string{
+					"dupe",
+					"example",
+					"test",
+				},
 			},
 		},
 	}
@@ -421,6 +567,38 @@ func TestServiceUpdate(t *testing.T) {
 			if err != nil {
 				t.Fatalf("want no error, got %q", err)
 			}
+
+			got, err := r.BookmarkGetByUID(tc.bookmark.UserUUID, tc.bookmark.UID)
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertBookmarksEqual(t, got, tc.want)
 		})
+	}
+}
+
+func assertBookmarksEqual(t *testing.T, got, want Bookmark) {
+	t.Helper()
+
+	if got.URL != want.URL {
+		t.Errorf("want URL %q, got %q", want.URL, got.URL)
+	}
+
+	if got.Title != want.Title {
+		t.Errorf("want Title %q, got %q", want.Title, got.Title)
+	}
+	if got.Description != want.Description {
+		t.Errorf("want Description %q, got %q", want.Description, got.Description)
+	}
+
+	if len(got.Tags) != len(want.Tags) {
+		t.Fatalf("want %d tags, got %d", len(want.Tags), len(got.Tags))
+	}
+
+	for i, wantTag := range want.Tags {
+		if got.Tags[i] != wantTag {
+			t.Errorf("want tag %d Name %q, got %q", i, wantTag, got.Tags[i])
+		}
 	}
 }

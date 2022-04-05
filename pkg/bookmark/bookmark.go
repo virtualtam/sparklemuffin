@@ -11,6 +11,8 @@ type Bookmark struct {
 	Title       string
 	Description string
 
+	Tags []string
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

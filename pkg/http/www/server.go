@@ -138,7 +138,7 @@ func (s *Server) addRoutes() {
 	})
 }
 
-// handleAccountView displays the user account management page.
+// handleAccountView renders the user account management page.
 func (s *Server) handleAccountView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := userValue(r.Context())
@@ -228,7 +228,7 @@ func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *ht
 	}
 }
 
-// handleAdmin displays the main administration page.
+// handleAdmin renders the main administration page.
 func (s *Server) handleAdmin() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var viewData Data
@@ -284,7 +284,7 @@ func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// handleAdminUserDeleteView displays the user deletion form.
+// handleAdminUserDeleteView renders the user deletion form.
 func (s *Server) handleAdminUserDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -332,7 +332,7 @@ func (s *Server) handleAdminUserDelete() func(w http.ResponseWriter, r *http.Req
 	}
 }
 
-// handleAdminUserEditView displays the user edition form.
+// handleAdminUserEditView renders the user edition form.
 func (s *Server) handleAdminUserEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -397,12 +397,14 @@ func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// handleBookmarkAddView renders the bookmark addition form.
 func (s *Server) handleBookmarkAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.bookmarkAddView.render(w, r, nil)
 	}
 }
 
+// handleBookmarkAdd processes the bookmark addition form.
 func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request) {
 	type bookmarkAddForm struct {
 		URL         string `schema:"url"`
@@ -440,6 +442,7 @@ func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// handleBookmarkDeleteView renders the bookmark deletion form.
 func (s *Server) handleBookmarkDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -463,6 +466,7 @@ func (s *Server) handleBookmarkDeleteView() func(w http.ResponseWriter, r *http.
 	}
 }
 
+// handleBookmarkDelete processes the bookmark deletion form.
 func (s *Server) handleBookmarkDelete() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -481,6 +485,7 @@ func (s *Server) handleBookmarkDelete() func(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+// handleBookmarkEditView renders the bookmark edition form.
 func (s *Server) handleBookmarkEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -504,6 +509,7 @@ func (s *Server) handleBookmarkEditView() func(w http.ResponseWriter, r *http.Re
 	}
 }
 
+// handleBookmarkEdit processes the bookmark edition form.
 func (s *Server) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Request) {
 	type bookmarkEditForm struct {
 		URL         string `schema:"url"`
@@ -545,6 +551,7 @@ func (s *Server) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// handleBookmarkListView renders the bookmark list.
 func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var viewData Data
@@ -755,6 +762,8 @@ func (s *Server) adminUser(h http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
+// putFlash sets a session flash message to be displayed by the next rendered
+// view.
 func (s *Server) putFlash(w http.ResponseWriter, level flashLevel, message string) {
 	flash := Flash{
 		Level:   level,

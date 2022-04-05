@@ -28,6 +28,7 @@ func (s *Service) Add(bookmark Bookmark) error {
 		s.normalizeURL,
 		s.requireURL,
 		s.ensureURLIsParseable,
+		// FIXME s.ensureURLIsNotRegistered,
 		s.normalizeTitle,
 		s.requireTitle,
 		s.normalizeDescription,
@@ -44,6 +45,25 @@ func (s *Service) Add(bookmark Bookmark) error {
 
 func (s *Service) All(userUUID string) ([]Bookmark, error) {
 	return s.r.BookmarkGetAll(userUUID)
+}
+
+func (s *Service) ByUID(userUUID string, uid string) (Bookmark, error) {
+	bookmark := Bookmark{
+		UserUUID: userUUID,
+		UID:      uid,
+	}
+
+	err := s.runValidationFuncs(
+		&bookmark,
+		s.requireUID,
+		s.validateUID,
+		s.requireUserUUID,
+	)
+	if err != nil {
+		return Bookmark{}, err
+	}
+
+	return s.r.BookmarkGetByUID(userUUID, uid)
 }
 
 func (s *Service) Delete(userUUID, uid string) error {

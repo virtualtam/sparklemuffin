@@ -32,6 +32,7 @@ type Server struct {
 	adminUserEditView   *view
 
 	bookmarkAddView  *view
+	bookmarkEditView *view
 	bookmarkListView *view
 
 	homeView      *view
@@ -55,6 +56,7 @@ func NewServer(bookmarkService *bookmark.Service, sessionService *session.Servic
 		adminUserEditView:   newView("admin/user_edit.gohtml"),
 
 		bookmarkAddView:  newView("bookmark/add.gohtml"),
+		bookmarkEditView: newView("bookmark/edit.gohtml"),
 		bookmarkListView: newView("bookmark/list.gohtml"),
 
 		homeView:      newView("static/home.gohtml"),
@@ -113,6 +115,8 @@ func (s *Server) addRoutes() {
 	bookmarkRouter.HandleFunc("", s.handleBookmarkListView()).Methods(http.MethodGet)
 	bookmarkRouter.HandleFunc("/add", s.handleBookmarkAddView()).Methods(http.MethodGet)
 	bookmarkRouter.HandleFunc("/add", s.handleBookmarkAdd()).Methods(http.MethodPost)
+	bookmarkRouter.HandleFunc("/{uid}/edit", s.handleBookmarkEditView()).Methods(http.MethodGet)
+	bookmarkRouter.HandleFunc("/{uid}/edit", s.handleBookmarkEdit()).Methods(http.MethodPost)
 
 	bookmarkRouter.Use(func(h http.Handler) http.Handler {
 		return s.authenticatedUser(h.ServeHTTP)
@@ -424,6 +428,70 @@ func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request
 		if err := s.bookmarkService.Add(newBookmark); err != nil {
 			log.Error().Err(err).Msg("failed to add bookmark")
 			s.PutFlashError(w, "failed to add bookmark")
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/b", http.StatusFound)
+	}
+}
+
+func (s *Server) handleBookmarkEditView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		uid := vars["uid"]
+
+		user := userValue(r.Context())
+
+		bookmark, err := s.bookmarkService.ByUID(user.UUID, uid)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve bookmark")
+			s.PutFlashError(w, "failed to retrieve bookmark")
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			return
+		}
+
+		viewData := Data{
+			Content: bookmark,
+		}
+
+		s.bookmarkEditView.render(w, r, viewData)
+	}
+}
+
+func (s *Server) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Request) {
+	type bookmarkEditForm struct {
+		URL         string `schema:"url"`
+		Title       string `schema:"title"`
+		Description string `schema:"description"`
+	}
+
+	var form bookmarkEditForm
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := parseForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse bookmark edition form")
+			s.PutFlashError(w, "failed to process form")
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			return
+		}
+
+		vars := mux.Vars(r)
+		uid := vars["uid"]
+
+		user := userValue(r.Context())
+
+		editedBookmark := bookmark.Bookmark{
+			UserUUID:    user.UUID,
+			UID:         uid,
+			URL:         form.URL,
+			Title:       form.Title,
+			Description: form.Description,
+		}
+
+		if err := s.bookmarkService.Update(editedBookmark); err != nil {
+			log.Error().Err(err).Msg("failed to edit bookmark")
+			s.PutFlashError(w, "failed to edit bookmark")
 			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
 			return
 		}

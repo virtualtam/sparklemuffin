@@ -106,6 +106,163 @@ func TestServiceAdd(t *testing.T) {
 	}
 }
 
+func TestServiceByUID(t *testing.T) {
+	cases := []struct {
+		tname               string
+		repositoryBookmarks []Bookmark
+		userUUID            string
+		uid                 string
+		want                Bookmark
+		wantErr             error
+	}{
+		{
+			tname:   "empty UID",
+			wantErr: ErrUIDRequired,
+		},
+		{
+			tname:   "invalid UID",
+			uid:     "invalid",
+			wantErr: ErrUIDInvalid,
+		},
+		{
+			tname:   "empty user UUID",
+			uid:     "27L5erU5VNJzIGY1uPUqzLkc9zV",
+			wantErr: ErrUserUUIDRequired,
+		},
+		{
+			tname:    "not found",
+			uid:      "27L5pr0PGGF6YTV7ULLu2K1x4xe",
+			userUUID: "f0127fa0-722d-458d-9f3c-31823c42e2b7",
+			wantErr:  ErrNotFound,
+		},
+		{
+			tname: "get bookmark",
+			repositoryBookmarks: []Bookmark{
+				{
+					UserUUID:    "f0127fa0-722d-458d-9f3c-31823c42e2b7",
+					UID:         "27L5pr0PGGF6YTV7ULLu2K1x4xe",
+					URL:         "https://domain.tld",
+					Title:       "Test Domain",
+					Description: "This is useful for tests!",
+				},
+			},
+			uid:      "27L5pr0PGGF6YTV7ULLu2K1x4xe",
+			userUUID: "f0127fa0-722d-458d-9f3c-31823c42e2b7",
+			want: Bookmark{
+				UserUUID:    "f0127fa0-722d-458d-9f3c-31823c42e2b7",
+				UID:         "27L5pr0PGGF6YTV7ULLu2K1x4xe",
+				URL:         "https://domain.tld",
+				Title:       "Test Domain",
+				Description: "This is useful for tests!",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+			}
+			s := NewService(r)
+
+			got, err := s.ByUID(tc.userUUID, tc.uid)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			if got.URL != tc.want.URL {
+				t.Errorf("want URL %q, got %q", tc.want.URL, got.URL)
+			}
+			if got.Title != tc.want.Title {
+				t.Errorf("want Title %q, got %q", tc.want.Title, got.Title)
+			}
+			if got.Description != tc.want.Description {
+				t.Errorf("want Description %q, got %q", tc.want.Description, got.Description)
+			}
+		})
+	}
+}
+
+func TestServiceDelete(t *testing.T) {
+	cases := []struct {
+		tname               string
+		repositoryBookmarks []Bookmark
+		userUUID            string
+		uid                 string
+		wantErr             error
+	}{
+		{
+			tname:   "empty UID",
+			wantErr: ErrUIDRequired,
+		},
+		{
+			tname:   "invalid UID",
+			uid:     "invalid",
+			wantErr: ErrUIDInvalid,
+		},
+		{
+			tname:   "empty user UUID",
+			uid:     "27L5erU5VNJzIGY1uPUqzLkc9zV",
+			wantErr: ErrUserUUIDRequired,
+		},
+		{
+			tname:    "not found",
+			uid:      "27L5pr0PGGF6YTV7ULLu2K1x4xe",
+			userUUID: "f0127fa0-722d-458d-9f3c-31823c42e2b7",
+			wantErr:  ErrNotFound,
+		},
+		{
+			tname: "delete bookmark",
+			repositoryBookmarks: []Bookmark{
+				{
+					UserUUID: "f0127fa0-722d-458d-9f3c-31823c42e2b7",
+					UID:      "27L5pr0PGGF6YTV7ULLu2K1x4xe",
+					URL:      "https://domain.tld",
+					Title:    "Test Domain",
+				},
+			},
+			uid:      "27L5pr0PGGF6YTV7ULLu2K1x4xe",
+			userUUID: "f0127fa0-722d-458d-9f3c-31823c42e2b7",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+			}
+			s := NewService(r)
+
+			err := s.Delete(tc.userUUID, tc.uid)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+		})
+	}
+}
+
 func TestServiceUpdate(t *testing.T) {
 	cases := []struct {
 		tname               string
@@ -233,75 +390,6 @@ func TestServiceUpdate(t *testing.T) {
 			s := NewService(r)
 
 			err := s.Update(tc.bookmark)
-
-			if tc.wantErr != nil {
-				if errors.Is(err, tc.wantErr) {
-					return
-				}
-				if err == nil {
-					t.Fatalf("want error %q, got nil", tc.wantErr)
-				}
-				t.Fatalf("want error %q, got %q", tc.wantErr, err)
-			}
-
-			if err != nil {
-				t.Fatalf("want no error, got %q", err)
-			}
-		})
-	}
-}
-
-func TestServiceDelete(t *testing.T) {
-	cases := []struct {
-		tname               string
-		repositoryBookmarks []Bookmark
-		userUUID            string
-		uid                 string
-		wantErr             error
-	}{
-		{
-			tname:   "empty UID",
-			wantErr: ErrUIDRequired,
-		},
-		{
-			tname:   "invalid UID",
-			uid:     "invalid",
-			wantErr: ErrUIDInvalid,
-		},
-		{
-			tname:   "empty user UUID",
-			uid:     "27L5erU5VNJzIGY1uPUqzLkc9zV",
-			wantErr: ErrUserUUIDRequired,
-		},
-		{
-			tname:    "not found",
-			uid:      "27L5pr0PGGF6YTV7ULLu2K1x4xe",
-			userUUID: "f0127fa0-722d-458d-9f3c-31823c42e2b7",
-			wantErr:  ErrNotFound,
-		},
-		{
-			tname: "delete bookmark",
-			repositoryBookmarks: []Bookmark{
-				{
-					UserUUID: "f0127fa0-722d-458d-9f3c-31823c42e2b7",
-					UID:      "27L5pr0PGGF6YTV7ULLu2K1x4xe",
-					URL:      "https://domain.tld",
-					Title:    "Test Domain",
-				},
-			},
-			uid:      "27L5pr0PGGF6YTV7ULLu2K1x4xe",
-			userUUID: "f0127fa0-722d-458d-9f3c-31823c42e2b7",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.tname, func(t *testing.T) {
-			r := &FakeRepository{
-				Bookmarks: tc.repositoryBookmarks,
-			}
-			s := NewService(r)
-
-			err := s.Delete(tc.userUUID, tc.uid)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

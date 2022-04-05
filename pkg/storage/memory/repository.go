@@ -39,6 +39,16 @@ func (r *Repository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error
 	return bookmarks, nil
 }
 
+func (r *Repository) BookmarkGetByUID(userUUID, uid string) (bookmark.Bookmark, error) {
+	for _, b := range r.Bookmarks {
+		if b.UserUUID == userUUID && b.UID == uid {
+			return b, nil
+		}
+	}
+
+	return bookmark.Bookmark{}, bookmark.ErrNotFound
+}
+
 func (r *Repository) BookmarkGetByURL(userUUID, url string) (bookmark.Bookmark, error) {
 	for _, b := range r.Bookmarks {
 		if b.UserUUID == userUUID && b.URL == url {

@@ -120,6 +120,37 @@ ORDER BY created_at DESC`,
 	return bookmarks, nil
 }
 
+func (r *Repository) BookmarkGetByUID(userUUID, uid string) (bookmark.Bookmark, error) {
+	dbBookmark := &Bookmark{}
+
+	err := r.db.QueryRowx(
+		`
+SELECT user_uuid, uid, url, title, description, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+AND uid=$2`,
+		userUUID,
+		uid,
+	).StructScan(dbBookmark)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return bookmark.Bookmark{}, bookmark.ErrNotFound
+	}
+	if err != nil {
+		return bookmark.Bookmark{}, err
+	}
+
+	return bookmark.Bookmark{
+		UserUUID:    dbBookmark.UserUUID,
+		UID:         dbBookmark.UID,
+		URL:         dbBookmark.URL,
+		Title:       dbBookmark.Title,
+		Description: dbBookmark.Description,
+		CreatedAt:   dbBookmark.CreatedAt,
+		UpdatedAt:   dbBookmark.UpdatedAt,
+	}, nil
+}
+
 func (r *Repository) BookmarkGetByURL(userUUID, url string) (bookmark.Bookmark, error) {
 	dbBookmark := &Bookmark{}
 

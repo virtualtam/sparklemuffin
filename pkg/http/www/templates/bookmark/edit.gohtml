@@ -1,7 +1,7 @@
 {{define "content"}}
 <h2>Bookmarks</h2>
-<h3>Add bookmark</h3>
-<form action="/b/add" method="POST">
+<h3>Edit bookmark</h3>
+<form action="/b/{{.UID}}/edit" method="POST">
   <p>
     <label for="url">URL</label>
     <br>
@@ -10,6 +10,7 @@
       id="url"
       name="url"
       placeholder="URL"
+      value="{{.URL}}"
       required="">
   </p>
   <p>
@@ -20,19 +21,15 @@
       id="title"
       name="title"
       placeholder="Title"
+      value="{{.Title}}"
       required="">
   </p>
   <p>
     <label for="description">Description</label>
     <br>
-    <textarea
-      id="description"
-      name="description"
-      placeholder="Description"
-      rows="10"
-      cols="80"></textarea>
+    <textarea id="description" name="description" rows="10" cols="80">{{.Description}}</textarea>
   </p>
   <p>
-    <button type="submit">Add</button>
+    <button type="submit">Edit</button>
   </p>
 {{end}}

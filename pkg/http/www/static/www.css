@@ -47,6 +47,7 @@ body > header > nav > form > button {
   font-family: var(--sans-font);
   font-weight: normal;
 }
+
 body > header > nav > form > button:hover {
   color: #bf616a;
   border-color: #bf616a;
@@ -64,6 +65,13 @@ body > footer {
 
 .bookmark .details {
   font-size: .8rem;
+}
+
+.bookmark .tag {
+  border-radius: 5px;
+  background-color: #434c5e;
+  font-size: .9rem;
+  padding: .1rem .5rem;
 }
 
 .flash {

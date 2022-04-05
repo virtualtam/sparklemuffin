@@ -27,12 +27,15 @@ func NewRepository(db *sqlx.DB) *Repository {
 }
 
 func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
+	dbTags := tagsToTextArray(b.Tags)
+
 	dbBookmark := Bookmark{
 		UID:         b.UID,
 		UserUUID:    b.UserUUID,
 		URL:         b.URL,
 		Title:       b.Title,
 		Description: b.Description,
+		Tags:        dbTags,
 		CreatedAt:   b.CreatedAt,
 		UpdatedAt:   b.UpdatedAt,
 	}
@@ -45,6 +48,7 @@ INSERT INTO bookmarks(
 	url,
 	title,
 	description,
+	tags,
 	created_at,
 	updated_at
 )
@@ -54,6 +58,7 @@ VALUES(
 	:url,
 	:title,
 	:description,
+	:tags,
 	:created_at,
 	:updated_at
 )
@@ -85,7 +90,7 @@ func (r *Repository) BookmarkDelete(userUUID, uid string) error {
 func (r *Repository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error) {
 	rows, err := r.db.Queryx(
 		`
-SELECT user_uuid, uid, url, title, description, created_at, updated_at
+SELECT user_uuid, uid, url, title, description, tags, created_at, updated_at
 FROM bookmarks
 WHERE user_uuid=$1
 ORDER BY created_at DESC`,
@@ -104,12 +109,15 @@ ORDER BY created_at DESC`,
 			return []bookmark.Bookmark{}, err
 		}
 
+		tags := textArrayToTags(dbBookmark.Tags)
+
 		bookmark := bookmark.Bookmark{
 			UserUUID:    dbBookmark.UserUUID,
 			UID:         dbBookmark.UID,
 			URL:         dbBookmark.URL,
 			Title:       dbBookmark.Title,
 			Description: dbBookmark.Description,
+			Tags:        tags,
 			CreatedAt:   dbBookmark.CreatedAt,
 			UpdatedAt:   dbBookmark.UpdatedAt,
 		}
@@ -125,7 +133,7 @@ func (r *Repository) BookmarkGetByUID(userUUID, uid string) (bookmark.Bookmark, 
 
 	err := r.db.QueryRowx(
 		`
-SELECT user_uuid, uid, url, title, description, created_at, updated_at
+SELECT user_uuid, uid, url, title, description, tags, created_at, updated_at
 FROM bookmarks
 WHERE user_uuid=$1
 AND uid=$2`,
@@ -140,12 +148,15 @@ AND uid=$2`,
 		return bookmark.Bookmark{}, err
 	}
 
+	tags := textArrayToTags(dbBookmark.Tags)
+
 	return bookmark.Bookmark{
 		UserUUID:    dbBookmark.UserUUID,
 		UID:         dbBookmark.UID,
 		URL:         dbBookmark.URL,
 		Title:       dbBookmark.Title,
 		Description: dbBookmark.Description,
+		Tags:        tags,
 		CreatedAt:   dbBookmark.CreatedAt,
 		UpdatedAt:   dbBookmark.UpdatedAt,
 	}, nil
@@ -156,7 +167,7 @@ func (r *Repository) BookmarkGetByURL(userUUID, url string) (bookmark.Bookmark, 
 
 	err := r.db.QueryRowx(
 		`
-SELECT user_uuid, uid, url, title, description, created_at, updated_at
+SELECT user_uuid, uid, url, title, description, tags, created_at, updated_at
 FROM bookmarks
 WHERE user_uuid=$1
 AND url=$2`,
@@ -171,12 +182,15 @@ AND url=$2`,
 		return bookmark.Bookmark{}, err
 	}
 
+	tags := textArrayToTags(dbBookmark.Tags)
+
 	return bookmark.Bookmark{
 		UserUUID:    dbBookmark.UserUUID,
 		UID:         dbBookmark.UID,
 		URL:         dbBookmark.URL,
 		Title:       dbBookmark.Title,
 		Description: dbBookmark.Description,
+		Tags:        tags,
 		CreatedAt:   dbBookmark.CreatedAt,
 		UpdatedAt:   dbBookmark.UpdatedAt,
 	}, nil
@@ -202,12 +216,15 @@ func (r *Repository) BookmarkIsURLRegistered(userUUID, url string) (bool, error)
 }
 
 func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
+	dbTags := tagsToTextArray(b.Tags)
+
 	dbBookmark := Bookmark{
 		UserUUID:    b.UserUUID,
 		UID:         b.UID,
 		URL:         b.URL,
 		Title:       b.Title,
 		Description: b.Description,
+		Tags:        dbTags,
 		UpdatedAt:   b.UpdatedAt,
 	}
 
@@ -218,6 +235,7 @@ SET
 	url=:url,
 	title=:title,
 	description=:description,
+	tags=:tags,
 	updated_at=:updated_at
 WHERE user_uuid=:user_uuid
 AND uid=:uid

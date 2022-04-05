@@ -4,10 +4,10 @@
   <ol>
   {{range .}}
     <li>
-    {{template "bookmark" .}}
+    {{- template "bookmark" .}}
     </li>
   {{end}}
-  </ul>
+  </ol>
 {{end}}
 
 {{define "bookmarkAddForm"}}
@@ -16,7 +16,7 @@
 </p>
 {{end}}
 
-{{define "bookmark"}}
+{{- define "bookmark"}}
 <div class="bookmark">
   <p>
     <a href="{{.URL}}">{{.Title}}</a>
@@ -24,10 +24,16 @@
     <span class="details">
       {{.UpdatedAt.Format "Mon, 02 Jan 2006 15:04:05 MST"}}
     </span>
-    {{with .Description}}
+    {{- with .Description}}
       <br>
       {{.}}
-    {{end}}
+    {{- end}}
+    {{- with .Tags}}
+      <br>
+      {{- range .}}
+      <span class="tag">{{.}}</span>
+      {{- end}}
+    {{- end}}
   </p>
   <p>
     <a href="/b/{{.UID}}/edit">Edit</a>
@@ -35,4 +41,4 @@
     <a href="/b/{{.UID}}/delete">Delete</a>
   </p>
 </div>
-{{end}}
+{{- end}}

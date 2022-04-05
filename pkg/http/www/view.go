@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -33,7 +34,10 @@ type view struct {
 func newView(templateFiles ...string) *view {
 	templateFiles = append(templateFiles, layoutTemplateFiles()...)
 
-	t, err := template.New("base").ParseFS(templates.FS, templateFiles...)
+	t, err := template.New("base").
+		Funcs(template.FuncMap{"Join": strings.Join}).
+		ParseFS(templates.FS, templateFiles...)
+
 	if err != nil {
 		panic(err)
 	}

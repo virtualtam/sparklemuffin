@@ -3,6 +3,7 @@ package www
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -410,6 +411,7 @@ func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request
 		URL         string `schema:"url"`
 		Title       string `schema:"title"`
 		Description string `schema:"description"`
+		Tags        string `schema:"tags"`
 	}
 
 	var form bookmarkAddForm
@@ -429,6 +431,7 @@ func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request
 			URL:         form.URL,
 			Title:       form.Title,
 			Description: form.Description,
+			Tags:        strings.Split(form.Tags, " "),
 		}
 
 		if err := s.bookmarkService.Add(newBookmark); err != nil {
@@ -515,6 +518,7 @@ func (s *Server) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Reques
 		URL         string `schema:"url"`
 		Title       string `schema:"title"`
 		Description string `schema:"description"`
+		Tags        string `schema:"tags"`
 	}
 
 	var form bookmarkEditForm
@@ -538,6 +542,7 @@ func (s *Server) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Reques
 			URL:         form.URL,
 			Title:       form.Title,
 			Description: form.Description,
+			Tags:        strings.Split(form.Tags, " "),
 		}
 
 		if err := s.bookmarkService.Update(editedBookmark); err != nil {

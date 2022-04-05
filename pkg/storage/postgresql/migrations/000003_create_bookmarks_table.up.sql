@@ -8,5 +8,7 @@ CREATE TABLE IF NOT EXISTS bookmarks(
     title       TEXT NOT NULL,
     description TEXT DEFAULT '',
 
+    tags        TEXT[],
+
     CONSTRAINT fk_user FOREIGN KEY(user_uuid) REFERENCES users(uuid) ON DELETE CASCADE
 );

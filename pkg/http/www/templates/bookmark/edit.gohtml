@@ -30,6 +30,16 @@
     <textarea id="description" name="description" rows="10" cols="80">{{.Description}}</textarea>
   </p>
   <p>
+    <label for="tags">Tags</label>
+    <br>
+    <input
+      type="text"
+      id="tags"
+      name="tags"
+      placeholder="tags, separated by spaces"
+      value="{{Join .Tags " "}}">
+  </p>
+  <p>
     <button type="submit">Edit</button>
   </p>
 {{end}}

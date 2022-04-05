@@ -6,6 +6,11 @@ type FakeRepository struct {
 	Bookmarks []Bookmark
 }
 
+func (r *FakeRepository) BookmarkAdd(bookmark Bookmark) error {
+	r.Bookmarks = append(r.Bookmarks, bookmark)
+	return nil
+}
+
 func (r *FakeRepository) BookmarkDelete(userUUID, uid string) error {
 	for index, b := range r.Bookmarks {
 		if b.UserUUID == userUUID && b.UID == uid {
@@ -49,9 +54,14 @@ func (r *FakeRepository) BookmarkGetByUID(userUUID, uid string) (Bookmark, error
 	return Bookmark{}, ErrNotFound
 }
 
-func (r *FakeRepository) BookmarkAdd(bookmark Bookmark) error {
-	r.Bookmarks = append(r.Bookmarks, bookmark)
-	return nil
+func (r *FakeRepository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {
+	for _, b := range r.Bookmarks {
+		if b.UserUUID == userUUID && b.URL == url {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (r *FakeRepository) BookmarkUpdate(bookmark Bookmark) error {

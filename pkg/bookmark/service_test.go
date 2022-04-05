@@ -7,9 +7,10 @@ import (
 
 func TestServiceAdd(t *testing.T) {
 	cases := []struct {
-		tname    string
-		bookmark Bookmark
-		wantErr  error
+		tname               string
+		repositoryBookmarks []Bookmark
+		bookmark            Bookmark
+		wantErr             error
 	}{
 		{
 			tname:   "empty bookmark",
@@ -45,6 +46,20 @@ func TestServiceAdd(t *testing.T) {
 				URL:      ":/dmn",
 			},
 			wantErr: ErrURLInvalid,
+		},
+		{
+			tname: "duplicate URL",
+			repositoryBookmarks: []Bookmark{
+				{
+					UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+					URL:      "https://duplicate.domain.tld",
+				},
+			},
+			bookmark: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://duplicate.domain.tld",
+			},
+			wantErr: ErrURLAlreadyRegistered,
 		},
 		{
 			tname: "empty title",
@@ -84,7 +99,9 @@ func TestServiceAdd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &FakeRepository{}
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+			}
 			s := NewService(r)
 
 			err := s.Add(tc.bookmark)

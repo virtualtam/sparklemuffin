@@ -416,7 +416,7 @@ func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark creation form")
 			s.PutFlashError(w, "failed to process form")
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusFound)
 			return
 		}
 
@@ -432,7 +432,7 @@ func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request
 		if err := s.bookmarkService.Add(newBookmark); err != nil {
 			log.Error().Err(err).Msg("failed to add bookmark")
 			s.PutFlashError(w, "failed to add bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusFound)
 			return
 		}
 

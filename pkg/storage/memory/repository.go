@@ -11,15 +11,20 @@ var _ session.Repository = &Repository{}
 var _ user.Repository = &Repository{}
 
 type Repository struct {
-	Bookmarks []bookmark.Bookmark
+	bookmarks []bookmark.Bookmark
 	sessions  []session.Session
 	users     []user.User
 }
 
+func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
+	r.bookmarks = append(r.bookmarks, b)
+	return nil
+}
+
 func (r *Repository) BookmarkDelete(userUUID, uid string) error {
-	for index, b := range r.Bookmarks {
+	for index, b := range r.bookmarks {
 		if b.UserUUID == userUUID && b.UID == uid {
-			r.Bookmarks = append(r.Bookmarks[:index], r.Bookmarks[index+1:]...)
+			r.bookmarks = append(r.bookmarks[:index], r.bookmarks[index+1:]...)
 			return nil
 		}
 	}
@@ -30,7 +35,7 @@ func (r *Repository) BookmarkDelete(userUUID, uid string) error {
 func (r *Repository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error) {
 	bookmarks := []bookmark.Bookmark{}
 
-	for _, b := range r.Bookmarks {
+	for _, b := range r.bookmarks {
 		if b.UserUUID == userUUID {
 			bookmarks = append(bookmarks, b)
 		}
@@ -40,7 +45,7 @@ func (r *Repository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error
 }
 
 func (r *Repository) BookmarkGetByUID(userUUID, uid string) (bookmark.Bookmark, error) {
-	for _, b := range r.Bookmarks {
+	for _, b := range r.bookmarks {
 		if b.UserUUID == userUUID && b.UID == uid {
 			return b, nil
 		}
@@ -50,7 +55,7 @@ func (r *Repository) BookmarkGetByUID(userUUID, uid string) (bookmark.Bookmark, 
 }
 
 func (r *Repository) BookmarkGetByURL(userUUID, url string) (bookmark.Bookmark, error) {
-	for _, b := range r.Bookmarks {
+	for _, b := range r.bookmarks {
 		if b.UserUUID == userUUID && b.URL == url {
 			return b, nil
 		}
@@ -59,15 +64,19 @@ func (r *Repository) BookmarkGetByURL(userUUID, url string) (bookmark.Bookmark, 
 	return bookmark.Bookmark{}, bookmark.ErrNotFound
 }
 
-func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
-	r.Bookmarks = append(r.Bookmarks, b)
-	return nil
+func (r *Repository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {
+	for _, b := range r.bookmarks {
+		if b.UserUUID == userUUID && b.URL == url {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (r *Repository) BookmarkUpdate(updated bookmark.Bookmark) error {
-	for index, b := range r.Bookmarks {
+	for index, b := range r.bookmarks {
 		if b.UserUUID == updated.UserUUID && b.UID == updated.UID {
-			r.Bookmarks[index] = updated
+			r.bookmarks[index] = updated
 			return nil
 		}
 	}

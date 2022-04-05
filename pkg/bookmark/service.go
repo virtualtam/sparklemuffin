@@ -28,7 +28,7 @@ func (s *Service) Add(bookmark Bookmark) error {
 		s.normalizeURL,
 		s.requireURL,
 		s.ensureURLIsParseable,
-		// FIXME s.ensureURLIsNotRegistered,
+		s.ensureURLIsNotRegistered,
 		s.normalizeTitle,
 		s.requireTitle,
 		s.normalizeDescription,
@@ -113,6 +113,17 @@ func (s *Service) ensureURLIsParseable(bookmark *Bookmark) error {
 		return ErrURLInvalid
 	}
 
+	return nil
+}
+
+func (s *Service) ensureURLIsNotRegistered(bookmark *Bookmark) error {
+	registered, err := s.r.BookmarkIsURLRegistered(bookmark.UserUUID, bookmark.URL)
+	if err != nil {
+		return err
+	}
+	if registered {
+		return ErrURLAlreadyRegistered
+	}
 	return nil
 }
 

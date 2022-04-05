@@ -182,6 +182,25 @@ AND url=$2`,
 	}, nil
 }
 
+func (r *Repository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {
+	dbBookmark := &Bookmark{}
+
+	err := r.db.QueryRowx(
+		"SELECT url FROM bookmarks WHERE user_uuid=$1 AND url=$2",
+		userUUID,
+		url,
+	).StructScan(dbBookmark)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
 	dbBookmark := Bookmark{
 		UserUUID:    b.UserUUID,

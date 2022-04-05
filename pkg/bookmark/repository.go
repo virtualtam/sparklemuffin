@@ -17,6 +17,10 @@ type Repository interface {
 	// BookmarkGetByURL returns the bookmark for a given user UUID and URL.
 	BookmarkGetByURL(userUUID, url string) (Bookmark, error)
 
+	// BookmarkIsURLRegistered returns whether a user has already saved a
+	// bookmark with a given URL.
+	BookmarkIsURLRegistered(userUUD, url string) (bool, error)
+
 	// BookmarkUpdate updates an existing bookmark for the logged in user.
 	BookmarkUpdate(bookmark Bookmark) error
 }

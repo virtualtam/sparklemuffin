@@ -166,7 +166,7 @@ func (s *Server) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.R
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account information update form")
 			s.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.URL.Path, http.StatusBadRequest)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
@@ -180,12 +180,12 @@ func (s *Server) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.R
 		if err := s.userService.UpdateInfo(userInfo); err != nil {
 			log.Error().Err(err).Msg("failed to update account information")
 			s.PutFlashError(w, "There was an error updating your information")
-			http.Redirect(w, r, r.URL.Path, http.StatusBadRequest)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		s.PutFlashSuccess(w, "Your account information has been successfully updated")
-		http.Redirect(w, r, "/account", http.StatusFound)
+		http.Redirect(w, r, "/account", http.StatusSeeOther)
 	}
 }
 
@@ -205,7 +205,7 @@ func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *ht
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account password update form")
 			s.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.URL.Path, http.StatusBadRequest)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
@@ -219,12 +219,12 @@ func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *ht
 		if err := s.userService.UpdatePassword(userPassword); err != nil {
 			log.Error().Err(err).Msg("failed to update account password")
 			s.PutFlashError(w, fmt.Sprintf("There was an error updating your password: %s", err))
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		s.PutFlashSuccess(w, "Your account password has been successfully updated")
-		http.Redirect(w, r, r.URL.Path, http.StatusFound)
+		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 	}
 }
 
@@ -260,7 +260,7 @@ func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Reques
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user creation form")
 			s.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusBadRequest)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
@@ -275,12 +275,12 @@ func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Reques
 		if err := s.userService.Add(newUser); err != nil {
 			log.Error().Err(err).Msg("failed to persist user")
 			s.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		s.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully created", newUser.Email))
-		http.Redirect(w, r, "/admin", http.StatusFound)
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 	}
 }
 
@@ -296,7 +296,7 @@ func (s *Server) handleAdminUserDeleteView() func(w http.ResponseWriter, r *http
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
 			s.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
@@ -316,19 +316,19 @@ func (s *Server) handleAdminUserDelete() func(w http.ResponseWriter, r *http.Req
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
 			s.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		if err := s.userService.DeleteByUUID(userUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete user")
 			s.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		s.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully deleted", user.Email))
-		http.Redirect(w, r, "/admin", http.StatusFound)
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 	}
 }
 
@@ -342,7 +342,7 @@ func (s *Server) handleAdminUserEditView() func(w http.ResponseWriter, r *http.R
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
 			s.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
@@ -372,7 +372,7 @@ func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Reque
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user edition form")
 			s.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusBadRequest)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
@@ -388,12 +388,12 @@ func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Reque
 		if err := s.userService.Update(editedUser); err != nil {
 			log.Error().Err(err).Msg("failed to update user")
 			s.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		s.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully updated", editedUser.Email))
-		http.Redirect(w, r, r.URL.Path, http.StatusFound)
+		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 	}
 }
 
@@ -416,7 +416,7 @@ func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark creation form")
 			s.PutFlashError(w, "failed to process form")
-			http.Redirect(w, r, r.URL.Path, http.StatusFound)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
@@ -432,11 +432,11 @@ func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request
 		if err := s.bookmarkService.Add(newBookmark); err != nil {
 			log.Error().Err(err).Msg("failed to add bookmark")
 			s.PutFlashError(w, "failed to add bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusFound)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		http.Redirect(w, r, "/b", http.StatusFound)
+		http.Redirect(w, r, "/b", http.StatusSeeOther)
 	}
 }
 
@@ -451,7 +451,7 @@ func (s *Server) handleBookmarkDeleteView() func(w http.ResponseWriter, r *http.
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmark")
 			s.PutFlashError(w, "failed to retrieve bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
@@ -473,11 +473,11 @@ func (s *Server) handleBookmarkDelete() func(w http.ResponseWriter, r *http.Requ
 		if err := s.bookmarkService.Delete(user.UUID, uid); err != nil {
 			log.Error().Err(err).Msg("failed to delete bookmark")
 			s.PutFlashError(w, "failed to delete bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		http.Redirect(w, r, "/b", http.StatusFound)
+		http.Redirect(w, r, "/b", http.StatusSeeOther)
 	}
 }
 
@@ -492,7 +492,7 @@ func (s *Server) handleBookmarkEditView() func(w http.ResponseWriter, r *http.Re
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmark")
 			s.PutFlashError(w, "failed to retrieve bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
@@ -517,7 +517,7 @@ func (s *Server) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Reques
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark edition form")
 			s.PutFlashError(w, "failed to process form")
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
@@ -537,11 +537,11 @@ func (s *Server) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Reques
 		if err := s.bookmarkService.Update(editedBookmark); err != nil {
 			log.Error().Err(err).Msg("failed to edit bookmark")
 			s.PutFlashError(w, "failed to edit bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		http.Redirect(w, r, "/b", http.StatusFound)
+		http.Redirect(w, r, "/b", http.StatusSeeOther)
 	}
 }
 
@@ -554,7 +554,7 @@ func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Re
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmarks")
 			s.PutFlashError(w, "failed to retrieve bookmarks")
-			http.Redirect(w, r, "/", http.StatusInternalServerError)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
@@ -577,7 +577,7 @@ func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse login form")
 			s.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusBadRequest)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
@@ -585,18 +585,18 @@ func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) 
 		if err != nil {
 			log.Error().Err(err).Msg("failed to authenticate user")
 			s.PutFlashError(w, "invalid email or password")
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		if err := s.setUserRememberToken(w, user.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to set remember token")
 			s.PutFlashError(w, "failed to save session cookie")
-			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		http.Redirect(w, r, "/", http.StatusFound)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
@@ -614,14 +614,14 @@ func (s *Server) handleUserLogout() func(w http.ResponseWriter, r *http.Request)
 
 		user := userValue(r.Context())
 		if user == nil {
-			http.Redirect(w, r, "/", http.StatusFound)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
 		token, err := rand.RandomBase64URLString(UserRememberTokenNBytes)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to generate a remember token")
-			http.Redirect(w, r, "/", http.StatusFound)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
@@ -633,11 +633,11 @@ func (s *Server) handleUserLogout() func(w http.ResponseWriter, r *http.Request)
 		err = s.sessionService.Add(userSession)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to save user session")
-			http.Redirect(w, r, "/", http.StatusFound)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
-		http.Redirect(w, r, "/", http.StatusFound)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 

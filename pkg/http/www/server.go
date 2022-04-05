@@ -31,9 +31,10 @@ type Server struct {
 	adminUserDeleteView *view
 	adminUserEditView   *view
 
-	bookmarkAddView  *view
-	bookmarkEditView *view
-	bookmarkListView *view
+	bookmarkAddView    *view
+	bookmarkDeleteView *view
+	bookmarkEditView   *view
+	bookmarkListView   *view
 
 	homeView      *view
 	userLoginView *view
@@ -55,9 +56,10 @@ func NewServer(bookmarkService *bookmark.Service, sessionService *session.Servic
 		adminUserDeleteView: newView("admin/user_delete.gohtml"),
 		adminUserEditView:   newView("admin/user_edit.gohtml"),
 
-		bookmarkAddView:  newView("bookmark/add.gohtml"),
-		bookmarkEditView: newView("bookmark/edit.gohtml"),
-		bookmarkListView: newView("bookmark/list.gohtml"),
+		bookmarkAddView:    newView("bookmark/add.gohtml"),
+		bookmarkDeleteView: newView("bookmark/delete.gohtml"),
+		bookmarkEditView:   newView("bookmark/edit.gohtml"),
+		bookmarkListView:   newView("bookmark/list.gohtml"),
 
 		homeView:      newView("static/home.gohtml"),
 		userLoginView: newView("user/login.gohtml"),
@@ -115,6 +117,8 @@ func (s *Server) addRoutes() {
 	bookmarkRouter.HandleFunc("", s.handleBookmarkListView()).Methods(http.MethodGet)
 	bookmarkRouter.HandleFunc("/add", s.handleBookmarkAddView()).Methods(http.MethodGet)
 	bookmarkRouter.HandleFunc("/add", s.handleBookmarkAdd()).Methods(http.MethodPost)
+	bookmarkRouter.HandleFunc("/{uid}/delete", s.handleBookmarkDeleteView()).Methods(http.MethodGet)
+	bookmarkRouter.HandleFunc("/{uid}/delete", s.handleBookmarkDelete()).Methods(http.MethodPost)
 	bookmarkRouter.HandleFunc("/{uid}/edit", s.handleBookmarkEditView()).Methods(http.MethodGet)
 	bookmarkRouter.HandleFunc("/{uid}/edit", s.handleBookmarkEdit()).Methods(http.MethodPost)
 
@@ -428,6 +432,47 @@ func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request
 		if err := s.bookmarkService.Add(newBookmark); err != nil {
 			log.Error().Err(err).Msg("failed to add bookmark")
 			s.PutFlashError(w, "failed to add bookmark")
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/b", http.StatusFound)
+	}
+}
+
+func (s *Server) handleBookmarkDeleteView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		uid := vars["uid"]
+
+		user := userValue(r.Context())
+
+		bookmark, err := s.bookmarkService.ByUID(user.UUID, uid)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve bookmark")
+			s.PutFlashError(w, "failed to retrieve bookmark")
+			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
+			return
+		}
+
+		viewData := Data{
+			Content: bookmark,
+		}
+
+		s.bookmarkDeleteView.render(w, r, viewData)
+	}
+}
+
+func (s *Server) handleBookmarkDelete() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		uid := vars["uid"]
+
+		user := userValue(r.Context())
+
+		if err := s.bookmarkService.Delete(user.UUID, uid); err != nil {
+			log.Error().Err(err).Msg("failed to delete bookmark")
+			s.PutFlashError(w, "failed to delete bookmark")
 			http.Redirect(w, r, r.URL.Path, http.StatusInternalServerError)
 			return
 		}

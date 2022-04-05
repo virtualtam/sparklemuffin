@@ -1,0 +1,9 @@
+{{define "content"}}
+<h2>Bookmarks</h2>
+<form action="/b/{{.UID}}/delete" method="POST">
+  <p>Delete bookmark: <a href="{{.URL}}">{{.Title}}</a>?
+  <p>
+    <button type="submit">Delete</button>
+  </p>
+</form>
+{{end}}

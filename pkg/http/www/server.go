@@ -411,6 +411,7 @@ func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request
 		URL         string `schema:"url"`
 		Title       string `schema:"title"`
 		Description string `schema:"description"`
+		Private     bool   `schema:"private"`
 		Tags        string `schema:"tags"`
 	}
 
@@ -431,6 +432,7 @@ func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request
 			URL:         form.URL,
 			Title:       form.Title,
 			Description: form.Description,
+			Private:     form.Private,
 			Tags:        strings.Split(form.Tags, " "),
 		}
 
@@ -518,6 +520,7 @@ func (s *Server) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Reques
 		URL         string `schema:"url"`
 		Title       string `schema:"title"`
 		Description string `schema:"description"`
+		Private     bool   `schema:"private"`
 		Tags        string `schema:"tags"`
 	}
 
@@ -542,6 +545,7 @@ func (s *Server) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Reques
 			URL:         form.URL,
 			Title:       form.Title,
 			Description: form.Description,
+			Private:     form.Private,
 			Tags:        strings.Split(form.Tags, " "),
 		}
 

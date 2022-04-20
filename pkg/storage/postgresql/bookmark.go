@@ -14,7 +14,8 @@ type Bookmark struct {
 	Title       string `db:"title"`
 	Description string `db:"description"`
 
-	Tags pgtype.TextArray
+	Private bool             `db:"private"`
+	Tags    pgtype.TextArray `db:"tags"`
 
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`

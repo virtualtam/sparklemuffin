@@ -35,6 +35,7 @@ func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
 		URL:         b.URL,
 		Title:       b.Title,
 		Description: b.Description,
+		Private:     b.Private,
 		Tags:        dbTags,
 		CreatedAt:   b.CreatedAt,
 		UpdatedAt:   b.UpdatedAt,
@@ -48,6 +49,7 @@ INSERT INTO bookmarks(
 	url,
 	title,
 	description,
+	private,
 	tags,
 	created_at,
 	updated_at
@@ -58,6 +60,7 @@ VALUES(
 	:url,
 	:title,
 	:description,
+	:private,
 	:tags,
 	:created_at,
 	:updated_at
@@ -90,7 +93,7 @@ func (r *Repository) BookmarkDelete(userUUID, uid string) error {
 func (r *Repository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error) {
 	rows, err := r.db.Queryx(
 		`
-SELECT user_uuid, uid, url, title, description, tags, created_at, updated_at
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 FROM bookmarks
 WHERE user_uuid=$1
 ORDER BY created_at DESC`,
@@ -117,6 +120,7 @@ ORDER BY created_at DESC`,
 			URL:         dbBookmark.URL,
 			Title:       dbBookmark.Title,
 			Description: dbBookmark.Description,
+			Private:     dbBookmark.Private,
 			Tags:        tags,
 			CreatedAt:   dbBookmark.CreatedAt,
 			UpdatedAt:   dbBookmark.UpdatedAt,
@@ -133,7 +137,7 @@ func (r *Repository) BookmarkGetByUID(userUUID, uid string) (bookmark.Bookmark, 
 
 	err := r.db.QueryRowx(
 		`
-SELECT user_uuid, uid, url, title, description, tags, created_at, updated_at
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 FROM bookmarks
 WHERE user_uuid=$1
 AND uid=$2`,
@@ -156,6 +160,7 @@ AND uid=$2`,
 		URL:         dbBookmark.URL,
 		Title:       dbBookmark.Title,
 		Description: dbBookmark.Description,
+		Private:     dbBookmark.Private,
 		Tags:        tags,
 		CreatedAt:   dbBookmark.CreatedAt,
 		UpdatedAt:   dbBookmark.UpdatedAt,
@@ -167,7 +172,7 @@ func (r *Repository) BookmarkGetByURL(userUUID, url string) (bookmark.Bookmark, 
 
 	err := r.db.QueryRowx(
 		`
-SELECT user_uuid, uid, url, title, description, tags, created_at, updated_at
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 FROM bookmarks
 WHERE user_uuid=$1
 AND url=$2`,
@@ -190,6 +195,7 @@ AND url=$2`,
 		URL:         dbBookmark.URL,
 		Title:       dbBookmark.Title,
 		Description: dbBookmark.Description,
+		Private:     dbBookmark.Private,
 		Tags:        tags,
 		CreatedAt:   dbBookmark.CreatedAt,
 		UpdatedAt:   dbBookmark.UpdatedAt,
@@ -224,6 +230,7 @@ func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
 		URL:         b.URL,
 		Title:       b.Title,
 		Description: b.Description,
+		Private:     b.Private,
 		Tags:        dbTags,
 		UpdatedAt:   b.UpdatedAt,
 	}
@@ -235,6 +242,7 @@ SET
 	url=:url,
 	title=:title,
 	description=:description,
+	private=:private,
 	tags=:tags,
 	updated_at=:updated_at
 WHERE user_uuid=:user_uuid

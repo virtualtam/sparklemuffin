@@ -40,6 +40,15 @@
       value="{{Join .Tags " "}}">
   </p>
   <p>
+    <label for="private">Private?</label>
+    <br>
+    <input
+      type="checkbox"
+      id="private"
+      name="private"
+      {{if .Private}}checked{{end}}>
+  </p>
+  <p>
     <button type="submit">Edit</button>
   </p>
 {{end}}

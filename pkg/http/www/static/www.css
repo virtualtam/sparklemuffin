@@ -67,6 +67,14 @@ body > footer {
   font-size: .8rem;
 }
 
+.bookmark .private {
+  border-radius: 5px;
+  background-color: #bf616a;
+  color: #2e3440;
+  font-size: .9rem;
+  padding: .1rem .5rem;
+}
+
 .bookmark .tag {
   border-radius: 5px;
   background-color: #434c5e;

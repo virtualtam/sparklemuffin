@@ -19,6 +19,9 @@
 {{- define "bookmark"}}
 <div class="bookmark">
   <p>
+    {{- if .Private}}
+      <span class="private">Private</span>
+    {{- end}}
     <a href="{{.URL}}">{{.Title}}</a>
     <br>
     <span class="details">

@@ -2,16 +2,13 @@ package command
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
+	migratepgx "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/virtualtam/yawbe/pkg/storage/postgresql/migrations"
-
-	_ "github.com/golang-migrate/migrate/v4/database/pgx"
-	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 var _ migrate.Logger = &migrateLogger{}
@@ -40,10 +37,16 @@ func NewMigrateCommand() *cobra.Command {
 				log.Error().Err(err).Msg("failed to open the database migration filesystem")
 			}
 
-			migrater, err := migrate.NewWithSourceInstance(
+			driver, err := migratepgx.WithInstance(db.DB, &migratepgx.Config{})
+			if err != nil {
+				log.Error().Err(err).Msg("failed to prepare the database driver")
+			}
+
+			migrater, err := migrate.NewWithInstance(
 				"iofs",
 				migrationsSource,
-				fmt.Sprintf("%s://%s", defaultDatabaseDriver, defaultDatabaseURI),
+				databaseDriver,
+				driver,
 			)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to load database migrations")

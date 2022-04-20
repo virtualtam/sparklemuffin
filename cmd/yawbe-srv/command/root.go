@@ -1,8 +1,6 @@
 package command
 
 import (
-	"fmt"
-
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -16,15 +14,18 @@ import (
 )
 
 const (
-	defaultDebugMode      bool   = false
-	defaultHMACKey        string = "hmac-secret-key"
-	defaultDatabaseDriver string = "pgx"
-	defaultDatabaseURI    string = "yawbe:yawbe@localhost:15432/yawbe?sslmode=disable"
+	databaseDriver string = "pgx"
+
+	defaultDebugMode   bool   = false
+	defaultHMACKey     string = "hmac-secret-key"
+	defaultDatabaseURI string = "postgres://yawbe:yawbe@localhost:15432/yawbe?sslmode=disable"
 )
 
 var (
 	debugMode bool
 	hmacKey   string
+
+	db *sqlx.DB
 
 	bookmarkService *bookmark.Service
 	sessionService  *session.Service
@@ -37,14 +38,16 @@ func NewRootCommand() *cobra.Command {
 		Use:   "yawbe-srv",
 		Short: "Yet Another Web Bookmarking Engine",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			var err error
+
 			if debugMode {
 				zerolog.SetGlobalLevel(zerolog.DebugLevel)
 			}
 
 			// FIXME hardcoded
-			db, err := sqlx.Connect(defaultDatabaseDriver, fmt.Sprintf("postgresql://%s", defaultDatabaseURI))
+			db, err = sqlx.Connect(databaseDriver, defaultDatabaseURI)
 			if err != nil {
-				log.Error().Err(err)
+				log.Error().Err(err).Msg("failed to connect to PostgresSQL")
 				return err
 			}
 			log.Info().Msg("Successfully connected to PostgreSQL")

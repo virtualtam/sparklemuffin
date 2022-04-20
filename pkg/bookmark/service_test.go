@@ -132,6 +132,29 @@ func TestServiceAdd(t *testing.T) {
 			},
 		},
 		{
+			tname: "add bookmark with unsorted tags",
+			bookmark: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://domain.tld",
+				Title:    "Example Domain",
+				Tags: []string{
+					"euphonium",
+					"xylophone",
+					"aulos",
+				},
+			},
+			want: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://domain.tld",
+				Title:    "Example Domain",
+				Tags: []string{
+					"aulos",
+					"euphonium",
+					"xylophone",
+				},
+			},
+		},
+		{
 			tname: "add bookmark with empty (whitespace) tags",
 			bookmark: Bookmark{
 				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
@@ -524,10 +547,10 @@ func TestServiceUpdate(t *testing.T) {
 				URL:      "https://domain.tld",
 				Title:    "Example Domain",
 				Tags: []string{
+					"example",
 					"  dupe",
 					"  ", // spaces
 					"	 ", // tab and spaces
-					"example",
 					"test",
 					"dupe",
 					"dupe  ",

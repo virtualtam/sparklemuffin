@@ -3,6 +3,7 @@ package bookmark
 import (
 	"errors"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
@@ -32,8 +33,9 @@ func (s *Service) Add(bookmark Bookmark) error {
 		s.normalizeTitle,
 		s.requireTitle,
 		s.normalizeDescription,
-		s.normalizeTagNames,
-		s.deduplicateTagNames,
+		s.normalizeTags,
+		s.deduplicateTags,
+		s.sortTags,
 		s.generateUID,
 		s.validateUID,
 		s.setCreatedUpdatedAt,
@@ -100,8 +102,9 @@ func (s *Service) Update(bookmark Bookmark) error {
 		s.normalizeTitle,
 		s.requireTitle,
 		s.normalizeDescription,
-		s.normalizeTagNames,
-		s.deduplicateTagNames,
+		s.normalizeTags,
+		s.deduplicateTags,
+		s.sortTags,
 		s.refreshUpdatedAt,
 	)
 	if err != nil {
@@ -110,7 +113,7 @@ func (s *Service) Update(bookmark Bookmark) error {
 
 	return s.r.BookmarkUpdate(bookmark)
 }
-func (s *Service) deduplicateTagNames(bookmark *Bookmark) error {
+func (s *Service) deduplicateTags(bookmark *Bookmark) error {
 	tagNames := map[string]bool{}
 	tags := []string{}
 
@@ -172,7 +175,7 @@ func (s *Service) normalizeDescription(bookmark *Bookmark) error {
 	return nil
 }
 
-func (s *Service) normalizeTagNames(bookmark *Bookmark) error {
+func (s *Service) normalizeTags(bookmark *Bookmark) error {
 	tags := []string{}
 
 	for _, tag := range bookmark.Tags {
@@ -235,6 +238,11 @@ func (s *Service) setCreatedUpdatedAt(bookmark *Bookmark) error {
 	bookmark.CreatedAt = now
 	bookmark.UpdatedAt = now
 
+	return nil
+}
+
+func (s *Service) sortTags(bookmark *Bookmark) error {
+	sort.Strings(bookmark.Tags)
 	return nil
 }
 

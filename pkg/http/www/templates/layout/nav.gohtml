@@ -3,7 +3,6 @@
   <h3>Yet Another Web Bookmarking Engine</h3>
   {{if .User}}<p>{{.User.Email}}</p>{{end}}
   <nav>
-    <a href="/">Home</a>
     {{if .User}}
     <a href="/bookmarks">Bookmarks</a>
       {{if .User.IsAdmin}}

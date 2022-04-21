@@ -612,7 +612,7 @@ func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
 	}
 }
 

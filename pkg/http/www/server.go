@@ -113,7 +113,7 @@ func (s *Server) addRoutes() {
 	s.router.HandleFunc("/logout", s.handleUserLogout()).Methods(http.MethodPost)
 
 	// bookmarks
-	bookmarkRouter := s.router.PathPrefix("/b").Subrouter()
+	bookmarkRouter := s.router.PathPrefix("/bookmarks").Subrouter()
 
 	bookmarkRouter.HandleFunc("", s.handleBookmarkListView()).Methods(http.MethodGet)
 	bookmarkRouter.HandleFunc("/add", s.handleBookmarkAddView()).Methods(http.MethodGet)
@@ -443,7 +443,7 @@ func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		http.Redirect(w, r, "/b", http.StatusSeeOther)
+		http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
 	}
 }
 
@@ -486,7 +486,7 @@ func (s *Server) handleBookmarkDelete() func(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		http.Redirect(w, r, "/b", http.StatusSeeOther)
+		http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
 	}
 }
 
@@ -556,7 +556,7 @@ func (s *Server) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		http.Redirect(w, r, "/b", http.StatusSeeOther)
+		http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
 	}
 }
 

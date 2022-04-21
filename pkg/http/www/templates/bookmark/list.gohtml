@@ -12,7 +12,7 @@
 
 {{define "bookmarkAddForm"}}
 <p>
-  <a href="/b/add">Add bookmark</a>
+  <a href="/bookmarks/add">Add bookmark</a>
 </p>
 {{end}}
 
@@ -39,9 +39,9 @@
     {{- end}}
   </p>
   <p>
-    <a href="/b/{{.UID}}/edit">Edit</a>
+    <a href="/bookmarks/{{.UID}}/edit">Edit</a>
     <br>
-    <a href="/b/{{.UID}}/delete">Delete</a>
+    <a href="/bookmarks/{{.UID}}/delete">Delete</a>
   </p>
 </div>
 {{- end}}

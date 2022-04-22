@@ -8,7 +8,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
+	"github.com/virtualtam/netscape-go/v2"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/yawbe/pkg/exporting"
 	"github.com/virtualtam/yawbe/pkg/http/www/rand"
 	"github.com/virtualtam/yawbe/pkg/http/www/static"
 	"github.com/virtualtam/yawbe/pkg/session"
@@ -21,9 +23,10 @@ var _ http.Handler = &Server{}
 type Server struct {
 	router *mux.Router
 
-	bookmarkService *bookmark.Service
-	sessionService  *session.Service
-	userService     *user.Service
+	bookmarkService  *bookmark.Service
+	exportingService *exporting.Service
+	sessionService   *session.Service
+	userService      *user.Service
 
 	accountView *view
 
@@ -37,18 +40,23 @@ type Server struct {
 	bookmarkEditView   *view
 	bookmarkListView   *view
 
+	toolsView       *view
+	toolsExportView *view
+	toolsImportView *view
+
 	homeView      *view
 	userLoginView *view
 }
 
 // NewServer initializes and returns a new Server.
-func NewServer(bookmarkService *bookmark.Service, sessionService *session.Service, userService *user.Service) *Server {
+func NewServer(bookmarkService *bookmark.Service, exportingService *exporting.Service, sessionService *session.Service, userService *user.Service) *Server {
 	s := &Server{
 		router: mux.NewRouter(),
 
-		bookmarkService: bookmarkService,
-		sessionService:  sessionService,
-		userService:     userService,
+		bookmarkService:  bookmarkService,
+		exportingService: exportingService,
+		sessionService:   sessionService,
+		userService:      userService,
 
 		accountView: newView("account/account.gohtml"),
 
@@ -61,6 +69,9 @@ func NewServer(bookmarkService *bookmark.Service, sessionService *session.Servic
 		bookmarkDeleteView: newView("bookmark/delete.gohtml"),
 		bookmarkEditView:   newView("bookmark/edit.gohtml"),
 		bookmarkListView:   newView("bookmark/list.gohtml"),
+
+		toolsView:       newView("tools/tools.gohtml"),
+		toolsExportView: newView("tools/export.gohtml"),
 
 		homeView:      newView("static/home.gohtml"),
 		userLoginView: newView("user/login.gohtml"),
@@ -124,6 +135,17 @@ func (s *Server) addRoutes() {
 	bookmarkRouter.HandleFunc("/{uid}/edit", s.handleBookmarkEdit()).Methods(http.MethodPost)
 
 	bookmarkRouter.Use(func(h http.Handler) http.Handler {
+		return s.authenticatedUser(h.ServeHTTP)
+	})
+
+	// bookmark management tools
+	toolsRouter := s.router.PathPrefix("/tools").Subrouter()
+
+	toolsRouter.HandleFunc("", s.toolsView.handle).Methods(http.MethodGet)
+	toolsRouter.HandleFunc("/export", s.toolsExportView.handle).Methods(http.MethodGet)
+	toolsRouter.HandleFunc("/export", s.handleToolsExport()).Methods(http.MethodPost)
+
+	toolsRouter.Use(func(h http.Handler) http.Handler {
 		return s.authenticatedUser(h.ServeHTTP)
 	})
 
@@ -577,6 +599,55 @@ func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Re
 		viewData.Content = bookmarks
 
 		s.bookmarkListView.render(w, r, viewData)
+	}
+}
+
+// handleToolsExport processes the bookmarks export form and sends the
+// corresponding file to the client.
+func (s *Server) handleToolsExport() func(w http.ResponseWriter, r *http.Request) {
+	type exportForm struct {
+		Visibility exporting.Visibility `schema:"visibility"`
+	}
+
+	var form exportForm
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := parseForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse bookmark export form")
+			s.PutFlashError(w, "failed to process form")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		user := userValue(r.Context())
+
+		document, err := s.exportingService.ExportAsNetscapeDocument(user.UUID, form.Visibility)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve bookmarks")
+			s.PutFlashError(w, "failed to export bookmarks")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		marshaled, err := netscape.Marshal(document)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to marshal Netscape bookmarks")
+			s.PutFlashError(w, "failed to export bookmarks")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		filename := fmt.Sprintf("bookmarks-%s.htm", form.Visibility)
+
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+		w.Header().Set("Content-Type", "application/octet-stream")
+		_, err = w.Write(marshaled)
+
+		if err != nil {
+			log.Error().Err(err).Msg("failed to send marshaled Netscape bookmark export")
+		}
+
+		return
 	}
 }
 

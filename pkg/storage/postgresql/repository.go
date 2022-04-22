@@ -6,11 +6,13 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/yawbe/pkg/exporting"
 	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/user"
 )
 
 var _ bookmark.Repository = &Repository{}
+var _ exporting.Repository = &Repository{}
 var _ session.Repository = &Repository{}
 var _ user.Repository = &Repository{}
 
@@ -90,15 +92,8 @@ func (r *Repository) BookmarkDelete(userUUID, uid string) error {
 	return nil
 }
 
-func (r *Repository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error) {
-	rows, err := r.db.Queryx(
-		`
-SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
-FROM bookmarks
-WHERE user_uuid=$1
-ORDER BY created_at DESC`,
-		userUUID,
-	)
+func (r *Repository) bookmarkGetQuery(query string, queryParams ...any) ([]bookmark.Bookmark, error) {
+	rows, err := r.db.Queryx(query, queryParams...)
 	if err != nil {
 		return []bookmark.Bookmark{}, err
 	}
@@ -130,6 +125,41 @@ ORDER BY created_at DESC`,
 	}
 
 	return bookmarks, nil
+}
+
+func (r *Repository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error) {
+	return r.bookmarkGetQuery(
+		`
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+ORDER BY created_at DESC`,
+		userUUID,
+	)
+}
+
+func (r *Repository) BookmarkGetAllPrivate(userUUID string) ([]bookmark.Bookmark, error) {
+	return r.bookmarkGetQuery(
+		`
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+AND   private=TRUE
+ORDER BY created_at DESC`,
+		userUUID,
+	)
+}
+
+func (r *Repository) BookmarkGetAllPublic(userUUID string) ([]bookmark.Bookmark, error) {
+	return r.bookmarkGetQuery(
+		`
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+AND   private=FALSE
+ORDER BY created_at DESC`,
+		userUUID,
+	)
 }
 
 func (r *Repository) BookmarkGetByUID(userUUID, uid string) (bookmark.Bookmark, error) {

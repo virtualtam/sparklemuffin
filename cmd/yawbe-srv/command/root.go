@@ -6,6 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/yawbe/pkg/exporting"
 	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/storage/postgresql"
 	"github.com/virtualtam/yawbe/pkg/user"
@@ -27,9 +28,10 @@ var (
 
 	db *sqlx.DB
 
-	bookmarkService *bookmark.Service
-	sessionService  *session.Service
-	userService     *user.Service
+	bookmarkService  *bookmark.Service
+	exportingService *exporting.Service
+	sessionService   *session.Service
+	userService      *user.Service
 )
 
 // NewRootCommand initializes the main CLI entrypoint and common command flags.
@@ -55,6 +57,7 @@ func NewRootCommand() *cobra.Command {
 			repository := postgresql.NewRepository(db)
 
 			bookmarkService = bookmark.NewService(repository)
+			exportingService = exporting.NewService(repository)
 			sessionService = session.NewService(repository, hmacKey)
 			userService = user.NewService(repository)
 

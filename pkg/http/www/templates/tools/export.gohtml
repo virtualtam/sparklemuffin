@@ -1,0 +1,21 @@
+{{define "content"}}
+<h2>Tools</h2>
+<h3>Export bookmarks</h3>
+<form action="/tools/export" method="POST">
+  <p>
+    Visibility:
+    <br>
+    <input type="radio" name="visibility" id="all" value="all" checked>
+    <label for="all">All</label>
+    <br>
+    <input type="radio" name="visibility" id="private" value="private">
+    <label for="private">Private</label>
+    <br>
+    <input type="radio" name="visibility" id="public" value="public">
+    <label for="public">Public</label>
+  </p>
+  <p>
+    <button type="submit">Export</button>
+  </p>
+</form>
+{{end}}

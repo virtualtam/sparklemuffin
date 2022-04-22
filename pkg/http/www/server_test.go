@@ -36,7 +36,7 @@ func TestServerAuthenticatedUser(t *testing.T) {
 		},
 	}
 
-	s := NewServer(nil, nil, nil, nil)
+	s := NewServer(nil, nil, nil, nil, nil)
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
@@ -94,7 +94,7 @@ func TestServerAdminUser(t *testing.T) {
 		},
 	}
 
-	s := NewServer(nil, nil, nil, nil)
+	s := NewServer(nil, nil, nil, nil, nil)
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
@@ -129,7 +129,7 @@ func TestServerAdminUser(t *testing.T) {
 func TestServerStaticCacheControl(t *testing.T) {
 	want := "max-age=2592000"
 
-	s := NewServer(nil, nil, nil, nil)
+	s := NewServer(nil, nil, nil, nil, nil)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	handler = s.staticCacheControl(handler)
 
@@ -200,7 +200,7 @@ func TestServerRememberUser(t *testing.T) {
 			}
 			userService := user.NewService(userRepository)
 
-			s := NewServer(nil, nil, sessionService, userService)
+			s := NewServer(nil, nil, nil, sessionService, userService)
 
 			var gotContext context.Context
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

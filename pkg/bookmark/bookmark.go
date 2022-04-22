@@ -25,6 +25,18 @@ type Bookmark struct {
 	UpdatedAt time.Time
 }
 
+// NewBookmark initializes and returns a new Bookmark.
+func NewBookmark(userUUID string) *Bookmark {
+	now := time.Now().UTC()
+	b := &Bookmark{
+		UserUUID:  userUUID,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	b.generateUID()
+	return b
+}
+
 // Normalize sanitizes and normalizes all fields.
 func (b *Bookmark) Normalize() {
 	b.normalizeURL()

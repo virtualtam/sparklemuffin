@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
 	"github.com/virtualtam/yawbe/pkg/exporting"
+	"github.com/virtualtam/yawbe/pkg/importing"
 	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/storage/postgresql"
 	"github.com/virtualtam/yawbe/pkg/user"
@@ -30,6 +31,7 @@ var (
 
 	bookmarkService  *bookmark.Service
 	exportingService *exporting.Service
+	importingService *importing.Service
 	sessionService   *session.Service
 	userService      *user.Service
 )
@@ -58,6 +60,7 @@ func NewRootCommand() *cobra.Command {
 
 			bookmarkService = bookmark.NewService(repository)
 			exportingService = exporting.NewService(repository)
+			importingService = importing.NewService(repository)
 			sessionService = session.NewService(repository, hmacKey)
 			userService = user.NewService(repository)
 

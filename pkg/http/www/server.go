@@ -1,7 +1,10 @@
 package www
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -13,6 +16,7 @@ import (
 	"github.com/virtualtam/yawbe/pkg/exporting"
 	"github.com/virtualtam/yawbe/pkg/http/www/rand"
 	"github.com/virtualtam/yawbe/pkg/http/www/static"
+	"github.com/virtualtam/yawbe/pkg/importing"
 	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/user"
 )
@@ -25,6 +29,7 @@ type Server struct {
 
 	bookmarkService  *bookmark.Service
 	exportingService *exporting.Service
+	importingService *importing.Service
 	sessionService   *session.Service
 	userService      *user.Service
 
@@ -49,12 +54,19 @@ type Server struct {
 }
 
 // NewServer initializes and returns a new Server.
-func NewServer(bookmarkService *bookmark.Service, exportingService *exporting.Service, sessionService *session.Service, userService *user.Service) *Server {
+func NewServer(
+	bookmarkService *bookmark.Service,
+	exportingService *exporting.Service,
+	importingService *importing.Service,
+	sessionService *session.Service,
+	userService *user.Service,
+) *Server {
 	s := &Server{
 		router: mux.NewRouter(),
 
 		bookmarkService:  bookmarkService,
 		exportingService: exportingService,
+		importingService: importingService,
 		sessionService:   sessionService,
 		userService:      userService,
 
@@ -72,6 +84,7 @@ func NewServer(bookmarkService *bookmark.Service, exportingService *exporting.Se
 
 		toolsView:       newView("tools/tools.gohtml"),
 		toolsExportView: newView("tools/export.gohtml"),
+		toolsImportView: newView("tools/import.gohtml"),
 
 		homeView:      newView("static/home.gohtml"),
 		userLoginView: newView("user/login.gohtml"),
@@ -144,6 +157,8 @@ func (s *Server) addRoutes() {
 	toolsRouter.HandleFunc("", s.toolsView.handle).Methods(http.MethodGet)
 	toolsRouter.HandleFunc("/export", s.toolsExportView.handle).Methods(http.MethodGet)
 	toolsRouter.HandleFunc("/export", s.handleToolsExport()).Methods(http.MethodPost)
+	toolsRouter.HandleFunc("/import", s.toolsImportView.handle).Methods(http.MethodGet)
+	toolsRouter.HandleFunc("/import", s.handleToolsImport()).Methods(http.MethodPost)
 
 	toolsRouter.Use(func(h http.Handler) http.Handler {
 		return s.authenticatedUser(h.ServeHTTP)
@@ -646,8 +661,77 @@ func (s *Server) handleToolsExport() func(w http.ResponseWriter, r *http.Request
 		if err != nil {
 			log.Error().Err(err).Msg("failed to send marshaled Netscape bookmark export")
 		}
+	}
+}
 
-		return
+// handleToolsImport processes data submitted through the bookmark import form.
+func (s *Server) handleToolsImport() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		multipartReader, err := r.MultipartReader()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to access multipart reader")
+			s.PutFlashError(w, "failed to process import form")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		var importFileBuffer, visibilityBuffer bytes.Buffer
+		importFileWriter := bufio.NewWriter(&importFileBuffer)
+		visibilityWriter := bufio.NewWriter(&visibilityBuffer)
+
+		for {
+			part, err := multipartReader.NextPart()
+
+			if err == io.EOF {
+				// no more parts to process
+				break
+			}
+
+			if err != nil {
+				log.Error().Err(err).Msg("failed to access multipart form data")
+				s.PutFlashError(w, "failed to process import form")
+				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+				return
+			}
+
+			switch part.FormName() {
+			case "importfile":
+				_, err = io.Copy(importFileWriter, part)
+			case "visibility":
+				_, err = io.Copy(visibilityWriter, part)
+			default:
+				err = fmt.Errorf("unexpected multipart form field: %q", part.FormName())
+			}
+
+			if err != nil {
+				log.Error().Err(err).Msg(fmt.Sprintf("failed to process multipart form part %q", part.FormName()))
+				s.PutFlashError(w, "failed to process import form")
+				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+				return
+			}
+		}
+
+		document, err := netscape.Unmarshal(importFileBuffer.Bytes())
+		if err != nil {
+			log.Error().Err(err).Msg("failed to process Netscape bookmark file")
+			s.PutFlashError(w, "failed to import bookmarks from the uploaded file")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		user := userValue(r.Context())
+		visibility := importing.Visibility(visibilityBuffer.String())
+
+		importStatus, err := s.importingService.ImportFromNetscapeDocument(user.UUID, document, visibility)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to save imported bookmarks")
+			s.PutFlashError(w, "failed to save imported bookmarks")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		s.PutFlashSuccess(w, fmt.Sprintf("Import status: %s", importStatus.Summary()))
+		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 	}
 }
 

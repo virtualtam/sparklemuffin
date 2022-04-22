@@ -1,0 +1,26 @@
+{{define "content"}}
+<h2>Tools</h2>
+<h3>Import bookmarks</h3>
+<form action="/tools/import" enctype="multipart/form-data" method="POST">
+  <p>
+    <label for="importfile">Choose a file to import:</label>
+    <br>
+    <input type="file" id="importfile" name="importfile">
+  </p>
+  <p>
+    Visibility:
+    <br>
+    <input type="radio" name="visibility" id="default" value="default" checked>
+    <label for="default">Use values from the imported file, default to public</label>
+    <br>
+    <input type="radio" name="visibility" id="private" value="private">
+    <label for="private">Import all bookmarks as private</label>
+    <br>
+    <input type="radio" name="visibility" id="public" value="public">
+    <label for="public">Import all bookmarks as public</label>
+  </p>
+  <p>
+    <button type="submit">Import</button>
+  </p>
+</form>
+{{end}}

@@ -7,12 +7,14 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
 	"github.com/virtualtam/yawbe/pkg/exporting"
+	"github.com/virtualtam/yawbe/pkg/importing"
 	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/user"
 )
 
 var _ bookmark.Repository = &Repository{}
 var _ exporting.Repository = &Repository{}
+var _ importing.Repository = &Repository{}
 var _ session.Repository = &Repository{}
 var _ user.Repository = &Repository{}
 
@@ -69,6 +71,57 @@ VALUES(
 )
 `,
 		dbBookmark,
+	)
+
+	return err
+}
+
+func (r *Repository) BookmarkAddMany(bookmarks []bookmark.Bookmark) error {
+	dbBookmarks := make([]Bookmark, len(bookmarks))
+
+	for index, b := range bookmarks {
+		dbTags := tagsToTextArray(b.Tags)
+
+		dbBookmark := Bookmark{
+			UID:         b.UID,
+			UserUUID:    b.UserUUID,
+			URL:         b.URL,
+			Title:       b.Title,
+			Description: b.Description,
+			Private:     b.Private,
+			Tags:        dbTags,
+			CreatedAt:   b.CreatedAt,
+			UpdatedAt:   b.UpdatedAt,
+		}
+		dbBookmarks[index] = dbBookmark
+	}
+
+	_, err := r.db.NamedExec(
+		`
+INSERT INTO bookmarks(
+	uid,
+	user_uuid,
+	url,
+	title,
+	description,
+	private,
+	tags,
+	created_at,
+	updated_at
+)
+VALUES(
+	:uid,
+	:user_uuid,
+	:url,
+	:title,
+	:description,
+	:private,
+	:tags,
+	:created_at,
+	:updated_at
+)
+`,
+		dbBookmarks,
 	)
 
 	return err

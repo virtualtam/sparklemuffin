@@ -11,6 +11,7 @@ func parseForm(r *http.Request, dst interface{}) error {
 		return err
 	}
 
+	// TODO share Decoder instance to cache struct fields
 	dec := schema.NewDecoder()
 
 	if err := dec.Decode(dst, r.PostForm); err != nil {

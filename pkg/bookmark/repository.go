@@ -1,7 +1,20 @@
 package bookmark
 
+// ValidationRepository provides methods for Bookmark validation.
+type ValidationRepository interface {
+	// BookmarkIsURLRegistered returns whether a user has already saved a
+	// bookmark with a given URL.
+	BookmarkIsURLRegistered(userUUID, url string) (bool, error)
+
+	// BookmarkIsURLRegisteredToAnotherUID returns whether a user has already
+	// saved a bookmark with a given URL and a different UID.
+	BookmarkIsURLRegisteredToAnotherUID(userUUID, url, uid string) (bool, error)
+}
+
 // Repository provides access to user bookmarks.
 type Repository interface {
+	ValidationRepository
+
 	// BookmarkAdd adds a new bookmark for the logged in user.
 	BookmarkAdd(bookmark Bookmark) error
 
@@ -13,13 +26,6 @@ type Repository interface {
 
 	// BookmarkGetByUID returns the bookmark for a given user UUID and UID.
 	BookmarkGetByUID(userUUID, uid string) (Bookmark, error)
-
-	// BookmarkGetByURL returns the bookmark for a given user UUID and URL.
-	BookmarkGetByURL(userUUID, url string) (Bookmark, error)
-
-	// BookmarkIsURLRegistered returns whether a user has already saved a
-	// bookmark with a given URL.
-	BookmarkIsURLRegistered(userUUD, url string) (bool, error)
 
 	// BookmarkUpdate updates an existing bookmark for the logged in user.
 	BookmarkUpdate(bookmark Bookmark) error

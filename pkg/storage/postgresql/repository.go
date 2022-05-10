@@ -167,41 +167,6 @@ AND uid=$2`,
 	}, nil
 }
 
-func (r *Repository) BookmarkGetByURL(userUUID, url string) (bookmark.Bookmark, error) {
-	dbBookmark := &Bookmark{}
-
-	err := r.db.QueryRowx(
-		`
-SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
-FROM bookmarks
-WHERE user_uuid=$1
-AND url=$2`,
-		userUUID,
-		url,
-	).StructScan(dbBookmark)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return bookmark.Bookmark{}, bookmark.ErrNotFound
-	}
-	if err != nil {
-		return bookmark.Bookmark{}, err
-	}
-
-	tags := textArrayToTags(dbBookmark.Tags)
-
-	return bookmark.Bookmark{
-		UserUUID:    dbBookmark.UserUUID,
-		UID:         dbBookmark.UID,
-		URL:         dbBookmark.URL,
-		Title:       dbBookmark.Title,
-		Description: dbBookmark.Description,
-		Private:     dbBookmark.Private,
-		Tags:        tags,
-		CreatedAt:   dbBookmark.CreatedAt,
-		UpdatedAt:   dbBookmark.UpdatedAt,
-	}, nil
-}
-
 func (r *Repository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {
 	dbBookmark := &Bookmark{}
 
@@ -209,6 +174,26 @@ func (r *Repository) BookmarkIsURLRegistered(userUUID, url string) (bool, error)
 		"SELECT url FROM bookmarks WHERE user_uuid=$1 AND url=$2",
 		userUUID,
 		url,
+	).StructScan(dbBookmark)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *Repository) BookmarkIsURLRegisteredToAnotherUID(userUUID, url, uid string) (bool, error) {
+	dbBookmark := &Bookmark{}
+
+	err := r.db.QueryRowx(
+		"SELECT url FROM bookmarks WHERE user_uuid=$1 AND url=$2 AND uid!=$3",
+		userUUID,
+		url,
+		uid,
 	).StructScan(dbBookmark)
 
 	if errors.Is(err, sql.ErrNoRows) {

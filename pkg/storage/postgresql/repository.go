@@ -76,7 +76,7 @@ VALUES(
 	return err
 }
 
-func (r *Repository) BookmarkAddMany(bookmarks []bookmark.Bookmark) error {
+func (r *Repository) BookmarkAddMany(bookmarks []bookmark.Bookmark) (int64, error) {
 	dbBookmarks := make([]Bookmark, len(bookmarks))
 
 	for index, b := range bookmarks {
@@ -96,7 +96,7 @@ func (r *Repository) BookmarkAddMany(bookmarks []bookmark.Bookmark) error {
 		dbBookmarks[index] = dbBookmark
 	}
 
-	_, err := r.db.NamedExec(
+	res, err := r.db.NamedExec(
 		`
 INSERT INTO bookmarks(
 	uid,
@@ -120,11 +120,20 @@ VALUES(
 	:created_at,
 	:updated_at
 )
+ON CONFLICT DO NOTHING
 `,
 		dbBookmarks,
 	)
+	if err != nil {
+		return 0, err
+	}
 
-	return err
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, err
 }
 
 func (r *Repository) BookmarkDelete(userUUID, uid string) error {

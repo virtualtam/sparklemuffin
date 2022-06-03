@@ -8,9 +8,9 @@ type FakeRepository struct {
 	Bookmarks []bookmark.Bookmark
 }
 
-func (r *FakeRepository) BookmarkAddMany(bookmarks []bookmark.Bookmark) error {
+func (r *FakeRepository) BookmarkAddMany(bookmarks []bookmark.Bookmark) (int64, error) {
 	r.Bookmarks = append(r.Bookmarks, bookmarks...)
-	return nil
+	return int64(len(bookmarks)), nil
 }
 
 func (r *FakeRepository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {

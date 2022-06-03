@@ -1,21 +1,21 @@
 package importing
 
 import (
-	"errors"
-
 	"github.com/virtualtam/netscape-go/v2"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
 )
 
 // Service handles bookmark import operations.
 type Service struct {
-	r Repository
+	r  Repository
+	vr bookmark.ValidationRepository
 }
 
 // NewService initializes and returns a new Service.
 func NewService(r Repository) *Service {
 	return &Service{
-		r: r,
+		r:  r,
+		vr: &validationRepository{},
 	}
 }
 
@@ -25,26 +25,29 @@ func (s *Service) bulkImport(bookmarks []bookmark.Bookmark) (Status, error) {
 	filteredBookmarks := []bookmark.Bookmark{}
 
 	for _, b := range bookmarks {
-		err := b.ValidateForAddition(s.r)
+		err := b.ValidateForAddition(s.vr)
 
 		if err == nil {
 			filteredBookmarks = append(filteredBookmarks, b)
-			status.New++
 			continue
 		}
 
-		if errors.Is(err, bookmark.ErrURLAlreadyRegistered) {
-			status.Skipped++
-		} else {
-			status.Invalid++
-		}
+		status.Invalid++
 	}
 
 	if len(filteredBookmarks) == 0 {
 		return status, nil
 	}
 
-	return status, s.r.BookmarkAddMany(filteredBookmarks)
+	rowsAffected, err := s.r.BookmarkAddMany(filteredBookmarks)
+	if err != nil {
+		return Status{}, err
+	}
+
+	status.New = int(rowsAffected)
+	status.Skipped = len(filteredBookmarks) - status.New
+
+	return status, nil
 }
 
 func (s *Service) ImportFromNetscapeDocument(userUUID string, document *netscape.Document, visibility Visibility) (Status, error) {

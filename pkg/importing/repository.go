@@ -21,4 +21,8 @@ func (r *validationRepository) BookmarkIsURLRegisteredToAnotherUID(userUUID, url
 type Repository interface {
 	// BookmarkAddMany adds a collection of new bookmarks.
 	BookmarkAddMany(bookmarks []bookmark.Bookmark) (int64, error)
+
+	// BookmarkUpsertMany adds a collection of new bookmarks and updates
+	// existing bookmarks in case of conflict.
+	BookmarkUpsertMany(bookmarks []bookmark.Bookmark) (int64, error)
 }

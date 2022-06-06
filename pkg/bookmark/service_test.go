@@ -611,8 +611,13 @@ func assertBookmarksEqual(t *testing.T, got, want Bookmark) {
 	if got.Title != want.Title {
 		t.Errorf("want Title %q, got %q", want.Title, got.Title)
 	}
+
 	if got.Description != want.Description {
 		t.Errorf("want Description %q, got %q", want.Description, got.Description)
+	}
+
+	if got.Private != want.Private {
+		t.Errorf("want Private %t, got %t", want.Private, got.Private)
 	}
 
 	if len(got.Tags) != len(want.Tags) {

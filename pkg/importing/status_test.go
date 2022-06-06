@@ -2,7 +2,7 @@ package importing
 
 import "testing"
 
-func TestStatusSummary(t *testing.T) {
+func TestAddStatusSummary(t *testing.T) {
 	cases := []struct {
 		tname  string
 		status Status
@@ -13,22 +13,23 @@ func TestStatusSummary(t *testing.T) {
 			want:  "0 new, 0 skipped, 0 invalid",
 		},
 		{
-			tname: "import, do not overwrite",
+			tname: "import, keep existing",
 			status: Status{
-				New:     17,
-				Skipped: 3,
-				Invalid: 4,
+				NewOrUpdated: 17,
+				Skipped:      3,
+				Invalid:      4,
 			},
 			want: "17 new, 3 skipped, 4 invalid",
 		},
 		{
-			tname: "import, overwrite",
+			tname: "import, overwrite existing",
 			status: Status{
-				New:     17,
-				Skipped: 0,
-				Invalid: 4,
+				overwriteExisting: true,
+				NewOrUpdated:      17,
+				Skipped:           0,
+				Invalid:           4,
 			},
-			want: "17 new, 0 skipped, 4 invalid",
+			want: "17 new or updated, 0 skipped, 4 invalid",
 		},
 	}
 

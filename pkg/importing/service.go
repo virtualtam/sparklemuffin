@@ -19,38 +19,68 @@ func NewService(r Repository) *Service {
 	}
 }
 
-func (s *Service) bulkImport(bookmarks []bookmark.Bookmark) (Status, error) {
-	var status Status
+func (s *Service) bulkImport(bookmarks []bookmark.Bookmark, overwriteExisting bool) (Status, error) {
+	status := Status{
+		overwriteExisting: overwriteExisting,
+	}
 
 	filteredBookmarks := []bookmark.Bookmark{}
+	uniqueURLs := map[string]bool{}
 
 	for _, b := range bookmarks {
-		err := b.ValidateForAddition(s.vr)
-
-		if err == nil {
-			filteredBookmarks = append(filteredBookmarks, b)
+		if err := b.ValidateForAddition(s.vr); err != nil {
+			status.Invalid++
 			continue
 		}
 
-		status.Invalid++
+		if _, ok := uniqueURLs[b.URL]; ok {
+			// the import data contains duplicate entries
+			// this may be a result of the normalization coperations, or due to
+			// a source allowing duplicate bookmarks -whether it is by design or
+			// not
+			status.Invalid++
+			continue
+		}
+
+		uniqueURLs[b.URL] = true
+		filteredBookmarks = append(filteredBookmarks, b)
+
 	}
 
 	if len(filteredBookmarks) == 0 {
 		return status, nil
 	}
 
-	rowsAffected, err := s.r.BookmarkAddMany(filteredBookmarks)
+	var rowsAffected int64
+	var err error
+
+	if overwriteExisting {
+		rowsAffected, err = s.r.BookmarkUpsertMany(filteredBookmarks)
+	} else {
+		rowsAffected, err = s.r.BookmarkAddMany(filteredBookmarks)
+	}
+
 	if err != nil {
 		return Status{}, err
 	}
 
-	status.New = int(rowsAffected)
-	status.Skipped = len(filteredBookmarks) - status.New
+	status.NewOrUpdated = int(rowsAffected)
+	status.Skipped = len(filteredBookmarks) - status.NewOrUpdated
 
 	return status, nil
 }
 
-func (s *Service) ImportFromNetscapeDocument(userUUID string, document *netscape.Document, visibility Visibility) (Status, error) {
+func (s *Service) ImportFromNetscapeDocument(userUUID string, document *netscape.Document, visibility Visibility, overwrite OnConflictStrategy) (Status, error) {
+	var overwriteExisting bool
+
+	switch overwrite {
+	case OnConflictOverwrite:
+		overwriteExisting = true
+	case OnConflictKeepExisting:
+	default:
+		return Status{}, ErrOnConflictStrategyInvalid
+	}
+
 	bookmarks := []bookmark.Bookmark{}
 
 	flattenedDocument := document.Flatten()
@@ -89,5 +119,5 @@ func (s *Service) ImportFromNetscapeDocument(userUUID string, document *netscape
 		bookmarks = append(bookmarks, *bookmark)
 	}
 
-	return s.bulkImport(bookmarks)
+	return s.bulkImport(bookmarks, overwriteExisting)
 }

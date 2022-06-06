@@ -77,6 +77,26 @@ VALUES(
 }
 
 func (r *Repository) BookmarkAddMany(bookmarks []bookmark.Bookmark) (int64, error) {
+	return r.bookmarkUpsertMany("ON CONFLICT DO NOTHING", bookmarks)
+}
+
+func (r *Repository) BookmarkUpsertMany(bookmarks []bookmark.Bookmark) (int64, error) {
+	return r.bookmarkUpsertMany(
+		`
+ON CONFLICT (user_uuid, url) DO UPDATE
+SET
+	title       = EXCLUDED.title,
+	description = EXCLUDED.description,
+	private     = EXCLUDED.private,
+	tags        = EXCLUDED.tags,
+	created_at  = EXCLUDED.created_at,
+	updated_at  = EXCLUDED.updated_at
+`,
+		bookmarks,
+	)
+}
+
+func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookmark.Bookmark) (int64, error) {
 	dbBookmarks := make([]Bookmark, len(bookmarks))
 
 	for index, b := range bookmarks {
@@ -96,8 +116,7 @@ func (r *Repository) BookmarkAddMany(bookmarks []bookmark.Bookmark) (int64, erro
 		dbBookmarks[index] = dbBookmark
 	}
 
-	res, err := r.db.NamedExec(
-		`
+	insertQuery := `
 INSERT INTO bookmarks(
 	uid,
 	user_uuid,
@@ -119,11 +138,10 @@ VALUES(
 	:tags,
 	:created_at,
 	:updated_at
-)
-ON CONFLICT DO NOTHING
-`,
-		dbBookmarks,
-	)
+)`
+
+	query := insertQuery + onConflictStmt
+	res, err := r.db.NamedExec(query, dbBookmarks)
 	if err != nil {
 		return 0, err
 	}

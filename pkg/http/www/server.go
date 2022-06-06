@@ -3,6 +3,7 @@ package www
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -675,14 +676,19 @@ func (s *Server) handleToolsImport() func(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		var importFileBuffer, visibilityBuffer bytes.Buffer
+		var (
+			importFileBuffer         bytes.Buffer
+			onConflictStrategyBuffer bytes.Buffer
+			visibilityBuffer         bytes.Buffer
+		)
 		importFileWriter := bufio.NewWriter(&importFileBuffer)
+		onConflictStrategyWriter := bufio.NewWriter(&onConflictStrategyBuffer)
 		visibilityWriter := bufio.NewWriter(&visibilityBuffer)
 
 		for {
 			part, err := multipartReader.NextPart()
 
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				// no more parts to process
 				break
 			}
@@ -697,6 +703,8 @@ func (s *Server) handleToolsImport() func(w http.ResponseWriter, r *http.Request
 			switch part.FormName() {
 			case "importfile":
 				_, err = io.Copy(importFileWriter, part)
+			case "on-conflict":
+				_, err = io.Copy(onConflictStrategyWriter, part)
 			case "visibility":
 				_, err = io.Copy(visibilityWriter, part)
 			default:
@@ -720,9 +728,10 @@ func (s *Server) handleToolsImport() func(w http.ResponseWriter, r *http.Request
 		}
 
 		user := userValue(r.Context())
+		overwrite := importing.OnConflictStrategy(onConflictStrategyBuffer.String())
 		visibility := importing.Visibility(visibilityBuffer.String())
 
-		importStatus, err := s.importingService.ImportFromNetscapeDocument(user.UUID, document, visibility)
+		importStatus, err := s.importingService.ImportFromNetscapeDocument(user.UUID, document, visibility, overwrite)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to save imported bookmarks")
 			s.PutFlashError(w, "failed to save imported bookmarks")

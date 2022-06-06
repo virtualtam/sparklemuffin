@@ -3,15 +3,23 @@ package importing
 import "fmt"
 
 type Status struct {
-	Invalid int
-	New     int
-	Skipped int
+	overwriteExisting bool
+
+	Invalid      int
+	NewOrUpdated int
+	Skipped      int
 }
 
 func (st *Status) Summary() string {
+	var orUpdated string
+	if st.overwriteExisting {
+		orUpdated = " or updated"
+	}
+
 	return fmt.Sprintf(
-		"%d new, %d skipped, %d invalid",
-		st.New,
+		"%d new%s, %d skipped, %d invalid",
+		st.NewOrUpdated,
+		orUpdated,
 		st.Skipped,
 		st.Invalid,
 	)

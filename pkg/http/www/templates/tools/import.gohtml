@@ -20,6 +20,15 @@
     <label for="public">Import all bookmarks as public</label>
   </p>
   <p>
+    In case of conflict (same URL):
+    <br>
+    <input type="radio" name="on-conflict" id="on-conflict-keep" value="keep" checked>
+    <label for="on-conflict-keep">Keep existing bookmarks</label>
+    <br>
+    <input type="radio" name="on-conflict" id="on-conflict-overwrite" value="overwrite">
+    <label for="on-conflict-overwrite">Overwrite existing bookmarks with imported data</label>
+  </p>
+  <p>
     <button type="submit">Import</button>
   </p>
 </form>

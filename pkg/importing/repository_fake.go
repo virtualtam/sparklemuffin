@@ -9,8 +9,38 @@ type FakeRepository struct {
 }
 
 func (r *FakeRepository) BookmarkAddMany(bookmarks []bookmark.Bookmark) (int64, error) {
-	r.Bookmarks = append(r.Bookmarks, bookmarks...)
-	return int64(len(bookmarks)), nil
+	return r.bookmarkUpsertMany(bookmarks, false)
+}
+
+func (r *FakeRepository) BookmarkUpsertMany(bookmarks []bookmark.Bookmark) (int64, error) {
+	return r.bookmarkUpsertMany(bookmarks, true)
+}
+
+func (r *FakeRepository) bookmarkUpsertMany(bookmarks []bookmark.Bookmark, overwriteExisting bool) (int64, error) {
+	uniqueURLs := map[string]int{}
+	for index, b := range r.Bookmarks {
+		uniqueURLs[b.URL] = index
+	}
+
+	var newOrUpdated int64
+
+	for _, b := range bookmarks {
+		if index, ok := uniqueURLs[b.URL]; ok {
+			// bookmark already exists
+			if overwriteExisting {
+				r.Bookmarks[index] = b
+				newOrUpdated++
+			}
+
+			continue
+		}
+
+		r.Bookmarks = append(r.Bookmarks, b)
+		uniqueURLs[b.URL] = len(r.Bookmarks) - 1
+		newOrUpdated++
+	}
+
+	return newOrUpdated, nil
 }
 
 func (r *FakeRepository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {

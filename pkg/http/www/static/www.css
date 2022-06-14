@@ -82,6 +82,10 @@ body > footer {
   padding: .1rem .5rem;
 }
 
+.center {
+  text-align: center;
+}
+
 .flash {
   margin: 0;
 }
@@ -100,4 +104,12 @@ body > footer {
 
 .flash-warning {
   color: #d08770;
+}
+
+.pagination a {
+  text-decoration: none;
+}
+
+.pagination a:hover {
+  text-decoration: underline;
 }

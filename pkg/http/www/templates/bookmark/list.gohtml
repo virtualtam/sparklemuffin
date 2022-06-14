@@ -1,19 +1,37 @@
 {{define "content"}}
   {{template "bookmarkAddForm"}}
   <hr>
-  <ol>
-  {{range .}}
+  {{template "pagination" .}}
+  <ol start="{{.Offset}}">
+  {{range .Bookmarks}}
     <li>
     {{- template "bookmark" .}}
     </li>
   {{end}}
   </ol>
+  {{template "pagination" .}}
 {{end}}
 
 {{define "bookmarkAddForm"}}
 <p>
   <a href="/bookmarks/add">Add bookmark</a>
 </p>
+{{end}}
+
+{{define "pagination"}}
+<div class="center pagination">
+  <p>
+    {{if lt .PreviousPageNumber .PageNumber }}
+    <a href="/bookmarks?page=1">&lt;&lt;</a>
+    <a href="/bookmarks?page={{.PreviousPageNumber}}">&lt;</a>
+    {{end}}
+    {{.PageNumber}} / {{.TotalPages}}
+    {{if lt .PageNumber .TotalPages }}
+    <a href="/bookmarks?page={{.NextPageNumber}}">&gt;</a>
+    <a href="/bookmarks?page={{.TotalPages}}">&gt;&gt;</a>
+    {{end}}
+  </p>
+</div>
 {{end}}
 
 {{- define "bookmark"}}

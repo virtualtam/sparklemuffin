@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/yawbe/pkg/displaying"
 	"github.com/virtualtam/yawbe/pkg/exporting"
 	"github.com/virtualtam/yawbe/pkg/importing"
 	"github.com/virtualtam/yawbe/pkg/session"
@@ -13,6 +14,7 @@ import (
 )
 
 var _ bookmark.Repository = &Repository{}
+var _ displaying.Repository = &Repository{}
 var _ exporting.Repository = &Repository{}
 var _ importing.Repository = &Repository{}
 var _ session.Repository = &Repository{}
@@ -275,6 +277,31 @@ AND uid=$2`,
 		CreatedAt:   dbBookmark.CreatedAt,
 		UpdatedAt:   dbBookmark.UpdatedAt,
 	}, nil
+}
+
+func (r *Repository) BookmarkGetCount(userUUID string) (int, error) {
+	var count int
+
+	err := r.db.Get(&count, "SELECT COUNT(*) FROM bookmarks WHERE user_uuid=$1", userUUID)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *Repository) BookmarkGetN(userUUID string, n int, offset int) ([]bookmark.Bookmark, error) {
+	return r.bookmarkGetQuery(
+		`
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3`,
+		userUUID,
+		n,
+		offset,
+	)
 }
 
 func (r *Repository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {

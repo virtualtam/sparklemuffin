@@ -28,11 +28,12 @@ func NewRunCommand() *cobra.Command {
 			server := www.NewServer().
 				WithBookmarkService(bookmarkService).
 				WithExportingService(exportingService).
+				WithDisplayingService(displayingService).
 				WithImportingService(importingService).
 				WithSessionService(sessionService).
 				WithUserService(userService)
 
-			// Structured loging
+			// Structured logging
 			chain := alice.New(hlog.NewHandler(log.Logger), hlog.AccessHandler(accessLogger))
 
 			httpServer := &http.Server{

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/netscape-go/v2"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/yawbe/pkg/displaying"
 	"github.com/virtualtam/yawbe/pkg/exporting"
 	"github.com/virtualtam/yawbe/pkg/http/www/rand"
 	"github.com/virtualtam/yawbe/pkg/http/www/static"
@@ -28,11 +30,12 @@ var _ http.Handler = &Server{}
 type Server struct {
 	router *mux.Router
 
-	bookmarkService  *bookmark.Service
-	exportingService *exporting.Service
-	importingService *importing.Service
-	sessionService   *session.Service
-	userService      *user.Service
+	bookmarkService   *bookmark.Service
+	displayingService *displaying.Service
+	exportingService  *exporting.Service
+	importingService  *importing.Service
+	sessionService    *session.Service
+	userService       *user.Service
 
 	accountView *view
 
@@ -86,6 +89,11 @@ func NewServer() *Server {
 
 func (s *Server) WithBookmarkService(bookmarkService *bookmark.Service) *Server {
 	s.bookmarkService = bookmarkService
+	return s
+}
+
+func (s *Server) WithDisplayingService(displayingService *displaying.Service) *Server {
+	s.displayingService = displayingService
 	return s
 }
 
@@ -617,15 +625,27 @@ func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Re
 		var viewData Data
 		user := userValue(r.Context())
 
-		bookmarks, err := s.bookmarkService.All(user.UUID)
+		pageNumberParam := r.URL.Query().Get("page")
+		pageNumber, err := strconv.Atoi(pageNumberParam)
 		if err != nil {
+			pageNumber = 1
+		}
+
+		bookmarksPage, err := s.displayingService.ByPage(user.UUID, pageNumber)
+		if errors.Is(err, displaying.ErrPageNumberOutOfBounds) {
+			msg := fmt.Sprintf("invalid page number: %d", pageNumber)
+			log.Error().Err(err).Msg(msg)
+			s.PutFlashError(w, msg)
+			http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
+			return
+		} else if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmarks")
 			s.PutFlashError(w, "failed to retrieve bookmarks")
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
-		viewData.Content = bookmarks
+		viewData.Content = bookmarksPage
 
 		s.bookmarkListView.render(w, r, viewData)
 	}

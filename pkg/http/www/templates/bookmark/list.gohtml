@@ -36,26 +36,28 @@
 
 {{- define "bookmark"}}
 <div class="bookmark">
-  <p>
-    {{- if .Private}}
-      <span class="private">Private</span>
-    {{- end}}
-    <a href="{{.URL}}">{{.Title}}</a>
-    <br>
-    <span class="details">
-      {{.UpdatedAt.Format "Mon, 02 Jan 2006 15:04:05 MST"}}
-    </span>
-    {{- with .Description}}
+  <div>
+    <p>
+      {{- if .Private}}
+        <span class="private">Private</span>
+      {{- end}}
+      <a href="{{.URL}}">{{.Title}}</a>
       <br>
+      <span class="details">
+        {{.CreatedAt.Format "Mon, 02 Jan 2006 15:04:05 MST"}}
+      </span>
+    </p>
+    {{- with .Description}}
       {{.}}
     {{- end}}
     {{- with .Tags}}
-      <br>
+      <p>
       {{- range .}}
       <span class="tag">{{.}}</span>
       {{- end}}
+      </p>
     {{- end}}
-  </p>
+  </div>
   <p>
     <a href="/bookmarks/{{.UID}}/edit">Edit</a>
     <br>

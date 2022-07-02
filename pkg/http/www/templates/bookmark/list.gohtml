@@ -48,7 +48,7 @@
       </span>
     </p>
     {{- with .Description}}
-      {{.}}
+      {{. | MarkdownToHTML}}
     {{- end}}
     {{- with .Tags}}
       <p>

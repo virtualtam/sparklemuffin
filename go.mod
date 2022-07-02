@@ -3,6 +3,7 @@ module github.com/virtualtam/yawbe
 go 1.18
 
 require (
+	github.com/alecthomas/chroma v0.10.0
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
@@ -15,10 +16,13 @@ require (
 	github.com/segmentio/ksuid v1.0.4
 	github.com/spf13/cobra v1.4.0
 	github.com/virtualtam/netscape-go/v2 v2.1.0
+	github.com/yuin/goldmark v1.4.12
+	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
 	golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e
 )
 
 require (
+	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect

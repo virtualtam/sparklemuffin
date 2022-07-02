@@ -35,7 +35,10 @@ func newView(templateFiles ...string) *view {
 	templateFiles = append(templateFiles, layoutTemplateFiles()...)
 
 	t, err := template.New("base").
-		Funcs(template.FuncMap{"Join": strings.Join}).
+		Funcs(template.FuncMap{
+			"Join":           strings.Join,
+			"MarkdownToHTML": markdownToHTML(),
+		}).
 		ParseFS(templates.FS, templateFiles...)
 
 	if err != nil {

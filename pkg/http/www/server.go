@@ -55,21 +55,9 @@ type Server struct {
 }
 
 // NewServer initializes and returns a new Server.
-func NewServer(
-	bookmarkService *bookmark.Service,
-	exportingService *exporting.Service,
-	importingService *importing.Service,
-	sessionService *session.Service,
-	userService *user.Service,
-) *Server {
+func NewServer() *Server {
 	s := &Server{
 		router: mux.NewRouter(),
-
-		bookmarkService:  bookmarkService,
-		exportingService: exportingService,
-		importingService: importingService,
-		sessionService:   sessionService,
-		userService:      userService,
 
 		accountView: newView("account/account.gohtml"),
 
@@ -93,6 +81,31 @@ func NewServer(
 
 	s.addRoutes()
 
+	return s
+}
+
+func (s *Server) WithBookmarkService(bookmarkService *bookmark.Service) *Server {
+	s.bookmarkService = bookmarkService
+	return s
+}
+
+func (s *Server) WithExportingService(exportingService *exporting.Service) *Server {
+	s.exportingService = exportingService
+	return s
+}
+
+func (s *Server) WithImportingService(importingService *importing.Service) *Server {
+	s.importingService = importingService
+	return s
+}
+
+func (s *Server) WithSessionService(sessionService *session.Service) *Server {
+	s.sessionService = sessionService
+	return s
+}
+
+func (s *Server) WithUserService(userService *user.Service) *Server {
+	s.userService = userService
 	return s
 }
 

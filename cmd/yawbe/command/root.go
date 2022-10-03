@@ -13,9 +13,9 @@ import (
 	"github.com/virtualtam/venom"
 	"github.com/virtualtam/yawbe/cmd/yawbe/config"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
-	"github.com/virtualtam/yawbe/pkg/displaying"
 	"github.com/virtualtam/yawbe/pkg/exporting"
 	"github.com/virtualtam/yawbe/pkg/importing"
+	"github.com/virtualtam/yawbe/pkg/querying"
 	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/storage/postgresql"
 	"github.com/virtualtam/yawbe/pkg/user"
@@ -47,12 +47,12 @@ var (
 
 	db *sqlx.DB
 
-	bookmarkService   *bookmark.Service
-	displayingService *displaying.Service
-	exportingService  *exporting.Service
-	importingService  *importing.Service
-	sessionService    *session.Service
-	userService       *user.Service
+	bookmarkService  *bookmark.Service
+	exportingService *exporting.Service
+	importingService *importing.Service
+	queryingService  *querying.Service
+	sessionService   *session.Service
+	userService      *user.Service
 )
 
 // NewRootCommand initializes the main CLI entrypoint and common command flags.
@@ -121,9 +121,9 @@ func NewRootCommand() *cobra.Command {
 
 			// YAWBE services
 			bookmarkService = bookmark.NewService(repository)
-			displayingService = displaying.NewService(repository)
 			exportingService = exporting.NewService(repository)
 			importingService = importing.NewService(repository)
+			queryingService = querying.NewService(repository)
 			sessionService = session.NewService(repository, hmacKey)
 			userService = user.NewService(repository)
 

@@ -6,17 +6,17 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
-	"github.com/virtualtam/yawbe/pkg/displaying"
 	"github.com/virtualtam/yawbe/pkg/exporting"
 	"github.com/virtualtam/yawbe/pkg/importing"
+	"github.com/virtualtam/yawbe/pkg/querying"
 	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/user"
 )
 
 var _ bookmark.Repository = &Repository{}
-var _ displaying.Repository = &Repository{}
 var _ exporting.Repository = &Repository{}
 var _ importing.Repository = &Repository{}
+var _ querying.Repository = &Repository{}
 var _ session.Repository = &Repository{}
 var _ user.Repository = &Repository{}
 

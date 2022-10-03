@@ -28,7 +28,7 @@ func NewRunCommand() *cobra.Command {
 			server := www.NewServer().
 				WithBookmarkService(bookmarkService).
 				WithExportingService(exportingService).
-				WithDisplayingService(displayingService).
+				WithQueryingService(queryingService).
 				WithImportingService(importingService).
 				WithSessionService(sessionService).
 				WithUserService(userService)

@@ -1,4 +1,4 @@
-package displaying
+package querying
 
 import "github.com/virtualtam/yawbe/pkg/bookmark"
 

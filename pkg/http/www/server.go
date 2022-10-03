@@ -17,10 +17,10 @@ import (
 
 	"github.com/virtualtam/yawbe/internal/rand"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
-	"github.com/virtualtam/yawbe/pkg/displaying"
 	"github.com/virtualtam/yawbe/pkg/exporting"
 	"github.com/virtualtam/yawbe/pkg/http/www/static"
 	"github.com/virtualtam/yawbe/pkg/importing"
+	"github.com/virtualtam/yawbe/pkg/querying"
 	"github.com/virtualtam/yawbe/pkg/session"
 	"github.com/virtualtam/yawbe/pkg/user"
 )
@@ -31,12 +31,12 @@ var _ http.Handler = &Server{}
 type Server struct {
 	router *mux.Router
 
-	bookmarkService   *bookmark.Service
-	displayingService *displaying.Service
-	exportingService  *exporting.Service
-	importingService  *importing.Service
-	sessionService    *session.Service
-	userService       *user.Service
+	bookmarkService  *bookmark.Service
+	exportingService *exporting.Service
+	importingService *importing.Service
+	queryingService  *querying.Service
+	sessionService   *session.Service
+	userService      *user.Service
 
 	accountView *view
 
@@ -93,8 +93,8 @@ func (s *Server) WithBookmarkService(bookmarkService *bookmark.Service) *Server 
 	return s
 }
 
-func (s *Server) WithDisplayingService(displayingService *displaying.Service) *Server {
-	s.displayingService = displayingService
+func (s *Server) WithQueryingService(queryingService *querying.Service) *Server {
+	s.queryingService = queryingService
 	return s
 }
 
@@ -632,8 +632,8 @@ func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Re
 			pageNumber = 1
 		}
 
-		bookmarksPage, err := s.displayingService.ByPage(user.UUID, pageNumber)
-		if errors.Is(err, displaying.ErrPageNumberOutOfBounds) {
+		bookmarksPage, err := s.queryingService.ByPage(user.UUID, pageNumber)
+		if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
 			msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 			log.Error().Err(err).Msg(msg)
 			s.PutFlashError(w, msg)

@@ -1,4 +1,4 @@
-package displaying
+package querying
 
 import (
 	"errors"

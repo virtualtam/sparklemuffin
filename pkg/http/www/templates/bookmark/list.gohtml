@@ -1,4 +1,5 @@
 {{define "content"}}
+  {{template "bookmarkSearchForm"}}
   {{template "bookmarkAddForm"}}
   <hr>
   {{template "pagination" .}}
@@ -10,6 +11,20 @@
   {{end}}
   </ol>
   {{template "pagination" .}}
+{{end}}
+
+{{define "bookmarkSearchForm"}}
+<form action="/bookmarks" method="GET">
+  <p>
+    <input
+      type="text"
+      id="searchTerms"
+      name="search"
+      placeholder="Search terms"
+      required="">
+    <button type="submit">Search</button>
+  </p>
+</form>
 {{end}}
 
 {{define "bookmarkAddForm"}}

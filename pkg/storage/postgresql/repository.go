@@ -34,17 +34,19 @@ func NewRepository(db *sqlx.DB) *Repository {
 
 func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
 	dbTags := tagsToTextArray(b.Tags)
+	fullTextSearchString := bookmarkToFullTextSearchString(b)
 
 	dbBookmark := Bookmark{
-		UID:         b.UID,
-		UserUUID:    b.UserUUID,
-		URL:         b.URL,
-		Title:       b.Title,
-		Description: b.Description,
-		Private:     b.Private,
-		Tags:        dbTags,
-		CreatedAt:   b.CreatedAt,
-		UpdatedAt:   b.UpdatedAt,
+		UID:                  b.UID,
+		UserUUID:             b.UserUUID,
+		URL:                  b.URL,
+		Title:                b.Title,
+		Description:          b.Description,
+		Private:              b.Private,
+		Tags:                 dbTags,
+		FullTextSearchString: fullTextSearchString,
+		CreatedAt:            b.CreatedAt,
+		UpdatedAt:            b.UpdatedAt,
 	}
 
 	_, err := r.db.NamedExec(
@@ -57,6 +59,7 @@ INSERT INTO bookmarks(
 	description,
 	private,
 	tags,
+	fulltextsearch_tsv,
 	created_at,
 	updated_at
 )
@@ -68,6 +71,7 @@ VALUES(
 	:description,
 	:private,
 	:tags,
+	to_tsvector(:fulltextsearch_string),
 	:created_at,
 	:updated_at
 )
@@ -103,17 +107,19 @@ func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookm
 
 	for index, b := range bookmarks {
 		dbTags := tagsToTextArray(b.Tags)
+		fullTextSearchString := bookmarkToFullTextSearchString(b)
 
 		dbBookmark := Bookmark{
-			UID:         b.UID,
-			UserUUID:    b.UserUUID,
-			URL:         b.URL,
-			Title:       b.Title,
-			Description: b.Description,
-			Private:     b.Private,
-			Tags:        dbTags,
-			CreatedAt:   b.CreatedAt,
-			UpdatedAt:   b.UpdatedAt,
+			UID:                  b.UID,
+			UserUUID:             b.UserUUID,
+			URL:                  b.URL,
+			Title:                b.Title,
+			Description:          b.Description,
+			Private:              b.Private,
+			Tags:                 dbTags,
+			FullTextSearchString: fullTextSearchString,
+			CreatedAt:            b.CreatedAt,
+			UpdatedAt:            b.UpdatedAt,
 		}
 		dbBookmarks[index] = dbBookmark
 	}
@@ -127,6 +133,7 @@ INSERT INTO bookmarks(
 	description,
 	private,
 	tags,
+	fulltextsearch_tsv,
 	created_at,
 	updated_at
 )
@@ -138,6 +145,7 @@ VALUES(
 	:description,
 	:private,
 	:tags,
+	to_tsvector(:fulltextsearch_string),
 	:created_at,
 	:updated_at
 )`
@@ -304,6 +312,45 @@ LIMIT $2 OFFSET $3`,
 	)
 }
 
+func (r *Repository) BookmarkSearchCount(userUUID string, searchTerms string) (int, error) {
+	var count int
+	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+
+	err := r.db.Get(
+		&count,
+		`
+SELECT COUNT(*)
+FROM bookmarks
+WHERE user_uuid=$1
+AND fulltextsearch_tsv @@ websearch_to_tsquery($2)
+`,
+		userUUID,
+		fullTextSearchTerms,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *Repository) BookmarkSearchN(userUUID string, searchTerms string, n int, offset int) ([]bookmark.Bookmark, error) {
+	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+
+	return r.bookmarkGetQuery(
+		`
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+AND fulltextsearch_tsv @@ websearch_to_tsquery($2)
+ORDER BY created_at DESC
+LIMIT $3 OFFSET $4`,
+		userUUID,
+		fullTextSearchTerms,
+		n,
+		offset,
+	)
+}
 func (r *Repository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {
 	dbBookmark := &Bookmark{}
 
@@ -345,16 +392,18 @@ func (r *Repository) BookmarkIsURLRegisteredToAnotherUID(userUUID, url, uid stri
 
 func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
 	dbTags := tagsToTextArray(b.Tags)
+	fullTextSearchString := bookmarkToFullTextSearchString(b)
 
 	dbBookmark := Bookmark{
-		UserUUID:    b.UserUUID,
-		UID:         b.UID,
-		URL:         b.URL,
-		Title:       b.Title,
-		Description: b.Description,
-		Private:     b.Private,
-		Tags:        dbTags,
-		UpdatedAt:   b.UpdatedAt,
+		UserUUID:             b.UserUUID,
+		UID:                  b.UID,
+		URL:                  b.URL,
+		Title:                b.Title,
+		Description:          b.Description,
+		Private:              b.Private,
+		Tags:                 dbTags,
+		FullTextSearchString: fullTextSearchString,
+		UpdatedAt:            b.UpdatedAt,
 	}
 
 	_, err := r.db.NamedExec(
@@ -366,6 +415,7 @@ SET
 	description=:description,
 	private=:private,
 	tags=:tags,
+	fulltextsearch_tsv=to_tsvector(:fulltextsearch_string)
 	updated_at=:updated_at
 WHERE user_uuid=:user_uuid
 AND uid=:uid

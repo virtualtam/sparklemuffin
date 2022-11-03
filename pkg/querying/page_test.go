@@ -9,6 +9,9 @@ import (
 func assertPagesEqual(t *testing.T, got, want Page) {
 	t.Helper()
 
+	if got.SearchTerms != want.SearchTerms {
+		t.Errorf("want query %q, got %q", want.SearchTerms, got.SearchTerms)
+	}
 	if got.PageNumber != want.PageNumber {
 		t.Errorf("want page number %d, got %d", want.PageNumber, got.PageNumber)
 	}

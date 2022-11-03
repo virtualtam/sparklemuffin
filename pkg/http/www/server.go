@@ -632,21 +632,41 @@ func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Re
 			pageNumber = 1
 		}
 
-		bookmarksPage, err := s.queryingService.ByPage(user.UUID, pageNumber)
-		if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
-			msg := fmt.Sprintf("invalid page number: %d", pageNumber)
-			log.Error().Err(err).Msg(msg)
-			s.PutFlashError(w, msg)
-			http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
-			return
-		} else if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve bookmarks")
-			s.PutFlashError(w, "failed to retrieve bookmarks")
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
+		searchTermsParam := r.URL.Query().Get("search")
+		if searchTermsParam != "" {
+			bookmarksSearchPage, err := s.queryingService.BySearchQueryAndPage(user.UUID, searchTermsParam, pageNumber)
+			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
+				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
+				log.Error().Err(err).Msg(msg)
+				s.PutFlashError(w, msg)
+				http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
+				return
+			} else if err != nil {
+				log.Error().Err(err).Msg("failed to retrieve bookmarks")
+				s.PutFlashError(w, "failed to retrieve bookmarks")
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
 
-		viewData.Content = bookmarksPage
+			viewData.Content = bookmarksSearchPage
+
+		} else {
+			bookmarksPage, err := s.queryingService.ByPage(user.UUID, pageNumber)
+			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
+				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
+				log.Error().Err(err).Msg(msg)
+				s.PutFlashError(w, msg)
+				http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
+				return
+			} else if err != nil {
+				log.Error().Err(err).Msg("failed to retrieve bookmarks")
+				s.PutFlashError(w, "failed to retrieve bookmarks")
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+
+			viewData.Content = bookmarksPage
+		}
 
 		s.bookmarkListView.render(w, r, viewData)
 	}

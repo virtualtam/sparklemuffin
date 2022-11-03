@@ -1,6 +1,7 @@
 package querying
 
 import (
+	"errors"
 	"sort"
 
 	"github.com/virtualtam/yawbe/pkg/bookmark"
@@ -46,4 +47,12 @@ func (r *fakeRepository) BookmarkGetCount(userUUID string) (int, error) {
 	}
 
 	return userBookmarkCount, nil
+}
+
+func (r *fakeRepository) BookmarkSearchCount(userUUID string, searchTerms string) (int, error) {
+	return 0, errors.New("Not implemented")
+}
+
+func (r *fakeRepository) BookmarkSearchN(userUUID string, searchTerms string, n int, offset int) ([]bookmark.Bookmark, error) {
+	return []bookmark.Bookmark{}, errors.New("Not implemented")
 }

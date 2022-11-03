@@ -14,6 +14,9 @@ type Page struct {
 	TotalPages         int
 	Offset             int
 
+	SearchTerms       string
+	SearchResultCount int
+
 	Bookmarks []bookmark.Bookmark
 }
 
@@ -38,6 +41,16 @@ func NewPage(number int, totalPages int, bookmarks []bookmark.Bookmark) Page {
 	}
 
 	page.Offset = (page.PageNumber-1)*bookmarksPerPage + 1
+
+	return page
+}
+
+// NewSearchResultPage initializes and returns a new bookmark Page containing search results.
+func NewSearchResultPage(searchTerms string, searchResultCount int, number int, totalPages int, bookmarks []bookmark.Bookmark) Page {
+	page := NewPage(number, totalPages, bookmarks)
+
+	page.SearchTerms = searchTerms
+	page.SearchResultCount = searchResultCount
 
 	return page
 }

@@ -1,9 +1,16 @@
 package postgresql
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgtype"
+	"github.com/virtualtam/yawbe/pkg/bookmark"
+)
+
+var (
+	fullTextSearchReplacer = strings.NewReplacer("/", " ", ".", " ")
 )
 
 type Bookmark struct {
@@ -17,8 +24,19 @@ type Bookmark struct {
 	Private bool             `db:"private"`
 	Tags    pgtype.TextArray `db:"tags"`
 
+	FullTextSearchString string `db:"fulltextsearch_string"`
+
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
+}
+
+func bookmarkToFullTextSearchString(b bookmark.Bookmark) string {
+	return fmt.Sprintf(
+		"%s %s %s",
+		b.Title,
+		fullTextSearchReplacer.Replace(b.Description),
+		fullTextSearchReplacer.Replace(strings.Join(b.Tags, " ")),
+	)
 }
 
 func tagsToTextArray(tags []string) pgtype.TextArray {

@@ -1,5 +1,5 @@
 {{define "content"}}
-  {{template "bookmarkSearchForm"}}
+  {{template "bookmarkSearchForm" .}}
   {{template "bookmarkAddForm"}}
   <hr>
   {{template "pagination" .}}
@@ -21,10 +21,16 @@
       id="searchTerms"
       name="search"
       placeholder="Search terms"
+      value="{{.SearchTerms}}"
       required="">
     <button type="submit">Search</button>
   </p>
 </form>
+{{if ne .SearchTerms "" }}
+<p>
+  <strong>{{.SearchResultCount}}</strong> bookmark{{if gt .SearchResultCount 1}}s{{end}} found
+</p>
+{{end}}
 {{end}}
 
 {{define "bookmarkAddForm"}}
@@ -37,13 +43,13 @@
 <div class="center pagination">
   <p>
     {{if lt .PreviousPageNumber .PageNumber }}
-    <a href="/bookmarks?page=1">&lt;&lt;</a>
-    <a href="/bookmarks?page={{.PreviousPageNumber}}">&lt;</a>
+    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page=1">&lt;&lt;</a>
+    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}">&lt;</a>
     {{end}}
     {{.PageNumber}} / {{.TotalPages}}
     {{if lt .PageNumber .TotalPages }}
-    <a href="/bookmarks?page={{.NextPageNumber}}">&gt;</a>
-    <a href="/bookmarks?page={{.TotalPages}}">&gt;&gt;</a>
+    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">&gt;</a>
+    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}">&gt;&gt;</a>
     {{end}}
   </p>
 </div>

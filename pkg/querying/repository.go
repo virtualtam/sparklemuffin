@@ -10,4 +10,12 @@ type Repository interface {
 	// BookmarkGetN returns at most n bookmarks for a given user, starting at
 	// a given offset.
 	BookmarkGetN(userUUID string, n int, offset int) ([]bookmark.Bookmark, error)
+
+	// BookmarkSearchCount returns the number of bookmarks for a given user and
+	// search terms.
+	BookmarkSearchCount(userUUID string, searchTerms string) (int, error)
+
+	// BookmarkSearchN returns at most n bookmarks for a given user and search
+	// terms, starting at a given offset.
+	BookmarkSearchN(userUUID string, searchTerms string, n int, offset int) ([]bookmark.Bookmark, error)
 }

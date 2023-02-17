@@ -1,6 +1,8 @@
 package command
 
 import (
+	"fmt"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -19,14 +21,23 @@ import (
 const (
 	databaseDriver string = "pgx"
 
-	defaultDebugMode   bool   = false
-	defaultHMACKey     string = "hmac-secret-key"
-	defaultDatabaseURI string = "postgres://yawbe:yawbe@localhost:15432/yawbe?sslmode=disable"
+	defaultDebugMode bool   = false
+	defaultHMACKey   string = "hmac-secret-key"
+
+	defaultDatabaseAddr     string = "localhost:15432"
+	defaultDatabaseName     string = "yawbe"
+	defaultDatabaseUser     string = "yawbe"
+	defaultDatabasePassword string = "yawbe"
 )
 
 var (
 	debugMode bool
 	hmacKey   string
+
+	databaseAddr     string
+	databaseName     string
+	databaseUser     string
+	databasePassword string
 
 	db *sqlx.DB
 
@@ -50,8 +61,16 @@ func NewRootCommand() *cobra.Command {
 				zerolog.SetGlobalLevel(zerolog.DebugLevel)
 			}
 
+			databaseURI := fmt.Sprintf(
+				"postgres://%s:%s@%s/%s?sslmode=disable",
+				databaseUser,
+				databasePassword,
+				databaseAddr,
+				databaseName,
+			)
+
 			// FIXME hardcoded
-			db, err = sqlx.Connect(databaseDriver, defaultDatabaseURI)
+			db, err = sqlx.Connect(databaseDriver, databaseURI)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to connect to PostgresSQL")
 				return err
@@ -76,6 +95,31 @@ func NewRootCommand() *cobra.Command {
 		"debug",
 		defaultDebugMode,
 		"Enable debugging",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&databaseAddr,
+		"db-addr",
+		defaultDatabaseAddr,
+		"Database address (host:port)",
+	)
+	cmd.PersistentFlags().StringVar(
+		&databaseName,
+		"db-name",
+		defaultDatabaseName,
+		"Database name",
+	)
+	cmd.PersistentFlags().StringVar(
+		&databaseUser,
+		"db-user",
+		defaultDatabaseUser,
+		"Database user",
+	)
+	cmd.PersistentFlags().StringVar(
+		&databasePassword,
+		"db-password",
+		defaultDatabasePassword,
+		"Database password",
 	)
 
 	cmd.PersistentFlags().StringVar(

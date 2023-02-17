@@ -31,7 +31,7 @@ psql:
 
 live:
 	@echo "== Starting database"
-	docker-compose up -d
+	docker compose -f docker-compose.dev.yml up -d
 	@echo "== Watching for changes... (hit Ctrl+C when done)"
 	@watchexec --restart --exts css,go,gohtml -- go run ./cmd/yawbe-srv/ run
 .PHONY: live

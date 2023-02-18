@@ -2,11 +2,15 @@ package command
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"github.com/virtualtam/venom"
+	"github.com/virtualtam/yawbe/cmd/yawbe-srv/config"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
 	"github.com/virtualtam/yawbe/pkg/displaying"
 	"github.com/virtualtam/yawbe/pkg/exporting"
@@ -61,6 +65,22 @@ func NewRootCommand() *cobra.Command {
 				zerolog.SetGlobalLevel(zerolog.DebugLevel)
 			}
 
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return err
+			}
+			homeConfigPath := filepath.Join(home, ".config")
+
+			configPaths := []string{config.DefaultConfigPath, homeConfigPath, "."}
+
+			// Inject global configuration as a pre-run hook
+			//
+			// This is required to let Viper load environment variables and
+			// configuration entries before invoking nested commands.
+			if err := venom.Inject(cmd, config.EnvPrefix, configPaths, config.ConfigName, false); err != nil {
+				return err
+			}
+
 			databaseURI := fmt.Sprintf(
 				"postgres://%s:%s@%s/%s?sslmode=disable",
 				databaseUser,
@@ -69,7 +89,6 @@ func NewRootCommand() *cobra.Command {
 				databaseName,
 			)
 
-			// FIXME hardcoded
 			db, err = sqlx.Connect(databaseDriver, databaseURI)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to connect to PostgresSQL")

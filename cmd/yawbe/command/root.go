@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
@@ -23,10 +24,9 @@ import (
 )
 
 const (
-	databaseDriver string = "pgx"
+	defaultHMACKey string = "hmac-secret-key"
 
-	defaultDebugMode bool   = false
-	defaultHMACKey   string = "hmac-secret-key"
+	databaseDriver string = "pgx"
 
 	defaultDatabaseAddr     string = "localhost:15432"
 	defaultDatabaseName     string = "yawbe"
@@ -35,8 +35,10 @@ const (
 )
 
 var (
-	debugMode bool
-	hmacKey   string
+	defaultLogLevelValue string = zerolog.LevelInfoValue
+	logLevelValue        string
+
+	hmacKey string
 
 	databaseAddr     string
 	databaseName     string
@@ -61,10 +63,7 @@ func NewRootCommand() *cobra.Command {
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 
-			if debugMode {
-				zerolog.SetGlobalLevel(zerolog.DebugLevel)
-			}
-
+			// Configuration file lookup paths
 			home, err := os.UserHomeDir()
 			if err != nil {
 				return err
@@ -81,6 +80,17 @@ func NewRootCommand() *cobra.Command {
 				return err
 			}
 
+			// Global logger configuration
+			var logLevel zerolog.Level
+
+			if err := logLevel.UnmarshalText([]byte(logLevelValue)); err != nil {
+				log.Error().Err(err).Msg("failed to set log level")
+				return err
+			}
+
+			zerolog.SetGlobalLevel(logLevel)
+
+			// Database connection pool
 			databaseURI := fmt.Sprintf(
 				"postgres://%s:%s@%s/%s?sslmode=disable",
 				databaseUser,
@@ -96,8 +106,10 @@ func NewRootCommand() *cobra.Command {
 			}
 			log.Info().Msg("Successfully connected to PostgreSQL")
 
+			// Main database repository
 			repository := postgresql.NewRepository(db)
 
+			// YAWBE services
 			bookmarkService = bookmark.NewService(repository)
 			displayingService = displaying.NewService(repository)
 			exportingService = exporting.NewService(repository)
@@ -109,11 +121,24 @@ func NewRootCommand() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().BoolVar(
-		&debugMode,
-		"debug",
-		defaultDebugMode,
-		"Enable debugging",
+	var logLevelValues = []string{
+		zerolog.LevelTraceValue,
+		zerolog.LevelDebugValue,
+		zerolog.LevelInfoValue,
+		zerolog.LevelWarnValue,
+		zerolog.LevelErrorValue,
+		zerolog.LevelFatalValue,
+		zerolog.LevelPanicValue,
+	}
+
+	cmd.PersistentFlags().StringVar(
+		&logLevelValue,
+		"log-level",
+		defaultLogLevelValue,
+		fmt.Sprintf(
+			"Log level (%s)",
+			strings.Join(logLevelValues, ", "),
+		),
 	)
 
 	cmd.PersistentFlags().StringVar(

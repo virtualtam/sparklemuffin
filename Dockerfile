@@ -22,7 +22,8 @@ ENV \
     YAWBE_DB_ADDR="postgres:5432" \
     YAWBE_DB_NAME="yawbe" \
     YAWBE_DB_USER="yawbe" \
-    YAWBE_DB_PASSWORD="yawbe"
+    YAWBE_DB_PASSWORD="yawbe" \
+    YAWBE_LOG_LEVEL="info"
 
 EXPOSE 8080
 

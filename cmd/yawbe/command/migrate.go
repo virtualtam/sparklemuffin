@@ -6,6 +6,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	migratepgx "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/virtualtam/yawbe/pkg/storage/postgresql/migrations"
@@ -53,7 +54,11 @@ func NewMigrateCommand() *cobra.Command {
 				return err
 			}
 
-			migrater.Log = migrateLogger{verbose: debugMode}
+			var verbose bool
+			if logLevelValue == zerolog.LevelTraceValue || logLevelValue == zerolog.LevelDebugValue {
+				verbose = true
+			}
+			migrater.Log = migrateLogger{verbose: verbose}
 
 			err = migrater.Up()
 			if errors.Is(err, migrate.ErrNoChange) {

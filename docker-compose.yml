@@ -20,5 +20,7 @@ services:
     build: .
     depends_on:
       - postgres
+    environment:
+      YAWBE_LOG_LEVEL: debug
     ports:
       - 8080:8080

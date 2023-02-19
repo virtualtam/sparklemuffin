@@ -14,10 +14,11 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/netscape-go/v2"
+
+	"github.com/virtualtam/yawbe/internal/rand"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
 	"github.com/virtualtam/yawbe/pkg/displaying"
 	"github.com/virtualtam/yawbe/pkg/exporting"
-	"github.com/virtualtam/yawbe/pkg/http/www/rand"
 	"github.com/virtualtam/yawbe/pkg/http/www/static"
 	"github.com/virtualtam/yawbe/pkg/importing"
 	"github.com/virtualtam/yawbe/pkg/session"

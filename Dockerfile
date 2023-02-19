@@ -23,6 +23,7 @@ ENV \
     YAWBE_DB_NAME="yawbe" \
     YAWBE_DB_USER="yawbe" \
     YAWBE_DB_PASSWORD="yawbe" \
+    YAWBE_HMAC_KEY="hmac-secret-key" \
     YAWBE_LOG_LEVEL="info"
 
 EXPOSE 8080

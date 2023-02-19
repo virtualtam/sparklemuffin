@@ -6,7 +6,7 @@ volumes:
 
 services:
   postgres:
-    image: postgres:14
+    image: postgres:15
     environment:
       POSTGRES_DB: yawbe
       POSTGRES_USER: yawbe

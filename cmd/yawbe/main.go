@@ -6,7 +6,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/virtualtam/yawbe/cmd/yawbe-srv/command"
+	"github.com/virtualtam/yawbe/cmd/yawbe/command"
 )
 
 func main() {

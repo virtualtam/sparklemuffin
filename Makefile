@@ -4,7 +4,7 @@ SRC_FILES := $(shell find . -name "*.go")
 all: lint cover build
 .PHONY: all
 
-build: $(BUILD_DIR)/yawbe-srv
+build: $(BUILD_DIR)/yawbe
 
 $(BUILD_DIR)/%: $(SRC_FILES)
 	go build -trimpath -o $@ ./cmd/$*
@@ -33,5 +33,5 @@ live:
 	@echo "== Starting database"
 	docker compose -f docker-compose.dev.yml up --remove-orphans -d
 	@echo "== Watching for changes... (hit Ctrl+C when done)"
-	@watchexec --restart --exts css,go,gohtml -- go run ./cmd/yawbe-srv/ run
+	@watchexec --restart --exts css,go,gohtml -- go run ./cmd/yawbe/ run
 .PHONY: live

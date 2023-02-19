@@ -16,7 +16,7 @@ FROM debian:bullseye-slim
 RUN mkdir /opt/yawbe
 WORKDIR /opt/yawbe
 
-COPY --from=builder /app/build/yawbe-srv /opt/yawbe/yawbe-srv
+COPY --from=builder /app/build/yawbe /opt/yawbe/yawbe
 
 ENV \
     YAWBE_DB_ADDR="postgres:5432" \
@@ -24,4 +24,6 @@ ENV \
     YAWBE_DB_USER="yawbe" \
     YAWBE_DB_PASSWORD="yawbe"
 
-CMD ["/opt/yawbe/yawbe-srv", "run"]
+EXPOSE 8080
+
+CMD ["/opt/yawbe/yawbe", "run"]

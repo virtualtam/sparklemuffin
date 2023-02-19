@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/virtualtam/venom"
-	"github.com/virtualtam/yawbe/cmd/yawbe-srv/config"
+	"github.com/virtualtam/yawbe/cmd/yawbe/config"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
 	"github.com/virtualtam/yawbe/pkg/displaying"
 	"github.com/virtualtam/yawbe/pkg/exporting"
@@ -56,7 +56,7 @@ var (
 // NewRootCommand initializes the main CLI entrypoint and common command flags.
 func NewRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "yawbe-srv",
+		Use:   "yawbe",
 		Short: "Yet Another Web Bookmarking Engine",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			var err error

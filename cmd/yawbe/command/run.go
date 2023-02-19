@@ -43,7 +43,7 @@ func NewRunCommand() *cobra.Command {
 				WriteTimeout: 15 * time.Second,
 			}
 
-			log.Info().Msgf("Listening to http://%s", listenAddr)
+			log.Info().Str("addr", listenAddr).Msg("starting HTTP server")
 			return httpServer.ListenAndServe()
 		},
 	}

@@ -84,10 +84,11 @@ func NewRootCommand() *cobra.Command {
 			var logLevel zerolog.Level
 
 			if err := logLevel.UnmarshalText([]byte(logLevelValue)); err != nil {
-				log.Error().Err(err).Msg("failed to set log level")
+				log.Error().Err(err).Msg("invalid log level")
 				return err
 			}
 
+			log.Info().Str("log_level", logLevelValue).Msg("setting log level")
 			zerolog.SetGlobalLevel(logLevel)
 
 			// Database connection pool
@@ -101,10 +102,19 @@ func NewRootCommand() *cobra.Command {
 
 			db, err = sqlx.Connect(databaseDriver, databaseURI)
 			if err != nil {
-				log.Error().Err(err).Msg("failed to connect to PostgresSQL")
+				log.Error().
+					Err(err).
+					Str("database_driver", databaseDriver).
+					Str("database_addr", databaseAddr).
+					Str("database_name", databaseName).
+					Msg("failed to connect to database")
 				return err
 			}
-			log.Info().Msg("Successfully connected to PostgreSQL")
+			log.Info().
+				Str("database_driver", databaseDriver).
+				Str("database_addr", databaseAddr).
+				Str("database_name", databaseName).
+				Msg("successfully connected to database")
 
 			// Main database repository
 			repository := postgresql.NewRepository(db)

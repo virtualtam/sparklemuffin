@@ -27,7 +27,6 @@ func NewCreateAdminUserCommand() *cobra.Command {
 		Use:   "createadmin",
 		Short: "Create a user with administration privileges",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO: generate strong password
 			adminUserPassword, err := rand.RandomBase64URLString(adminUserPasswordNBytes)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to generate admin user password")
@@ -65,7 +64,9 @@ func NewCreateAdminUserCommand() *cobra.Command {
 		"",
 		"Email address",
 	)
-	cmd.MarkFlagRequired("email")
+	if err := cmd.MarkFlagRequired("email"); err != nil {
+		log.Fatal().Err(err).Msg("failed to mark flag as required")
+	}
 
 	cmd.Flags().StringVar(
 		&adminUserNickname,
@@ -73,7 +74,9 @@ func NewCreateAdminUserCommand() *cobra.Command {
 		"",
 		"User nickname",
 	)
-	cmd.MarkFlagRequired("nickname")
+	if err := cmd.MarkFlagRequired("nickname"); err != nil {
+		log.Fatal().Err(err).Msg("failed to mark flag as required")
+	}
 
 	cmd.Flags().StringVar(
 		&adminUserDisplayName,
@@ -81,7 +84,9 @@ func NewCreateAdminUserCommand() *cobra.Command {
 		"",
 		"User display name",
 	)
-	cmd.MarkFlagRequired("displayname")
+	if err := cmd.MarkFlagRequired("displayname"); err != nil {
+		log.Fatal().Err(err).Msg("failed to mark flag as required")
+	}
 
 	return cmd
 }

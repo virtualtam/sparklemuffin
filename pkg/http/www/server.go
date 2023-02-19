@@ -266,7 +266,7 @@ func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *ht
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account password update form")
 			s.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			http.Redirect(w, r, "/account", http.StatusSeeOther)
 			return
 		}
 
@@ -280,12 +280,12 @@ func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *ht
 		if err := s.userService.UpdatePassword(userPassword); err != nil {
 			log.Error().Err(err).Msg("failed to update account password")
 			s.PutFlashError(w, fmt.Sprintf("There was an error updating your password: %s", err))
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			http.Redirect(w, r, "/account", http.StatusSeeOther)
 			return
 		}
 
 		s.PutFlashSuccess(w, "Your account password has been successfully updated")
-		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+		http.Redirect(w, r, "/account", http.StatusSeeOther)
 	}
 }
 

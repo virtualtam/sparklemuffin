@@ -1,7 +1,5 @@
 {{define "content"}}
   {{template "bookmarkSearchForm" .}}
-  {{template "bookmarkAddForm"}}
-  <hr>
   {{template "pagination" .}}
   <ol start="{{.Offset}}">
   {{range .Bookmarks}}
@@ -14,29 +12,24 @@
 {{end}}
 
 {{define "bookmarkSearchForm"}}
-<form action="/bookmarks" method="GET">
-  <p>
-    <input
-      type="text"
-      id="searchTerms"
-      name="search"
-      placeholder="Search terms"
-      value="{{.SearchTerms}}"
-      required="">
-    <button type="submit">Search</button>
-  </p>
-</form>
+<div class="search">
+  <form action="/bookmarks" method="GET">
+    <p>
+      <input
+        type="text"
+        id="searchTerms"
+        name="search"
+        placeholder="Search terms"
+        value="{{.SearchTerms}}">
+      <button type="submit">Search</button>
+    </p>
+  </form>
 {{if ne .SearchTerms "" }}
-<p>
-  <strong>{{.SearchResultCount}}</strong> bookmark{{if gt .SearchResultCount 1}}s{{end}} found
-</p>
+  <p>
+    <strong>{{.SearchResultCount}}</strong> bookmark{{if gt .SearchResultCount 1}}s{{end}} found
+  </p>
 {{end}}
-{{end}}
-
-{{define "bookmarkAddForm"}}
-<p>
-  <a href="/bookmarks/add">Add bookmark</a>
-</p>
+</div>
 {{end}}
 
 {{define "pagination"}}
@@ -62,14 +55,16 @@
       {{- if .Private}}
         <span class="private">Private</span>
       {{- end}}
-      <a href="{{.URL}}">{{.Title}}</a>
+      <span class="title"><a href="{{.URL}}">{{.Title}}</a></span>
       <br>
       <span class="details">
         {{.CreatedAt.Format "Mon, 02 Jan 2006 15:04:05 MST"}}
       </span>
     </p>
     {{- with .Description}}
+    <div class="description">
       {{. | MarkdownToHTML}}
+    </div>
     {{- end}}
     {{- with .Tags}}
       <p>
@@ -79,10 +74,12 @@
       </p>
     {{- end}}
   </div>
-  <p>
-    <a href="/bookmarks/{{.UID}}/edit">Edit</a>
-    <br>
-    <a href="/bookmarks/{{.UID}}/delete">Delete</a>
-  </p>
+  <div class="controls">
+    <p>
+      <a href="/bookmarks/{{.UID}}/edit">Edit</a>
+      <br>
+      <a href="/bookmarks/{{.UID}}/delete">Delete</a>
+    </p>
+  </div>
 </div>
 {{- end}}

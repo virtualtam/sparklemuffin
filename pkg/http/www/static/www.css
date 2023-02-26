@@ -1,16 +1,32 @@
 :root {
   --reading-width: min(45rem, 90%);
+
+  /* Nord Theme */
+  --bg: #eceff4;
+  --accent-bg: #e5e9f0;
+  --text: #3b4252;
+  --text-light: #434c5e;
+  --accent: #ebcb8b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Nord Theme (Dark)*/
+    --bg: #2e3440;
+    --accent-bg: #3b4252;
+    --text: #d8dee9;
+    --text-light: #e5e9f0;
+  }
 }
 
 body {
-  grid-template-columns: 1fr 4fr 1fr;
+  grid-template-columns: 1fr;
 }
 
 body>header {
   display: grid;
-  grid-column-start: 2;
-  grid-column-end: 3;
-  padding: 0;
+  border: none;
+  padding: 0 1rem;
   text-align: left;
 }
 
@@ -18,8 +34,9 @@ body>header>h3 {
   grid-column-start: 1;
   grid-column-end: 2;
   line-height: 1.2;
-  margin-bottom: 0;
-  margin-top: 1.1rem;
+  margin-bottom: 0.8rem;
+  margin-top: 1rem;
+  font-family: var(--mono-font);
 }
 
 body>header>p {
@@ -34,28 +51,51 @@ body>header>nav {
   text-align: right;
 }
 
+body>header>nav>a {
+  border: none;
+  font-weight: bold;
+  margin: 0;
+  padding: 0 .5rem;
+}
+
 body>header>nav>form {
   display: inline;
 }
 
 body>header>nav>form>button {
   margin: 0;
-  padding: .5rem .9rem;
-  border: 1px solid var(--border);
+  padding: 0 .5rem;
+  border: none;
   background: none;
-  color: var(--text);
+  color: #bf616a;
   font-family: var(--sans-font);
-  font-weight: normal;
 }
 
 body>header>nav>form>button:hover {
   color: #bf616a;
-  border-color: #bf616a;
+  text-decoration: underline;
 }
 
+body>main,
 body>footer {
-  grid-column-start: 2;
-  grid-column-end: 3;
+  grid-column: 1;
+  padding-left: 2rem;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.search {
+  padding-left: 2.5rem;
+}
+
+.search input {
+  width: 50ch;
 }
 
 .bookmark {
@@ -63,8 +103,13 @@ body>footer {
   grid-template-columns: auto 7rem;
 }
 
-.bookmark .details {
-  font-size: .8rem;
+.bookmark .title {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.bookmark .title a {
+  color: #ebcb8b;
 }
 
 .bookmark .private {
@@ -75,11 +120,30 @@ body>footer {
   padding: .1rem .5rem;
 }
 
+.bookmark .details {
+  font-size: .8rem;
+}
+
+.bookmark .description a {
+  color: #81a1c1;
+}
+
+.bookmark .description a:visited {
+  color: #b48ead;
+}
+
 .bookmark .tag {
+  border: 1px solid var(--accent-bg);
   border-radius: 5px;
-  background-color: #3b4252;
+  background-color: var(--accent-bg);
   font-size: .9rem;
   padding: .1rem .5rem;
+}
+
+.bookmark .tag:hover {
+  color: #eceff4;
+  background-color: #4c566a;
+  border: 1px solid #8fbcbb;
 }
 
 .bookmark .tag a {
@@ -87,9 +151,8 @@ body>footer {
   text-decoration: none;
 }
 
-.bookmark .tag:hover {
-  color: #eceff4;
-  background-color: #4c566a;
+.bookmark .controls a {
+  color: var(--text);
 }
 
 .center {

@@ -1,15 +1,15 @@
 {{define "nav"}}
 <header>
-  <h3>Yet Another Web Bookmarking Engine</h3>
-  {{if .User}}<p>{{.User.Email}}</p>{{end}}
+  <h3>&lt;yawbe/&gt;</h3>
   <nav>
     {{if .User}}
+    <a href="/bookmarks/add">+ Add bookmark</a>
     <a href="/bookmarks">Bookmarks</a>
     <a href="/tools">Tools</a>
       {{if .User.IsAdmin}}
     <a href="/admin">Admin</a>
       {{end}}
-    <a href="/account">Account</a>
+    <a href="/account">{{.User.Email}}</a>
       {{template "logoutForm"}}
     {{else}}
     <a href="/login">Login</a>

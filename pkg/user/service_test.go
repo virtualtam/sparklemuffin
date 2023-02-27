@@ -38,6 +38,30 @@ func TestServiceAdd(t *testing.T) {
 			wantErr: ErrNickNameRequired,
 		},
 		{
+			tname: "invalid nick (whitespace)",
+			user: User{
+				Email:    "spacenick@domain.tld",
+				NickName: "s p a c e",
+			},
+			wantErr: ErrNickNameInvalid,
+		},
+		{
+			tname: "invalid nick (slash)",
+			user: User{
+				Email:    "saul@huds.on",
+				NickName: "s/lash",
+			},
+			wantErr: ErrNickNameInvalid,
+		},
+		{
+			tname: "invalid nick (question mark)",
+			user: User{
+				Email:    "invader@domain.tld",
+				NickName: "s?pace",
+			},
+			wantErr: ErrNickNameInvalid,
+		},
+		{
 			tname: "nick already registered",
 			repositoryUsers: []User{
 				{
@@ -72,7 +96,7 @@ func TestServiceAdd(t *testing.T) {
 			tname: "valid user",
 			user: User{
 				Email:       "new@domain.tld",
-				NickName:    "new",
+				NickName:    "dat-new-pal3",
 				DisplayName: "The New Pal",
 				Password:    "ImN3w!",
 			},
@@ -296,6 +320,33 @@ func TestServiceUpdate(t *testing.T) {
 			wantErr: ErrNickNameRequired,
 		},
 		{
+			tname: "invalid nick (whitespace)",
+			user: User{
+				UUID:     "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
+				Email:    "spacenick@domain.tld",
+				NickName: "s p a c e",
+			},
+			wantErr: ErrNickNameInvalid,
+		},
+		{
+			tname: "invalid nick (slash)",
+			user: User{
+				UUID:     "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
+				Email:    "saul@huds.on",
+				NickName: "s/lash",
+			},
+			wantErr: ErrNickNameInvalid,
+		},
+		{
+			tname: "invalid nick (question mark)",
+			user: User{
+				UUID:     "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
+				Email:    "invader@domain.tld",
+				NickName: "s?pace",
+			},
+			wantErr: ErrNickNameInvalid,
+		},
+		{
 			tname: "empty (whitespace) display name",
 			user: User{
 				UUID:        "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
@@ -417,6 +468,51 @@ func TestServiceUpdateInfo(t *testing.T) {
 				NickName: "    ",
 			},
 			wantErr: ErrNickNameRequired,
+		},
+		{
+			tname: "invalid nick (whitespace)",
+			repositoryUsers: []User{
+				{
+					UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+					Email: "mimic@domain.tld",
+				},
+			},
+			info: InfoUpdate{
+				UUID:     "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email:    "mimic@domain.tld",
+				NickName: "s p a c e",
+			},
+			wantErr: ErrNickNameInvalid,
+		},
+		{
+			tname: "invalid nick (slash)",
+			repositoryUsers: []User{
+				{
+					UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+					Email: "mimic@domain.tld",
+				},
+			},
+			info: InfoUpdate{
+				UUID:     "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email:    "mimic@domain.tld",
+				NickName: "s/lash",
+			},
+			wantErr: ErrNickNameInvalid,
+		},
+		{
+			tname: "invalid nick (question mark)",
+			repositoryUsers: []User{
+				{
+					UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+					Email: "mimic@domain.tld",
+				},
+			},
+			info: InfoUpdate{
+				UUID:     "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email:    "mimic@domain.tld",
+				NickName: "s?lash",
+			},
+			wantErr: ErrNickNameInvalid,
 		},
 		{
 			tname: "empty display name (whitespace)",

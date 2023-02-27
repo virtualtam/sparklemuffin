@@ -2,11 +2,16 @@ package user
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	nickNameRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_-]+$`)
 )
 
 // Service handles operations for the user domain.
@@ -30,6 +35,7 @@ func (s *Service) Add(user User) error {
 		s.ensureEmailIsNotRegistered,
 		s.normalizeNickName,
 		s.requireNickName,
+		s.ensureNickNameIsValid,
 		s.ensureNickNameIsNotRegistered,
 		s.normalizeDisplayName,
 		s.requireDisplayName,
@@ -115,6 +121,7 @@ func (s *Service) Update(user User) error {
 		s.ensureEmailIsNotRegisteredToAnotherUser,
 		s.normalizeNickName,
 		s.requireNickName,
+		s.ensureNickNameIsValid,
 		s.ensureNickNameIsNotRegisteredToAnotherUser,
 		s.normalizeDisplayName,
 		s.requireDisplayName,
@@ -147,6 +154,7 @@ func (s *Service) UpdateInfo(info InfoUpdate) error {
 		s.ensureEmailIsNotRegisteredToAnotherUser,
 		s.normalizeNickName,
 		s.requireNickName,
+		s.ensureNickNameIsValid,
 		s.ensureNickNameIsNotRegisteredToAnotherUser,
 		s.normalizeDisplayName,
 		s.requireDisplayName,
@@ -317,6 +325,14 @@ func (s *Service) ensureEmailIsNotRegisteredToAnotherUser(user *User) error {
 	return ErrEmailAlreadyRegistered
 }
 
+func (s *Service) ensureNickNameIsValid(user *User) error {
+	if !nickNameRegex.MatchString(user.NickName) {
+		return ErrNickNameInvalid
+	}
+
+	return nil
+}
+
 func (s *Service) generateUUID(user *User) error {
 	generatedUUID, err := uuid.NewRandom()
 	if err != nil {
@@ -336,7 +352,7 @@ func (s *Service) hashPassword(user *User) error {
 
 	user.PasswordHash = string(h)
 
-	// wipe the clear-text password as soon as it is hashed
+	// clear the clear-text password as soon as it is hashed
 	user.Password = ""
 
 	return nil

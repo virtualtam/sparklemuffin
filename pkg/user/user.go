@@ -2,15 +2,30 @@ package user
 
 import "time"
 
-// User represents an authenticated user.
+// User represents a registered user.
 type User struct {
-	UUID         string
-	Email        string
-	NickName     string
-	DisplayName  string
-	Password     string
+	// UUID is the internal identifier for this User.
+	UUID string
+
+	// Email is the identifier a User logs in with.
+	Email string
+
+	// NickName is the handle used in user-specific URLs, and may only contain
+	// alphanumerical characters, the dash character, or the underscore character.
+	NickName string
+
+	// DisplayName is the handle used in the Web interface for this User.
+	DisplayName string
+
+	// Password is the clear-text password for this User, that will be set when
+	// creating or updating the User, and cleared once it has been hashed.
+	Password string
+
+	// PasswordHash contains the securely hashed password for this User.
 	PasswordHash string
-	IsAdmin      bool
+
+	// IsAdmin represents whether this User has administration privileges.
+	IsAdmin bool
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

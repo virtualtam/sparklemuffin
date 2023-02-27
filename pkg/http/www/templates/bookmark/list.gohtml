@@ -51,35 +51,29 @@
 {{- define "bookmark"}}
 <div class="bookmark">
   <div>
-    <p>
-      {{- if .Private}}
-        <span class="private">Private</span>
-      {{- end}}
-      <span class="title"><a href="{{.URL}}">{{.Title}}</a></span>
-      <br>
-      <span class="details">
-        {{.CreatedAt.Format "Mon, 02 Jan 2006 15:04:05 MST"}}
-      </span>
-    </p>
-    {{- with .Description}}
-    <div class="description">
-      {{. | MarkdownToHTML}}
-    </div>
+    {{- if .Private}}
+      <span class="private">Private</span>
     {{- end}}
-    {{- with .Tags}}
-      <p>
-      {{- range .}}
-      <span class="tag"><a href="/bookmarks?search={{.}}">{{.}}</a></span>
-      {{- end}}
-      </p>
-    {{- end}}
+    <span class="title"><a href="{{.URL}}">{{.Title}}</a></span>
   </div>
-  <div class="controls">
-    <p>
+  <div class="metadata">
+      {{.CreatedAt.Format "Mon, 02 Jan 2006 15:04:05 MST"}}
+      -
       <a href="/bookmarks/{{.UID}}/edit">Edit</a>
-      <br>
+      -
       <a href="/bookmarks/{{.UID}}/delete">Delete</a>
-    </p>
   </div>
+  {{- with .Description}}
+  <div class="description">
+    {{. | MarkdownToHTML}}
+  </div>
+  {{- end}}
+  {{- with .Tags}}
+    <div>
+    {{- range .}}
+    <span class="tag"><a href="/bookmarks?search={{.}}">{{.}}</a></span>
+    {{- end}}
+    </div>
+  {{- end}}
 </div>
 {{- end}}

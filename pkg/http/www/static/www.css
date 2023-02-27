@@ -82,12 +82,22 @@ body>footer {
   padding-left: 2rem;
 }
 
+body>main {
+  padding-top: 0;
+}
+
 a {
   text-decoration: none;
 }
 
 a:hover {
   text-decoration: underline;
+}
+
+blockquote {
+  margin: 0 0 1rem 1rem;
+  padding: 0 .8rem;
+  border-left-color: var(--text);
 }
 
 .search {
@@ -100,7 +110,7 @@ a:hover {
 
 .bookmark {
   display: grid;
-  grid-template-columns: auto 7rem;
+  padding-bottom: 1rem;
 }
 
 .bookmark .title {
@@ -120,8 +130,13 @@ a:hover {
   padding: .1rem .5rem;
 }
 
-.bookmark .details {
+.bookmark .metadata {
   font-size: .8rem;
+}
+
+.bookmark .description {
+  margin: .5rem 0;
+  font-size: 1rem;
 }
 
 .bookmark .description a {
@@ -149,10 +164,6 @@ a:hover {
 .bookmark .tag a {
   color: #d8dee9;
   text-decoration: none;
-}
-
-.bookmark .controls a {
-  color: var(--text);
 }
 
 .center {

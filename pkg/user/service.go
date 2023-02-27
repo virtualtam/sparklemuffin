@@ -81,6 +81,23 @@ func (s *Service) Authenticate(email, password string) (User, error) {
 	}
 }
 
+// ByNickName returns the user corresponding to a given NickName.
+func (s *Service) ByNickName(nick string) (User, error) {
+	user := User{NickName: nick}
+
+	err := s.runValidationFuncs(
+		&user,
+		s.normalizeNickName,
+		s.requireNickName,
+		s.ensureNickNameIsValid,
+	)
+	if err != nil {
+		return User{}, err
+	}
+
+	return s.r.UserGetByNickName(user.NickName)
+}
+
 // ByUUID returns the user corresponding to a given UUID.
 func (s *Service) ByUUID(userUUID string) (User, error) {
 	user := User{UUID: userUUID}

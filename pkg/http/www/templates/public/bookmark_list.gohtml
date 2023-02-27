@@ -1,0 +1,80 @@
+{{define "content"}}
+<h3>{{.Owner.DisplayName}}'s bookmarks</h3>
+
+<div class="search">
+  <form action="/u/{{.Owner.NickName}}/bookmarks" method="GET">
+    <p>
+      <input
+        type="text"
+        id="searchTerms"
+        name="search"
+        placeholder="Search terms"
+        value="{{.Page.SearchTerms}}">
+      <button type="submit">Search</button>
+    </p>
+  </form>
+{{if ne .Page.SearchTerms "" }}
+  <p>
+    <strong>{{.Page.SearchResultCount}}</strong> bookmark{{if gt .Page.SearchResultCount 1}}s{{end}} found
+  </p>
+{{end}}
+</div>
+
+<div class="center pagination">
+  <p>
+    {{if lt .Page.PreviousPageNumber .Page.PageNumber }}
+    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page=1">&lt;&lt;</a>
+    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.PreviousPageNumber}}">&lt;</a>
+    {{end}}
+    {{.Page.PageNumber}} / {{.Page.TotalPages}}
+    {{if lt .Page.PageNumber .Page.TotalPages }}
+    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.NextPageNumber}}">&gt;</a>
+    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.TotalPages}}">&gt;&gt;</a>
+    {{end}}
+  </p>
+</div>
+
+<ol start="{{.Page.Offset}}">
+{{range .Page.Bookmarks}}
+  <li>
+    <div class="bookmark">
+      <div>
+        {{- if .Private}}
+          <span class="private">Private</span>
+        {{- end}}
+        <span class="title"><a href="{{.URL}}">{{.Title}}</a></span>
+      </div>
+      <div class="metadata">
+          {{.CreatedAt.Format "Mon, 02 Jan 2006 15:04:05 MST"}}
+      </div>
+      {{- with .Description}}
+      <div class="description">
+        {{. | MarkdownToHTML}}
+      </div>
+      {{- end}}
+      {{- with .Tags}}
+        <div>
+        {{- range .}}
+        <span class="tag"><a href="/u/{{$.Owner.NickName}}/bookmarks?search={{.}}">{{.}}</a></span>
+        {{- end}}
+        </div>
+      {{- end}}
+    </div>
+  </li>
+{{end}}
+</ol>
+
+<div class="center pagination">
+  <p>
+    {{if lt .Page.PreviousPageNumber .Page.PageNumber }}
+    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page=1">&lt;&lt;</a>
+    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.PreviousPageNumber}}">&lt;</a>
+    {{end}}
+    {{.Page.PageNumber}} / {{.Page.TotalPages}}
+    {{if lt .Page.PageNumber .Page.TotalPages }}
+    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.NextPageNumber}}">&gt;</a>
+    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.TotalPages}}">&gt;&gt;</a>
+    {{end}}
+  </p>
+</div>
+{{end}}

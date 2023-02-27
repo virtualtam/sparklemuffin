@@ -50,6 +50,8 @@ type Server struct {
 	bookmarkEditView   *view
 	bookmarkListView   *view
 
+	publicBookmarkListView *view
+
 	toolsView       *view
 	toolsExportView *view
 	toolsImportView *view
@@ -75,6 +77,8 @@ func NewServer() *Server {
 		bookmarkEditView:   newView("bookmark/edit.gohtml"),
 		bookmarkListView:   newView("bookmark/list.gohtml"),
 
+		publicBookmarkListView: newView("public/bookmark_list.gohtml"),
+
 		toolsView:       newView("tools/tools.gohtml"),
 		toolsExportView: newView("tools/export.gohtml"),
 		toolsImportView: newView("tools/import.gohtml"),
@@ -93,11 +97,6 @@ func (s *Server) WithBookmarkService(bookmarkService *bookmark.Service) *Server 
 	return s
 }
 
-func (s *Server) WithQueryingService(queryingService *querying.Service) *Server {
-	s.queryingService = queryingService
-	return s
-}
-
 func (s *Server) WithExportingService(exportingService *exporting.Service) *Server {
 	s.exportingService = exportingService
 	return s
@@ -105,6 +104,11 @@ func (s *Server) WithExportingService(exportingService *exporting.Service) *Serv
 
 func (s *Server) WithImportingService(importingService *importing.Service) *Server {
 	s.importingService = importingService
+	return s
+}
+
+func (s *Server) WithQueryingService(queryingService *querying.Service) *Server {
+	s.queryingService = queryingService
 	return s
 }
 
@@ -186,6 +190,10 @@ func (s *Server) addRoutes() {
 	toolsRouter.Use(func(h http.Handler) http.Handler {
 		return s.authenticatedUser(h.ServeHTTP)
 	})
+
+	// public bookmarks
+	publicBookmarkRouter := s.router.PathPrefix("/u/{nickname}").Subrouter()
+	publicBookmarkRouter.HandleFunc("/bookmarks", s.handlePublicBookmarkListView()).Methods(http.MethodGet)
 
 	// static assets
 	s.router.HandleFunc("/static/", http.NotFound)
@@ -620,7 +628,7 @@ func (s *Server) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// handleBookmarkListView renders the bookmark list.
+// handleBookmarkListView renders the bookmark list for the current authenticated user.
 func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var viewData Data
@@ -669,6 +677,81 @@ func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Re
 		}
 
 		s.bookmarkListView.render(w, r, viewData)
+	}
+}
+
+// handlePublicBookmarkListView renders the public bookmark list for a registered user.
+func (s *Server) handlePublicBookmarkListView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var viewData Data
+
+		vars := mux.Vars(r)
+		nickName := vars["nickname"]
+
+		owner, err := s.userService.ByNickName(nickName)
+		if err != nil {
+			log.Error().Err(err).Str("nickname", nickName).Msg("failed to retrieve user")
+			s.PutFlashError(w, "unknown user")
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		// TODO public bookmarks only!
+
+		pageNumberParam := r.URL.Query().Get("page")
+		pageNumber, err := strconv.Atoi(pageNumberParam)
+		if err != nil {
+			pageNumber = 1
+		}
+
+		var bookmarkPage querying.Page
+
+		searchTermsParam := r.URL.Query().Get("search")
+		if searchTermsParam != "" {
+			bookmarksSearchPage, err := s.queryingService.BySearchQueryAndPage(owner.UUID, searchTermsParam, pageNumber)
+			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
+				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
+				log.Error().Err(err).Msg(msg)
+				s.PutFlashError(w, msg)
+				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+				return
+			} else if err != nil {
+				log.Error().Err(err).Msg("failed to retrieve bookmarks")
+				s.PutFlashError(w, "failed to retrieve bookmarks")
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+
+			bookmarkPage = bookmarksSearchPage
+
+		} else {
+			bookmarksPage, err := s.queryingService.ByPage(owner.UUID, pageNumber)
+			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
+				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
+				log.Error().Err(err).Msg(msg)
+				s.PutFlashError(w, msg)
+				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+				return
+			} else if err != nil {
+				log.Error().Err(err).Msg("failed to retrieve bookmarks")
+				s.PutFlashError(w, "failed to retrieve bookmarks")
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+
+			bookmarkPage = bookmarksPage
+		}
+
+		// TODO: rework with a proper struct
+		viewData.Content = struct {
+			Owner user.User
+			Page  querying.Page
+		}{
+			Owner: owner,
+			Page:  bookmarkPage,
+		}
+
+		s.publicBookmarkListView.render(w, r, viewData)
 	}
 }
 

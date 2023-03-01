@@ -19,12 +19,12 @@ func NewService(r Repository) *Service {
 }
 
 // ByPage returns a Page containing a limited and offset number of bookmarks.
-func (s *Service) ByPage(userUUID string, number int) (Page, error) {
+func (s *Service) ByPage(userUUID string, visibility Visibility, number int) (Page, error) {
 	if number < 1 {
 		return Page{}, ErrPageNumberOutOfBounds
 	}
 
-	bookmarkCount, err := s.r.BookmarkGetCount(userUUID)
+	bookmarkCount, err := s.r.BookmarkGetCount(userUUID, visibility)
 	if err != nil {
 		return Page{}, err
 	}
@@ -42,7 +42,7 @@ func (s *Service) ByPage(userUUID string, number int) (Page, error) {
 
 	dbOffset := (number - 1) * bookmarksPerPage
 
-	bookmarks, err := s.r.BookmarkGetN(userUUID, bookmarksPerPage, dbOffset)
+	bookmarks, err := s.r.BookmarkGetN(userUUID, visibility, bookmarksPerPage, dbOffset)
 	if err != nil {
 		return Page{}, err
 	}
@@ -52,12 +52,12 @@ func (s *Service) ByPage(userUUID string, number int) (Page, error) {
 
 // BySearchQueryAndPage returns a SearchPage containing a limited and offset
 // number of bookmarks for a given set of search terms.
-func (s *Service) BySearchQueryAndPage(userUUID string, searchTerms string, number int) (Page, error) {
+func (s *Service) BySearchQueryAndPage(userUUID string, visibility Visibility, searchTerms string, number int) (Page, error) {
 	if number < 1 {
 		return Page{}, ErrPageNumberOutOfBounds
 	}
 
-	bookmarkCount, err := s.r.BookmarkSearchCount(userUUID, searchTerms)
+	bookmarkCount, err := s.r.BookmarkSearchCount(userUUID, visibility, searchTerms)
 	if err != nil {
 		return Page{}, err
 	}
@@ -75,7 +75,7 @@ func (s *Service) BySearchQueryAndPage(userUUID string, searchTerms string, numb
 
 	dbOffset := (number - 1) * bookmarksPerPage
 
-	bookmarks, err := s.r.BookmarkSearchN(userUUID, searchTerms, bookmarksPerPage, dbOffset)
+	bookmarks, err := s.r.BookmarkSearchN(userUUID, visibility, searchTerms, bookmarksPerPage, dbOffset)
 	if err != nil {
 		return Page{}, err
 	}

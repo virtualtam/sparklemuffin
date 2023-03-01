@@ -642,7 +642,12 @@ func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Re
 
 		searchTermsParam := r.URL.Query().Get("search")
 		if searchTermsParam != "" {
-			bookmarksSearchPage, err := s.queryingService.BySearchQueryAndPage(user.UUID, searchTermsParam, pageNumber)
+			bookmarksSearchPage, err := s.queryingService.BySearchQueryAndPage(
+				user.UUID,
+				querying.VisibilityAll,
+				searchTermsParam,
+				pageNumber,
+			)
 			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
@@ -659,7 +664,11 @@ func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Re
 			viewData.Content = bookmarksSearchPage
 
 		} else {
-			bookmarksPage, err := s.queryingService.ByPage(user.UUID, pageNumber)
+			bookmarksPage, err := s.queryingService.ByPage(
+				user.UUID,
+				querying.VisibilityAll,
+				pageNumber,
+			)
 			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
@@ -696,8 +705,6 @@ func (s *Server) handlePublicBookmarkListView() func(w http.ResponseWriter, r *h
 			return
 		}
 
-		// TODO public bookmarks only!
-
 		pageNumberParam := r.URL.Query().Get("page")
 		pageNumber, err := strconv.Atoi(pageNumberParam)
 		if err != nil {
@@ -708,7 +715,12 @@ func (s *Server) handlePublicBookmarkListView() func(w http.ResponseWriter, r *h
 
 		searchTermsParam := r.URL.Query().Get("search")
 		if searchTermsParam != "" {
-			bookmarksSearchPage, err := s.queryingService.BySearchQueryAndPage(owner.UUID, searchTermsParam, pageNumber)
+			bookmarksSearchPage, err := s.queryingService.BySearchQueryAndPage(
+				owner.UUID,
+				querying.VisibilityPublic,
+				searchTermsParam,
+				pageNumber,
+			)
 			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
@@ -725,7 +737,11 @@ func (s *Server) handlePublicBookmarkListView() func(w http.ResponseWriter, r *h
 			bookmarkPage = bookmarksSearchPage
 
 		} else {
-			bookmarksPage, err := s.queryingService.ByPage(owner.UUID, pageNumber)
+			bookmarksPage, err := s.queryingService.ByPage(
+				owner.UUID,
+				querying.VisibilityPublic,
+				pageNumber,
+			)
 			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)

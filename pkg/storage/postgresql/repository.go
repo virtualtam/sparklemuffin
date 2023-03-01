@@ -287,10 +287,38 @@ AND uid=$2`,
 	}, nil
 }
 
-func (r *Repository) BookmarkGetCount(userUUID string) (int, error) {
+func (r *Repository) BookmarkGetCount(userUUID string, visibility querying.Visibility) (int, error) {
+	var query string
+
+	switch visibility {
+	case querying.VisibilityPrivate:
+		query = `
+		SELECT COUNT(*)
+		FROM  bookmarks
+		WHERE user_uuid=$1
+		AND   private=TRUE`
+
+	case querying.VisibilityPublic:
+		query = `
+		SELECT COUNT(*)
+		FROM  bookmarks
+		WHERE user_uuid=$1
+		AND   private=FALSE`
+
+	default:
+		query = `
+		SELECT COUNT(*)
+		FROM bookmarks
+		WHERE user_uuid=$1`
+	}
+
 	var count int
 
-	err := r.db.Get(&count, "SELECT COUNT(*) FROM bookmarks WHERE user_uuid=$1", userUUID)
+	err := r.db.Get(
+		&count,
+		query,
+		userUUID,
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -298,32 +326,79 @@ func (r *Repository) BookmarkGetCount(userUUID string) (int, error) {
 	return count, nil
 }
 
-func (r *Repository) BookmarkGetN(userUUID string, n int, offset int) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkGetN(userUUID string, visibility querying.Visibility, n int, offset int) ([]bookmark.Bookmark, error) {
+	var query string
+
+	switch visibility {
+	case querying.VisibilityPrivate:
+		query = `
+		SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+		FROM  bookmarks
+		WHERE user_uuid=$1
+		AND   private=TRUE
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3`
+
+	case querying.VisibilityPublic:
+		query = `
+		SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+		FROM  bookmarks
+		WHERE user_uuid=$1
+		AND   private=FALSE
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3`
+
+	default:
+		query = `
+		SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+		FROM  bookmarks
+		WHERE user_uuid=$1
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3`
+	}
+
 	return r.bookmarkGetQuery(
-		`
-SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
-FROM bookmarks
-WHERE user_uuid=$1
-ORDER BY created_at DESC
-LIMIT $2 OFFSET $3`,
+		query,
 		userUUID,
 		n,
 		offset,
 	)
 }
 
-func (r *Repository) BookmarkSearchCount(userUUID string, searchTerms string) (int, error) {
+func (r *Repository) BookmarkSearchCount(userUUID string, visibility querying.Visibility, searchTerms string) (int, error) {
+	var query string
+
+	switch visibility {
+	case querying.VisibilityPrivate:
+		query = `
+		SELECT COUNT(*)
+		FROM bookmarks
+		WHERE user_uuid=$1
+		AND PRIVATE=TRUE
+		AND fulltextsearch_tsv @@ websearch_to_tsquery($2)`
+
+	case querying.VisibilityPublic:
+		query = `
+		SELECT COUNT(*)
+		FROM bookmarks
+		WHERE user_uuid=$1
+		AND PRIVATE=FALSE
+		AND fulltextsearch_tsv @@ websearch_to_tsquery($2)`
+
+	default:
+		query = `
+		SELECT COUNT(*)
+		FROM bookmarks
+		WHERE user_uuid=$1
+		AND fulltextsearch_tsv @@ websearch_to_tsquery($2)`
+	}
+
 	var count int
 	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
 
 	err := r.db.Get(
 		&count,
-		`
-SELECT COUNT(*)
-FROM bookmarks
-WHERE user_uuid=$1
-AND fulltextsearch_tsv @@ websearch_to_tsquery($2)
-`,
+		query,
 		userUUID,
 		fullTextSearchTerms,
 	)
@@ -334,23 +409,51 @@ AND fulltextsearch_tsv @@ websearch_to_tsquery($2)
 	return count, nil
 }
 
-func (r *Repository) BookmarkSearchN(userUUID string, searchTerms string, n int, offset int) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkSearchN(userUUID string, visibility querying.Visibility, searchTerms string, n int, offset int) ([]bookmark.Bookmark, error) {
+	var query string
+
+	switch visibility {
+	case querying.VisibilityPrivate:
+		query = `
+		SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+		FROM bookmarks
+		WHERE user_uuid=$1
+		AND private=TRUE
+		AND fulltextsearch_tsv @@ websearch_to_tsquery($2)
+		ORDER BY created_at DESC
+		LIMIT $3 OFFSET $4`
+
+	case querying.VisibilityPublic:
+		query = `
+		SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+		FROM bookmarks
+		WHERE user_uuid=$1
+		AND private=FALSE
+		AND fulltextsearch_tsv @@ websearch_to_tsquery($2)
+		ORDER BY created_at DESC
+		LIMIT $3 OFFSET $4`
+
+	default:
+		query = `
+		SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+		FROM bookmarks
+		WHERE user_uuid=$1
+		AND fulltextsearch_tsv @@ websearch_to_tsquery($2)
+		ORDER BY created_at DESC
+		LIMIT $3 OFFSET $4`
+	}
+
 	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
 
 	return r.bookmarkGetQuery(
-		`
-SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
-FROM bookmarks
-WHERE user_uuid=$1
-AND fulltextsearch_tsv @@ websearch_to_tsquery($2)
-ORDER BY created_at DESC
-LIMIT $3 OFFSET $4`,
+		query,
 		userUUID,
 		fullTextSearchTerms,
 		n,
 		offset,
 	)
 }
+
 func (r *Repository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {
 	dbBookmark := &Bookmark{}
 

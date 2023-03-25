@@ -68,7 +68,7 @@ func TestServiceByPage(t *testing.T) {
 		repositoryBookmarks []bookmark.Bookmark
 		ownerUUID           string
 		visibility          Visibility
-		pageNumber          int
+		pageNumber          uint
 		want                Page
 		wantErr             error
 	}{
@@ -183,12 +183,6 @@ func TestServiceByPage(t *testing.T) {
 			pageNumber: 10,
 			ownerUUID:  "9681e525-f205-489d-b53e-1a858b4ca561",
 			wantErr:    ErrOwnerNotFound,
-		},
-		{
-			tname:      "negative page number",
-			pageNumber: -12,
-			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
-			wantErr:    ErrPageNumberOutOfBounds,
 		},
 		{
 			tname:      "zeroth page",

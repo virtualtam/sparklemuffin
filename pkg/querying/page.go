@@ -11,20 +11,20 @@ type Page struct {
 	// Owner exposes public matadata for the User owning the bookmarks.
 	Owner Owner
 
-	PageNumber         int
-	PreviousPageNumber int
-	NextPageNumber     int
-	TotalPages         int
-	Offset             int
+	PageNumber         uint
+	PreviousPageNumber uint
+	NextPageNumber     uint
+	TotalPages         uint
+	Offset             uint
 
 	SearchTerms       string
-	SearchResultCount int
+	SearchResultCount uint
 
 	Bookmarks []bookmark.Bookmark
 }
 
 // NewPage initializes and returns a new bookmark Page.
-func NewPage(owner Owner, number int, totalPages int, bookmarks []bookmark.Bookmark) Page {
+func NewPage(owner Owner, number uint, totalPages uint, bookmarks []bookmark.Bookmark) Page {
 	page := Page{
 		Owner:      owner,
 		PageNumber: number,
@@ -50,7 +50,7 @@ func NewPage(owner Owner, number int, totalPages int, bookmarks []bookmark.Bookm
 }
 
 // NewSearchResultPage initializes and returns a new bookmark Page containing search results.
-func NewSearchResultPage(owner Owner, searchTerms string, searchResultCount int, number int, totalPages int, bookmarks []bookmark.Bookmark) Page {
+func NewSearchResultPage(owner Owner, searchTerms string, searchResultCount uint, number uint, totalPages uint, bookmarks []bookmark.Bookmark) Page {
 	page := NewPage(owner, number, totalPages, bookmarks)
 
 	page.SearchTerms = searchTerms
@@ -59,10 +59,10 @@ func NewSearchResultPage(owner Owner, searchTerms string, searchResultCount int,
 	return page
 }
 
-func pageCount(bookmarkCount, bookmarksPerPage int) int {
+func pageCount(bookmarkCount, bookmarksPerPage uint) uint {
 	if bookmarkCount == 0 {
 		return 1
 	}
 
-	return int(math.Ceil(float64(bookmarkCount) / float64(bookmarksPerPage)))
+	return uint(math.Ceil(float64(bookmarkCount) / float64(bookmarksPerPage)))
 }

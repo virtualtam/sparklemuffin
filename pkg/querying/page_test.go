@@ -46,8 +46,8 @@ func assertPagesEqual(t *testing.T, got, want Page) {
 func TestNewPage(t *testing.T) {
 	cases := []struct {
 		tname      string
-		number     int
-		totalPages int
+		number     uint
+		totalPages uint
 		want       Page
 	}{
 		{
@@ -117,8 +117,8 @@ func TestNewPage(t *testing.T) {
 func TestPageCount(t *testing.T) {
 	cases := []struct {
 		tname         string
-		bookmarkCount int
-		want          int
+		bookmarkCount uint
+		want          uint
 	}{
 		{
 			tname:         "0 bookmarks, 1 page",

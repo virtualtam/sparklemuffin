@@ -26,7 +26,7 @@ func visibilityMatches(visibility Visibility, private bool) bool {
 	}
 }
 
-func (r *fakeRepository) BookmarkGetN(userUUID string, visibility Visibility, n int, offset int) ([]bookmark.Bookmark, error) {
+func (r *fakeRepository) BookmarkGetN(userUUID string, visibility Visibility, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	userBookmarks := []bookmark.Bookmark{}
 
 	for _, b := range r.bookmarks {
@@ -42,10 +42,10 @@ func (r *fakeRepository) BookmarkGetN(userUUID string, visibility Visibility, n 
 		return userBookmarks[i].CreatedAt.After(userBookmarks[j].CreatedAt)
 	})
 
-	var nBookmarks int
+	var nBookmarks uint
 
-	if n > len(userBookmarks[offset:]) {
-		nBookmarks = len(userBookmarks[offset:])
+	if n > uint(len(userBookmarks[offset:])) {
+		nBookmarks = uint(len(userBookmarks[offset:]))
 	} else {
 		nBookmarks = n
 	}
@@ -53,8 +53,8 @@ func (r *fakeRepository) BookmarkGetN(userUUID string, visibility Visibility, n 
 	return userBookmarks[offset : offset+nBookmarks], nil
 }
 
-func (r *fakeRepository) BookmarkGetCount(userUUID string, visibility Visibility) (int, error) {
-	var userBookmarkCount int
+func (r *fakeRepository) BookmarkGetCount(userUUID string, visibility Visibility) (uint, error) {
+	var userBookmarkCount uint
 
 	for _, b := range r.bookmarks {
 		if b.UserUUID == userUUID {
@@ -68,11 +68,11 @@ func (r *fakeRepository) BookmarkGetCount(userUUID string, visibility Visibility
 	return userBookmarkCount, nil
 }
 
-func (r *fakeRepository) BookmarkSearchCount(userUUID string, visibility Visibility, searchTerms string) (int, error) {
+func (r *fakeRepository) BookmarkSearchCount(userUUID string, visibility Visibility, searchTerms string) (uint, error) {
 	return 0, errors.New("not implemented")
 }
 
-func (r *fakeRepository) BookmarkSearchN(userUUID string, visibility Visibility, searchTerms string, n int, offset int) ([]bookmark.Bookmark, error) {
+func (r *fakeRepository) BookmarkSearchN(userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	return []bookmark.Bookmark{}, errors.New("not implemented")
 }
 

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -635,9 +634,12 @@ func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Re
 		user := userValue(r.Context())
 
 		pageNumberParam := r.URL.Query().Get("page")
-		pageNumber, err := strconv.Atoi(pageNumberParam)
+		pageNumber, err := getPageNumber(pageNumberParam)
 		if err != nil {
-			pageNumber = 1
+			log.Error().Err(err).Str("page_number", pageNumberParam).Msg("invalid page number")
+			s.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
+			http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
+			return
 		}
 
 		searchTermsParam := r.URL.Query().Get("search")
@@ -709,9 +711,12 @@ func (s *Server) handlePublicBookmarkListView() func(w http.ResponseWriter, r *h
 		}
 
 		pageNumberParam := r.URL.Query().Get("page")
-		pageNumber, err := strconv.Atoi(pageNumberParam)
+		pageNumber, err := getPageNumber(pageNumberParam)
 		if err != nil {
-			pageNumber = 1
+			log.Error().Err(err).Str("page_number", pageNumberParam).Msg("invalid page number")
+			s.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
 		}
 
 		var bookmarkPage querying.Page

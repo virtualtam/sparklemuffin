@@ -287,7 +287,7 @@ AND uid=$2`,
 	}, nil
 }
 
-func (r *Repository) BookmarkGetCount(userUUID string, visibility querying.Visibility) (int, error) {
+func (r *Repository) BookmarkGetCount(userUUID string, visibility querying.Visibility) (uint, error) {
 	var query string
 
 	switch visibility {
@@ -312,7 +312,7 @@ func (r *Repository) BookmarkGetCount(userUUID string, visibility querying.Visib
 		WHERE user_uuid=$1`
 	}
 
-	var count int
+	var count uint
 
 	err := r.db.Get(
 		&count,
@@ -326,7 +326,7 @@ func (r *Repository) BookmarkGetCount(userUUID string, visibility querying.Visib
 	return count, nil
 }
 
-func (r *Repository) BookmarkGetN(userUUID string, visibility querying.Visibility, n int, offset int) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkGetN(userUUID string, visibility querying.Visibility, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	var query string
 
 	switch visibility {
@@ -365,7 +365,7 @@ func (r *Repository) BookmarkGetN(userUUID string, visibility querying.Visibilit
 	)
 }
 
-func (r *Repository) BookmarkSearchCount(userUUID string, visibility querying.Visibility, searchTerms string) (int, error) {
+func (r *Repository) BookmarkSearchCount(userUUID string, visibility querying.Visibility, searchTerms string) (uint, error) {
 	var query string
 
 	switch visibility {
@@ -393,7 +393,7 @@ func (r *Repository) BookmarkSearchCount(userUUID string, visibility querying.Vi
 		AND fulltextsearch_tsv @@ websearch_to_tsquery($2)`
 	}
 
-	var count int
+	var count uint
 	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
 
 	err := r.db.Get(
@@ -409,7 +409,7 @@ func (r *Repository) BookmarkSearchCount(userUUID string, visibility querying.Vi
 	return count, nil
 }
 
-func (r *Repository) BookmarkSearchN(userUUID string, visibility querying.Visibility, searchTerms string, n int, offset int) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkSearchN(userUUID string, visibility querying.Visibility, searchTerms string, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	var query string
 
 	switch visibility {

@@ -3,7 +3,7 @@ package querying
 import "github.com/virtualtam/yawbe/pkg/bookmark"
 
 const (
-	bookmarksPerPage int = 20
+	bookmarksPerPage uint = 20
 )
 
 // Service handles oprtaions related to displaying and paginating bookmarks.
@@ -19,7 +19,7 @@ func NewService(r Repository) *Service {
 }
 
 // BookmarksByPage returns a Page containing a limited and offset number of bookmarks.
-func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, number int) (Page, error) {
+func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, number uint) (Page, error) {
 	owner, err := s.r.OwnerGetByUUID(ownerUUID)
 	if err != nil {
 		return Page{}, err
@@ -57,7 +57,7 @@ func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, numbe
 
 // BookmarksBySearchQueryAndPage returns a SearchPage containing a limited and offset
 // number of bookmarks for a given set of search terms.
-func (s *Service) BookmarksBySearchQueryAndPage(ownerUUID string, visibility Visibility, searchTerms string, number int) (Page, error) {
+func (s *Service) BookmarksBySearchQueryAndPage(ownerUUID string, visibility Visibility, searchTerms string, number uint) (Page, error) {
 	owner, err := s.r.OwnerGetByUUID(ownerUUID)
 	if err != nil {
 		return Page{}, err
@@ -94,12 +94,12 @@ func (s *Service) BookmarksBySearchQueryAndPage(ownerUUID string, visibility Vis
 }
 
 // PublicBookmarksByPage returns a Page containing a limited and offset number of bookmarks.
-func (s *Service) PublicBookmarksByPage(ownerUUID string, number int) (Page, error) {
+func (s *Service) PublicBookmarksByPage(ownerUUID string, number uint) (Page, error) {
 	return s.BookmarksByPage(ownerUUID, VisibilityPublic, number)
 }
 
 // PublicBookmarksBySearchQueryAndPage returns a SearchPage containing a limited and offset
 // number of bookmarks for a given set of search terms.
-func (s *Service) PublicBookmarksBySearchQueryAndPage(ownerUUID string, searchTerms string, number int) (Page, error) {
+func (s *Service) PublicBookmarksBySearchQueryAndPage(ownerUUID string, searchTerms string, number uint) (Page, error) {
 	return s.BookmarksBySearchQueryAndPage(ownerUUID, VisibilityPublic, searchTerms, number)
 }

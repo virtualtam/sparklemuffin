@@ -12,12 +12,12 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/virtualtam/venom"
 	"github.com/virtualtam/yawbe/cmd/yawbe/config"
+	"github.com/virtualtam/yawbe/internal/repository/postgresql"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
 	"github.com/virtualtam/yawbe/pkg/exporting"
 	"github.com/virtualtam/yawbe/pkg/importing"
 	"github.com/virtualtam/yawbe/pkg/querying"
 	"github.com/virtualtam/yawbe/pkg/session"
-	"github.com/virtualtam/yawbe/pkg/storage/postgresql"
 	"github.com/virtualtam/yawbe/pkg/user"
 
 	_ "github.com/jackc/pgx/v4/stdlib"

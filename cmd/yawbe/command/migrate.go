@@ -9,7 +9,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/virtualtam/yawbe/pkg/storage/postgresql/migrations"
+
+	"github.com/virtualtam/yawbe/internal/repository/postgresql/migrations"
 )
 
 var _ migrate.Logger = &migrateLogger{}

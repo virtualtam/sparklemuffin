@@ -33,11 +33,6 @@ type Server struct {
 
 	accountView *view
 
-	adminView           *view
-	adminUserAddView    *view
-	adminUserDeleteView *view
-	adminUserEditView   *view
-
 	homeView      *view
 	userLoginView *view
 }
@@ -50,11 +45,6 @@ func NewServer(optionFuncs ...optionFunc) *Server {
 		router: mux.NewRouter(),
 
 		accountView: newView("account/account.gohtml"),
-
-		adminView:           newView("admin/admin.gohtml"),
-		adminUserAddView:    newView("admin/user_add.gohtml"),
-		adminUserDeleteView: newView("admin/user_delete.gohtml"),
-		adminUserEditView:   newView("admin/user_edit.gohtml"),
 
 		homeView:      newView("static/home.gohtml"),
 		userLoginView: newView("user/login.gohtml"),
@@ -115,6 +105,8 @@ func (s *Server) addRoutes() {
 	// static pages
 	s.router.HandleFunc("/", s.homeView.handle)
 
+	setupAdminHandlers(s.router, s.userService)
+
 	// user account
 	accountRouter := s.router.PathPrefix("/account").Subrouter()
 
@@ -124,21 +116,6 @@ func (s *Server) addRoutes() {
 
 	accountRouter.Use(func(h http.Handler) http.Handler {
 		return authenticatedUser(h.ServeHTTP)
-	})
-
-	// administration
-	adminRouter := s.router.PathPrefix("/admin").Subrouter()
-
-	adminRouter.HandleFunc("", s.handleAdmin()).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/users/add", s.adminUserAddView.handle).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/users", s.handleAdminUserAdd()).Methods(http.MethodPost)
-	adminRouter.HandleFunc("/users/{uuid}", s.handleAdminUserEditView()).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/users/{uuid}", s.handleAdminUserEdit()).Methods(http.MethodPost)
-	adminRouter.HandleFunc("/users/{uuid}/delete", s.handleAdminUserDeleteView()).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/users/{uuid}/delete", s.handleAdminUserDelete()).Methods(http.MethodPost)
-
-	adminRouter.Use(func(h http.Handler) http.Handler {
-		return s.adminUser(h.ServeHTTP)
 	})
 
 	// authentication
@@ -248,175 +225,6 @@ func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *ht
 
 		PutFlashSuccess(w, "Your account password has been successfully updated")
 		http.Redirect(w, r, "/account", http.StatusSeeOther)
-	}
-}
-
-// handleAdmin renders the main administration page.
-func (s *Server) handleAdmin() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var viewData Data
-
-		users, err := s.userService.All()
-		if err != nil {
-			PutFlashError(w, err.Error())
-		} else {
-			viewData.Content = users
-		}
-
-		s.adminView.render(w, r, viewData)
-	}
-}
-
-// handleAdminUserAdd processes data submitted through the user creation form.
-func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Request) {
-	type userAddForm struct {
-		Email       string `schema:"email"`
-		NickName    string `schema:"nick_name"`
-		DisplayName string `schema:"display_name"`
-		Password    string `schema:"password"`
-		IsAdmin     bool   `schema:"is_admin"`
-	}
-
-	var form userAddForm
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := parseForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse user creation form")
-			PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		newUser := user.User{
-			Email:       form.Email,
-			NickName:    form.NickName,
-			DisplayName: form.DisplayName,
-			Password:    form.Password,
-			IsAdmin:     form.IsAdmin,
-		}
-
-		if err := s.userService.Add(newUser); err != nil {
-			log.Error().Err(err).Msg("failed to persist user")
-			PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully created", newUser.Email))
-		http.Redirect(w, r, "/admin", http.StatusSeeOther)
-	}
-}
-
-// handleAdminUserDeleteView renders the user deletion form.
-func (s *Server) handleAdminUserDeleteView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		userUUID := vars["uuid"]
-
-		var viewData Data
-
-		user, err := s.userService.ByUUID(userUUID)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve user")
-			PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		viewData.Content = user
-
-		s.adminUserDeleteView.render(w, r, viewData)
-	}
-}
-
-// handleAdminUserDelete processes the user deletion form.
-func (s *Server) handleAdminUserDelete() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		userUUID := vars["uuid"]
-
-		user, err := s.userService.ByUUID(userUUID)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve user")
-			PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		if err := s.userService.DeleteByUUID(userUUID); err != nil {
-			log.Error().Err(err).Msg("failed to delete user")
-			PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully deleted", user.Email))
-		http.Redirect(w, r, "/admin", http.StatusSeeOther)
-	}
-}
-
-// handleAdminUserEditView renders the user edition form.
-func (s *Server) handleAdminUserEditView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		userUUID := vars["uuid"]
-
-		user, err := s.userService.ByUUID(userUUID)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve user")
-			PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		viewData := Data{
-			Content: user,
-		}
-		s.adminUserEditView.render(w, r, viewData)
-	}
-}
-
-// handleAdminUserEdit processes the user edition form.
-func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Request) {
-	type userEditForm struct {
-		Email       string `schema:"email"`
-		NickName    string `schema:"nick_name"`
-		DisplayName string `schema:"display_name"`
-		Password    string `schema:"password"`
-		IsAdmin     bool   `schema:"is_admin"`
-	}
-
-	var form userEditForm
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		userUUID := vars["uuid"]
-
-		if err := parseForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse user edition form")
-			PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		editedUser := user.User{
-			UUID:        userUUID,
-			Email:       form.Email,
-			NickName:    form.NickName,
-			DisplayName: form.DisplayName,
-			Password:    form.Password,
-			IsAdmin:     form.IsAdmin,
-		}
-
-		if err := s.userService.Update(editedUser); err != nil {
-			log.Error().Err(err).Msg("failed to update user")
-			PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully updated", editedUser.Email))
-		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 	}
 }
 
@@ -572,26 +380,6 @@ func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {
 		ctx := r.Context()
 		ctx = withUser(ctx, user)
 		r = r.WithContext(ctx)
-
-		h(w, r)
-	})
-}
-
-// adminUser requires the user to have administration privileges to
-// access content.
-func (s *Server) adminUser(h http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := userValue(r.Context())
-
-		if user == nil {
-			http.Error(w, "Not Found", http.StatusNotFound)
-			return
-		}
-
-		if !user.IsAdmin {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
 
 		h(w, r)
 	})

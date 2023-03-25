@@ -100,9 +100,15 @@ func TestNewPage(t *testing.T) {
 		},
 	}
 
+	owner := Owner{
+		UUID:        "13faccd4-8b67-46cf-823a-87e1fa0f7e62",
+		NickName:    "test-user",
+		DisplayName: "Test User",
+	}
+
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			got := NewPage(tc.number, tc.totalPages, []bookmark.Bookmark{})
+			got := NewPage(owner, tc.number, tc.totalPages, []bookmark.Bookmark{})
 			assertPagesEqual(t, got, tc.want)
 		})
 	}

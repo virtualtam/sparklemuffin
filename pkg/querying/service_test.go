@@ -6,7 +6,21 @@ import (
 	"time"
 
 	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/yawbe/pkg/user"
 )
+
+var testRepositoryUsers = []user.User{
+	{
+		UUID:        "b8ed2e7e-a11f-42a7-ae4f-2e80485af823",
+		NickName:    "test-user-1",
+		DisplayName: "Test User 1",
+	},
+	{
+		UUID:        "5d75c769-059c-4b36-9db6-1c82619e704a",
+		NickName:    "test-user-1",
+		DisplayName: "Test User 1",
+	},
+}
 
 var testRepositoryBookmarks = []bookmark.Bookmark{
 	{
@@ -52,7 +66,7 @@ func TestServiceByPage(t *testing.T) {
 	cases := []struct {
 		tname               string
 		repositoryBookmarks []bookmark.Bookmark
-		userUUID            string
+		ownerUUID           string
 		visibility          Visibility
 		pageNumber          int
 		want                Page
@@ -61,7 +75,7 @@ func TestServiceByPage(t *testing.T) {
 		// nominal cases
 		{
 			tname:      "page 1, 0 bookmarks",
-			userUUID:   "b8ed2e7e-a11f-42a7-ae4f-2e80485af823",
+			ownerUUID:  "b8ed2e7e-a11f-42a7-ae4f-2e80485af823",
 			visibility: VisibilityAll,
 			pageNumber: 1,
 			want: Page{
@@ -75,7 +89,7 @@ func TestServiceByPage(t *testing.T) {
 		{
 			tname:               "page 1, 3 bookmarks (2 public, 1 private)",
 			repositoryBookmarks: testRepositoryBookmarks,
-			userUUID:            "5d75c769-059c-4b36-9db6-1c82619e704a",
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility:          VisibilityAll,
 			pageNumber:          1,
 			want: Page{
@@ -112,7 +126,7 @@ func TestServiceByPage(t *testing.T) {
 		{
 			tname:               "page 1, 1 private bookmark",
 			repositoryBookmarks: testRepositoryBookmarks,
-			userUUID:            "5d75c769-059c-4b36-9db6-1c82619e704a",
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility:          VisibilityPrivate,
 			pageNumber:          1,
 			want: Page{
@@ -135,7 +149,7 @@ func TestServiceByPage(t *testing.T) {
 		{
 			tname:               "page 1, 2 public bookmarks",
 			repositoryBookmarks: testRepositoryBookmarks,
-			userUUID:            "5d75c769-059c-4b36-9db6-1c82619e704a",
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility:          VisibilityPublic,
 			pageNumber:          1,
 			want: Page{
@@ -165,18 +179,27 @@ func TestServiceByPage(t *testing.T) {
 
 		// error cases
 		{
+			tname:      "owner not found",
+			pageNumber: 10,
+			ownerUUID:  "9681e525-f205-489d-b53e-1a858b4ca561",
+			wantErr:    ErrOwnerNotFound,
+		},
+		{
 			tname:      "negative page number",
 			pageNumber: -12,
+			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
 			wantErr:    ErrPageNumberOutOfBounds,
 		},
 		{
 			tname:      "zeroth page",
 			pageNumber: 0,
+			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
 			wantErr:    ErrPageNumberOutOfBounds,
 		},
 		{
 			tname:      "page number out of bounds",
 			pageNumber: 18,
+			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
 			wantErr:    ErrPageNumberOutOfBounds,
 		},
 	}
@@ -185,11 +208,12 @@ func TestServiceByPage(t *testing.T) {
 		t.Run(tc.tname, func(t *testing.T) {
 			r := &fakeRepository{
 				bookmarks: tc.repositoryBookmarks,
+				users:     testRepositoryUsers,
 			}
 
 			s := NewService(r)
 
-			got, err := s.ByPage(tc.userUUID, tc.visibility, tc.pageNumber)
+			got, err := s.BookmarksByPage(tc.ownerUUID, tc.visibility, tc.pageNumber)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

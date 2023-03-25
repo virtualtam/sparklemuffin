@@ -642,7 +642,7 @@ func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Re
 
 		searchTermsParam := r.URL.Query().Get("search")
 		if searchTermsParam != "" {
-			bookmarksSearchPage, err := s.queryingService.BySearchQueryAndPage(
+			bookmarksSearchPage, err := s.queryingService.BookmarksBySearchQueryAndPage(
 				user.UUID,
 				querying.VisibilityAll,
 				searchTermsParam,
@@ -664,7 +664,7 @@ func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Re
 			viewData.Content = bookmarksSearchPage
 
 		} else {
-			bookmarksPage, err := s.queryingService.ByPage(
+			bookmarksPage, err := s.queryingService.BookmarksByPage(
 				user.UUID,
 				querying.VisibilityAll,
 				pageNumber,
@@ -697,6 +697,9 @@ func (s *Server) handlePublicBookmarkListView() func(w http.ResponseWriter, r *h
 		vars := mux.Vars(r)
 		nickName := vars["nickname"]
 
+		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
+		// in querying.Service.
+		// In practice, this requires performing an extra database query.
 		owner, err := s.userService.ByNickName(nickName)
 		if err != nil {
 			log.Error().Err(err).Str("nickname", nickName).Msg("failed to retrieve user")
@@ -715,9 +718,8 @@ func (s *Server) handlePublicBookmarkListView() func(w http.ResponseWriter, r *h
 
 		searchTermsParam := r.URL.Query().Get("search")
 		if searchTermsParam != "" {
-			bookmarksSearchPage, err := s.queryingService.BySearchQueryAndPage(
+			bookmarksSearchPage, err := s.queryingService.PublicBookmarksBySearchQueryAndPage(
 				owner.UUID,
-				querying.VisibilityPublic,
 				searchTermsParam,
 				pageNumber,
 			)
@@ -737,9 +739,8 @@ func (s *Server) handlePublicBookmarkListView() func(w http.ResponseWriter, r *h
 			bookmarkPage = bookmarksSearchPage
 
 		} else {
-			bookmarksPage, err := s.queryingService.ByPage(
+			bookmarksPage, err := s.queryingService.PublicBookmarksByPage(
 				owner.UUID,
-				querying.VisibilityPublic,
 				pageNumber,
 			)
 			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
@@ -758,14 +759,7 @@ func (s *Server) handlePublicBookmarkListView() func(w http.ResponseWriter, r *h
 			bookmarkPage = bookmarksPage
 		}
 
-		// TODO: rework with a proper struct
-		viewData.Content = struct {
-			Owner user.User
-			Page  querying.Page
-		}{
-			Owner: owner,
-			Page:  bookmarkPage,
-		}
+		viewData.Content = bookmarkPage
 
 		s.publicBookmarkListView.render(w, r, viewData)
 	}

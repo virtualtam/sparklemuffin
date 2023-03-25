@@ -18,13 +18,18 @@ func NewService(r Repository) *Service {
 	}
 }
 
-// ByPage returns a Page containing a limited and offset number of bookmarks.
-func (s *Service) ByPage(userUUID string, visibility Visibility, number int) (Page, error) {
+// BookmarksByPage returns a Page containing a limited and offset number of bookmarks.
+func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, number int) (Page, error) {
+	owner, err := s.r.OwnerGetByUUID(ownerUUID)
+	if err != nil {
+		return Page{}, err
+	}
+
 	if number < 1 {
 		return Page{}, ErrPageNumberOutOfBounds
 	}
 
-	bookmarkCount, err := s.r.BookmarkGetCount(userUUID, visibility)
+	bookmarkCount, err := s.r.BookmarkGetCount(ownerUUID, visibility)
 	if err != nil {
 		return Page{}, err
 	}
@@ -37,27 +42,32 @@ func (s *Service) ByPage(userUUID string, visibility Visibility, number int) (Pa
 
 	if bookmarkCount == 0 {
 		// early return: nothing to display
-		return NewPage(1, 1, []bookmark.Bookmark{}), nil
+		return NewPage(owner, 1, 1, []bookmark.Bookmark{}), nil
 	}
 
 	dbOffset := (number - 1) * bookmarksPerPage
 
-	bookmarks, err := s.r.BookmarkGetN(userUUID, visibility, bookmarksPerPage, dbOffset)
+	bookmarks, err := s.r.BookmarkGetN(ownerUUID, visibility, bookmarksPerPage, dbOffset)
 	if err != nil {
 		return Page{}, err
 	}
 
-	return NewPage(number, totalPages, bookmarks), nil
+	return NewPage(owner, number, totalPages, bookmarks), nil
 }
 
-// BySearchQueryAndPage returns a SearchPage containing a limited and offset
+// BookmarksBySearchQueryAndPage returns a SearchPage containing a limited and offset
 // number of bookmarks for a given set of search terms.
-func (s *Service) BySearchQueryAndPage(userUUID string, visibility Visibility, searchTerms string, number int) (Page, error) {
+func (s *Service) BookmarksBySearchQueryAndPage(ownerUUID string, visibility Visibility, searchTerms string, number int) (Page, error) {
+	owner, err := s.r.OwnerGetByUUID(ownerUUID)
+	if err != nil {
+		return Page{}, err
+	}
+
 	if number < 1 {
 		return Page{}, ErrPageNumberOutOfBounds
 	}
 
-	bookmarkCount, err := s.r.BookmarkSearchCount(userUUID, visibility, searchTerms)
+	bookmarkCount, err := s.r.BookmarkSearchCount(ownerUUID, visibility, searchTerms)
 	if err != nil {
 		return Page{}, err
 	}
@@ -70,15 +80,26 @@ func (s *Service) BySearchQueryAndPage(userUUID string, visibility Visibility, s
 
 	if bookmarkCount == 0 {
 		// early return: nothing to display
-		return NewSearchResultPage(searchTerms, 0, 1, 1, []bookmark.Bookmark{}), nil
+		return NewSearchResultPage(owner, searchTerms, 0, 1, 1, []bookmark.Bookmark{}), nil
 	}
 
 	dbOffset := (number - 1) * bookmarksPerPage
 
-	bookmarks, err := s.r.BookmarkSearchN(userUUID, visibility, searchTerms, bookmarksPerPage, dbOffset)
+	bookmarks, err := s.r.BookmarkSearchN(ownerUUID, visibility, searchTerms, bookmarksPerPage, dbOffset)
 	if err != nil {
 		return Page{}, err
 	}
 
-	return NewSearchResultPage(searchTerms, bookmarkCount, number, totalPages, bookmarks), nil
+	return NewSearchResultPage(owner, searchTerms, bookmarkCount, number, totalPages, bookmarks), nil
+}
+
+// PublicBookmarksByPage returns a Page containing a limited and offset number of bookmarks.
+func (s *Service) PublicBookmarksByPage(ownerUUID string, number int) (Page, error) {
+	return s.BookmarksByPage(ownerUUID, VisibilityPublic, number)
+}
+
+// PublicBookmarksBySearchQueryAndPage returns a SearchPage containing a limited and offset
+// number of bookmarks for a given set of search terms.
+func (s *Service) PublicBookmarksBySearchQueryAndPage(ownerUUID string, searchTerms string, number int) (Page, error) {
+	return s.BookmarksBySearchQueryAndPage(ownerUUID, VisibilityPublic, searchTerms, number)
 }

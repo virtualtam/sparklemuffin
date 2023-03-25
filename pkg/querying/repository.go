@@ -18,4 +18,7 @@ type Repository interface {
 	// BookmarkSearchN returns at most n bookmarks for a given user and search
 	// terms, starting at a given offset.
 	BookmarkSearchN(userUUID string, visibility Visibility, searchTerms string, n int, offset int) ([]bookmark.Bookmark, error)
+
+	// OwnerGetByUUID returns the Owner corresponding to a given UUID.
+	OwnerGetByUUID(string) (Owner, error)
 }

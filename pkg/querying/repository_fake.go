@@ -5,12 +5,14 @@ import (
 	"sort"
 
 	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/yawbe/pkg/user"
 )
 
 var _ Repository = &fakeRepository{}
 
 type fakeRepository struct {
 	bookmarks []bookmark.Bookmark
+	users     []user.User
 }
 
 func visibilityMatches(visibility Visibility, private bool) bool {
@@ -72,4 +74,19 @@ func (r *fakeRepository) BookmarkSearchCount(userUUID string, visibility Visibil
 
 func (r *fakeRepository) BookmarkSearchN(userUUID string, visibility Visibility, searchTerms string, n int, offset int) ([]bookmark.Bookmark, error) {
 	return []bookmark.Bookmark{}, errors.New("not implemented")
+}
+
+func (r *fakeRepository) OwnerGetByUUID(userUUID string) (Owner, error) {
+	for _, u := range r.users {
+		if u.UUID == userUUID {
+			owner := Owner{
+				UUID:        u.UUID,
+				NickName:    u.NickName,
+				DisplayName: u.DisplayName,
+			}
+			return owner, nil
+		}
+	}
+
+	return Owner{}, ErrOwnerNotFound
 }

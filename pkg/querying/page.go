@@ -8,6 +8,9 @@ import (
 
 // A Page holds a set of paginated bookmarks.
 type Page struct {
+	// Owner exposes public matadata for the User owning the bookmarks.
+	Owner Owner
+
 	PageNumber         int
 	PreviousPageNumber int
 	NextPageNumber     int
@@ -21,8 +24,9 @@ type Page struct {
 }
 
 // NewPage initializes and returns a new bookmark Page.
-func NewPage(number int, totalPages int, bookmarks []bookmark.Bookmark) Page {
+func NewPage(owner Owner, number int, totalPages int, bookmarks []bookmark.Bookmark) Page {
 	page := Page{
+		Owner:      owner,
 		PageNumber: number,
 		TotalPages: totalPages,
 		Bookmarks:  bookmarks,
@@ -46,8 +50,8 @@ func NewPage(number int, totalPages int, bookmarks []bookmark.Bookmark) Page {
 }
 
 // NewSearchResultPage initializes and returns a new bookmark Page containing search results.
-func NewSearchResultPage(searchTerms string, searchResultCount int, number int, totalPages int, bookmarks []bookmark.Bookmark) Page {
-	page := NewPage(number, totalPages, bookmarks)
+func NewSearchResultPage(owner Owner, searchTerms string, searchResultCount int, number int, totalPages int, bookmarks []bookmark.Bookmark) Page {
+	page := NewPage(owner, number, totalPages, bookmarks)
 
 	page.SearchTerms = searchTerms
 	page.SearchResultCount = searchResultCount

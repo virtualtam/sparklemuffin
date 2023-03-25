@@ -528,6 +528,30 @@ AND uid=:uid
 	return err
 }
 
+func (r *Repository) OwnerGetByUUID(userUUID string) (querying.Owner, error) {
+	dbUser := &User{}
+
+	err := r.db.QueryRowx(
+		`SELECT uuid, nick_name, display_name
+FROM users
+WHERE uuid=$1`,
+		userUUID,
+	).StructScan(dbUser)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return querying.Owner{}, querying.ErrOwnerNotFound
+	}
+	if err != nil {
+		return querying.Owner{}, err
+	}
+
+	return querying.Owner{
+		UUID:        dbUser.UUID,
+		NickName:    dbUser.NickName,
+		DisplayName: dbUser.DisplayName,
+	}, nil
+}
+
 func (r *Repository) SessionAdd(sess session.Session) error {
 	dbSession := Session{
 		UserUUID:               sess.UserUUID,

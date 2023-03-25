@@ -1,17 +1,12 @@
 package www
 
 import (
-	"bufio"
-	"bytes"
-	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
-	"github.com/virtualtam/netscape-go/v2"
 
 	"github.com/virtualtam/yawbe/internal/rand"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
@@ -43,10 +38,6 @@ type Server struct {
 	adminUserDeleteView *view
 	adminUserEditView   *view
 
-	toolsView       *view
-	toolsExportView *view
-	toolsImportView *view
-
 	homeView      *view
 	userLoginView *view
 }
@@ -64,10 +55,6 @@ func NewServer(optionFuncs ...optionFunc) *Server {
 		adminUserAddView:    newView("admin/user_add.gohtml"),
 		adminUserDeleteView: newView("admin/user_delete.gohtml"),
 		adminUserEditView:   newView("admin/user_edit.gohtml"),
-
-		toolsView:       newView("tools/tools.gohtml"),
-		toolsExportView: newView("tools/export.gohtml"),
-		toolsImportView: newView("tools/import.gohtml"),
 
 		homeView:      newView("static/home.gohtml"),
 		userLoginView: newView("user/login.gohtml"),
@@ -160,19 +147,7 @@ func (s *Server) addRoutes() {
 	s.router.HandleFunc("/logout", s.handleUserLogout()).Methods(http.MethodPost)
 
 	setupBookmarkHandlers(s.router, s.bookmarkService, s.queryingService, s.userService)
-
-	// bookmark management tools
-	toolsRouter := s.router.PathPrefix("/tools").Subrouter()
-
-	toolsRouter.HandleFunc("", s.handleToolsView()).Methods(http.MethodGet)
-	toolsRouter.HandleFunc("/export", s.toolsExportView.handle).Methods(http.MethodGet)
-	toolsRouter.HandleFunc("/export", s.handleToolsExport()).Methods(http.MethodPost)
-	toolsRouter.HandleFunc("/import", s.toolsImportView.handle).Methods(http.MethodGet)
-	toolsRouter.HandleFunc("/import", s.handleToolsImport()).Methods(http.MethodPost)
-
-	toolsRouter.Use(func(h http.Handler) http.Handler {
-		return authenticatedUser(h.ServeHTTP)
-	})
+	setupToolsHandlers(s.router, s.exportingService, s.importingService)
 
 	// static assets
 	s.router.HandleFunc("/static/", http.NotFound)
@@ -441,144 +416,6 @@ func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Reque
 		}
 
 		PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully updated", editedUser.Email))
-		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-	}
-}
-
-// handleToolsView renders the user account management page.
-func (s *Server) handleToolsView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user := userValue(r.Context())
-		viewData := Data{
-			Content: user,
-		}
-
-		s.toolsView.render(w, r, viewData)
-	}
-}
-
-// handleToolsExport processes the bookmarks export form and sends the
-// corresponding file to the client.
-func (s *Server) handleToolsExport() func(w http.ResponseWriter, r *http.Request) {
-	type exportForm struct {
-		Visibility exporting.Visibility `schema:"visibility"`
-	}
-
-	var form exportForm
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := parseForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse bookmark export form")
-			PutFlashError(w, "failed to process form")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		user := userValue(r.Context())
-
-		document, err := s.exportingService.ExportAsNetscapeDocument(user.UUID, form.Visibility)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve bookmarks")
-			PutFlashError(w, "failed to export bookmarks")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		marshaled, err := netscape.Marshal(document)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to marshal Netscape bookmarks")
-			PutFlashError(w, "failed to export bookmarks")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		filename := fmt.Sprintf("bookmarks-%s.htm", form.Visibility)
-
-		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
-		w.Header().Set("Content-Type", "application/octet-stream")
-		_, err = w.Write(marshaled)
-
-		if err != nil {
-			log.Error().Err(err).Msg("failed to send marshaled Netscape bookmark export")
-		}
-	}
-}
-
-// handleToolsImport processes data submitted through the bookmark import form.
-func (s *Server) handleToolsImport() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		multipartReader, err := r.MultipartReader()
-		if err != nil {
-			log.Error().Err(err).Msg("failed to access multipart reader")
-			PutFlashError(w, "failed to process import form")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		var (
-			importFileBuffer         bytes.Buffer
-			onConflictStrategyBuffer bytes.Buffer
-			visibilityBuffer         bytes.Buffer
-		)
-		importFileWriter := bufio.NewWriter(&importFileBuffer)
-		onConflictStrategyWriter := bufio.NewWriter(&onConflictStrategyBuffer)
-		visibilityWriter := bufio.NewWriter(&visibilityBuffer)
-
-		for {
-			part, err := multipartReader.NextPart()
-
-			if errors.Is(err, io.EOF) {
-				// no more parts to process
-				break
-			}
-
-			if err != nil {
-				log.Error().Err(err).Msg("failed to access multipart form data")
-				PutFlashError(w, "failed to process import form")
-				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-				return
-			}
-
-			switch part.FormName() {
-			case "importfile":
-				_, err = io.Copy(importFileWriter, part)
-			case "on-conflict":
-				_, err = io.Copy(onConflictStrategyWriter, part)
-			case "visibility":
-				_, err = io.Copy(visibilityWriter, part)
-			default:
-				err = fmt.Errorf("unexpected multipart form field: %q", part.FormName())
-			}
-
-			if err != nil {
-				log.Error().Err(err).Msg(fmt.Sprintf("failed to process multipart form part %q", part.FormName()))
-				PutFlashError(w, "failed to process import form")
-				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-				return
-			}
-		}
-
-		document, err := netscape.Unmarshal(importFileBuffer.Bytes())
-		if err != nil {
-			log.Error().Err(err).Msg("failed to process Netscape bookmark file")
-			PutFlashError(w, "failed to import bookmarks from the uploaded file")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		user := userValue(r.Context())
-		overwrite := importing.OnConflictStrategy(onConflictStrategyBuffer.String())
-		visibility := importing.Visibility(visibilityBuffer.String())
-
-		importStatus, err := s.importingService.ImportFromNetscapeDocument(user.UUID, document, visibility, overwrite)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to save imported bookmarks")
-			PutFlashError(w, "failed to save imported bookmarks")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		PutFlashSuccess(w, fmt.Sprintf("Import status: %s", importStatus.Summary()))
 		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 	}
 }

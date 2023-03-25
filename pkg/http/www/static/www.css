@@ -166,6 +166,15 @@ blockquote {
   text-decoration: none;
 }
 
+.tools {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.tools h3 {
+  margin-top: 0;
+}
+
 .center {
   text-align: center;
 }

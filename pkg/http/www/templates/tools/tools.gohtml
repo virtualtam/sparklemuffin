@@ -1,8 +1,18 @@
 {{define "content"}}
 <h2>Tools</h2>
-<h3>Bookmarks</h3>
-<ul>
-  <li><a href="/tools/export">Export bookmarks</a></li>
-  <li><a href="/tools/import">Import bookmarks</a></li>
-</ul>
+<div class="tools">
+  <div>
+    <h3>Bookmarks</h3>
+    <ul>
+      <li><a href="/tools/export">Export bookmarks</a></li>
+      <li><a href="/tools/import">Import bookmarks</a></li>
+    </ul>
+  </div>
+  <div>
+    <h3>Sharing</h3>
+    <ul>
+      <li><a href="/u/{{.NickName}}/bookmarks">Public Bookmark URL</a></li>
+    </ul>
+  </div>
+</div>
 {{end}}

@@ -180,7 +180,7 @@ func (s *Server) addRoutes() {
 	// bookmark management tools
 	toolsRouter := s.router.PathPrefix("/tools").Subrouter()
 
-	toolsRouter.HandleFunc("", s.toolsView.handle).Methods(http.MethodGet)
+	toolsRouter.HandleFunc("", s.handleToolsView()).Methods(http.MethodGet)
 	toolsRouter.HandleFunc("/export", s.toolsExportView.handle).Methods(http.MethodGet)
 	toolsRouter.HandleFunc("/export", s.handleToolsExport()).Methods(http.MethodPost)
 	toolsRouter.HandleFunc("/import", s.toolsImportView.handle).Methods(http.MethodGet)
@@ -767,6 +767,18 @@ func (s *Server) handlePublicBookmarkListView() func(w http.ResponseWriter, r *h
 		viewData.Content = bookmarkPage
 
 		s.publicBookmarkListView.render(w, r, viewData)
+	}
+}
+
+// handleToolsView renders the user account management page.
+func (s *Server) handleToolsView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := userValue(r.Context())
+		viewData := Data{
+			Content: user,
+		}
+
+		s.toolsView.render(w, r, viewData)
 	}
 }
 

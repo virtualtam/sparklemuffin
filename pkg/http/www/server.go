@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -44,13 +43,6 @@ type Server struct {
 	adminUserDeleteView *view
 	adminUserEditView   *view
 
-	bookmarkAddView    *view
-	bookmarkDeleteView *view
-	bookmarkEditView   *view
-	bookmarkListView   *view
-
-	publicBookmarkListView *view
-
 	toolsView       *view
 	toolsExportView *view
 	toolsImportView *view
@@ -72,13 +64,6 @@ func NewServer(optionFuncs ...optionFunc) *Server {
 		adminUserAddView:    newView("admin/user_add.gohtml"),
 		adminUserDeleteView: newView("admin/user_delete.gohtml"),
 		adminUserEditView:   newView("admin/user_edit.gohtml"),
-
-		bookmarkAddView:    newView("bookmark/add.gohtml"),
-		bookmarkDeleteView: newView("bookmark/delete.gohtml"),
-		bookmarkEditView:   newView("bookmark/edit.gohtml"),
-		bookmarkListView:   newView("bookmark/list.gohtml"),
-
-		publicBookmarkListView: newView("public/bookmark_list.gohtml"),
 
 		toolsView:       newView("tools/tools.gohtml"),
 		toolsExportView: newView("tools/export.gohtml"),
@@ -151,7 +136,7 @@ func (s *Server) addRoutes() {
 	accountRouter.HandleFunc("/password", s.handleAccountPasswordUpdate()).Methods(http.MethodPost)
 
 	accountRouter.Use(func(h http.Handler) http.Handler {
-		return s.authenticatedUser(h.ServeHTTP)
+		return authenticatedUser(h.ServeHTTP)
 	})
 
 	// administration
@@ -174,20 +159,7 @@ func (s *Server) addRoutes() {
 	s.router.HandleFunc("/login", s.handleUserLogin()).Methods(http.MethodPost)
 	s.router.HandleFunc("/logout", s.handleUserLogout()).Methods(http.MethodPost)
 
-	// bookmarks
-	bookmarkRouter := s.router.PathPrefix("/bookmarks").Subrouter()
-
-	bookmarkRouter.HandleFunc("", s.handleBookmarkListView()).Methods(http.MethodGet)
-	bookmarkRouter.HandleFunc("/add", s.handleBookmarkAddView()).Methods(http.MethodGet)
-	bookmarkRouter.HandleFunc("/add", s.handleBookmarkAdd()).Methods(http.MethodPost)
-	bookmarkRouter.HandleFunc("/{uid}/delete", s.handleBookmarkDeleteView()).Methods(http.MethodGet)
-	bookmarkRouter.HandleFunc("/{uid}/delete", s.handleBookmarkDelete()).Methods(http.MethodPost)
-	bookmarkRouter.HandleFunc("/{uid}/edit", s.handleBookmarkEditView()).Methods(http.MethodGet)
-	bookmarkRouter.HandleFunc("/{uid}/edit", s.handleBookmarkEdit()).Methods(http.MethodPost)
-
-	bookmarkRouter.Use(func(h http.Handler) http.Handler {
-		return s.authenticatedUser(h.ServeHTTP)
-	})
+	setupBookmarkHandlers(s.router, s.bookmarkService, s.queryingService, s.userService)
 
 	// bookmark management tools
 	toolsRouter := s.router.PathPrefix("/tools").Subrouter()
@@ -199,12 +171,8 @@ func (s *Server) addRoutes() {
 	toolsRouter.HandleFunc("/import", s.handleToolsImport()).Methods(http.MethodPost)
 
 	toolsRouter.Use(func(h http.Handler) http.Handler {
-		return s.authenticatedUser(h.ServeHTTP)
+		return authenticatedUser(h.ServeHTTP)
 	})
-
-	// public bookmarks
-	publicBookmarkRouter := s.router.PathPrefix("/u/{nickname}").Subrouter()
-	publicBookmarkRouter.HandleFunc("/bookmarks", s.handlePublicBookmarkListView()).Methods(http.MethodGet)
 
 	// static assets
 	s.router.HandleFunc("/static/", http.NotFound)
@@ -245,7 +213,7 @@ func (s *Server) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.R
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account information update form")
-			s.PutFlashError(w, "There was an error processing the form")
+			PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -259,12 +227,12 @@ func (s *Server) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.R
 
 		if err := s.userService.UpdateInfo(userInfo); err != nil {
 			log.Error().Err(err).Msg("failed to update account information")
-			s.PutFlashError(w, "There was an error updating your information")
+			PutFlashError(w, "There was an error updating your information")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		s.PutFlashSuccess(w, "Your account information has been successfully updated")
+		PutFlashSuccess(w, "Your account information has been successfully updated")
 		http.Redirect(w, r, "/account", http.StatusSeeOther)
 	}
 }
@@ -284,7 +252,7 @@ func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *ht
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account password update form")
-			s.PutFlashError(w, "There was an error processing the form")
+			PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, "/account", http.StatusSeeOther)
 			return
 		}
@@ -298,12 +266,12 @@ func (s *Server) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *ht
 
 		if err := s.userService.UpdatePassword(userPassword); err != nil {
 			log.Error().Err(err).Msg("failed to update account password")
-			s.PutFlashError(w, fmt.Sprintf("There was an error updating your password: %s", err))
+			PutFlashError(w, fmt.Sprintf("There was an error updating your password: %s", err))
 			http.Redirect(w, r, "/account", http.StatusSeeOther)
 			return
 		}
 
-		s.PutFlashSuccess(w, "Your account password has been successfully updated")
+		PutFlashSuccess(w, "Your account password has been successfully updated")
 		http.Redirect(w, r, "/account", http.StatusSeeOther)
 	}
 }
@@ -315,7 +283,7 @@ func (s *Server) handleAdmin() func(w http.ResponseWriter, r *http.Request) {
 
 		users, err := s.userService.All()
 		if err != nil {
-			s.PutFlashError(w, err.Error())
+			PutFlashError(w, err.Error())
 		} else {
 			viewData.Content = users
 		}
@@ -339,7 +307,7 @@ func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Reques
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user creation form")
-			s.PutFlashError(w, err.Error())
+			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -354,12 +322,12 @@ func (s *Server) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Reques
 
 		if err := s.userService.Add(newUser); err != nil {
 			log.Error().Err(err).Msg("failed to persist user")
-			s.PutFlashError(w, err.Error())
+			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		s.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully created", newUser.Email))
+		PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully created", newUser.Email))
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 	}
 }
@@ -375,7 +343,7 @@ func (s *Server) handleAdminUserDeleteView() func(w http.ResponseWriter, r *http
 		user, err := s.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
-			s.PutFlashError(w, err.Error())
+			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -395,19 +363,19 @@ func (s *Server) handleAdminUserDelete() func(w http.ResponseWriter, r *http.Req
 		user, err := s.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
-			s.PutFlashError(w, err.Error())
+			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		if err := s.userService.DeleteByUUID(userUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete user")
-			s.PutFlashError(w, err.Error())
+			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		s.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully deleted", user.Email))
+		PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully deleted", user.Email))
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 	}
 }
@@ -421,7 +389,7 @@ func (s *Server) handleAdminUserEditView() func(w http.ResponseWriter, r *http.R
 		user, err := s.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
-			s.PutFlashError(w, err.Error())
+			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -451,7 +419,7 @@ func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Reque
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user edition form")
-			s.PutFlashError(w, err.Error())
+			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -467,318 +435,13 @@ func (s *Server) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Reque
 
 		if err := s.userService.Update(editedUser); err != nil {
 			log.Error().Err(err).Msg("failed to update user")
-			s.PutFlashError(w, err.Error())
+			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		s.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully updated", editedUser.Email))
+		PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully updated", editedUser.Email))
 		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-	}
-}
-
-// handleBookmarkAddView renders the bookmark addition form.
-func (s *Server) handleBookmarkAddView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		s.bookmarkAddView.render(w, r, nil)
-	}
-}
-
-// handleBookmarkAdd processes the bookmark addition form.
-func (s *Server) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request) {
-	type bookmarkAddForm struct {
-		URL         string `schema:"url"`
-		Title       string `schema:"title"`
-		Description string `schema:"description"`
-		Private     bool   `schema:"private"`
-		Tags        string `schema:"tags"`
-	}
-
-	var form bookmarkAddForm
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := parseForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse bookmark creation form")
-			s.PutFlashError(w, "failed to process form")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		user := userValue(r.Context())
-
-		newBookmark := bookmark.Bookmark{
-			UserUUID:    user.UUID,
-			URL:         form.URL,
-			Title:       form.Title,
-			Description: form.Description,
-			Private:     form.Private,
-			Tags:        strings.Split(form.Tags, " "),
-		}
-
-		if err := s.bookmarkService.Add(newBookmark); err != nil {
-			log.Error().Err(err).Msg("failed to add bookmark")
-			s.PutFlashError(w, "failed to add bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
-	}
-}
-
-// handleBookmarkDeleteView renders the bookmark deletion form.
-func (s *Server) handleBookmarkDeleteView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		uid := vars["uid"]
-
-		user := userValue(r.Context())
-
-		bookmark, err := s.bookmarkService.ByUID(user.UUID, uid)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve bookmark")
-			s.PutFlashError(w, "failed to retrieve bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		viewData := Data{
-			Content: bookmark,
-		}
-
-		s.bookmarkDeleteView.render(w, r, viewData)
-	}
-}
-
-// handleBookmarkDelete processes the bookmark deletion form.
-func (s *Server) handleBookmarkDelete() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		uid := vars["uid"]
-
-		user := userValue(r.Context())
-
-		if err := s.bookmarkService.Delete(user.UUID, uid); err != nil {
-			log.Error().Err(err).Msg("failed to delete bookmark")
-			s.PutFlashError(w, "failed to delete bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
-	}
-}
-
-// handleBookmarkEditView renders the bookmark edition form.
-func (s *Server) handleBookmarkEditView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		uid := vars["uid"]
-
-		user := userValue(r.Context())
-
-		bookmark, err := s.bookmarkService.ByUID(user.UUID, uid)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve bookmark")
-			s.PutFlashError(w, "failed to retrieve bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		viewData := Data{
-			Content: bookmark,
-		}
-
-		s.bookmarkEditView.render(w, r, viewData)
-	}
-}
-
-// handleBookmarkEdit processes the bookmark edition form.
-func (s *Server) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Request) {
-	type bookmarkEditForm struct {
-		URL         string `schema:"url"`
-		Title       string `schema:"title"`
-		Description string `schema:"description"`
-		Private     bool   `schema:"private"`
-		Tags        string `schema:"tags"`
-	}
-
-	var form bookmarkEditForm
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := parseForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse bookmark edition form")
-			s.PutFlashError(w, "failed to process form")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		vars := mux.Vars(r)
-		uid := vars["uid"]
-
-		user := userValue(r.Context())
-
-		editedBookmark := bookmark.Bookmark{
-			UserUUID:    user.UUID,
-			UID:         uid,
-			URL:         form.URL,
-			Title:       form.Title,
-			Description: form.Description,
-			Private:     form.Private,
-			Tags:        strings.Split(form.Tags, " "),
-		}
-
-		if err := s.bookmarkService.Update(editedBookmark); err != nil {
-			log.Error().Err(err).Msg("failed to edit bookmark")
-			s.PutFlashError(w, "failed to edit bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
-	}
-}
-
-// handleBookmarkListView renders the bookmark list for the current authenticated user.
-func (s *Server) handleBookmarkListView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var viewData Data
-		user := userValue(r.Context())
-
-		pageNumberParam := r.URL.Query().Get("page")
-		pageNumber, err := getPageNumber(pageNumberParam)
-		if err != nil {
-			log.Error().Err(err).Str("page_number", pageNumberParam).Msg("invalid page number")
-			s.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
-			http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
-			return
-		}
-
-		searchTermsParam := r.URL.Query().Get("search")
-		if searchTermsParam != "" {
-			bookmarksSearchPage, err := s.queryingService.BookmarksBySearchQueryAndPage(
-				user.UUID,
-				querying.VisibilityAll,
-				searchTermsParam,
-				pageNumber,
-			)
-			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
-				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
-				log.Error().Err(err).Msg(msg)
-				s.PutFlashError(w, msg)
-				http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
-				return
-			} else if err != nil {
-				log.Error().Err(err).Msg("failed to retrieve bookmarks")
-				s.PutFlashError(w, "failed to retrieve bookmarks")
-				http.Redirect(w, r, "/", http.StatusSeeOther)
-				return
-			}
-
-			viewData.Content = bookmarksSearchPage
-
-		} else {
-			bookmarksPage, err := s.queryingService.BookmarksByPage(
-				user.UUID,
-				querying.VisibilityAll,
-				pageNumber,
-			)
-			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
-				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
-				log.Error().Err(err).Msg(msg)
-				s.PutFlashError(w, msg)
-				http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
-				return
-			} else if err != nil {
-				log.Error().Err(err).Msg("failed to retrieve bookmarks")
-				s.PutFlashError(w, "failed to retrieve bookmarks")
-				http.Redirect(w, r, "/", http.StatusSeeOther)
-				return
-			}
-
-			viewData.Content = bookmarksPage
-		}
-
-		s.bookmarkListView.render(w, r, viewData)
-	}
-}
-
-// handlePublicBookmarkListView renders the public bookmark list for a registered user.
-func (s *Server) handlePublicBookmarkListView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var viewData Data
-
-		vars := mux.Vars(r)
-		nickName := vars["nickname"]
-
-		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
-		// in querying.Service.
-		// In practice, this requires performing an extra database query.
-		owner, err := s.userService.ByNickName(nickName)
-		if err != nil {
-			log.Error().Err(err).Str("nickname", nickName).Msg("failed to retrieve user")
-			s.PutFlashError(w, "unknown user")
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-
-		pageNumberParam := r.URL.Query().Get("page")
-		pageNumber, err := getPageNumber(pageNumberParam)
-		if err != nil {
-			log.Error().Err(err).Str("page_number", pageNumberParam).Msg("invalid page number")
-			s.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		var bookmarkPage querying.Page
-
-		searchTermsParam := r.URL.Query().Get("search")
-		if searchTermsParam != "" {
-			bookmarksSearchPage, err := s.queryingService.PublicBookmarksBySearchQueryAndPage(
-				owner.UUID,
-				searchTermsParam,
-				pageNumber,
-			)
-			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
-				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
-				log.Error().Err(err).Msg(msg)
-				s.PutFlashError(w, msg)
-				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-				return
-			} else if err != nil {
-				log.Error().Err(err).Msg("failed to retrieve bookmarks")
-				s.PutFlashError(w, "failed to retrieve bookmarks")
-				http.Redirect(w, r, "/", http.StatusSeeOther)
-				return
-			}
-
-			bookmarkPage = bookmarksSearchPage
-
-		} else {
-			bookmarksPage, err := s.queryingService.PublicBookmarksByPage(
-				owner.UUID,
-				pageNumber,
-			)
-			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
-				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
-				log.Error().Err(err).Msg(msg)
-				s.PutFlashError(w, msg)
-				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-				return
-			} else if err != nil {
-				log.Error().Err(err).Msg("failed to retrieve bookmarks")
-				s.PutFlashError(w, "failed to retrieve bookmarks")
-				http.Redirect(w, r, "/", http.StatusSeeOther)
-				return
-			}
-
-			bookmarkPage = bookmarksPage
-		}
-
-		viewData.Content = bookmarkPage
-
-		s.publicBookmarkListView.render(w, r, viewData)
 	}
 }
 
@@ -806,7 +469,7 @@ func (s *Server) handleToolsExport() func(w http.ResponseWriter, r *http.Request
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark export form")
-			s.PutFlashError(w, "failed to process form")
+			PutFlashError(w, "failed to process form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -816,7 +479,7 @@ func (s *Server) handleToolsExport() func(w http.ResponseWriter, r *http.Request
 		document, err := s.exportingService.ExportAsNetscapeDocument(user.UUID, form.Visibility)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmarks")
-			s.PutFlashError(w, "failed to export bookmarks")
+			PutFlashError(w, "failed to export bookmarks")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -824,7 +487,7 @@ func (s *Server) handleToolsExport() func(w http.ResponseWriter, r *http.Request
 		marshaled, err := netscape.Marshal(document)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to marshal Netscape bookmarks")
-			s.PutFlashError(w, "failed to export bookmarks")
+			PutFlashError(w, "failed to export bookmarks")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -847,7 +510,7 @@ func (s *Server) handleToolsImport() func(w http.ResponseWriter, r *http.Request
 		multipartReader, err := r.MultipartReader()
 		if err != nil {
 			log.Error().Err(err).Msg("failed to access multipart reader")
-			s.PutFlashError(w, "failed to process import form")
+			PutFlashError(w, "failed to process import form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -871,7 +534,7 @@ func (s *Server) handleToolsImport() func(w http.ResponseWriter, r *http.Request
 
 			if err != nil {
 				log.Error().Err(err).Msg("failed to access multipart form data")
-				s.PutFlashError(w, "failed to process import form")
+				PutFlashError(w, "failed to process import form")
 				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 				return
 			}
@@ -889,7 +552,7 @@ func (s *Server) handleToolsImport() func(w http.ResponseWriter, r *http.Request
 
 			if err != nil {
 				log.Error().Err(err).Msg(fmt.Sprintf("failed to process multipart form part %q", part.FormName()))
-				s.PutFlashError(w, "failed to process import form")
+				PutFlashError(w, "failed to process import form")
 				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 				return
 			}
@@ -898,7 +561,7 @@ func (s *Server) handleToolsImport() func(w http.ResponseWriter, r *http.Request
 		document, err := netscape.Unmarshal(importFileBuffer.Bytes())
 		if err != nil {
 			log.Error().Err(err).Msg("failed to process Netscape bookmark file")
-			s.PutFlashError(w, "failed to import bookmarks from the uploaded file")
+			PutFlashError(w, "failed to import bookmarks from the uploaded file")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -910,12 +573,12 @@ func (s *Server) handleToolsImport() func(w http.ResponseWriter, r *http.Request
 		importStatus, err := s.importingService.ImportFromNetscapeDocument(user.UUID, document, visibility, overwrite)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to save imported bookmarks")
-			s.PutFlashError(w, "failed to save imported bookmarks")
+			PutFlashError(w, "failed to save imported bookmarks")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		s.PutFlashSuccess(w, fmt.Sprintf("Import status: %s", importStatus.Summary()))
+		PutFlashSuccess(w, fmt.Sprintf("Import status: %s", importStatus.Summary()))
 		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 	}
 }
@@ -932,7 +595,7 @@ func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) 
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse login form")
-			s.PutFlashError(w, err.Error())
+			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -940,14 +603,14 @@ func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) 
 		user, err := s.userService.Authenticate(form.Email, form.Password)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to authenticate user")
-			s.PutFlashError(w, "invalid email or password")
+			PutFlashError(w, "invalid email or password")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		if err := s.setUserRememberToken(w, user.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to set remember token")
-			s.PutFlashError(w, "failed to save session cookie")
+			PutFlashError(w, "failed to save session cookie")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -1077,20 +740,6 @@ func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-// authenticatedUser requires the user to be authenticated.
-func (s *Server) authenticatedUser(h http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := userValue(r.Context())
-
-		if user == nil {
-			http.Error(w, "Not Found", http.StatusNotFound)
-			return
-		}
-
-		h(w, r)
-	})
-}
-
 // adminUser requires the user to have administration privileges to
 // access content.
 func (s *Server) adminUser(h http.HandlerFunc) http.HandlerFunc {
@@ -1109,48 +758,4 @@ func (s *Server) adminUser(h http.HandlerFunc) http.HandlerFunc {
 
 		h(w, r)
 	})
-}
-
-// putFlash sets a session flash message to be displayed by the next rendered
-// view.
-func (s *Server) putFlash(w http.ResponseWriter, level flashLevel, message string) {
-	flash := Flash{
-		Level:   level,
-		Message: message,
-	}
-
-	encoded, err := flash.base64URLEncode()
-	if err != nil {
-		log.Error().Err(err).Msg("failed to put flash cookie")
-		return
-	}
-
-	cookie := &http.Cookie{
-		Name:     flashCookieName,
-		Path:     "/",
-		Value:    encoded,
-		HttpOnly: true,
-	}
-
-	http.SetCookie(w, cookie)
-}
-
-// PutFlashError sets a Flash that will be rendered as an error message.
-func (s *Server) PutFlashError(w http.ResponseWriter, message string) {
-	s.putFlash(w, flashLevelError, fmt.Sprintf("Error: %s", message))
-}
-
-// PutFlashInfo sets a Flash that will be rendered as an information message.
-func (s *Server) PutFlashInfo(w http.ResponseWriter, message string) {
-	s.putFlash(w, flashLevelInfo, message)
-}
-
-// PutFlashSuccess sets a Flash that will be rendered as a success message.
-func (s *Server) PutFlashSuccess(w http.ResponseWriter, message string) {
-	s.putFlash(w, flashLevelSuccess, message)
-}
-
-// PutFlashWarning sets a Flash that will be rendered as a warning message.
-func (s *Server) PutFlashWarning(w http.ResponseWriter, message string) {
-	s.putFlash(w, flashLevelWarning, fmt.Sprintf("Warning: %s", message))
 }

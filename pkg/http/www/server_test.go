@@ -200,9 +200,10 @@ func TestServerRememberUser(t *testing.T) {
 			}
 			userService := user.NewService(userRepository)
 
-			s := NewServer().
-				WithSessionService(sessionService).
-				WithUserService(userService)
+			s := NewServer(
+				WithSessionService(sessionService),
+				WithUserService(userService),
+			)
 
 			var gotContext context.Context
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

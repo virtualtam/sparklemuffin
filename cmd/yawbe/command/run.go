@@ -25,13 +25,14 @@ func NewRunCommand() *cobra.Command {
 		Use:   "run",
 		Short: "Start the HTTP server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			server := www.NewServer().
-				WithBookmarkService(bookmarkService).
-				WithExportingService(exportingService).
-				WithQueryingService(queryingService).
-				WithImportingService(importingService).
-				WithSessionService(sessionService).
-				WithUserService(userService)
+			server := www.NewServer(
+				www.WithBookmarkService(bookmarkService),
+				www.WithExportingService(exportingService),
+				www.WithQueryingService(queryingService),
+				www.WithImportingService(importingService),
+				www.WithSessionService(sessionService),
+				www.WithUserService(userService),
+			)
 
 			// Structured logging
 			chain := alice.New(hlog.NewHandler(log.Logger), hlog.AccessHandler(accessLogger))

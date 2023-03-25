@@ -59,8 +59,10 @@ type Server struct {
 	userLoginView *view
 }
 
+type optionFunc func(*Server)
+
 // NewServer initializes and returns a new Server.
-func NewServer() *Server {
+func NewServer(optionFuncs ...optionFunc) *Server {
 	s := &Server{
 		router: mux.NewRouter(),
 
@@ -86,39 +88,49 @@ func NewServer() *Server {
 		userLoginView: newView("user/login.gohtml"),
 	}
 
+	for _, optionFunc := range optionFuncs {
+		optionFunc(s)
+	}
+
 	s.addRoutes()
 
 	return s
 }
 
-func (s *Server) WithBookmarkService(bookmarkService *bookmark.Service) *Server {
-	s.bookmarkService = bookmarkService
-	return s
+func WithBookmarkService(bookmarkService *bookmark.Service) optionFunc {
+	return func(s *Server) {
+		s.bookmarkService = bookmarkService
+	}
 }
 
-func (s *Server) WithExportingService(exportingService *exporting.Service) *Server {
-	s.exportingService = exportingService
-	return s
+func WithExportingService(exportingService *exporting.Service) optionFunc {
+	return func(s *Server) {
+		s.exportingService = exportingService
+	}
 }
 
-func (s *Server) WithImportingService(importingService *importing.Service) *Server {
-	s.importingService = importingService
-	return s
+func WithImportingService(importingService *importing.Service) optionFunc {
+	return func(s *Server) {
+		s.importingService = importingService
+	}
 }
 
-func (s *Server) WithQueryingService(queryingService *querying.Service) *Server {
-	s.queryingService = queryingService
-	return s
+func WithQueryingService(queryingService *querying.Service) optionFunc {
+	return func(s *Server) {
+		s.queryingService = queryingService
+	}
 }
 
-func (s *Server) WithSessionService(sessionService *session.Service) *Server {
-	s.sessionService = sessionService
-	return s
+func WithSessionService(sessionService *session.Service) optionFunc {
+	return func(s *Server) {
+		s.sessionService = sessionService
+	}
 }
 
-func (s *Server) WithUserService(userService *user.Service) *Server {
-	s.userService = userService
-	return s
+func WithUserService(userService *user.Service) optionFunc {
+	return func(s *Server) {
+		s.userService = userService
+	}
 }
 
 // ServeHTTP satisfies the http.Handler interface,

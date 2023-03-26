@@ -67,5 +67,5 @@ func accessLogger(r *http.Request, status, size int, dur time.Duration) {
 		Str("path", r.URL.Path).
 		Int("size", size).
 		Int("status", status).
-		Msg("Request")
+		Msg("handle request")
 }

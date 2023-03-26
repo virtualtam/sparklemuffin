@@ -15,7 +15,7 @@ type accountHandlerContext struct {
 	accountView *view
 }
 
-func setupAccounthandlers(
+func registerAccounthandlers(
 	r *mux.Router,
 	userService *user.Service,
 ) {

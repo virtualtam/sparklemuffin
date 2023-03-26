@@ -27,7 +27,7 @@ type bookmarkHandlerContext struct {
 	publicBookmarkListView *view
 }
 
-func setupBookmarkHandlers(
+func registerBookmarkHandlers(
 	r *mux.Router,
 	bookmarkService *bookmark.Service,
 	queryingService *querying.Service,

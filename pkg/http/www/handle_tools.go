@@ -24,7 +24,7 @@ type toolsHandlerContext struct {
 	toolsImportView *view
 }
 
-func setupToolsHandlers(
+func registerToolsHandlers(
 	r *mux.Router,
 	exportingService *exporting.Service,
 	importingService *importing.Service,

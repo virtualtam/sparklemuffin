@@ -23,7 +23,7 @@ type sessionHandlerContext struct {
 	userLoginView *view
 }
 
-func setupSessionHandlers(
+func registerSessionHandlers(
 	r *mux.Router,
 	sessionService *session.Service,
 	userService *user.Service,

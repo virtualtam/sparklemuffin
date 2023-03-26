@@ -44,13 +44,13 @@ func NewServer(optionFuncs ...optionFunc) *Server {
 		optionFunc(s)
 	}
 
-	s.addRoutes()
+	s.registerHandlers()
 
 	return s
 }
 
-// addRoutes registers all HTTP handlers for the Web interface.
-func (s *Server) addRoutes() {
+// registerHandlers registers all HTTP handlers for the Web interface.
+func (s *Server) registerHandlers() {
 	// Static pages
 	s.router.HandleFunc("/", s.homeView.handle)
 
@@ -60,12 +60,12 @@ func (s *Server) addRoutes() {
 		"/static/",
 		staticCacheControl(http.FileServer(http.FS(static.FS)))))
 
-	// Domain handlers
-	setupSessionHandlers(s.router, s.sessionService, s.userService)
-	setupAdminHandlers(s.router, s.userService)
-	setupAccounthandlers(s.router, s.userService)
-	setupBookmarkHandlers(s.router, s.bookmarkService, s.queryingService, s.userService)
-	setupToolsHandlers(s.router, s.exportingService, s.importingService)
+	// Register domain handlers
+	registerSessionHandlers(s.router, s.sessionService, s.userService)
+	registerAdminHandlers(s.router, s.userService)
+	registerAccounthandlers(s.router, s.userService)
+	registerBookmarkHandlers(s.router, s.bookmarkService, s.queryingService, s.userService)
+	registerToolsHandlers(s.router, s.exportingService, s.importingService)
 
 	// Global middleware
 	s.router.Use(func(h http.Handler) http.Handler {

@@ -18,7 +18,7 @@ type adminHandlerContext struct {
 	adminUserEditView   *view
 }
 
-func setupAdminHandlers(
+func registerAdminHandlers(
 	r *mux.Router,
 	userService *user.Service,
 ) {

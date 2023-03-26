@@ -2,12 +2,9 @@ package www
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/rs/zerolog/log"
 
-	"github.com/virtualtam/yawbe/internal/rand"
 	"github.com/virtualtam/yawbe/pkg/bookmark"
 	"github.com/virtualtam/yawbe/pkg/exporting"
 	"github.com/virtualtam/yawbe/pkg/http/www/static"
@@ -30,8 +27,7 @@ type Server struct {
 	sessionService   *session.Service
 	userService      *user.Service
 
-	homeView      *view
-	userLoginView *view
+	homeView *view
 }
 
 type optionFunc func(*Server)
@@ -41,8 +37,7 @@ func NewServer(optionFuncs ...optionFunc) *Server {
 	s := &Server{
 		router: mux.NewRouter(),
 
-		homeView:      newView("static/home.gohtml"),
-		userLoginView: newView("user/login.gohtml"),
+		homeView: newView("static/home.gohtml"),
 	}
 
 	for _, optionFunc := range optionFuncs {
@@ -100,11 +95,7 @@ func (s *Server) addRoutes() {
 	// static pages
 	s.router.HandleFunc("/", s.homeView.handle)
 
-	// authentication
-	s.router.HandleFunc("/login", s.userLoginView.handle).Methods(http.MethodGet)
-	s.router.HandleFunc("/login", s.handleUserLogin()).Methods(http.MethodPost)
-	s.router.HandleFunc("/logout", s.handleUserLogout()).Methods(http.MethodPost)
-
+	setupSessionHandlers(s.router, s.sessionService, s.userService)
 	setupAdminHandlers(s.router, s.userService)
 	setupAccounthandlers(s.router, s.userService)
 	setupBookmarkHandlers(s.router, s.bookmarkService, s.queryingService, s.userService)
@@ -120,125 +111,6 @@ func (s *Server) addRoutes() {
 	s.router.Use(func(h http.Handler) http.Handler {
 		return s.rememberUser(h.ServeHTTP)
 	})
-}
-
-// handleUserLogin processes data submitted through the user login form.
-func (s *Server) handleUserLogin() func(w http.ResponseWriter, r *http.Request) {
-	type loginForm struct {
-		Email    string `schema:"email"`
-		Password string `schema:"password"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		var form loginForm
-
-		if err := parseForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse login form")
-			PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		user, err := s.userService.Authenticate(form.Email, form.Password)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to authenticate user")
-			PutFlashError(w, "invalid email or password")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		if err := s.setUserRememberToken(w, user.UUID); err != nil {
-			log.Error().Err(err).Msg("failed to set remember token")
-			PutFlashError(w, "failed to save session cookie")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
-	}
-}
-
-// handleUserLogout logs a user out and clears their session data.
-func (s *Server) handleUserLogout() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cookie := http.Cookie{
-			Name:     UserRememberTokenCookieName,
-			Value:    "",
-			Path:     "/",
-			Expires:  time.Unix(0, 1),
-			HttpOnly: true,
-		}
-		http.SetCookie(w, &cookie)
-
-		user := userValue(r.Context())
-		if user == nil {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-
-		token, err := rand.RandomBase64URLString(UserRememberTokenNBytes)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to generate a remember token")
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-
-		userSession := session.Session{
-			UserUUID:      user.UUID,
-			RememberToken: token,
-		}
-
-		err = s.sessionService.Add(userSession)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to save user session")
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-	}
-}
-
-const (
-	UserRememberTokenNBytes     int    = 32
-	UserRememberTokenCookieName string = "remember_me"
-)
-
-// setUserRememberToken creates and persists a new RememberToken if needed, and
-// sets it as a session cookie.
-func (s *Server) setUserRememberToken(w http.ResponseWriter, userUUID string) error {
-	token, err := rand.RandomBase64URLString(UserRememberTokenNBytes)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to generate a remember token")
-		return err
-	}
-
-	// expires after one month
-	expiresAt := time.Now().UTC().AddDate(0, 1, 0)
-
-	userSession := session.Session{
-		UserUUID:               userUUID,
-		RememberToken:          token,
-		RememberTokenExpiresAt: expiresAt,
-	}
-
-	err = s.sessionService.Add(userSession)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to update user")
-		return err
-	}
-
-	cookie := http.Cookie{
-		Name:     UserRememberTokenCookieName,
-		Value:    userSession.RememberToken,
-		Expires:  expiresAt,
-		Path:     "/",
-		HttpOnly: true,
-	}
-
-	http.SetCookie(w, &cookie)
-
-	return nil
 }
 
 // staticCacheControl sets the Cache-Control header for static assets.

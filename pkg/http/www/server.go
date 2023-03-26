@@ -78,42 +78,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
-func WithBookmarkService(bookmarkService *bookmark.Service) optionFunc {
-	return func(s *Server) {
-		s.bookmarkService = bookmarkService
-	}
-}
-
-func WithExportingService(exportingService *exporting.Service) optionFunc {
-	return func(s *Server) {
-		s.exportingService = exportingService
-	}
-}
-
-func WithImportingService(importingService *importing.Service) optionFunc {
-	return func(s *Server) {
-		s.importingService = importingService
-	}
-}
-
-func WithQueryingService(queryingService *querying.Service) optionFunc {
-	return func(s *Server) {
-		s.queryingService = queryingService
-	}
-}
-
-func WithSessionService(sessionService *session.Service) optionFunc {
-	return func(s *Server) {
-		s.sessionService = sessionService
-	}
-}
-
-func WithUserService(userService *user.Service) optionFunc {
-	return func(s *Server) {
-		s.userService = userService
-	}
-}
-
 // rememberUser enriches the request context with a user.User if a valid
 // remember token cookie is set.
 func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {

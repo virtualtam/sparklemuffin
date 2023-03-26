@@ -35,3 +35,11 @@ func authenticatedUser(h http.HandlerFunc) http.HandlerFunc {
 		h(w, r)
 	})
 }
+
+// staticCacheControl sets the Cache-Control header for static assets.
+func staticCacheControl(h http.Handler) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "max-age=2592000") // 30 days
+		h.ServeHTTP(w, r)
+	})
+}

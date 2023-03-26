@@ -10,24 +10,6 @@ import (
 	"github.com/virtualtam/yawbe/pkg/user"
 )
 
-func TestServerStaticCacheControl(t *testing.T) {
-	want := "max-age=2592000"
-
-	s := NewServer()
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	handler = s.staticCacheControl(handler)
-
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/", nil)
-
-	handler(w, r)
-	got := w.Header().Get("Cache-Control")
-
-	if got != want {
-		t.Errorf("want Cache-Control %q, got %q", want, got)
-	}
-}
-
 func TestServerRememberUser(t *testing.T) {
 	cases := []struct {
 		tname               string

@@ -119,3 +119,20 @@ func TestAuthenticatedUser(t *testing.T) {
 		})
 	}
 }
+
+func TestServerStaticCacheControl(t *testing.T) {
+	want := "max-age=2592000"
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	handler = staticCacheControl(handler)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	handler(w, r)
+	got := w.Header().Get("Cache-Control")
+
+	if got != want {
+		t.Errorf("want Cache-Control %q, got %q", want, got)
+	}
+}

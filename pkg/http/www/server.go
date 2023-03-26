@@ -49,6 +49,35 @@ func NewServer(optionFuncs ...optionFunc) *Server {
 	return s
 }
 
+// addRoutes registers all HTTP handlers for the Web interface.
+func (s *Server) addRoutes() {
+	// Static pages
+	s.router.HandleFunc("/", s.homeView.handle)
+
+	// Static assets
+	s.router.HandleFunc("/static/", http.NotFound)
+	s.router.PathPrefix("/static/").Handler(http.StripPrefix(
+		"/static/",
+		staticCacheControl(http.FileServer(http.FS(static.FS)))))
+
+	// Domain handlers
+	setupSessionHandlers(s.router, s.sessionService, s.userService)
+	setupAdminHandlers(s.router, s.userService)
+	setupAccounthandlers(s.router, s.userService)
+	setupBookmarkHandlers(s.router, s.bookmarkService, s.queryingService, s.userService)
+	setupToolsHandlers(s.router, s.exportingService, s.importingService)
+
+	// Global middleware
+	s.router.Use(func(h http.Handler) http.Handler {
+		return s.rememberUser(h.ServeHTTP)
+	})
+}
+
+// ServeHTTP satisfies the http.Handler interface,
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.router.ServeHTTP(w, r)
+}
+
 func WithBookmarkService(bookmarkService *bookmark.Service) optionFunc {
 	return func(s *Server) {
 		s.bookmarkService = bookmarkService
@@ -83,42 +112,6 @@ func WithUserService(userService *user.Service) optionFunc {
 	return func(s *Server) {
 		s.userService = userService
 	}
-}
-
-// ServeHTTP satisfies the http.Handler interface,
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.router.ServeHTTP(w, r)
-}
-
-// addRoutes registers all HTTP handlers for the Web interface.
-func (s *Server) addRoutes() {
-	// static pages
-	s.router.HandleFunc("/", s.homeView.handle)
-
-	setupSessionHandlers(s.router, s.sessionService, s.userService)
-	setupAdminHandlers(s.router, s.userService)
-	setupAccounthandlers(s.router, s.userService)
-	setupBookmarkHandlers(s.router, s.bookmarkService, s.queryingService, s.userService)
-	setupToolsHandlers(s.router, s.exportingService, s.importingService)
-
-	// static assets
-	s.router.HandleFunc("/static/", http.NotFound)
-	s.router.PathPrefix("/static/").Handler(http.StripPrefix(
-		"/static/",
-		s.staticCacheControl(http.FileServer(http.FS(static.FS)))))
-
-	// global middleware
-	s.router.Use(func(h http.Handler) http.Handler {
-		return s.rememberUser(h.ServeHTTP)
-	})
-}
-
-// staticCacheControl sets the Cache-Control header for static assets.
-func (s *Server) staticCacheControl(h http.Handler) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "max-age=2592000") // 30 days
-		h.ServeHTTP(w, r)
-	})
 }
 
 // rememberUser enriches the request context with a user.User if a valid

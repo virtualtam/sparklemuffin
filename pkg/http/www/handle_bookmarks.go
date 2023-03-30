@@ -63,6 +63,7 @@ func registerBookmarkHandlers(
 	// public bookmarks
 	publicBookmarkRouter := r.PathPrefix("/u/{nickname}").Subrouter()
 	publicBookmarkRouter.HandleFunc("/bookmarks", hc.handlePublicBookmarkListView()).Methods(http.MethodGet)
+	publicBookmarkRouter.HandleFunc("/feed/atom", hc.handlePublicBookmarkFeedAtom()).Methods(http.MethodGet)
 }
 
 // handleBookmarkAddView renders the bookmark addition form.
@@ -364,9 +365,53 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 			bookmarkPage = bookmarksPage
 		}
 
+		viewData.AtomFeedURL = fmt.Sprintf("/u/%s/feed/atom", bookmarkPage.Owner.NickName)
 		viewData.Content = bookmarkPage
 
 		hc.publicBookmarkListView.render(w, r, viewData)
+	}
+}
+
+// handlePublicBookmarkFeedAtom renders the public Atom feed for a registered user.
+func (hc *bookmarkHandlerContext) handlePublicBookmarkFeedAtom() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		nickName := vars["nickname"]
+
+		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
+		// in querying.Service.
+		// In practice, this requires performing an extra database query.
+		owner, err := hc.userService.ByNickName(nickName)
+		if err != nil {
+			log.Error().Err(err).Str("nickname", nickName).Msg("failed to retrieve user")
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
+
+		bookmarksPage, err := hc.queryingService.PublicBookmarksByPage(
+			owner.UUID,
+			1,
+		)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve bookmarks")
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		feed, err := bookmarksToFeed(bookmarksPage.Owner, bookmarksPage.Bookmarks)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to create feed")
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.atom", bookmarksPage.Owner.NickName))
+		w.Header().Add("Content-Type", "application/atom+xml")
+
+		if err := feed.WriteAtom(w); err != nil {
+			log.Error().Err(err).Msg("failed to marshal Atom feed")
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
 	}
 }
 

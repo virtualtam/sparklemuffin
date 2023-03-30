@@ -18,9 +18,10 @@ import (
 
 // Data holds the data that can be rendered by views.
 type Data struct {
-	Content any
-	Flash   *Flash
-	User    *user.User
+	AtomFeedURL string
+	Content     any
+	Flash       *Flash
+	User        *user.User
 }
 
 // view represents a Web view that will be rendered by the server in response to
@@ -37,7 +38,7 @@ func newView(templateFiles ...string) *view {
 	t, err := template.New("base").
 		Funcs(template.FuncMap{
 			"Join":           strings.Join,
-			"MarkdownToHTML": markdownToHTML(),
+			"MarkdownToHTML": markdownToHTMLFunc(),
 		}).
 		ParseFS(templates.FS, templateFiles...)
 

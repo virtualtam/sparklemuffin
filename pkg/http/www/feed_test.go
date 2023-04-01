@@ -2,15 +2,22 @@ package www
 
 import (
 	"fmt"
+	"net/url"
 	"testing"
 	"time"
 
 	"github.com/gorilla/feeds"
+
 	"github.com/virtualtam/yawbe/pkg/bookmark"
 	"github.com/virtualtam/yawbe/pkg/querying"
 )
 
 func TestBookmarksToFeed(t *testing.T) {
+	publicURL := &url.URL{
+		Scheme: "http",
+		Host:   "test.domain.tld:8080",
+	}
+
 	owner := querying.Owner{
 		NickName:    "test-user-1",
 		DisplayName: "Test User",
@@ -29,7 +36,7 @@ func TestBookmarksToFeed(t *testing.T) {
 			want: feeds.Feed{
 				Title: fmt.Sprintf("%s's bookmarks", owner.DisplayName),
 				Link: &feeds.Link{
-					Href: fmt.Sprintf("/u/%s/bookmarks", owner.NickName),
+					Href: fmt.Sprintf("http://test.domain.tld:8080/u/%s/bookmarks", owner.NickName),
 				},
 				Author: &feeds.Author{
 					Name: owner.DisplayName,
@@ -50,7 +57,7 @@ func TestBookmarksToFeed(t *testing.T) {
 			want: feeds.Feed{
 				Title: fmt.Sprintf("%s's bookmarks", owner.DisplayName),
 				Link: &feeds.Link{
-					Href: fmt.Sprintf("/u/%s/bookmarks", owner.NickName),
+					Href: fmt.Sprintf("http://test.domain.tld:8080/u/%s/bookmarks", owner.NickName),
 				},
 				Author: &feeds.Author{
 					Name: owner.DisplayName,
@@ -87,7 +94,7 @@ func TestBookmarksToFeed(t *testing.T) {
 			want: feeds.Feed{
 				Title: fmt.Sprintf("%s's bookmarks", owner.DisplayName),
 				Link: &feeds.Link{
-					Href: fmt.Sprintf("/u/%s/bookmarks", owner.NickName),
+					Href: fmt.Sprintf("http://test.domain.tld:8080/u/%s/bookmarks", owner.NickName),
 				},
 				Author: &feeds.Author{
 					Name: owner.DisplayName,
@@ -132,7 +139,7 @@ func TestBookmarksToFeed(t *testing.T) {
 			want: feeds.Feed{
 				Title: fmt.Sprintf("%s's bookmarks", owner.DisplayName),
 				Link: &feeds.Link{
-					Href: fmt.Sprintf("/u/%s/bookmarks", owner.NickName),
+					Href: fmt.Sprintf("http://test.domain.tld:8080/u/%s/bookmarks", owner.NickName),
 				},
 				Author: &feeds.Author{
 					Name: owner.DisplayName,
@@ -164,7 +171,7 @@ func TestBookmarksToFeed(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.tname, func(t *testing.T) {
-			got, err := bookmarksToFeed(owner, tc.bookmarks)
+			got, err := bookmarksToFeed(publicURL, owner, tc.bookmarks)
 			if err != nil {
 				t.Fatalf("expected no error, got %q", err)
 			}

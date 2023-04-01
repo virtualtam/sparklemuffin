@@ -2,6 +2,7 @@ package www
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 
@@ -18,7 +19,8 @@ var _ http.Handler = &Server{}
 
 // Server represents the Web service.
 type Server struct {
-	router *mux.Router
+	router    *mux.Router
+	publicURL *url.URL
 
 	bookmarkService  *bookmark.Service
 	exportingService *exporting.Service
@@ -64,7 +66,7 @@ func (s *Server) registerHandlers() {
 	registerSessionHandlers(s.router, s.sessionService, s.userService)
 	registerAdminHandlers(s.router, s.userService)
 	registerAccounthandlers(s.router, s.userService)
-	registerBookmarkHandlers(s.router, s.bookmarkService, s.queryingService, s.userService)
+	registerBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.queryingService, s.userService)
 	registerToolsHandlers(s.router, s.exportingService, s.importingService)
 
 	// Global middleware

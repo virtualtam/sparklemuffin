@@ -21,6 +21,7 @@ services:
     depends_on:
       - postgres
     environment:
+      YAWBE_PUBLIC_ADDR: https://yawbe.domain.tld
       YAWBE_LOG_LEVEL: debug
     ports:
       - 8080:8080

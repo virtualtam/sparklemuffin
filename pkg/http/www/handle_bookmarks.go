@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -15,6 +16,8 @@ import (
 )
 
 type bookmarkHandlerContext struct {
+	publicURL *url.URL
+
 	bookmarkService *bookmark.Service
 	queryingService *querying.Service
 	userService     *user.Service
@@ -29,11 +32,14 @@ type bookmarkHandlerContext struct {
 
 func registerBookmarkHandlers(
 	r *mux.Router,
+	publicURL *url.URL,
 	bookmarkService *bookmark.Service,
 	queryingService *querying.Service,
 	userService *user.Service,
 ) {
 	hc := bookmarkHandlerContext{
+		publicURL: publicURL,
+
 		bookmarkService: bookmarkService,
 		queryingService: queryingService,
 		userService:     userService,
@@ -398,7 +404,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkFeedAtom() func(w http.Res
 			return
 		}
 
-		feed, err := bookmarksToFeed(bookmarksPage.Owner, bookmarksPage.Bookmarks)
+		feed, err := bookmarksToFeed(hc.publicURL, bookmarksPage.Owner, bookmarksPage.Bookmarks)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create feed")
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

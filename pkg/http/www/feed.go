@@ -2,15 +2,17 @@ package www
 
 import (
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/gorilla/feeds"
+
 	"github.com/virtualtam/yawbe/pkg/bookmark"
 	"github.com/virtualtam/yawbe/pkg/querying"
 )
 
 // bookmarksToFeed initializes and returns a new feed for a list of bookmarks.
-func bookmarksToFeed(owner querying.Owner, bookmarks []bookmark.Bookmark) (*feeds.Feed, error) {
+func bookmarksToFeed(publicURL *url.URL, owner querying.Owner, bookmarks []bookmark.Bookmark) (*feeds.Feed, error) {
 	feedItems := []*feeds.Item{}
 
 	for _, b := range bookmarks {
@@ -41,7 +43,7 @@ func bookmarksToFeed(owner querying.Owner, bookmarks []bookmark.Bookmark) (*feed
 	feed := &feeds.Feed{
 		Title: fmt.Sprintf("%s's bookmarks", owner.DisplayName),
 		Link: &feeds.Link{
-			Href: fmt.Sprintf("/u/%s/bookmarks", owner.NickName),
+			Href: fmt.Sprintf("%s/u/%s/bookmarks", publicURL.String(), owner.NickName),
 		},
 		Author: &feeds.Author{
 			Name: owner.DisplayName,

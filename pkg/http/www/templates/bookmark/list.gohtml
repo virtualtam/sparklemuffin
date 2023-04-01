@@ -4,7 +4,37 @@
   <ol start="{{.Offset}}">
   {{range .Bookmarks}}
     <li>
-    {{- template "bookmark" .}}
+    <div class="bookmark">
+      <div>
+        {{- if .Private}}
+          <span class="private">Private</span>
+        {{- end}}
+        <span class="title"><a href="{{.URL}}">{{.Title}}</a></span>
+      </div>
+      <div class="metadata">
+          {{.CreatedAt.Format "Mon, 02 Jan 2006 15:04:05 MST"}}
+          {{- if not .Private}}
+          -
+          <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">Permalink</a>
+          {{- end}}
+          -
+          <a href="/bookmarks/{{.UID}}/edit">Edit</a>
+          -
+          <a href="/bookmarks/{{.UID}}/delete">Delete</a>
+      </div>
+      {{- with .Description}}
+      <div class="description">
+        {{. | MarkdownToHTML}}
+      </div>
+      {{- end}}
+      {{- with .Tags}}
+        <div>
+        {{- range .}}
+        <span class="tag"><a href="/bookmarks?search={{.}}">{{.}}</a></span>
+        {{- end}}
+        </div>
+      {{- end}}
+    </div>
     </li>
   {{end}}
   </ol>
@@ -47,33 +77,3 @@
   </p>
 </div>
 {{end}}
-
-{{- define "bookmark"}}
-<div class="bookmark">
-  <div>
-    {{- if .Private}}
-      <span class="private">Private</span>
-    {{- end}}
-    <span class="title"><a href="{{.URL}}">{{.Title}}</a></span>
-  </div>
-  <div class="metadata">
-      {{.CreatedAt.Format "Mon, 02 Jan 2006 15:04:05 MST"}}
-      -
-      <a href="/bookmarks/{{.UID}}/edit">Edit</a>
-      -
-      <a href="/bookmarks/{{.UID}}/delete">Delete</a>
-  </div>
-  {{- with .Description}}
-  <div class="description">
-    {{. | MarkdownToHTML}}
-  </div>
-  {{- end}}
-  {{- with .Tags}}
-    <div>
-    {{- range .}}
-    <span class="tag"><a href="/bookmarks?search={{.}}">{{.}}</a></span>
-    {{- end}}
-    </div>
-  {{- end}}
-</div>
-{{- end}}

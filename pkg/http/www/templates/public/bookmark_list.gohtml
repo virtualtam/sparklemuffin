@@ -46,6 +46,8 @@
       </div>
       <div class="metadata">
           {{.CreatedAt.Format "Mon, 02 Jan 2006 15:04:05 MST"}}
+          -
+          <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">Permalink</a>
       </div>
       {{- with .Description}}
       <div class="description">

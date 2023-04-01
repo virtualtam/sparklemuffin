@@ -68,6 +68,16 @@ func (r *fakeRepository) BookmarkGetCount(userUUID string, visibility Visibility
 	return userBookmarkCount, nil
 }
 
+func (r *fakeRepository) BookmarkGetPublicByUID(userUUID, uid string) (bookmark.Bookmark, error) {
+	for _, b := range r.bookmarks {
+		if b.UserUUID == userUUID && b.UID == uid && !b.Private {
+			return b, nil
+		}
+	}
+
+	return bookmark.Bookmark{}, bookmark.ErrNotFound
+}
+
 func (r *fakeRepository) BookmarkSearchCount(userUUID string, visibility Visibility, searchTerms string) (uint, error) {
 	return 0, errors.New("not implemented")
 }

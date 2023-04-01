@@ -365,6 +365,42 @@ func (r *Repository) BookmarkGetN(userUUID string, visibility querying.Visibilit
 	)
 }
 
+func (r *Repository) BookmarkGetPublicByUID(userUUID, uid string) (bookmark.Bookmark, error) {
+	dbBookmark := &Bookmark{}
+
+	err := r.db.QueryRowx(
+		`
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+AND uid=$2
+AND private=false`,
+		userUUID,
+		uid,
+	).StructScan(dbBookmark)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return bookmark.Bookmark{}, bookmark.ErrNotFound
+	}
+	if err != nil {
+		return bookmark.Bookmark{}, err
+	}
+
+	tags := textArrayToTags(dbBookmark.Tags)
+
+	return bookmark.Bookmark{
+		UserUUID:    dbBookmark.UserUUID,
+		UID:         dbBookmark.UID,
+		URL:         dbBookmark.URL,
+		Title:       dbBookmark.Title,
+		Description: dbBookmark.Description,
+		Private:     dbBookmark.Private,
+		Tags:        tags,
+		CreatedAt:   dbBookmark.CreatedAt,
+		UpdatedAt:   dbBookmark.UpdatedAt,
+	}, nil
+}
+
 func (r *Repository) BookmarkSearchCount(userUUID string, visibility querying.Visibility, searchTerms string) (uint, error) {
 	var query string
 

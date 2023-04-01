@@ -11,6 +11,9 @@ type Repository interface {
 	// a given offset.
 	BookmarkGetN(userUUID string, visibility Visibility, n uint, offset uint) ([]bookmark.Bookmark, error)
 
+	// BookmarkGetPublicByUID returns the bookmark for a given user and UID, provided the bookmark is public.
+	BookmarkGetPublicByUID(userUUID, uid string) (bookmark.Bookmark, error)
+
 	// BookmarkSearchCount returns the number of bookmarks for a given user and
 	// search terms.
 	BookmarkSearchCount(userUUID string, visibility Visibility, searchTerms string) (uint, error)

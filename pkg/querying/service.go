@@ -93,6 +93,23 @@ func (s *Service) BookmarksBySearchQueryAndPage(ownerUUID string, visibility Vis
 	return NewSearchResultPage(owner, searchTerms, bookmarkCount, number, totalPages, bookmarks), nil
 }
 
+// BookmarkByUID returns a Page containing a single bookmark.
+func (s *Service) PublicBookmarkByUID(ownerUUID string, uid string) (Page, error) {
+	owner, err := s.r.OwnerGetByUUID(ownerUUID)
+	if err != nil {
+		return Page{}, err
+	}
+
+	b, err := s.r.BookmarkGetPublicByUID(owner.UUID, uid)
+	if err == bookmark.ErrNotFound {
+		return NewPage(owner, 1, 1, []bookmark.Bookmark{}), nil
+	} else if err != nil {
+		return Page{}, err
+	}
+
+	return NewPage(owner, 1, 1, []bookmark.Bookmark{b}), nil
+}
+
 // PublicBookmarksByPage returns a Page containing a limited and offset number of bookmarks.
 func (s *Service) PublicBookmarksByPage(ownerUUID string, number uint) (Page, error) {
 	return s.BookmarksByPage(ownerUUID, VisibilityPublic, number)

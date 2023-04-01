@@ -69,6 +69,7 @@ func registerBookmarkHandlers(
 	// public bookmarks
 	publicBookmarkRouter := r.PathPrefix("/u/{nickname}").Subrouter()
 	publicBookmarkRouter.HandleFunc("/bookmarks", hc.handlePublicBookmarkListView()).Methods(http.MethodGet)
+	publicBookmarkRouter.HandleFunc("/bookmarks/{uid}", hc.handlePublicBookmarkPermalinkView()).Methods(http.MethodGet)
 	publicBookmarkRouter.HandleFunc("/feed/atom", hc.handlePublicBookmarkFeedAtom()).Methods(http.MethodGet)
 }
 
@@ -369,6 +370,41 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 			}
 
 			bookmarkPage = bookmarksPage
+		}
+
+		viewData.AtomFeedURL = fmt.Sprintf("/u/%s/feed/atom", bookmarkPage.Owner.NickName)
+		viewData.Content = bookmarkPage
+
+		hc.publicBookmarkListView.render(w, r, viewData)
+	}
+}
+
+// handlePublicBookmarkPermalinkView renders a given public bookmark for a registered user.
+func (hc *bookmarkHandlerContext) handlePublicBookmarkPermalinkView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var viewData Data
+
+		vars := mux.Vars(r)
+		nickName := vars["nickname"]
+		uid := vars["uid"]
+
+		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
+		// in querying.Service.
+		// In practice, this requires performing an extra database query.
+		owner, err := hc.userService.ByNickName(nickName)
+		if err != nil {
+			log.Error().Err(err).Str("nickname", nickName).Msg("failed to retrieve user")
+			PutFlashError(w, "unknown user")
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		bookmarkPage, err := hc.queryingService.PublicBookmarkByUID(owner.UUID, uid)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve bookmarks")
+			PutFlashError(w, "failed to retrieve bookmarks")
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
 		}
 
 		viewData.AtomFeedURL = fmt.Sprintf("/u/%s/feed/atom", bookmarkPage.Owner.NickName)

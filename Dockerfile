@@ -13,8 +13,16 @@ RUN --mount=type=cache,target=/root/.cache/go-build make build
 # Step 2: Build the actual image
 FROM debian:bullseye-slim
 
-RUN mkdir /opt/yawbe
-WORKDIR /opt/yawbe
+RUN groupadd \
+        --gid 1000 \
+        yawbe \
+    && useradd \
+        --create-home \
+        --home-dir /var/lib/yawbe \
+        --shell /bin/bash \
+        --uid 1000 \
+        --gid yawbe \
+        yawbe
 
 COPY --from=builder /app/build/yawbe /usr/local/bin/yawbe
 
@@ -29,5 +37,8 @@ ENV \
     YAWBE_LOG_LEVEL="info"
 
 EXPOSE 8080
+
+USER yawbe
+WORKDIR /var/lib/yawbe
 
 CMD ["/usr/local/bin/yawbe", "run"]

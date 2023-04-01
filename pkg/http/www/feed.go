@@ -17,7 +17,7 @@ func bookmarksToFeed(publicURL *url.URL, owner querying.Owner, bookmarks []bookm
 
 	for _, b := range bookmarks {
 		feedItem := &feeds.Item{
-			Id:    b.UID,
+			Id:    fmt.Sprintf("%s/u/%s/bookmarks/%s", publicURL.String(), owner.NickName, b.UID),
 			Title: b.Title,
 			Link: &feeds.Link{
 				Href: b.URL,

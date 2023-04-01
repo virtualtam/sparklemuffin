@@ -64,7 +64,7 @@ func TestBookmarksToFeed(t *testing.T) {
 				},
 				Items: []*feeds.Item{
 					{
-						Id:    "2NpRkS46UT88WPWL6c4Ni8e1Ial",
+						Id:    fmt.Sprintf("%s/u/%s/bookmarks/%s", publicURL.String(), owner.NickName, "2NpRkS46UT88WPWL6c4Ni8e1Ial"),
 						Title: "Test 1",
 						Link: &feeds.Link{
 							Href: "https://domain.tld/path",
@@ -101,7 +101,7 @@ func TestBookmarksToFeed(t *testing.T) {
 				},
 				Items: []*feeds.Item{
 					{
-						Id:    "2NpRkS46UT88WPWL6c4Ni8e1Ial",
+						Id:    fmt.Sprintf("%s/u/%s/bookmarks/%s", publicURL.String(), owner.NickName, "2NpRkS46UT88WPWL6c4Ni8e1Ial"),
 						Title: "Test 1",
 						Link: &feeds.Link{
 							Href: "https://domain.tld/path",
@@ -146,7 +146,7 @@ func TestBookmarksToFeed(t *testing.T) {
 				},
 				Items: []*feeds.Item{
 					{
-						Id:    "2NpRkS46UT88WPWL6c4Ni8e1Ial",
+						Id:    fmt.Sprintf("%s/u/%s/bookmarks/%s", publicURL.String(), owner.NickName, "2NpRkS46UT88WPWL6c4Ni8e1Ial"),
 						Title: "Test 1",
 						Link: &feeds.Link{
 							Href: "https://domain.tld/path",
@@ -155,7 +155,7 @@ func TestBookmarksToFeed(t *testing.T) {
 						Updated: now,
 					},
 					{
-						Id:    "2NpWy2Ncn9en8R1udvJ0KWrVwlc",
+						Id:    fmt.Sprintf("%s/u/%s/bookmarks/%s", publicURL.String(), owner.NickName, "2NpWy2Ncn9en8R1udvJ0KWrVwlc"),
 						Title: "Test 1",
 						Link: &feeds.Link{
 							Href: "https://domain.tld/path",

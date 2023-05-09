@@ -11,6 +11,11 @@ services:
       POSTGRES_DB: yawbe
       POSTGRES_USER: yawbe
       POSTGRES_PASSWORD: yawbe
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d yawbe" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     ports:
       - 15432:5432
     volumes:

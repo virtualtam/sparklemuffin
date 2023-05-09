@@ -554,7 +554,7 @@ SET
 	description=:description,
 	private=:private,
 	tags=:tags,
-	fulltextsearch_tsv=to_tsvector(:fulltextsearch_string)
+	fulltextsearch_tsv=to_tsvector(:fulltextsearch_string),
 	updated_at=:updated_at
 WHERE user_uuid=:user_uuid
 AND uid=:uid

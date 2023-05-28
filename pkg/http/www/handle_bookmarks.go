@@ -10,9 +10,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
-	"github.com/virtualtam/yawbe/pkg/bookmark"
-	"github.com/virtualtam/yawbe/pkg/querying"
-	"github.com/virtualtam/yawbe/pkg/user"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 type bookmarkHandlerContext struct {

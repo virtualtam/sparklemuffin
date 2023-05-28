@@ -3,7 +3,7 @@ package www
 import (
 	"context"
 
-	"github.com/virtualtam/yawbe/pkg/user"
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 type userContextKey string

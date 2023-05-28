@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/virtualtam/yawbe/cmd/yawbe/command"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/command"
 )
 
 func main() {

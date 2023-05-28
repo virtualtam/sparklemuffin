@@ -15,30 +15,30 @@ FROM debian:bullseye-slim
 
 RUN groupadd \
         --gid 1000 \
-        yawbe \
+        sparklemuffin \
     && useradd \
         --create-home \
-        --home-dir /var/lib/yawbe \
+        --home-dir /var/lib/sparklemuffin \
         --shell /bin/bash \
         --uid 1000 \
-        --gid yawbe \
-        yawbe
+        --gid sparklemuffin \
+        sparklemuffin
 
-COPY --from=builder /app/build/yawbe /usr/local/bin/yawbe
+COPY --from=builder /app/build/sparklemuffin /usr/local/bin/sparklemuffin
 
 ENV \
-    YAWBE_DB_ADDR="postgres:5432" \
-    YAWBE_DB_NAME="yawbe" \
-    YAWBE_DB_USER="yawbe" \
-    YAWBE_DB_PASSWORD="yawbe" \
-    YAWBE_HMAC_KEY="hmac-secret-key" \
-    YAWBE_LISTEN_ADDR="0.0.0.0:8080" \
-    YAWBE_PUBLIC_ADDR="http://localhost:8080" \
-    YAWBE_LOG_LEVEL="info"
+    SPARKLEMUFFIN_DB_ADDR="postgres:5432" \
+    SPARKLEMUFFIN_DB_NAME="sparklemuffin" \
+    SPARKLEMUFFIN_DB_USER="sparklemuffin" \
+    SPARKLEMUFFIN_DB_PASSWORD="sparklemuffin" \
+    SPARKLEMUFFIN_HMAC_KEY="hmac-secret-key" \
+    SPARKLEMUFFIN_LISTEN_ADDR="0.0.0.0:8080" \
+    SPARKLEMUFFIN_PUBLIC_ADDR="http://localhost:8080" \
+    SPARKLEMUFFIN_LOG_LEVEL="info"
 
 EXPOSE 8080
 
-USER yawbe
-WORKDIR /var/lib/yawbe
+USER sparklemuffin
+WORKDIR /var/lib/sparklemuffin
 
-CMD ["/usr/local/bin/yawbe", "run"]
+CMD ["/usr/local/bin/sparklemuffin", "run"]

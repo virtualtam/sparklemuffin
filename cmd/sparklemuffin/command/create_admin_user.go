@@ -6,8 +6,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/virtualtam/yawbe/internal/rand"
-	"github.com/virtualtam/yawbe/pkg/user"
+	"github.com/virtualtam/sparklemuffin/internal/rand"
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 const (

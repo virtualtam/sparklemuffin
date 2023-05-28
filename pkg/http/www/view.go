@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/virtualtam/yawbe/pkg/http/www/templates"
-	"github.com/virtualtam/yawbe/pkg/user"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/templates"
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 // Data holds the data that can be rendered by views.

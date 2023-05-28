@@ -3,7 +3,7 @@ package querying
 import (
 	"testing"
 
-	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
 func assertPagesEqual(t *testing.T, got, want Page) {

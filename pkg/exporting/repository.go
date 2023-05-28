@@ -1,6 +1,6 @@
 package exporting
 
-import "github.com/virtualtam/yawbe/pkg/bookmark"
+import "github.com/virtualtam/sparklemuffin/pkg/bookmark"
 
 type Repository interface {
 	// BookmarkGetAll returns all bookmarks for a given user UUID.

@@ -1,6 +1,6 @@
 package querying
 
-import "github.com/virtualtam/yawbe/pkg/bookmark"
+import "github.com/virtualtam/sparklemuffin/pkg/bookmark"
 
 const (
 	bookmarksPerPage uint = 20

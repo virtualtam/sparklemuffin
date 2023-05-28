@@ -1,7 +1,7 @@
 package session
 
 import (
-	"github.com/virtualtam/yawbe/pkg/hash"
+	"github.com/virtualtam/sparklemuffin/pkg/hash"
 )
 
 // Service handles operations for the user session domain.

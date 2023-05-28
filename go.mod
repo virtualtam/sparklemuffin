@@ -1,4 +1,4 @@
-module github.com/virtualtam/yawbe
+module github.com/virtualtam/sparklemuffin
 
 go 1.20
 

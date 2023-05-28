@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/virtualtam/yawbe/pkg/bookmark"
-	"github.com/virtualtam/yawbe/pkg/user"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 var testRepositoryUsers = []user.User{

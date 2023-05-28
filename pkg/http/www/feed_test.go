@@ -8,8 +8,8 @@ import (
 
 	"github.com/gorilla/feeds"
 
-	"github.com/virtualtam/yawbe/pkg/bookmark"
-	"github.com/virtualtam/yawbe/pkg/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/querying"
 )
 
 func TestBookmarksToFeed(t *testing.T) {

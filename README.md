@@ -1,8 +1,8 @@
-# `yawbe` - Yet Another Web Bookmarking Engine
+# `sparklemuffin` - Web Bookmark Manager
 ## Change Log
 
 See [CHANGELOG](./CHANGELOG.md)
 
 ## License
 
-`yawbe` is licensed under the MIT license.
+`sparklemuffin` is licensed under the MIT license.

@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/feeds"
 
-	"github.com/virtualtam/yawbe/pkg/bookmark"
-	"github.com/virtualtam/yawbe/pkg/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/querying"
 )
 
 // bookmarksToFeed initializes and returns a new feed for a list of bookmarks.

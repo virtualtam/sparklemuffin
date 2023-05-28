@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/virtualtam/yawbe/pkg/session"
-	"github.com/virtualtam/yawbe/pkg/user"
+	"github.com/virtualtam/sparklemuffin/pkg/session"
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 func TestServerRememberUser(t *testing.T) {

@@ -1,6 +1,6 @@
 package importing
 
-import "github.com/virtualtam/yawbe/pkg/bookmark"
+import "github.com/virtualtam/sparklemuffin/pkg/bookmark"
 
 var _ Repository = &FakeRepository{}
 

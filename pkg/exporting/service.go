@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/virtualtam/netscape-go/v2"
-	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
 // Service handles bookmark export operations.
@@ -40,7 +40,7 @@ func (s *Service) ExportAsNetscapeDocument(userUUID string, visibility Visibilit
 		return &netscape.Document{}, err
 	}
 
-	documentTitle := fmt.Sprintf("YAWBE export of %s bookmarks", visibility)
+	documentTitle := fmt.Sprintf("SparkleMuffin export of %s bookmarks", visibility)
 	document := &netscape.Document{
 		Title: documentTitle,
 		Root: netscape.Folder{

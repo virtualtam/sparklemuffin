@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgtype"
-	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
 var (

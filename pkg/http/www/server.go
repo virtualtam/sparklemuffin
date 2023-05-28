@@ -6,13 +6,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/virtualtam/yawbe/pkg/bookmark"
-	"github.com/virtualtam/yawbe/pkg/exporting"
-	"github.com/virtualtam/yawbe/pkg/http/www/static"
-	"github.com/virtualtam/yawbe/pkg/importing"
-	"github.com/virtualtam/yawbe/pkg/querying"
-	"github.com/virtualtam/yawbe/pkg/session"
-	"github.com/virtualtam/yawbe/pkg/user"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/exporting"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/static"
+	"github.com/virtualtam/sparklemuffin/pkg/importing"
+	"github.com/virtualtam/sparklemuffin/pkg/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/session"
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 var _ http.Handler = &Server{}

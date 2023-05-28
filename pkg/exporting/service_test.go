@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/virtualtam/netscape-go/v2"
-	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
 func TestServiceExportAsNetscapeDocument(t *testing.T) {
@@ -73,9 +73,9 @@ func TestServiceExportAsNetscapeDocument(t *testing.T) {
 			userUUID:   "b9e785dc-3613-4d8d-909b-31a4728b530d",
 			visibility: VisibilityAll,
 			want: &netscape.Document{
-				Title: "YAWBE export of all bookmarks",
+				Title: "SparkleMuffin export of all bookmarks",
 				Root: netscape.Folder{
-					Name: "YAWBE export of all bookmarks",
+					Name: "SparkleMuffin export of all bookmarks",
 				},
 			},
 		},
@@ -84,9 +84,9 @@ func TestServiceExportAsNetscapeDocument(t *testing.T) {
 			userUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility: VisibilityAll,
 			want: &netscape.Document{
-				Title: "YAWBE export of all bookmarks",
+				Title: "SparkleMuffin export of all bookmarks",
 				Root: netscape.Folder{
-					Name: "YAWBE export of all bookmarks",
+					Name: "SparkleMuffin export of all bookmarks",
 					Bookmarks: []netscape.Bookmark{
 						{
 							Title: "Bookmark 1",
@@ -112,9 +112,9 @@ func TestServiceExportAsNetscapeDocument(t *testing.T) {
 			userUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility: VisibilityPrivate,
 			want: &netscape.Document{
-				Title: "YAWBE export of private bookmarks",
+				Title: "SparkleMuffin export of private bookmarks",
 				Root: netscape.Folder{
-					Name: "YAWBE export of private bookmarks",
+					Name: "SparkleMuffin export of private bookmarks",
 					Bookmarks: []netscape.Bookmark{
 						{
 							Title:   "Bookmark 3 (private)",
@@ -130,9 +130,9 @@ func TestServiceExportAsNetscapeDocument(t *testing.T) {
 			userUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility: VisibilityPublic,
 			want: &netscape.Document{
-				Title: "YAWBE export of public bookmarks",
+				Title: "SparkleMuffin export of public bookmarks",
 				Root: netscape.Folder{
-					Name: "YAWBE export of public bookmarks",
+					Name: "SparkleMuffin export of public bookmarks",
 					Bookmarks: []netscape.Bookmark{
 						{
 							Title: "Bookmark 1",

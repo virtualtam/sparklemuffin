@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/virtualtam/yawbe/pkg/http/www"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www"
 )
 
 const (

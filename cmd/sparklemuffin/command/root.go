@@ -10,15 +10,15 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/config"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/exporting"
+	"github.com/virtualtam/sparklemuffin/pkg/importing"
+	"github.com/virtualtam/sparklemuffin/pkg/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/session"
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 	"github.com/virtualtam/venom"
-	"github.com/virtualtam/yawbe/cmd/yawbe/config"
-	"github.com/virtualtam/yawbe/internal/repository/postgresql"
-	"github.com/virtualtam/yawbe/pkg/bookmark"
-	"github.com/virtualtam/yawbe/pkg/exporting"
-	"github.com/virtualtam/yawbe/pkg/importing"
-	"github.com/virtualtam/yawbe/pkg/querying"
-	"github.com/virtualtam/yawbe/pkg/session"
-	"github.com/virtualtam/yawbe/pkg/user"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
@@ -29,9 +29,9 @@ const (
 	databaseDriver string = "pgx"
 
 	defaultDatabaseAddr     string = "localhost:15432"
-	defaultDatabaseName     string = "yawbe"
-	defaultDatabaseUser     string = "yawbe"
-	defaultDatabasePassword string = "yawbe"
+	defaultDatabaseName     string = "sparklemuffin"
+	defaultDatabaseUser     string = "sparklemuffin"
+	defaultDatabasePassword string = "sparklemuffin"
 )
 
 var (
@@ -58,8 +58,8 @@ var (
 // NewRootCommand initializes the main CLI entrypoint and common command flags.
 func NewRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "yawbe",
-		Short: "Yet Another Web Bookmarking Engine",
+		Use:   "sparklemuffin",
+		Short: "Web Bookmark Manager",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 
@@ -119,7 +119,7 @@ func NewRootCommand() *cobra.Command {
 			// Main database repository
 			repository := postgresql.NewRepository(db)
 
-			// YAWBE services
+			// sparklemuffin services
 			bookmarkService = bookmark.NewService(repository)
 			exportingService = exporting.NewService(repository)
 			importingService = importing.NewService(repository)

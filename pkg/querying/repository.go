@@ -1,6 +1,6 @@
 package querying
 
-import "github.com/virtualtam/yawbe/pkg/bookmark"
+import "github.com/virtualtam/sparklemuffin/pkg/bookmark"
 
 // Repository provides access to query user bookmarks.
 type Repository interface {

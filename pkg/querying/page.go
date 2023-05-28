@@ -3,7 +3,7 @@ package querying
 import (
 	"math"
 
-	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
 // A Page holds a set of paginated bookmarks.

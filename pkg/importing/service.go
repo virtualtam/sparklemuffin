@@ -2,7 +2,7 @@ package importing
 
 import (
 	"github.com/virtualtam/netscape-go/v2"
-	"github.com/virtualtam/yawbe/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
 // Service handles bookmark import operations.

@@ -35,3 +35,14 @@ live:
 	@echo "== Watching for changes... (hit Ctrl+C when done)"
 	@watchexec --restart --exts css,go,gohtml -- go run ./cmd/sparklemuffin/ run
 .PHONY: live
+
+dev-migrate:
+	go run ./cmd/sparklemuffin migrate
+.PHONY: dev-migrate
+
+dev-admin:
+	go run ./cmd/sparklemuffin createadmin \
+		--displayname Admin \
+		--email admin@dev.local \
+		--nickname admin
+.PHONY: dev-admin

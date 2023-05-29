@@ -86,6 +86,11 @@ body>main {
   padding-top: 0;
 }
 
+body>main>form>label {
+  color: var(--accent);
+  padding-top: .8rem;
+}
+
 a {
   text-decoration: none;
 }
@@ -119,7 +124,7 @@ blockquote {
 }
 
 .bookmark .title a {
-  color: #ebcb8b;
+  color: var(--accent);
 }
 
 .bookmark .private {

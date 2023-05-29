@@ -1,58 +1,46 @@
 {{define "content"}}
-<h2>Bookmarks</h2>
-<h3>Edit bookmark</h3>
+<h2>Edit bookmark</h2>
 <form action="/bookmarks/{{.UID}}/edit" method="POST">
-  <p>
-    <label for="url">URL</label>
-    <br>
-    <input
-      type="url"
-      id="url"
-      name="url"
-      placeholder="URL"
-      size="80"
-      value="{{.URL}}"
-      required="">
-  </p>
-  <p>
-    <label for="title">Title</label>
-    <br>
-    <input
-      type="text"
-      id="title"
-      name="title"
-      placeholder="Title"
-      size="80"
-      value="{{.Title}}"
-      required="">
-  </p>
-  <p>
-    <label for="description">Description</label>
-    <br>
-    <textarea id="description" name="description" rows="10" cols="80">{{.Description}}</textarea>
-  </p>
-  <p>
-    <label for="tags">Tags</label>
-    <br>
-    <input
-      type="text"
-      id="tags"
-      name="tags"
-      placeholder="tags, separated by spaces"
-      size="80"
-      value="{{Join .Tags " "}}">
-  </p>
-  <p>
-    <label for="private">Private?</label>
-    <br>
-    <input
-      type="checkbox"
-      id="private"
-      name="private"
-      {{if .Private}}checked{{end}}>
-  </p>
-  <p>
-    <button type="submit">Save changes</button>
-  </p>
+  <label for="url">URL</label>
+  <input
+    type="url"
+    id="url"
+    name="url"
+    placeholder="URL"
+    size="80"
+    value="{{.URL}}"
+    required="">
+
+  <label for="title">Title</label>
+  <input
+    type="text"
+    id="title"
+    name="title"
+    placeholder="Title"
+    size="80"
+    value="{{.Title}}"
+    required="">
+
+  <label for="description">Description</label>
+  <textarea id="description" name="description" rows="10" cols="80">{{.Description}}</textarea>
+
+  <label for="tags">Tags</label>
+  <input
+    type="text"
+    id="tags"
+    name="tags"
+    placeholder="tags, separated by spaces"
+    size="80"
+    value="{{Join .Tags " "}}">
+
+  <label for="private">Private?</label>
+  <input
+    type="checkbox"
+    id="private"
+    name="private"
+    {{if .Private}}checked{{end}}>
+
+  <br>
+  <button type="submit">Save changes</button>
 </form>
 {{end}}

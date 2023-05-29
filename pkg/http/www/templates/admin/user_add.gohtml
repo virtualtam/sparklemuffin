@@ -2,58 +2,51 @@
 <h2>Administration</h2>
 <h3>Add user</h3>
 <form action="/admin/users" method="POST">
-  <p>
-    <label for="email">Email address</label>
-    <br>
-    <input
-      type="email"
-      id="email"
-      name="email"
-      placeholder="Email"
-      required="">
-  </p>
-  <p>
-    <label for="nick_name">Nickname</label>
-    <br>
-    <input
-      type="text"
-      id="nick_name"
-      name="nick_name"
-      placeholder="Nickname"
-      value="{{.NickName}}"
-      required="">
-  </p>
-  <p>
-    <label for="display_name">Display Name</label>
-    <br>
-    <input
-      type="text"
-      id="display_name"
-      name="display_name"
-      placeholder="Display Name"
-      value="{{.DisplayName}}"
-      required="">
-  </p>
-  <p>
-    <label for="password">Password</label>
-    <br>
-    <input
-      type="password"
-      id="password"
-      name="password"
-      placeholder="Password"
-      required="">
-  </p>
-  <p>
-    <label for="is_admin">Administrator?</label>
-    <br>
-    <input
-      type="checkbox"
-      id="is_admin"
-      name="is_admin">
-  </p>
-  <p>
-    <button type="submit">Add</button>
-  </p>
+  <label for="email">Email address</label>
+  <input
+    type="email"
+    id="email"
+    name="email"
+    placeholder="Email"
+    size="40"
+    required="">
+
+  <label for="nick_name">Nickname</label>
+  <input
+    type="text"
+    id="nick_name"
+    name="nick_name"
+    placeholder="Nickname"
+    size="40"
+    value="{{.NickName}}"
+    required="">
+
+  <label for="display_name">Display Name</label>
+  <input
+    type="text"
+    id="display_name"
+    name="display_name"
+    placeholder="Display Name"
+    size="40"
+    value="{{.DisplayName}}"
+    required="">
+
+  <label for="password">Password</label>
+  <input
+    type="password"
+    id="password"
+    name="password"
+    placeholder="Password"
+    size="40"
+    required="">
+
+  <label for="is_admin">Administrator?</label>
+  <input
+    type="checkbox"
+    id="is_admin"
+    name="is_admin">
+
+  <br>
+  <button type="submit">Save</button>
 </form>
 {{end}}

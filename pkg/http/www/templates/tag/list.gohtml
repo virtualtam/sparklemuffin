@@ -1,0 +1,52 @@
+{{define "content"}}
+  {{template "tagFilterForm" .}}
+  {{template "pagination" .}}
+  <p>
+    <strong>{{.TagCount}}</strong> tag{{if gt .TagCount 1}}s{{end}}
+  </p>
+  <table>
+    <thead>
+      <tr><th>Occurences</th><th>Name</th></tr>
+    </thead>
+  {{range .Tags}}
+    <tr>
+      <td>{{.Count}}</td>
+      <td>
+        <span class="tag"><a href="/bookmarks?search={{.Name}}">{{.Name}}</a></span>
+      </td>
+    </tr>
+  {{end}}
+  </table>
+{{end}}
+
+{{define "tagFilterForm"}}
+<div class="search">
+  <form action="/tags" method="GET">
+    <p>
+      <input
+        type="text"
+        id="filterTerm"
+        name="filter"
+        placeholder="Filter tags"
+        value="{{.FilterTerm}}">
+      <button type="submit">Filter</button>
+    </p>
+  </form>
+</div>
+{{end}}
+
+{{define "pagination"}}
+<div class="center pagination">
+  <p>
+    {{if lt .PreviousPageNumber .PageNumber }}
+    <a href="/tags?{{if .FilterTerm}}search={{.FilterTerm}}&amp;{{end}}page=1">&lt;&lt;</a>
+    <a href="/tags?{{if .FilterTerm}}search={{.FilterTerm}}&amp;{{end}}page={{.PreviousPageNumber}}">&lt;</a>
+    {{end}}
+    {{.PageNumber}} / {{.TotalPages}}
+    {{if lt .PageNumber .TotalPages }}
+    <a href="/tags?{{if .FilterTerm}}search={{.FilterTerm}}&amp;{{end}}page={{.NextPageNumber}}">&gt;</a>
+    <a href="/tags?{{if .FilterTerm}}search={{.FilterTerm}}&amp;{{end}}page={{.TotalPages}}">&gt;&gt;</a>
+    {{end}}
+  </p>
+</div>
+{{end}}

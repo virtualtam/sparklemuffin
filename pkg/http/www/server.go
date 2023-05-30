@@ -67,6 +67,7 @@ func (s *Server) registerHandlers() {
 	registerAdminHandlers(s.router, s.userService)
 	registerAccounthandlers(s.router, s.userService)
 	registerBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.queryingService, s.userService)
+	registerTagHandlers(s.router, s.queryingService)
 	registerToolsHandlers(s.router, s.exportingService, s.importingService)
 
 	// Global middleware

@@ -59,10 +59,69 @@ func NewSearchResultPage(owner Owner, searchTerms string, searchResultCount uint
 	return page
 }
 
-func pageCount(bookmarkCount, bookmarksPerPage uint) uint {
-	if bookmarkCount == 0 {
+// A Tag holds metadata for a given bookmark tag.
+type Tag struct {
+	Name  string
+	Count uint
+}
+
+// A TagPage holds a set of paginated bookmark tags.
+type TagPage struct {
+	// Owner exposes public matadata for the User owning the bookmarks.
+	Owner Owner
+
+	PageNumber         uint
+	PreviousPageNumber uint
+	NextPageNumber     uint
+	TotalPages         uint
+	Offset             uint
+
+	FilterTerm string
+
+	TagCount uint
+	Tags     []Tag
+}
+
+// NewTagPage initializes and returns a new TagPage.
+func NewTagPage(owner Owner, number uint, totalPages uint, tagCount uint, tags []Tag) TagPage {
+	page := TagPage{
+		Owner:      owner,
+		PageNumber: number,
+		TotalPages: totalPages,
+		TagCount:   tagCount,
+		Tags:       tags,
+	}
+
+	if page.PageNumber == 1 {
+		page.PreviousPageNumber = 1
+	} else {
+		page.PreviousPageNumber = page.PageNumber - 1
+	}
+
+	if page.PageNumber == page.TotalPages {
+		page.NextPageNumber = page.PageNumber
+	} else {
+		page.NextPageNumber = page.PageNumber + 1
+	}
+
+	page.Offset = (page.PageNumber-1)*bookmarksPerPage + 1
+
+	return page
+}
+
+// NewTagFilterResultPage initializes and returns a new bookmark Page containing filtered results.
+func NewTagFilterResultPage(owner Owner, filterTerm string, tagCount uint, number uint, totalPages uint, tags []Tag) TagPage {
+	page := NewTagPage(owner, number, totalPages, tagCount, tags)
+
+	page.FilterTerm = filterTerm
+
+	return page
+}
+
+func pageCount(itemCount, itemsPerPage uint) uint {
+	if itemCount == 0 {
 		return 1
 	}
 
-	return uint(math.Ceil(float64(bookmarkCount) / float64(bookmarksPerPage)))
+	return uint(math.Ceil(float64(itemCount) / float64(itemsPerPage)))
 }

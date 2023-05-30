@@ -152,7 +152,7 @@ blockquote {
   color: #b48ead;
 }
 
-.bookmark .tag {
+.tag {
   border: 1px solid var(--accent-bg);
   border-radius: 5px;
   background-color: var(--accent-bg);
@@ -160,13 +160,13 @@ blockquote {
   padding: .1rem .5rem;
 }
 
-.bookmark .tag:hover {
+.tag:hover {
   color: #eceff4;
   background-color: #4c566a;
   border: 1px solid #8fbcbb;
 }
 
-.bookmark .tag a {
+.tag a {
   color: #d8dee9;
   text-decoration: none;
 }

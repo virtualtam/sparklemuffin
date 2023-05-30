@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
 	"github.com/virtualtam/sparklemuffin/pkg/importing"
@@ -634,6 +635,228 @@ WHERE remember_token_hash=$1`,
 		UserUUID:          dbSession.UserUUID,
 		RememberTokenHash: dbSession.RememberTokenHash,
 	}, nil
+}
+
+func (r *Repository) tagGetQuery(query string, queryParams ...any) ([]querying.Tag, error) {
+	rows, err := r.db.Queryx(query, queryParams...)
+	if err != nil {
+		return []querying.Tag{}, err
+	}
+
+	tags := []querying.Tag{}
+
+	for rows.Next() {
+		dbTag := Tag{}
+
+		if err := rows.StructScan(&dbTag); err != nil {
+			return []querying.Tag{}, err
+		}
+
+		tag := querying.Tag{
+			Name:  dbTag.Name,
+			Count: dbTag.Count,
+		}
+
+		tags = append(tags, tag)
+	}
+
+	return tags, nil
+}
+
+func (r *Repository) TagGetCount(userUUID string, visibility querying.Visibility) (uint, error) {
+	var query string
+
+	switch visibility {
+	case querying.VisibilityPrivate:
+		query = `
+		SELECT COUNT(DISTINCT name)
+		FROM (
+			SELECT unnest(tags) as name
+			FROM bookmarks
+			WHERE user_uuid=$1
+			AND   private=TRUE
+		) s`
+
+	case querying.VisibilityPublic:
+		query = `
+		SELECT COUNT(DISTINCT name)
+		FROM (
+			SELECT unnest(tags) as name
+			FROM bookmarks
+			WHERE user_uuid=$1
+			AND   private=FALSE
+		) s`
+
+	default:
+		query = `
+		SELECT COUNT(DISTINCT name)
+		FROM (
+			SELECT unnest(tags) as name
+			FROM bookmarks
+			WHERE user_uuid=$1
+		) s`
+	}
+
+	var count uint
+
+	err := r.db.Get(
+		&count,
+		query,
+		userUUID,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *Repository) TagGetN(userUUID string, visibility querying.Visibility, n uint, offset uint) ([]querying.Tag, error) {
+	var query string
+
+	switch visibility {
+	case querying.VisibilityPrivate:
+		query = `
+		SELECT name, COUNT(name) as count
+		FROM (
+			SELECT unnest(tags) as name
+			FROM  bookmarks
+			WHERE user_uuid=$1
+			AND   private=TRUE
+		) s
+		GROUP BY name
+		ORDER BY count DESC
+		LIMIT $2 OFFSET $3`
+
+	case querying.VisibilityPublic:
+		query = `
+		SELECT name, COUNT(name) as count
+		FROM (
+			SELECT unnest(tags) as name
+			FROM  bookmarks
+			WHERE user_uuid=$1
+			AND   private=FALSE
+		) s
+		GROUP BY name
+		ORDER BY count DESC
+		LIMIT $2 OFFSET $3`
+
+	default:
+		query = `
+		SELECT name, COUNT(name) as count
+		FROM (
+			SELECT unnest(tags) as name
+			FROM  bookmarks
+			WHERE user_uuid=$1
+		) s
+		GROUP BY name
+		ORDER BY count DESC
+		LIMIT $2 OFFSET $3`
+	}
+
+	return r.tagGetQuery(query, userUUID, n, offset)
+}
+
+func (r *Repository) TagFilterCount(userUUID string, visibility querying.Visibility, filterTerm string) (uint, error) {
+	var query string
+
+	switch visibility {
+	case querying.VisibilityPrivate:
+		query = `
+		SELECT COUNT(DISTINCT name)
+		FROM (
+			SELECT unnest(tags) as name
+			FROM bookmarks
+			WHERE user_uuid=$1
+			AND   private=TRUE
+		) s
+		WHERE name ILIKE $2`
+
+	case querying.VisibilityPublic:
+		query = `
+		SELECT COUNT(DISTINCT name)
+		FROM (
+			SELECT unnest(tags) as name
+			FROM bookmarks
+			WHERE user_uuid=$1
+			AND   private=FALSE
+		) s
+		WHERE name ILIKE $2`
+
+	default:
+		query = `
+		SELECT COUNT(DISTINCT name)
+		FROM (
+			SELECT unnest(tags) as name
+			FROM bookmarks
+			WHERE user_uuid=$1
+		) s
+		WHERE name ILIKE $2`
+	}
+
+	var count uint
+
+	err := r.db.Get(
+		&count,
+		query,
+		userUUID,
+		"%"+filterTerm+"%",
+	)
+	if err != nil {
+		log.Warn().Msg("plop")
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *Repository) TagFilterN(userUUID string, visibility querying.Visibility, filterTerm string, n uint, offset uint) ([]querying.Tag, error) {
+	var query string
+
+	switch visibility {
+	case querying.VisibilityPrivate:
+		query = `
+		SELECT name, COUNT(name) as count
+		FROM (
+			SELECT unnest(tags) as name
+			FROM  bookmarks
+			WHERE user_uuid=$1
+			AND   private=TRUE
+		) s
+		WHERE name ILIKE $2
+		GROUP BY name
+		ORDER BY count DESC
+		LIMIT $3 OFFSET $4`
+
+	case querying.VisibilityPublic:
+		query = `
+		SELECT name, COUNT(name) as count
+		FROM (
+			SELECT unnest(tags) as name
+			FROM  bookmarks
+			WHERE user_uuid=$1
+			AND   private=FALSE
+		) s
+		WHERE name ILIKE $2
+		GROUP BY name
+		ORDER BY count DESC
+		LIMIT $3 OFFSET $4`
+
+	default:
+		query = `
+		SELECT name, COUNT(name) as count
+		FROM (
+			SELECT unnest(tags) as name
+			FROM  bookmarks
+			WHERE user_uuid=$1
+		) s
+		WHERE name ILIKE $2
+		GROUP BY name
+		ORDER BY count DESC
+		LIMIT $3 OFFSET $4`
+	}
+
+	return r.tagGetQuery(query, userUUID, "%"+filterTerm+"%", n, offset)
 }
 
 func (r *Repository) UserAdd(u user.User) error {

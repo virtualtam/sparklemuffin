@@ -24,4 +24,19 @@ type Repository interface {
 
 	// OwnerGetByUUID returns the Owner corresponding to a given UUID.
 	OwnerGetByUUID(string) (Owner, error)
+
+	// TagGetCount returns the number of tags for a given user.
+	TagGetCount(userUUID string, visibility Visibility) (uint, error)
+
+	// TagGetN returns at most n tags for a given user, starting at
+	// a given offset.
+	TagGetN(userUUID string, visibility Visibility, n uint, offset uint) ([]Tag, error)
+
+	// TagFilterCount returns the number of tags for a given user and
+	// filter term.
+	TagFilterCount(userUUID string, visibility Visibility, filterTerm string) (uint, error)
+
+	// BookmarkSearchN returns at most n tags for a given user and filter
+	// term, starting at a given offset.
+	TagFilterN(userUUID string, visibility Visibility, filterTerm string, n uint, offset uint) ([]Tag, error)
 }

@@ -4,6 +4,7 @@ import "github.com/virtualtam/sparklemuffin/pkg/bookmark"
 
 const (
 	bookmarksPerPage uint = 20
+	tagsPerPage      uint = 50
 )
 
 // Service handles oprtaions related to displaying and paginating bookmarks.
@@ -119,4 +120,79 @@ func (s *Service) PublicBookmarksByPage(ownerUUID string, number uint) (Page, er
 // number of bookmarks for a given set of search terms.
 func (s *Service) PublicBookmarksBySearchQueryAndPage(ownerUUID string, searchTerms string, number uint) (Page, error) {
 	return s.BookmarksBySearchQueryAndPage(ownerUUID, VisibilityPublic, searchTerms, number)
+}
+
+// TagsByPage returns a Page containing a limited and offset number of tags.
+func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uint) (TagPage, error) {
+	owner, err := s.r.OwnerGetByUUID(ownerUUID)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	if number < 1 {
+		return TagPage{}, ErrPageNumberOutOfBounds
+	}
+
+	tagCount, err := s.r.TagGetCount(ownerUUID, visibility)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	totalPages := pageCount(tagCount, tagsPerPage)
+
+	if number > totalPages {
+		return TagPage{}, ErrPageNumberOutOfBounds
+	}
+
+	if tagCount == 0 {
+		// early return: nothing to display
+		return NewTagPage(owner, 1, 1, 0, []Tag{}), nil
+	}
+
+	dbOffset := (number - 1) * tagsPerPage
+
+	tags, err := s.r.TagGetN(ownerUUID, visibility, tagsPerPage, dbOffset)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	return NewTagPage(owner, number, totalPages, tagCount, tags), nil
+}
+
+// TagsByFilterQueryAndPage returns a TagSearchPage containing a limited and offset
+// number of tags for a given filter term.
+func (s *Service) TagsByFilterQueryAndPage(ownerUUID string, visibility Visibility, filterTerm string, number uint) (TagPage, error) {
+	owner, err := s.r.OwnerGetByUUID(ownerUUID)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	if number < 1 {
+		return TagPage{}, ErrPageNumberOutOfBounds
+	}
+
+	tagCount, err := s.r.TagFilterCount(ownerUUID, visibility, filterTerm)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	totalPages := pageCount(tagCount, tagsPerPage)
+
+	if number > totalPages {
+		return TagPage{}, ErrPageNumberOutOfBounds
+	}
+
+	if tagCount == 0 {
+		// early return: nothing to display
+		return NewTagFilterResultPage(owner, filterTerm, 0, 1, 1, []Tag{}), nil
+	}
+
+	dbOffset := (number - 1) * tagsPerPage
+
+	tags, err := s.r.TagFilterN(ownerUUID, visibility, filterTerm, tagsPerPage, dbOffset)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	return NewTagFilterResultPage(owner, filterTerm, tagCount, number, totalPages, tags), nil
 }

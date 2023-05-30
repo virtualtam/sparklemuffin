@@ -6,7 +6,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
-func assertPagesEqual(t *testing.T, got, want Page) {
+func assertPagesEqual(t *testing.T, got, want BookmarkPage) {
 	t.Helper()
 
 	if got.SearchTerms != want.SearchTerms {
@@ -48,13 +48,13 @@ func TestNewPage(t *testing.T) {
 		tname      string
 		number     uint
 		totalPages uint
-		want       Page
+		want       BookmarkPage
 	}{
 		{
 			tname:      "page 1 of 1",
 			number:     1,
 			totalPages: 1,
-			want: Page{
+			want: BookmarkPage{
 				PageNumber:         1,
 				PreviousPageNumber: 1,
 				NextPageNumber:     1,
@@ -66,7 +66,7 @@ func TestNewPage(t *testing.T) {
 			tname:      "page 1 of 8",
 			number:     1,
 			totalPages: 8,
-			want: Page{
+			want: BookmarkPage{
 				PageNumber:         1,
 				PreviousPageNumber: 1,
 				NextPageNumber:     2,
@@ -78,7 +78,7 @@ func TestNewPage(t *testing.T) {
 			tname:      "page 7 of 8",
 			number:     7,
 			totalPages: 8,
-			want: Page{
+			want: BookmarkPage{
 				PageNumber:         7,
 				PreviousPageNumber: 6,
 				NextPageNumber:     8,
@@ -90,7 +90,7 @@ func TestNewPage(t *testing.T) {
 			tname:      "page 8 of 8",
 			number:     8,
 			totalPages: 8,
-			want: Page{
+			want: BookmarkPage{
 				PageNumber:         8,
 				PreviousPageNumber: 7,
 				NextPageNumber:     8,
@@ -108,7 +108,7 @@ func TestNewPage(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			got := NewPage(owner, tc.number, tc.totalPages, []bookmark.Bookmark{})
+			got := NewBookmarkPage(owner, tc.number, tc.totalPages, []bookmark.Bookmark{})
 			assertPagesEqual(t, got, tc.want)
 		})
 	}

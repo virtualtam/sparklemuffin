@@ -327,7 +327,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 			return
 		}
 
-		var bookmarkPage querying.Page
+		var bookmarkPage querying.BookmarkPage
 
 		searchTermsParam := r.URL.Query().Get("search")
 		if searchTermsParam != "" {

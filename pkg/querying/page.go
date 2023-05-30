@@ -6,8 +6,8 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
-// A Page holds a set of paginated bookmarks.
-type Page struct {
+// A BookmarkPage holds a set of paginated bookmarks.
+type BookmarkPage struct {
 	// Owner exposes public matadata for the User owning the bookmarks.
 	Owner Owner
 
@@ -23,9 +23,9 @@ type Page struct {
 	Bookmarks []bookmark.Bookmark
 }
 
-// NewPage initializes and returns a new bookmark Page.
-func NewPage(owner Owner, number uint, totalPages uint, bookmarks []bookmark.Bookmark) Page {
-	page := Page{
+// NewBookmarkPage initializes and returns a new BookmarkPage.
+func NewBookmarkPage(owner Owner, number uint, totalPages uint, bookmarks []bookmark.Bookmark) BookmarkPage {
+	page := BookmarkPage{
 		Owner:      owner,
 		PageNumber: number,
 		TotalPages: totalPages,
@@ -49,9 +49,9 @@ func NewPage(owner Owner, number uint, totalPages uint, bookmarks []bookmark.Boo
 	return page
 }
 
-// NewSearchResultPage initializes and returns a new bookmark Page containing search results.
-func NewSearchResultPage(owner Owner, searchTerms string, searchResultCount uint, number uint, totalPages uint, bookmarks []bookmark.Bookmark) Page {
-	page := NewPage(owner, number, totalPages, bookmarks)
+// NewBookmarkSearchResultPage initializes and returns a new BookmarkPage containing search results.
+func NewBookmarkSearchResultPage(owner Owner, searchTerms string, searchResultCount uint, number uint, totalPages uint, bookmarks []bookmark.Bookmark) BookmarkPage {
+	page := NewBookmarkPage(owner, number, totalPages, bookmarks)
 
 	page.SearchTerms = searchTerms
 	page.SearchResultCount = searchResultCount

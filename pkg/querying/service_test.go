@@ -69,7 +69,7 @@ func TestServiceByPage(t *testing.T) {
 		ownerUUID           string
 		visibility          Visibility
 		pageNumber          uint
-		want                Page
+		want                BookmarkPage
 		wantErr             error
 	}{
 		// nominal cases
@@ -78,7 +78,7 @@ func TestServiceByPage(t *testing.T) {
 			ownerUUID:  "b8ed2e7e-a11f-42a7-ae4f-2e80485af823",
 			visibility: VisibilityAll,
 			pageNumber: 1,
-			want: Page{
+			want: BookmarkPage{
 				PageNumber:         1,
 				PreviousPageNumber: 1,
 				NextPageNumber:     1,
@@ -92,7 +92,7 @@ func TestServiceByPage(t *testing.T) {
 			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility:          VisibilityAll,
 			pageNumber:          1,
-			want: Page{
+			want: BookmarkPage{
 				PageNumber:         1,
 				PreviousPageNumber: 1,
 				NextPageNumber:     1,
@@ -129,7 +129,7 @@ func TestServiceByPage(t *testing.T) {
 			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility:          VisibilityPrivate,
 			pageNumber:          1,
-			want: Page{
+			want: BookmarkPage{
 				PageNumber:         1,
 				PreviousPageNumber: 1,
 				NextPageNumber:     1,
@@ -152,7 +152,7 @@ func TestServiceByPage(t *testing.T) {
 			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility:          VisibilityPublic,
 			pageNumber:          1,
-			want: Page{
+			want: BookmarkPage{
 				PageNumber:         1,
 				PreviousPageNumber: 1,
 				NextPageNumber:     1,

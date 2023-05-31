@@ -16,11 +16,16 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
+const (
+	appTitle string = "SparkleMuffin"
+)
+
 // Data holds the data that can be rendered by views.
 type Data struct {
 	AtomFeedURL string
 	Content     any
 	Flash       *Flash
+	Title       string
 	User        *user.User
 }
 
@@ -65,6 +70,12 @@ func (v *view) render(w http.ResponseWriter, r *http.Request, data interface{}) 
 		viewData = d
 	default:
 		viewData = Data{Content: data}
+	}
+
+	if viewData.Title == "" {
+		viewData.Title = appTitle
+	} else {
+		viewData.Title = fmt.Sprintf("%s | %s", viewData.Title, appTitle)
 	}
 
 	viewData.popFlash(w, r)

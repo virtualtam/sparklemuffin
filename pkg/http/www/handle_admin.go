@@ -35,7 +35,7 @@ func registerAdminHandlers(
 	adminRouter := r.PathPrefix("/admin").Subrouter()
 
 	adminRouter.HandleFunc("", hc.handleAdmin()).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/users/add", hc.adminUserAddView.handle).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/users/add", hc.handleAdminUserAddView()).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/users", hc.handleAdminUserAdd()).Methods(http.MethodPost)
 	adminRouter.HandleFunc("/users/{uuid}", hc.handleAdminUserEditView()).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/users/{uuid}", hc.handleAdminUserEdit()).Methods(http.MethodPost)
@@ -50,7 +50,7 @@ func registerAdminHandlers(
 // handleAdmin renders the main administration page.
 func (hc *adminHandlerContext) handleAdmin() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var viewData Data
+		viewData := Data{Title: "Administration"}
 
 		users, err := hc.userService.All()
 		if err != nil {
@@ -60,6 +60,15 @@ func (hc *adminHandlerContext) handleAdmin() func(w http.ResponseWriter, r *http
 		}
 
 		hc.adminView.render(w, r, viewData)
+	}
+}
+
+// handleAdminUserAddView renders the user creation form.
+func (hc *adminHandlerContext) handleAdminUserAddView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		viewData := Data{Title: "Add user"}
+
+		hc.adminUserAddView.render(w, r, viewData)
 	}
 }
 
@@ -120,6 +129,7 @@ func (hc *adminHandlerContext) handleAdminUserDeleteView() func(w http.ResponseW
 		}
 
 		viewData.Content = user
+		viewData.Title = fmt.Sprintf("Delete user: %s", user.NickName)
 
 		hc.adminUserDeleteView.render(w, r, viewData)
 	}
@@ -167,6 +177,7 @@ func (hc *adminHandlerContext) handleAdminUserEditView() func(w http.ResponseWri
 
 		viewData := Data{
 			Content: user,
+			Title:   fmt.Sprintf("Edit user: %s", user.NickName),
 		}
 		hc.adminUserEditView.render(w, r, viewData)
 	}

@@ -76,7 +76,8 @@ func registerBookmarkHandlers(
 // handleBookmarkAddView renders the bookmark addition form.
 func (hc *bookmarkHandlerContext) handleBookmarkAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		hc.bookmarkAddView.render(w, r, nil)
+		viewData := Data{Title: "Add bookmark"}
+		hc.bookmarkAddView.render(w, r, viewData)
 	}
 }
 
@@ -140,6 +141,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkDeleteView() func(w http.Respons
 
 		viewData := Data{
 			Content: bookmark,
+			Title:   fmt.Sprintf("Delete bookmark: %s", bookmark.Title),
 		}
 
 		hc.bookmarkDeleteView.render(w, r, viewData)
@@ -183,6 +185,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseW
 
 		viewData := Data{
 			Content: bookmark,
+			Title:   fmt.Sprintf("Edit bookmark: %s", bookmark.Title),
 		}
 
 		hc.bookmarkEditView.render(w, r, viewData)
@@ -271,6 +274,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkListView() func(w http.ResponseW
 				return
 			}
 
+			viewData.Title = fmt.Sprintf("Bookmark search: %s", searchTermsParam)
 			viewData.Content = bookmarksSearchPage
 
 		} else {
@@ -292,6 +296,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkListView() func(w http.ResponseW
 				return
 			}
 
+			viewData.Title = "Bookmarks"
 			viewData.Content = bookmarksPage
 		}
 
@@ -350,6 +355,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 			}
 
 			bookmarkPage = bookmarksSearchPage
+			viewData.Title = fmt.Sprintf("%s's bookmarks: %s", owner.DisplayName, searchTermsParam)
 
 		} else {
 			bookmarksPage, err := hc.queryingService.PublicBookmarksByPage(
@@ -370,6 +376,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 			}
 
 			bookmarkPage = bookmarksPage
+			viewData.Title = fmt.Sprintf("%s's bookmarks", owner.DisplayName)
 		}
 
 		viewData.AtomFeedURL = fmt.Sprintf("/u/%s/feed/atom", bookmarkPage.Owner.NickName)
@@ -408,6 +415,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkPermalinkView() func(w htt
 		}
 
 		viewData.AtomFeedURL = fmt.Sprintf("/u/%s/feed/atom", bookmarkPage.Owner.NickName)
+		viewData.Title = fmt.Sprintf("%s's bookmarks", owner.DisplayName)
 		viewData.Content = bookmarkPage
 
 		hc.publicBookmarkListView.render(w, r, viewData)

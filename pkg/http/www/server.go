@@ -54,7 +54,7 @@ func NewServer(optionFuncs ...optionFunc) *Server {
 // registerHandlers registers all HTTP handlers for the Web interface.
 func (s *Server) registerHandlers() {
 	// Static pages
-	s.router.HandleFunc("/", s.homeView.handle)
+	s.router.HandleFunc("/", s.handleHomeView())
 
 	// Static assets
 	s.router.HandleFunc("/static/", http.NotFound)
@@ -79,6 +79,14 @@ func (s *Server) registerHandlers() {
 // ServeHTTP satisfies the http.Handler interface,
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
+}
+
+// handleHomeView renders the application's home page.
+func (s *Server) handleHomeView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		viewData := Data{Title: "Home"}
+		s.homeView.render(w, r, viewData)
+	}
 }
 
 // rememberUser enriches the request context with a user.User if a valid

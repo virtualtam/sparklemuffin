@@ -43,6 +43,7 @@ func (hc *accountHandlerContext) handleAccountView() func(w http.ResponseWriter,
 		user := userValue(r.Context())
 		viewData := Data{
 			Content: user,
+			Title:   "Account",
 		}
 
 		hc.accountView.render(w, r, viewData)

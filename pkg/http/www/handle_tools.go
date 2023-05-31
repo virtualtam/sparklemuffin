@@ -42,9 +42,9 @@ func registerToolsHandlers(
 	toolsRouter := r.PathPrefix("/tools").Subrouter()
 
 	toolsRouter.HandleFunc("", hc.handleToolsView()).Methods(http.MethodGet)
-	toolsRouter.HandleFunc("/export", hc.toolsExportView.handle).Methods(http.MethodGet)
+	toolsRouter.HandleFunc("/export", hc.handleToolsExportView()).Methods(http.MethodGet)
 	toolsRouter.HandleFunc("/export", hc.handleToolsExport()).Methods(http.MethodPost)
-	toolsRouter.HandleFunc("/import", hc.toolsImportView.handle).Methods(http.MethodGet)
+	toolsRouter.HandleFunc("/import", hc.handleToolsImportView()).Methods(http.MethodGet)
 	toolsRouter.HandleFunc("/import", hc.handleToolsImport()).Methods(http.MethodPost)
 
 	toolsRouter.Use(func(h http.Handler) http.Handler {
@@ -52,15 +52,29 @@ func registerToolsHandlers(
 	})
 }
 
-// handleToolsView renders the user account management page.
+// handleToolsView renders the tools page.
 func (hc *toolsHandlerContext) handleToolsView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := userValue(r.Context())
 		viewData := Data{
 			Content: user,
+			Title:   "Tools",
 		}
 
 		hc.toolsView.render(w, r, viewData)
+	}
+}
+
+// handleToolsExportView renders the bookmark export page.
+func (hc *toolsHandlerContext) handleToolsExportView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := userValue(r.Context())
+		viewData := Data{
+			Content: user,
+			Title:   "Export bookmarks",
+		}
+
+		hc.toolsExportView.render(w, r, viewData)
 	}
 }
 
@@ -108,6 +122,19 @@ func (hc *toolsHandlerContext) handleToolsExport() func(w http.ResponseWriter, r
 		if err != nil {
 			log.Error().Err(err).Msg("failed to send marshaled Netscape bookmark export")
 		}
+	}
+}
+
+// handleToolsExportView renders the bookmark import page.
+func (hc *toolsHandlerContext) handleToolsImportView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := userValue(r.Context())
+		viewData := Data{
+			Content: user,
+			Title:   "Import bookmarks",
+		}
+
+		hc.toolsImportView.render(w, r, viewData)
 	}
 }
 

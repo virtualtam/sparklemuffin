@@ -72,6 +72,7 @@ func (tc *tagHandlerContext) handleTagListView() func(w http.ResponseWriter, r *
 				return
 			}
 
+			viewData.Title = fmt.Sprintf("Tag search: %s", filterTermParam)
 			viewData.Content = tagSearchPage
 
 		} else {
@@ -94,6 +95,7 @@ func (tc *tagHandlerContext) handleTagListView() func(w http.ResponseWriter, r *
 				return
 			}
 
+			viewData.Title = "Tags"
 			viewData.Content = tagPage
 		}
 

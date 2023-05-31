@@ -171,6 +171,36 @@ blockquote {
   text-decoration: none;
 }
 
+.tag-count {
+  display: inline-block;
+  text-align: right;
+  width: 4em;
+}
+
+.tag-list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(90, auto);
+}
+
+@media (min-width: 600px) {
+  .tag-list {
+    grid-template-rows: repeat(60, auto);
+  }
+}
+
+@media (min-width: 1200px) {
+  .tag-list {
+    grid-template-rows: repeat(30, auto);
+  }
+}
+
+@media (min-width: 1600px) {
+  .tag-list {
+    grid-template-rows: repeat(23, auto);
+  }
+}
+
 .tools {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

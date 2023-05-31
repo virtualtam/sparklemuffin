@@ -4,7 +4,7 @@ import "github.com/virtualtam/sparklemuffin/pkg/bookmark"
 
 const (
 	bookmarksPerPage uint = 20
-	tagsPerPage      uint = 50
+	tagsPerPage      uint = 90
 )
 
 // Service handles oprtaions related to displaying and paginating bookmarks.

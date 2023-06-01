@@ -1,6 +1,7 @@
 package querying
 
 import (
+	"encoding/base64"
 	"math"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
@@ -61,8 +62,18 @@ func NewBookmarkSearchResultPage(owner Owner, searchTerms string, searchResultCo
 
 // A Tag holds metadata for a given bookmark tag.
 type Tag struct {
-	Name  string
-	Count uint
+	Name        string
+	EncodedName string
+	Count       uint
+}
+
+// NewTag initializes and returns a new Tag.
+func NewTag(name string, count uint) Tag {
+	return Tag{
+		Name:        name,
+		EncodedName: base64.URLEncoding.EncodeToString([]byte(name)),
+		Count:       count,
+	}
 }
 
 // A TagPage holds a set of paginated bookmark tags.

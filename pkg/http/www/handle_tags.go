@@ -1,37 +1,123 @@
 package www
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
 )
 
 type tagHandlerContext struct {
+	bookmarkService *bookmark.Service
 	queryingService *querying.Service
 
+	tagEditView *view
 	tagListView *view
 }
 
 func registerTagHandlers(
 	r *mux.Router,
+	bookmarkService *bookmark.Service,
 	queryingService *querying.Service,
 ) {
 	tc := tagHandlerContext{
+		bookmarkService: bookmarkService,
 		queryingService: queryingService,
-		tagListView:     newView("tag/list.gohtml"),
+
+		tagEditView: newView("tag/edit.gohtml"),
+		tagListView: newView("tag/list.gohtml"),
 	}
 
 	// bookmark tags
 	tagRouter := r.PathPrefix("/tags").Subrouter()
 	tagRouter.HandleFunc("", tc.handleTagListView()).Methods(http.MethodGet)
+	tagRouter.HandleFunc("/{name}/edit", tc.handleTagEditView()).Methods(http.MethodGet)
+	tagRouter.HandleFunc("/{name}/edit", tc.handleTagEdit()).Methods(http.MethodPost)
 
 	tagRouter.Use(func(h http.Handler) http.Handler {
 		return authenticatedUser(h.ServeHTTP)
 	})
+}
+
+// handleTagEditView renders the tag edition form.
+func (tc *tagHandlerContext) handleTagEditView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		nameBase64 := vars["name"]
+
+		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
+		if err != nil {
+			log.Error().Err(err).Msg("invalid tag")
+			PutFlashError(w, "invalid tag")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		name := string(nameBytes)
+		tag := querying.NewTag(name, 0)
+
+		viewData := Data{
+			Content: tag,
+			Title:   fmt.Sprintf("Edit tag: %s", name),
+		}
+
+		tc.tagEditView.render(w, r, viewData)
+	}
+}
+
+// handleTagEditView processes the tag edition form.
+func (tc *tagHandlerContext) handleTagEdit() func(w http.ResponseWriter, r *http.Request) {
+	type tagEditForm struct {
+		Name string `schema:"name"`
+	}
+
+	var form tagEditForm
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := parseForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse tag edition form")
+			PutFlashError(w, "failed to process form")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		vars := mux.Vars(r)
+		nameBase64 := vars["name"]
+
+		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
+		if err != nil {
+			log.Error().Err(err).Msg("invalid tag")
+			PutFlashError(w, "invalid tag")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		name := string(nameBytes)
+
+		user := userValue(r.Context())
+
+		tagNameUpdate := bookmark.TagNameUpdate{
+			UserUUID:    user.UUID,
+			CurrentName: name,
+			NewName:     form.Name,
+		}
+
+		updated, err := tc.bookmarkService.UpdateTag(tagNameUpdate)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to rename tag")
+			PutFlashError(w, "failed to rename tag")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		PutFlashSuccess(w, fmt.Sprintf("Tag updated for %d bookmarks", updated))
+		http.Redirect(w, r, "/tags", http.StatusSeeOther)
+	}
 }
 
 // handleTagListView renders the tag list view for the current authenticated user.

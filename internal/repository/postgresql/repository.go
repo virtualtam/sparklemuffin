@@ -254,6 +254,19 @@ ORDER BY created_at DESC`,
 	)
 }
 
+func (r *Repository) BookmarkGetByTag(userUUID string, tagName string) ([]bookmark.Bookmark, error) {
+	return r.bookmarkGetQuery(
+		`
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+AND   $2=ANY(tags)
+		`,
+		userUUID,
+		tagName,
+	)
+}
+
 func (r *Repository) BookmarkGetByUID(userUUID, uid string) (bookmark.Bookmark, error) {
 	dbBookmark := &Bookmark{}
 
@@ -531,6 +544,13 @@ func (r *Repository) BookmarkIsURLRegisteredToAnotherUID(userUUID, url, uid stri
 	return true, nil
 }
 
+func (r *Repository) BookmarkTagUpdateMany(bookmarks []bookmark.Bookmark) (int64, error) {
+	// sqlx does not support PostgreSQL's bulk update syntax.
+	// As a workaround, we perform a bulk upsert to update existing bookmarks.
+	// https://github.com/jmoiron/sqlx/issues/796
+	return r.BookmarkUpsertMany(bookmarks)
+}
+
 func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
 	dbTags := tagsToTextArray(b.Tags)
 	fullTextSearchString := bookmarkToFullTextSearchString(b)
@@ -653,10 +673,7 @@ func (r *Repository) tagGetQuery(query string, queryParams ...any) ([]querying.T
 			return []querying.Tag{}, err
 		}
 
-		tag := querying.Tag{
-			Name:  dbTag.Name,
-			Count: dbTag.Count,
-		}
+		tag := querying.NewTag(dbTag.Name, dbTag.Count)
 
 		tags = append(tags, tag)
 	}

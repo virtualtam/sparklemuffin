@@ -34,6 +34,20 @@ func (r *FakeRepository) BookmarkGetAll(userUUID string) ([]Bookmark, error) {
 	return bookmarks, nil
 }
 
+func (r *FakeRepository) BookmarkGetByTag(userUUID string, name string) ([]Bookmark, error) {
+	bookmarks := []Bookmark{}
+
+	for _, b := range r.Bookmarks {
+		for _, tag := range b.Tags {
+			if tag == name {
+				bookmarks = append(bookmarks, b)
+			}
+		}
+	}
+
+	return bookmarks, nil
+}
+
 func (r *FakeRepository) BookmarkGetByUID(userUUID, uid string) (Bookmark, error) {
 	for _, b := range r.Bookmarks {
 		if b.UserUUID == userUUID && b.UID == uid {
@@ -62,6 +76,18 @@ func (r *FakeRepository) BookmarkIsURLRegisteredToAnotherUID(userUUID, url, uid 
 	}
 
 	return false, nil
+}
+
+func (r *FakeRepository) BookmarkTagUpdateMany(bookmarks []Bookmark) (int64, error) {
+	for _, bookmark := range bookmarks {
+		for index, b := range r.Bookmarks {
+			if b.UserUUID == bookmark.UserUUID && b.UID == bookmark.UID {
+				r.Bookmarks[index] = bookmark
+			}
+		}
+	}
+
+	return int64(len(bookmarks)), nil
 }
 
 func (r *FakeRepository) BookmarkUpdate(bookmark Bookmark) error {

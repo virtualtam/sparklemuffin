@@ -1,6 +1,8 @@
 package bookmark
 
-import "time"
+import (
+	"time"
+)
 
 // Service handles operations for the bookmark domain.
 type Service struct {
@@ -87,4 +89,33 @@ func (s *Service) Update(bookmark Bookmark) error {
 	}
 
 	return s.r.BookmarkUpdate(bookmark)
+}
+
+func (s *Service) UpdateTag(tagNameUpdate TagNameUpdate) (int64, error) {
+	now := time.Now().UTC()
+
+	// todo normalize tag name
+	// todo check non-empty
+	// todo ensure single string
+	// todo check not equal to current name
+
+	bookmarks, err := s.r.BookmarkGetByTag(tagNameUpdate.UserUUID, tagNameUpdate.CurrentName)
+	if err != nil {
+		return 0, err
+	}
+
+	for i, bookmark := range bookmarks {
+		for j, name := range bookmark.Tags {
+			if name == tagNameUpdate.CurrentName {
+				bookmark.Tags[j] = tagNameUpdate.NewName
+			}
+		}
+
+		bookmark.normalizeTags()
+		bookmark.UpdatedAt = now
+
+		bookmarks[i] = bookmark
+	}
+
+	return s.r.BookmarkTagUpdateMany(bookmarks)
 }

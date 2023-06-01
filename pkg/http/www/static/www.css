@@ -177,6 +177,24 @@ blockquote {
   width: 4em;
 }
 
+.tag-delete a {
+  color: #bf616a;
+}
+
+.tag-delete a:hover {
+  filter: brightness(1.5);
+  text-decoration: none;
+}
+
+.tag-edit a {
+  color: #81a1c1;
+}
+
+.tag-edit a:hover {
+  filter: brightness(1.5);
+  text-decoration: none;
+}
+
 .tag-list {
   display: grid;
   grid-auto-flow: column;

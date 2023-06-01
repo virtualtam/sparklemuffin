@@ -6,6 +6,8 @@
   {{range .Tags}}
   <div>
     <span class="tag-count">{{.Count}}</span>
+    <span class="tag-edit"><a href="/tags/{{.EncodedName}}/edit" title="Edit tag: {{.Name}}">e</a></span>
+    <span class="tag-delete"><a href="/tags/{{.EncodedName}}/delete" title="Delete tag: {{.Name}}">x</a></span>
     <span class="tag">
       <a href="/bookmarks?search={{.Name}}" title="Bookmarks tagged {{.Name}}">{{.Name}}</a>
     </span>

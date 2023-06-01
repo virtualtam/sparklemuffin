@@ -92,12 +92,13 @@ func (r *Repository) BookmarkUpsertMany(bookmarks []bookmark.Bookmark) (int64, e
 		`
 ON CONFLICT (user_uuid, url) DO UPDATE
 SET
-	title       = EXCLUDED.title,
-	description = EXCLUDED.description,
-	private     = EXCLUDED.private,
-	tags        = EXCLUDED.tags,
-	created_at  = EXCLUDED.created_at,
-	updated_at  = EXCLUDED.updated_at
+	title              = EXCLUDED.title,
+	description        = EXCLUDED.description,
+	private            = EXCLUDED.private,
+	tags               = EXCLUDED.tags,
+	fulltextsearch_tsv = EXCLUDED.fulltextsearch_tsv,
+	created_at         = EXCLUDED.created_at,
+	updated_at         = EXCLUDED.updated_at
 `,
 		bookmarks,
 	)

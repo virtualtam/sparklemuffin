@@ -35,7 +35,7 @@ func (s *Service) bulkImport(bookmarks []bookmark.Bookmark, overwriteExisting bo
 
 		if _, ok := uniqueURLs[b.URL]; ok {
 			// the import data contains duplicate entries
-			// this may be a result of the normalization coperations, or due to
+			// this may be a result of the normalization operations, or due to
 			// a source allowing duplicate bookmarks -whether it is by design or
 			// not
 			status.Invalid++
@@ -70,6 +70,11 @@ func (s *Service) bulkImport(bookmarks []bookmark.Bookmark, overwriteExisting bo
 	return status, nil
 }
 
+// ImportFromNetscapeDocument performs a bulk import from a Netscape bookmark export.
+//
+// The import will ignore:
+// - duplicate bookmarks for a given URL; only the first entry will be imported;
+// - bookmarks with missing or invalid values for required fields, such as the Title and URL.
 func (s *Service) ImportFromNetscapeDocument(userUUID string, document *netscape.Document, visibility Visibility, overwrite OnConflictStrategy) (Status, error) {
 	var overwriteExisting bool
 

@@ -161,8 +161,8 @@ func TestServiceAdd(t *testing.T) {
 				URL:      "https://domain.tld",
 				Title:    "Example Domain",
 				Tags: []string{
-					"   ", // spaces
-					"	", // tab
+					"   ",  // spaces
+					"	",    // tab
 					" 	  ", // spaces, tab, spaces
 				},
 			},
@@ -597,6 +597,147 @@ func TestServiceUpdate(t *testing.T) {
 			}
 
 			assertBookmarksEqual(t, got, tc.want)
+		})
+	}
+}
+
+func TestServiceUpdateTag(t *testing.T) {
+	cases := []struct {
+		tname                   string
+		repositoryBookmarks     []Bookmark
+		tagNameUpdate           TagNameUpdate
+		want                    int64
+		wantErr                 error
+		wantRepositoryBookmarks []Bookmark
+	}{
+		// error cases
+		{
+			tname: "current tag is empty",
+			tagNameUpdate: TagNameUpdate{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+			},
+			wantErr: ErrTagCurrentNameRequired,
+		},
+		{
+			tname: "current tag is empty (whitespace)",
+			tagNameUpdate: TagNameUpdate{
+				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				CurrentName: "     ",
+			},
+			wantErr: ErrTagCurrentNameRequired,
+		},
+		{
+			tname: "current tag contains whitespace (multiple values)",
+			tagNameUpdate: TagNameUpdate{
+				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				CurrentName: "tag1   tag2",
+			},
+			wantErr: ErrTagCurrentNameContainsWhitespace,
+		},
+		{
+			tname: "new tag is empty",
+			tagNameUpdate: TagNameUpdate{
+				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				CurrentName: "test",
+			},
+			wantErr: ErrTagNewNameRequired,
+		},
+		{
+			tname: "new tag is empty (whitespace)",
+			tagNameUpdate: TagNameUpdate{
+				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				CurrentName: "test",
+				NewName:     "     ",
+			},
+			wantErr: ErrTagNewNameRequired,
+		},
+		{
+			tname: "new tag contains whitespace (multiple values)",
+			tagNameUpdate: TagNameUpdate{
+				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				CurrentName: "tag1",
+				NewName:     "tag2 tag3   tag4",
+			},
+			wantErr: ErrTagNewNameContainsWhitespace,
+		},
+		{
+			tname: "new tag equals current tag",
+			tagNameUpdate: TagNameUpdate{
+				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				CurrentName: "tag1",
+				NewName:     "tag1",
+			},
+			wantErr: ErrTagNewNameEqualsCurrentName,
+		},
+
+		// nominal cases
+		{
+			tname: "no bookmark with this tag",
+			tagNameUpdate: TagNameUpdate{
+				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				CurrentName: "tag1",
+				NewName:     "tag2",
+			},
+		},
+		{
+			tname: "update bookmark with tags",
+			repositoryBookmarks: []Bookmark{
+				{
+					UID:      "27L4DoEZaRASKhQKygRCrvVAwkr",
+					UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+					URL:      "https://domain.tld",
+					Tags:     []string{"a", "c", "replace-me", "z"},
+					Title:    "Example Domain",
+				},
+			},
+			tagNameUpdate: TagNameUpdate{
+				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				CurrentName: "replace-me",
+				NewName:     "b",
+			},
+			want: 1,
+			wantRepositoryBookmarks: []Bookmark{
+				{
+					UID:      "27L4DoEZaRASKhQKygRCrvVAwkr",
+					UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+					URL:      "https://domain.tld",
+					Tags:     []string{"a", "b", "c", "z"},
+					Title:    "Example Domain",
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+			}
+			s := NewService(r)
+
+			got, err := s.UpdateTag(tc.tagNameUpdate)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			if got != tc.want {
+				t.Errorf("want %d updated bookmarks, got %d", tc.want, got)
+			}
+
+			for index, bookmark := range r.Bookmarks {
+				assertBookmarksEqual(t, bookmark, tc.wantRepositoryBookmarks[index])
+			}
 		})
 	}
 }

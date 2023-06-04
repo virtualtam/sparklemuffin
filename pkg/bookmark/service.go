@@ -91,27 +91,40 @@ func (s *Service) Update(bookmark Bookmark) error {
 	return s.r.BookmarkUpdate(bookmark)
 }
 
-func (s *Service) UpdateTag(tagNameUpdate TagNameUpdate) (int64, error) {
+func (s *Service) UpdateTag(u TagNameUpdate) (int64, error) {
 	now := time.Now().UTC()
 
-	// todo normalize tag name
-	// todo check non-empty
-	// todo ensure single string
-	// todo check not equal to current name
+	u.normalize()
 
-	bookmarks, err := s.r.BookmarkGetByTag(tagNameUpdate.UserUUID, tagNameUpdate.CurrentName)
+	fns := []func() error{
+		u.requireUserUUID,
+		u.requireCurrentName,
+		u.ensureCurrentNameHasNoWhitespace,
+		u.requireNewName,
+		u.ensureNewNameHasNoWhitespace,
+		u.ensureNewNameIsNotEqualToCurrentName,
+	}
+
+	for _, fn := range fns {
+		if err := fn(); err != nil {
+			return 0, err
+		}
+	}
+
+	bookmarks, err := s.r.BookmarkGetByTag(u.UserUUID, u.CurrentName)
 	if err != nil {
 		return 0, err
 	}
 
 	for i, bookmark := range bookmarks {
-		for j, name := range bookmark.Tags {
-			if name == tagNameUpdate.CurrentName {
-				bookmark.Tags[j] = tagNameUpdate.NewName
+		for j, bookmarkTag := range bookmark.Tags {
+			if bookmarkTag == u.CurrentName {
+				bookmark.Tags[j] = u.NewName
 			}
 		}
 
-		bookmark.normalizeTags()
+		bookmark.deduplicateTags()
+		bookmark.sortTags()
 		bookmark.UpdatedAt = now
 
 		bookmarks[i] = bookmark

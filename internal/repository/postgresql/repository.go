@@ -254,7 +254,7 @@ ORDER BY created_at DESC`,
 	)
 }
 
-func (r *Repository) BookmarkGetByTag(userUUID string, tagName string) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkGetByTag(userUUID string, tag string) ([]bookmark.Bookmark, error) {
 	return r.bookmarkGetQuery(
 		`
 SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
@@ -263,7 +263,7 @@ WHERE user_uuid=$1
 AND   $2=ANY(tags)
 		`,
 		userUUID,
-		tagName,
+		tag,
 	)
 }
 

@@ -25,7 +25,7 @@ type Repository interface {
 	BookmarkGetAll(userUUID string) ([]Bookmark, error)
 
 	// BookmarkGetByTag returns all bookmarks for a given user UUID and tag.
-	BookmarkGetByTag(userUUID string, name string) ([]Bookmark, error)
+	BookmarkGetByTag(userUUID string, tag string) ([]Bookmark, error)
 
 	// BookmarkGetByUID returns the bookmark for a given user UUID and UID.
 	BookmarkGetByUID(userUUID, uid string) (Bookmark, error)

@@ -34,12 +34,12 @@ func (r *FakeRepository) BookmarkGetAll(userUUID string) ([]Bookmark, error) {
 	return bookmarks, nil
 }
 
-func (r *FakeRepository) BookmarkGetByTag(userUUID string, name string) ([]Bookmark, error) {
+func (r *FakeRepository) BookmarkGetByTag(userUUID string, tag string) ([]Bookmark, error) {
 	bookmarks := []Bookmark{}
 
 	for _, b := range r.Bookmarks {
-		for _, tag := range b.Tags {
-			if tag == name {
+		for _, bookmarkTag := range b.Tags {
+			if bookmarkTag == tag {
 				bookmarks = append(bookmarks, b)
 			}
 		}

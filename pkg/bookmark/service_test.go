@@ -709,7 +709,7 @@ func TestServiceUpdateTag(t *testing.T) {
 	cases := []struct {
 		tname                   string
 		repositoryBookmarks     []Bookmark
-		tagNameUpdate           TagNameUpdate
+		tagNameUpdate           TagUpdateQuery
 		want                    int64
 		wantErr                 error
 		wantRepositoryBookmarks []Bookmark
@@ -717,56 +717,56 @@ func TestServiceUpdateTag(t *testing.T) {
 		// error cases
 		{
 			tname: "current tag is empty",
-			tagNameUpdate: TagNameUpdate{
+			tagNameUpdate: TagUpdateQuery{
 				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
 			},
-			wantErr: ErrTagCurrentNameRequired,
+			wantErr: ErrTagNameRequired,
 		},
 		{
 			tname: "current tag is empty (whitespace)",
-			tagNameUpdate: TagNameUpdate{
+			tagNameUpdate: TagUpdateQuery{
 				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
 				CurrentName: "     ",
 			},
-			wantErr: ErrTagCurrentNameRequired,
+			wantErr: ErrTagNameRequired,
 		},
 		{
 			tname: "current tag contains whitespace (multiple values)",
-			tagNameUpdate: TagNameUpdate{
+			tagNameUpdate: TagUpdateQuery{
 				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
 				CurrentName: "tag1   tag2",
 			},
-			wantErr: ErrTagCurrentNameContainsWhitespace,
+			wantErr: ErrTagNameContainsWhitespace,
 		},
 		{
 			tname: "new tag is empty",
-			tagNameUpdate: TagNameUpdate{
+			tagNameUpdate: TagUpdateQuery{
 				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
 				CurrentName: "test",
 			},
-			wantErr: ErrTagNewNameRequired,
+			wantErr: ErrTagNameRequired,
 		},
 		{
 			tname: "new tag is empty (whitespace)",
-			tagNameUpdate: TagNameUpdate{
+			tagNameUpdate: TagUpdateQuery{
 				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
 				CurrentName: "test",
 				NewName:     "     ",
 			},
-			wantErr: ErrTagNewNameRequired,
+			wantErr: ErrTagNameRequired,
 		},
 		{
 			tname: "new tag contains whitespace (multiple values)",
-			tagNameUpdate: TagNameUpdate{
+			tagNameUpdate: TagUpdateQuery{
 				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
 				CurrentName: "tag1",
 				NewName:     "tag2 tag3   tag4",
 			},
-			wantErr: ErrTagNewNameContainsWhitespace,
+			wantErr: ErrTagNameContainsWhitespace,
 		},
 		{
 			tname: "new tag equals current tag",
-			tagNameUpdate: TagNameUpdate{
+			tagNameUpdate: TagUpdateQuery{
 				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
 				CurrentName: "tag1",
 				NewName:     "tag1",
@@ -777,7 +777,7 @@ func TestServiceUpdateTag(t *testing.T) {
 		// nominal cases
 		{
 			tname: "no bookmark with this tag",
-			tagNameUpdate: TagNameUpdate{
+			tagNameUpdate: TagUpdateQuery{
 				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
 				CurrentName: "tag1",
 				NewName:     "tag2",
@@ -794,7 +794,7 @@ func TestServiceUpdateTag(t *testing.T) {
 					Title:    "Example Domain",
 				},
 			},
-			tagNameUpdate: TagNameUpdate{
+			tagNameUpdate: TagUpdateQuery{
 				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
 				CurrentName: "replace-me",
 				NewName:     "b",

@@ -129,18 +129,18 @@ func (s *Service) DeleteTag(dq TagDeleteQuery) (int64, error) {
 	return s.r.BookmarkTagUpdateMany(bookmarks)
 }
 
-func (s *Service) UpdateTag(u TagNameUpdate) (int64, error) {
+func (s *Service) UpdateTag(uq TagUpdateQuery) (int64, error) {
 	now := time.Now().UTC()
 
-	u.normalize()
+	uq.normalize()
 
 	fns := []func() error{
-		u.requireUserUUID,
-		u.requireCurrentName,
-		u.ensureCurrentNameHasNoWhitespace,
-		u.requireNewName,
-		u.ensureNewNameHasNoWhitespace,
-		u.ensureNewNameIsNotEqualToCurrentName,
+		uq.requireUserUUID,
+		uq.requireCurrentName,
+		uq.ensureCurrentNameHasNoWhitespace,
+		uq.requireNewName,
+		uq.ensureNewNameHasNoWhitespace,
+		uq.ensureNewNameIsNotEqualToCurrentName,
 	}
 
 	for _, fn := range fns {
@@ -149,15 +149,15 @@ func (s *Service) UpdateTag(u TagNameUpdate) (int64, error) {
 		}
 	}
 
-	bookmarks, err := s.r.BookmarkGetByTag(u.UserUUID, u.CurrentName)
+	bookmarks, err := s.r.BookmarkGetByTag(uq.UserUUID, uq.CurrentName)
 	if err != nil {
 		return 0, err
 	}
 
 	for i, bookmark := range bookmarks {
 		for j, bookmarkTag := range bookmark.Tags {
-			if bookmarkTag == u.CurrentName {
-				bookmark.Tags[j] = u.NewName
+			if bookmarkTag == uq.CurrentName {
+				bookmark.Tags[j] = uq.NewName
 			}
 		}
 

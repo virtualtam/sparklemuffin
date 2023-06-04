@@ -20,10 +20,7 @@ func (dq *TagDeleteQuery) normalize() {
 }
 
 func (dq *TagDeleteQuery) requireUserUUID() error {
-	if dq.UserUUID == "" {
-		return ErrUserUUIDRequired
-	}
-	return nil
+	return requireUserUUID(dq.UserUUID)
 }
 
 func (dq *TagDeleteQuery) ensureNameHasNoWhitespace() error {
@@ -40,56 +37,53 @@ func (dq *TagDeleteQuery) requireName() error {
 	return nil
 }
 
-// TagNameUpdate represents a tag name update for all bookmarks for an authenticated user.
-type TagNameUpdate struct {
+// TagUpdateQuery represents a tag name update for all bookmarks for an authenticated user.
+type TagUpdateQuery struct {
 	UserUUID    string
 	CurrentName string
 	NewName     string
 }
 
-func (u *TagNameUpdate) ensureCurrentNameHasNoWhitespace() error {
-	if whitespaceRegexp.MatchString(u.CurrentName) {
-		return ErrTagCurrentNameContainsWhitespace
+func (uq *TagUpdateQuery) ensureCurrentNameHasNoWhitespace() error {
+	if whitespaceRegexp.MatchString(uq.CurrentName) {
+		return newValidationError("current", ErrTagNameContainsWhitespace)
 	}
 	return nil
 }
 
-func (u *TagNameUpdate) ensureNewNameHasNoWhitespace() error {
-	if whitespaceRegexp.MatchString(u.NewName) {
-		return ErrTagNewNameContainsWhitespace
+func (uq *TagUpdateQuery) ensureNewNameHasNoWhitespace() error {
+	if whitespaceRegexp.MatchString(uq.NewName) {
+		return newValidationError("new", ErrTagNameContainsWhitespace)
 	}
 	return nil
 }
 
-func (u *TagNameUpdate) ensureNewNameIsNotEqualToCurrentName() error {
-	if u.CurrentName == u.NewName {
+func (uq *TagUpdateQuery) ensureNewNameIsNotEqualToCurrentName() error {
+	if uq.CurrentName == uq.NewName {
 		return ErrTagNewNameEqualsCurrentName
 	}
 	return nil
 }
 
-func (u *TagNameUpdate) normalize() {
-	u.CurrentName = strings.TrimSpace(u.CurrentName)
-	u.NewName = strings.TrimSpace(u.NewName)
+func (uq *TagUpdateQuery) normalize() {
+	uq.CurrentName = strings.TrimSpace(uq.CurrentName)
+	uq.NewName = strings.TrimSpace(uq.NewName)
 }
 
-func (u *TagNameUpdate) requireCurrentName() error {
-	if u.CurrentName == "" {
-		return ErrTagCurrentNameRequired
+func (uq *TagUpdateQuery) requireCurrentName() error {
+	if uq.CurrentName == "" {
+		return newValidationError("current", ErrTagNameRequired)
 	}
 	return nil
 }
 
-func (u *TagNameUpdate) requireNewName() error {
-	if u.NewName == "" {
-		return ErrTagNewNameRequired
+func (uq *TagUpdateQuery) requireNewName() error {
+	if uq.NewName == "" {
+		return newValidationError("new", ErrTagNameRequired)
 	}
 	return nil
 }
 
-func (u *TagNameUpdate) requireUserUUID() error {
-	if u.UserUUID == "" {
-		return ErrUserUUIDRequired
-	}
-	return nil
+func (uq *TagUpdateQuery) requireUserUUID() error {
+	return requireUserUUID(uq.UserUUID)
 }

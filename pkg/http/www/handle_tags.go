@@ -180,7 +180,7 @@ func (tc *tagHandlerContext) handleTagEdit() func(w http.ResponseWriter, r *http
 
 		user := userValue(r.Context())
 
-		tagNameUpdate := bookmark.TagNameUpdate{
+		tagNameUpdate := bookmark.TagUpdateQuery{
 			UserUUID:    user.UUID,
 			CurrentName: name,
 			NewName:     form.Name,

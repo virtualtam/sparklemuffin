@@ -200,10 +200,7 @@ func (b *Bookmark) requireURL() error {
 }
 
 func (b *Bookmark) requireUserUUID() error {
-	if b.UserUUID == "" {
-		return ErrUserUUIDRequired
-	}
-	return nil
+	return requireUserUUID(b.UserUUID)
 }
 
 func (b *Bookmark) validateUID() error {

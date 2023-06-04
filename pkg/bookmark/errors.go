@@ -6,6 +6,8 @@ var (
 	ErrNotFound                         error = errors.New("not found")
 	ErrTagCurrentNameContainsWhitespace error = errors.New("current tag contains whitespace")
 	ErrTagCurrentNameRequired           error = errors.New("current tag required")
+	ErrTagNameContainsWhitespace        error = errors.New("tag contains whitespace")
+	ErrTagNameRequired                  error = errors.New("tag required")
 	ErrTagNewNameContainsWhitespace     error = errors.New("new tag contains whitespace")
 	ErrTagNewNameEqualsCurrentName      error = errors.New("new tag is the same as current tag")
 	ErrTagNewNameRequired               error = errors.New("new tag required")

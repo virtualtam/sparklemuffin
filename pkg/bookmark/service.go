@@ -91,6 +91,44 @@ func (s *Service) Update(bookmark Bookmark) error {
 	return s.r.BookmarkUpdate(bookmark)
 }
 
+func (s *Service) DeleteTag(dq TagDeleteQuery) (int64, error) {
+	now := time.Now().UTC()
+
+	dq.normalize()
+
+	fns := []func() error{
+		dq.requireUserUUID,
+		dq.requireName,
+		dq.ensureNameHasNoWhitespace,
+	}
+
+	for _, fn := range fns {
+		if err := fn(); err != nil {
+			return 0, err
+		}
+	}
+
+	bookmarks, err := s.r.BookmarkGetByTag(dq.UserUUID, dq.Name)
+	if err != nil {
+		return 0, err
+	}
+
+	for i, bookmark := range bookmarks {
+		for j, bookmarkTag := range bookmark.Tags {
+			if bookmarkTag == dq.Name {
+				bookmark.Tags = append(bookmark.Tags[:j], bookmark.Tags[j+1:]...)
+				break
+			}
+		}
+
+		bookmark.UpdatedAt = now
+
+		bookmarks[i] = bookmark
+	}
+
+	return s.r.BookmarkTagUpdateMany(bookmarks)
+}
+
 func (s *Service) UpdateTag(u TagNameUpdate) (int64, error) {
 	now := time.Now().UTC()
 

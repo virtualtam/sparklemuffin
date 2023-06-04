@@ -16,8 +16,9 @@ type tagHandlerContext struct {
 	bookmarkService *bookmark.Service
 	queryingService *querying.Service
 
-	tagEditView *view
-	tagListView *view
+	tagDeleteView *view
+	tagEditView   *view
+	tagListView   *view
 }
 
 func registerTagHandlers(
@@ -29,19 +30,97 @@ func registerTagHandlers(
 		bookmarkService: bookmarkService,
 		queryingService: queryingService,
 
-		tagEditView: newView("tag/edit.gohtml"),
-		tagListView: newView("tag/list.gohtml"),
+		tagDeleteView: newView("tag/delete.gohtml"),
+		tagEditView:   newView("tag/edit.gohtml"),
+		tagListView:   newView("tag/list.gohtml"),
 	}
 
 	// bookmark tags
 	tagRouter := r.PathPrefix("/tags").Subrouter()
 	tagRouter.HandleFunc("", tc.handleTagListView()).Methods(http.MethodGet)
+	tagRouter.HandleFunc("/{name}/delete", tc.handleTagDeleteView()).Methods(http.MethodGet)
+	tagRouter.HandleFunc("/{name}/delete", tc.handleTagDelete()).Methods(http.MethodPost)
 	tagRouter.HandleFunc("/{name}/edit", tc.handleTagEditView()).Methods(http.MethodGet)
 	tagRouter.HandleFunc("/{name}/edit", tc.handleTagEdit()).Methods(http.MethodPost)
 
 	tagRouter.Use(func(h http.Handler) http.Handler {
 		return authenticatedUser(h.ServeHTTP)
 	})
+}
+
+// handleTagDeleteView renders the tag deletion form.
+func (tc *tagHandlerContext) handleTagDeleteView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		nameBase64 := vars["name"]
+
+		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
+		if err != nil {
+			log.Error().Err(err).Msg("invalid tag")
+			PutFlashError(w, "invalid tag")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		name := string(nameBytes)
+		tag := querying.NewTag(name, 0)
+
+		viewData := Data{
+			Content: tag,
+			Title:   fmt.Sprintf("Delete tag: %s", name),
+		}
+
+		tc.tagDeleteView.render(w, r, viewData)
+	}
+}
+
+// handleTagDelete processes the tag deletion form.
+func (tc *tagHandlerContext) handleTagDelete() func(w http.ResponseWriter, r *http.Request) {
+	type tagDeleteForm struct {
+		Name string `schema:"name"`
+	}
+
+	var form tagDeleteForm
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := parseForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse tag deletion form")
+			PutFlashError(w, "failed to process form")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		vars := mux.Vars(r)
+		nameBase64 := vars["name"]
+
+		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
+		if err != nil {
+			log.Error().Err(err).Msg("invalid tag")
+			PutFlashError(w, "invalid tag")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		name := string(nameBytes)
+
+		user := userValue(r.Context())
+
+		tagDelete := bookmark.TagDeleteQuery{
+			UserUUID: user.UUID,
+			Name:     name,
+		}
+
+		updated, err := tc.bookmarkService.DeleteTag(tagDelete)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to delete tag")
+			PutFlashError(w, "failed to delete tag")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		PutFlashSuccess(w, fmt.Sprintf("Tag deleted from %d bookmarks", updated))
+		http.Redirect(w, r, "/tags", http.StatusSeeOther)
+	}
 }
 
 // handleTagEditView renders the tag edition form.
@@ -70,7 +149,7 @@ func (tc *tagHandlerContext) handleTagEditView() func(w http.ResponseWriter, r *
 	}
 }
 
-// handleTagEditView processes the tag edition form.
+// handleTagEdit processes the tag edition form.
 func (tc *tagHandlerContext) handleTagEdit() func(w http.ResponseWriter, r *http.Request) {
 	type tagEditForm struct {
 		Name string `schema:"name"`

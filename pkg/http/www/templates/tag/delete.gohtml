@@ -1,0 +1,9 @@
+{{define "content"}}
+<h2>Delete tag</h2>
+<form action="/tags/{{(.EncodedName)}}/delete" method="POST">
+  <p>Delete tag: <span class="tag">{{.Name}}</span>?</p>
+  <p>
+    <button type="submit">Delete</button>
+  </p>
+</form>
+{{end}}

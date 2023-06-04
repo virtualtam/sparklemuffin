@@ -601,6 +601,110 @@ func TestServiceUpdate(t *testing.T) {
 	}
 }
 
+func TestServiceDeleteTag(t *testing.T) {
+	cases := []struct {
+		tname                   string
+		repositoryBookmarks     []Bookmark
+		tagDeleteQuery          TagDeleteQuery
+		want                    int64
+		wantErr                 error
+		wantRepositoryBookmarks []Bookmark
+	}{
+		// error cases
+		{
+			tname: "tag is empty",
+			tagDeleteQuery: TagDeleteQuery{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+			},
+			wantErr: ErrTagNameRequired,
+		},
+		{
+			tname: "tag is empty (whitespace)",
+			tagDeleteQuery: TagDeleteQuery{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				Name:     "     ",
+			},
+			wantErr: ErrTagNameRequired,
+		},
+		{
+			tname: "tag contains whitespace (multiple values)",
+			tagDeleteQuery: TagDeleteQuery{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				Name:     "tag1   tag2",
+			},
+			wantErr: ErrTagNameContainsWhitespace,
+		},
+
+		// nominal cases
+		{
+			tname: "no bookmark with this tag",
+			tagDeleteQuery: TagDeleteQuery{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				Name:     "tag1",
+			},
+		},
+		{
+			tname: "update bookmark with tags",
+			repositoryBookmarks: []Bookmark{
+				{
+					UID:      "27L4DoEZaRASKhQKygRCrvVAwkr",
+					UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+					URL:      "https://domain.tld",
+					Tags:     []string{"a", "c", "delete-me", "z"},
+					Title:    "Example Domain",
+				},
+			},
+			tagDeleteQuery: TagDeleteQuery{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				Name:     "delete-me",
+			},
+			want: 1,
+			wantRepositoryBookmarks: []Bookmark{
+				{
+					UID:      "27L4DoEZaRASKhQKygRCrvVAwkr",
+					UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+					URL:      "https://domain.tld",
+					Tags:     []string{"a", "c", "z"},
+					Title:    "Example Domain",
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+			}
+			s := NewService(r)
+
+			got, err := s.DeleteTag(tc.tagDeleteQuery)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			if got != tc.want {
+				t.Errorf("want %d updated bookmarks, got %d", tc.want, got)
+			}
+
+			for index, bookmark := range r.Bookmarks {
+				assertBookmarksEqual(t, bookmark, tc.wantRepositoryBookmarks[index])
+			}
+		})
+	}
+}
+
 func TestServiceUpdateTag(t *testing.T) {
 	cases := []struct {
 		tname                   string

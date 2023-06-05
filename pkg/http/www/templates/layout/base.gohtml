@@ -2,32 +2,34 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-  <meta charset="utf-8">
-  <title>{{.Title}}</title>
-  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
-  <link rel="manifest" href="/static/site.webmanifest">
-  <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
-  <link rel="stylesheet" href="/static/www.css">
-  {{- with .AtomFeedURL}}
-  <link rel="alternate" type="application/atom+xml" href="{{.}}" />
-  {{- end}}
-</head>
+  <head>
+    <meta charset="utf-8">
+    <title>{{.Title}}</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="manifest" href="/static/site.webmanifest">
+    <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+    <link rel="stylesheet" href="/static/www.css">
+    <link rel="stylesheet" href="/static/easymde.css">
+    {{- with .AtomFeedURL}}
+    <link rel="alternate" type="application/atom+xml" href="{{.}}" />
+    {{- end}}
+  </head>
 
-<body>
-  {{template "nav" .}}
+  <body>
+    {{template "nav" .}}
 
-  <main>
-    {{if .Flash}}
-    {{template "flash" .Flash}}
-    {{end}}
-    {{template "content" .Content}}
-  </main>
+    <main>
+      {{if .Flash}}
+      {{template "flash" .Flash}}
+      {{end}}
+      {{template "content" .Content}}
+    </main>
 
-  {{template "footer"}}
-</body>
+    {{template "footer"}}
+  </body>
 
 </html>
 {{end}}

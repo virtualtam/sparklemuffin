@@ -2,46 +2,37 @@
 <h2>Add bookmark</h2>
 <form action="/bookmarks/add" method="POST">
   <label for="url">URL</label>
-  <input
-    type="url"
-    id="url"
-    name="url"
-    placeholder="URL"
-    size="80"
-    required="">
+  <input type="url"
+         id="url"
+         name="url"
+         placeholder="URL"
+         size="80"
+         required="">
 
   <label for="title">Title</label>
-  <input
-    type="text"
-    id="title"
-    name="title"
-    placeholder="Title"
-    size="80"
-    required="">
+  <input type="text"
+         id="title"
+         name="title"
+         placeholder="Title"
+         size="80"
+         required="">
 
   <label for="description">Description</label>
-  <textarea
-    id="description"
-    name="description"
-    placeholder="Description"
-    rows="10"
-    cols="80"></textarea>
+  <textarea id="description" name="description" placeholder="Description" rows="10" cols="80"></textarea>
 
   <label for="tags">Tags</label>
-  <input
-    type="text"
-    id="tags"
-    name="tags"
-    placeholder="tags, separated by spaces"
-    size="80">
+  <input type="text"
+         id="tags"
+         name="tags"
+         placeholder="tags, separated by spaces"
+         size="80">
 
   <label for="private">Private?</label>
-  <input
-    type="checkbox"
-    id="private"
-    name="private">
-
+  <input type="checkbox"
+         id="private"
+         name="private">
   <br>
   <button type="submit">Save</button>
 </form>
+{{template "easymde" "description"}}
 {{end}}

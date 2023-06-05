@@ -1,0 +1,57 @@
+.EasyMDEContainer {
+  width: 97ch;
+}
+
+.EasyMDEContainer .CodeMirror {
+  background-color: var(--bg);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.CodeMirror .cm-spell-error .cm-tab {
+  background-color: var(--accent-bg);
+}
+
+.CodeMirror-cursor {
+  border-color: var(--text-light);
+}
+
+.CodeMirror-selected,
+.CodeMirror-focused .CodeMirror-selected,
+.EasyMDEContainer .CodeMirror-focused .CodeMirror-selected {
+  background: var(--accent-bg);
+}
+
+.cm-s-easymde .cm-link {
+  color: var(--text);
+}
+
+.editor-statusbar {
+  color: var(--text);
+  font-size: .8rem;
+  text-align: left;
+}
+
+.editor-statusbar span {
+  margin-left: 0;
+  margin-right: 1em;
+}
+
+.editor-toolbar {
+  border-color: var(--border);
+}
+
+.editor-toolbar button {
+  color: var(--text);
+}
+
+.editor-toolbar button.active,
+.editor-toolbar button:hover {
+  background: var(--accent-bg);
+  border-color: var(--accent-bg);
+  color: var(--text-light);
+}
+
+.editor-toolbar i.separator {
+  border-color: var(--border);
+}

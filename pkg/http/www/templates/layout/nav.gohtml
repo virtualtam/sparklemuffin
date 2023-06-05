@@ -1,21 +1,29 @@
 {{define "nav"}}
 <header>
-  <h3>&lt;sparklemuffin/&gt;</h3>
-  <nav>
-    {{if .User}}
-    <a href="/bookmarks/add">+ Add bookmark</a>
-    <a href="/bookmarks">Bookmarks</a>
-    <a href="/tags">Tags</a>
-    <a href="/tools">Tools</a>
+  <div id="controls-app">
+    <nav>
+      {{if .User}}
+      <a href="/bookmarks/add">+ Add bookmark</a>
+      <a href="/bookmarks">Bookmarks</a>
+      <a href="/tags">Tags</a>
+      <a href="/tools">Tools</a>
       {{if .User.IsAdmin}}
-    <a href="/admin">Admin</a>
+      <a href="/admin">Admin</a>
       {{end}}
-    <a href="/account">{{.User.Email}}</a>
+      {{end}}
+    </nav>
+  </div>
+  <div id="controls-account">
+    <nav>
+      {{if .User}}
+      <a href="/account">{{.User.Email}}</a>
       {{template "logoutForm"}}
-    {{else}}
-    <a href="/login">Login</a>
-    {{end}}
-  </nav>
+      {{else}}
+      <a href="/login">Login</a>
+      {{end}}
+    </nav>
+  </div>
+
 </header>
 {{end}}
 

@@ -30,39 +30,39 @@ body>header {
   text-align: left;
 }
 
-body>header>h3 {
+#controls-app {
   grid-column-start: 1;
+  grid-column-end: 1;
+}
+
+#controls-account {
+  grid-column-start: 2;
   grid-column-end: 2;
-  line-height: 1.2;
-  margin-bottom: 0.8rem;
-  margin-top: 1rem;
-  font-family: var(--mono-font);
-}
-
-body>header>p {
-  margin-bottom: 0;
-  margin-top: 1.4rem;
-  padding-top: 0;
-}
-
-body>header>nav {
-  grid-column-start: 3;
-  grid-column-end: 3;
   text-align: right;
 }
 
-body>header>nav>a {
+body>header nav {
+  font-size: 1rem;
+  line-height: 2;
+}
+
+body>header nav>a {
   border: none;
+  color: var(--text);
   font-weight: bold;
   margin: 0;
   padding: 0 .5rem;
 }
 
-body>header>nav>form {
+body>header nav>a:visited {
+  color: var(--text);
+}
+
+body>header nav>form {
   display: inline;
 }
 
-body>header>nav>form>button {
+body>header nav>form>button {
   margin: 0;
   padding: 0 .5rem;
   border: none;
@@ -71,7 +71,7 @@ body>header>nav>form>button {
   font-family: var(--sans-font);
 }
 
-body>header>nav>form>button:hover {
+body>header nav>form>button:hover {
   color: #bf616a;
   text-decoration: underline;
 }
@@ -250,6 +250,11 @@ blockquote {
 
 .flash-warning {
   color: #d08770;
+}
+
+.logo {
+  color: #a3be8c;
+  font-family: 'DejaVu Sans Mono', 'Consolas', 'Lucida Console', monospace;
 }
 
 .pagination a {

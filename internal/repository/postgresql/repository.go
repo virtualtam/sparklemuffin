@@ -743,7 +743,7 @@ func (r *Repository) TagGetAll(userUUID string, visibility querying.Visibility) 
 			AND   private=TRUE
 		) s
 		GROUP BY name
-		ORDER BY count DESC`
+		ORDER BY count DESC, name ASC`
 
 	case querying.VisibilityPublic:
 		query = `
@@ -755,7 +755,7 @@ func (r *Repository) TagGetAll(userUUID string, visibility querying.Visibility) 
 			AND   private=FALSE
 		) s
 		GROUP BY name
-		ORDER BY count DESC`
+		ORDER BY count DESC, name ASC`
 
 	default:
 		query = `
@@ -766,7 +766,7 @@ func (r *Repository) TagGetAll(userUUID string, visibility querying.Visibility) 
 			WHERE user_uuid=$1
 		) s
 		GROUP BY name
-		ORDER BY count DESC`
+		ORDER BY count DESC, name ASC`
 	}
 
 	return r.tagGetQuery(query, userUUID)
@@ -786,7 +786,7 @@ func (r *Repository) TagGetN(userUUID string, visibility querying.Visibility, n 
 			AND   private=TRUE
 		) s
 		GROUP BY name
-		ORDER BY count DESC
+		ORDER BY count DESC, name ASC
 		LIMIT $2 OFFSET $3`
 
 	case querying.VisibilityPublic:
@@ -799,7 +799,7 @@ func (r *Repository) TagGetN(userUUID string, visibility querying.Visibility, n 
 			AND   private=FALSE
 		) s
 		GROUP BY name
-		ORDER BY count DESC
+		ORDER BY count DESC, name ASC
 		LIMIT $2 OFFSET $3`
 
 	default:
@@ -811,7 +811,7 @@ func (r *Repository) TagGetN(userUUID string, visibility querying.Visibility, n 
 			WHERE user_uuid=$1
 		) s
 		GROUP BY name
-		ORDER BY count DESC
+		ORDER BY count DESC, name ASC
 		LIMIT $2 OFFSET $3`
 	}
 
@@ -886,7 +886,7 @@ func (r *Repository) TagFilterN(userUUID string, visibility querying.Visibility,
 		) s
 		WHERE name ILIKE $2
 		GROUP BY name
-		ORDER BY count DESC
+		ORDER BY count DESC, name ASC
 		LIMIT $3 OFFSET $4`
 
 	case querying.VisibilityPublic:
@@ -900,7 +900,7 @@ func (r *Repository) TagFilterN(userUUID string, visibility querying.Visibility,
 		) s
 		WHERE name ILIKE $2
 		GROUP BY name
-		ORDER BY count DESC
+		ORDER BY count DESC, name ASC
 		LIMIT $3 OFFSET $4`
 
 	default:
@@ -913,7 +913,7 @@ func (r *Repository) TagFilterN(userUUID string, visibility querying.Visibility,
 		) s
 		WHERE name ILIKE $2
 		GROUP BY name
-		ORDER BY count DESC
+		ORDER BY count DESC, name ASC
 		LIMIT $3 OFFSET $4`
 	}
 

@@ -28,4 +28,4 @@ jobs:
         uses: golangci/golangci-lint-action@v3
 
       - name: Test
-        run: make test
+        run: make cover

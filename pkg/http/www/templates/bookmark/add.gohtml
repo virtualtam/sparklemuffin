@@ -24,8 +24,9 @@
   <input type="text"
          id="tags"
          name="tags"
-         placeholder="tags, separated by spaces"
-         size="80">
+         placeholder="Tags, separated by spaces"
+         size="80"
+         data-list="{{Join .Tags ","}}">
 
   <label for="private">Private?</label>
   <input type="checkbox"
@@ -34,5 +35,6 @@
   <br>
   <button type="submit">Save</button>
 </form>
+{{template "awesomplete"}}
 {{template "easymde" "description"}}
 {{end}}

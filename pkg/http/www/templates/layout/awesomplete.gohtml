@@ -1,0 +1,26 @@
+{{define "awesomplete"}}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"
+  integrity="sha512-HcBl0GSJvt4Qecm4srHapirUx0HJDi2zYXm6KUKNNUGdTIN9cBwakVZHWmRVj4MKgy1AChqhWGYcMDbRKgO0zg=="
+  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script type="text/javascript">
+  var tags = document.getElementById("tags");
+  new Awesomplete(tags, {
+    autoFirst: true,
+    sort: false,
+
+    filter: function (text, input) {
+      return Awesomplete.FILTER_CONTAINS(text, input.match(/[^ ]*$/)[0]);
+    },
+
+    item: function (text, input) {
+      return Awesomplete.ITEM(text, input.match(/[^ ]*$/)[0]);
+    },
+
+    replace: function (text) {
+      var before = this.input.value.match(/^.+\s+|/)[0];
+      this.input.value = before + text + " ";
+    }
+  });
+</script>
+{{end}}

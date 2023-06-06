@@ -1,13 +1,13 @@
 {{define "content"}}
 <h2>Edit bookmark</h2>
-<form action="/bookmarks/{{.UID}}/edit" method="POST">
+<form action="/bookmarks/{{.Bookmark.UID}}/edit" method="POST">
   <label for="url">URL</label>
   <input type="url"
          id="url"
          name="url"
          placeholder="URL"
          size="80"
-         value="{{.URL}}"
+         value="{{.Bookmark.URL}}"
          required="">
 
   <label for="title">Title</label>
@@ -16,25 +16,26 @@
          name="title"
          placeholder="Title"
          size="80"
-         value="{{.Title}}"
+         value="{{.Bookmark.Title}}"
          required="">
 
   <label for="description">Description</label>
-  <textarea id="description" name="description" rows="10" cols="80">{{.Description}}</textarea>
-
+  <textarea id="description" name="description" rows="10" cols="80">{{.Bookmark.Description}}</textarea>
 
   <label for="tags">Tags</label>
   <input type="text"
          id="tags"
          name="tags"
-         placeholder="tags, separated by spaces"
+         placeholder="Tags, separated by spaces"
          size="80"
-         value="{{Join .Tags " "}}">
+         value="{{Join .Bookmark.Tags " "}}"
+         data-list="{{Join .Tags ","}}">
 
   <label for="private">Private?</label>
-  <input type="checkbox" id="private" name="private" {{if .Private}}checked{{end}}>
+  <input type="checkbox" id="private" name="private" {{if .Bookmark.Private}}checked{{end}}>
   <br>
   <button type="submit">Save changes</button>
 </form>
+{{template "awesomplete"}}
 {{template "easymde" "description"}}
 {{end}}

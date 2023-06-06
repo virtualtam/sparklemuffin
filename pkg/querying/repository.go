@@ -25,6 +25,9 @@ type Repository interface {
 	// OwnerGetByUUID returns the Owner corresponding to a given UUID.
 	OwnerGetByUUID(string) (Owner, error)
 
+	// TagGetAll returns all tags for a given user.
+	TagGetAll(userUUID string, visibility Visibility) ([]Tag, error)
+
 	// TagGetCount returns the number of tags for a given user.
 	TagGetCount(userUUID string, visibility Visibility) (uint, error)
 

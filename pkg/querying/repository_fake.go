@@ -101,6 +101,10 @@ func (r *fakeRepository) OwnerGetByUUID(userUUID string) (Owner, error) {
 	return Owner{}, ErrOwnerNotFound
 }
 
+func (r *fakeRepository) TagGetAll(userUUID string, visibility Visibility) ([]Tag, error) {
+	return []Tag{}, errors.New("not implemented")
+}
+
 func (r *fakeRepository) TagGetCount(userUUID string, visibility Visibility) (uint, error) {
 	return 0, errors.New("not implemented")
 }

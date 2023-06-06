@@ -30,6 +30,11 @@ type bookmarkHandlerContext struct {
 	publicBookmarkListView *view
 }
 
+type bookmarkFormContent struct {
+	Bookmark *bookmark.Bookmark
+	Tags     []string
+}
+
 func registerBookmarkHandlers(
 	r *mux.Router,
 	publicURL *url.URL,
@@ -76,7 +81,22 @@ func registerBookmarkHandlers(
 // handleBookmarkAddView renders the bookmark addition form.
 func (hc *bookmarkHandlerContext) handleBookmarkAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		viewData := Data{Title: "Add bookmark"}
+		user := userValue(r.Context())
+
+		tags, err := hc.queryingService.TagNamesByCount(user.UUID, querying.VisibilityAll)
+		if err != nil {
+			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve tags")
+			PutFlashError(w, "failed to retrieve existing tags")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		viewData := Data{
+			Content: bookmarkFormContent{
+				Tags: tags,
+			},
+			Title: "Add bookmark",
+		}
 		hc.bookmarkAddView.render(w, r, viewData)
 	}
 }
@@ -175,6 +195,14 @@ func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseW
 
 		user := userValue(r.Context())
 
+		tags, err := hc.queryingService.TagNamesByCount(user.UUID, querying.VisibilityAll)
+		if err != nil {
+			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve tags")
+			PutFlashError(w, "failed to retrieve existing tags")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
 		bookmark, err := hc.bookmarkService.ByUID(user.UUID, uid)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmark")
@@ -184,8 +212,11 @@ func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseW
 		}
 
 		viewData := Data{
-			Content: bookmark,
-			Title:   fmt.Sprintf("Edit bookmark: %s", bookmark.Title),
+			Content: bookmarkFormContent{
+				Bookmark: &bookmark,
+				Tags:     tags,
+			},
+			Title: fmt.Sprintf("Edit bookmark: %s", bookmark.Title),
 		}
 
 		hc.bookmarkEditView.render(w, r, viewData)

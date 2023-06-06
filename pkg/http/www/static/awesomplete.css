@@ -1,0 +1,25 @@
+.awesomplete>ul,
+.awesomplete>ul:before {
+  background: var(--nord1);
+  color: var(--text);
+}
+
+.awesomplete>ul>li:hover {
+  background-color: var(--nord3);
+  color: var(--text-light);
+}
+
+.awesomplete>ul>li[aria-selected="true"] {
+  background: var(--nord2);
+  color: var(--text-light);
+}
+
+.awesomplete>ul>li>mark,
+.awesomplete li[aria-selected="true"] mark,
+.awesomplete li:hover mark,
+.awesomplete>ul>li>mark:hover {
+  padding: 0;
+  background-color: transparent;
+  color: var(--text-light);
+  font-weight: bold;
+}

@@ -729,6 +729,49 @@ func (r *Repository) TagGetCount(userUUID string, visibility querying.Visibility
 	return count, nil
 }
 
+func (r *Repository) TagGetAll(userUUID string, visibility querying.Visibility) ([]querying.Tag, error) {
+	var query string
+
+	switch visibility {
+	case querying.VisibilityPrivate:
+		query = `
+		SELECT name, COUNT(name) as count
+		FROM (
+			SELECT unnest(tags) as name
+			FROM  bookmarks
+			WHERE user_uuid=$1
+			AND   private=TRUE
+		) s
+		GROUP BY name
+		ORDER BY count DESC`
+
+	case querying.VisibilityPublic:
+		query = `
+		SELECT name, COUNT(name) as count
+		FROM (
+			SELECT unnest(tags) as name
+			FROM  bookmarks
+			WHERE user_uuid=$1
+			AND   private=FALSE
+		) s
+		GROUP BY name
+		ORDER BY count DESC`
+
+	default:
+		query = `
+		SELECT name, COUNT(name) as count
+		FROM (
+			SELECT unnest(tags) as name
+			FROM  bookmarks
+			WHERE user_uuid=$1
+		) s
+		GROUP BY name
+		ORDER BY count DESC`
+	}
+
+	return r.tagGetQuery(query, userUUID)
+}
+
 func (r *Repository) TagGetN(userUUID string, visibility querying.Visibility, n uint, offset uint) ([]querying.Tag, error) {
 	var query string
 

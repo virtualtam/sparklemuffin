@@ -122,6 +122,28 @@ func (s *Service) PublicBookmarksBySearchQueryAndPage(ownerUUID string, searchTe
 	return s.BookmarksBySearchQueryAndPage(ownerUUID, VisibilityPublic, searchTerms, number)
 }
 
+// Tags return all tags for a given user.
+func (s *Service) Tags(userUUID string, visibility Visibility) ([]Tag, error) {
+	return s.r.TagGetAll(userUUID, visibility)
+}
+
+// TagNamesByCount returns all tag names for a given user,
+// sorted by count in descending order.
+func (s *Service) TagNamesByCount(userUUID string, visibility Visibility) ([]string, error) {
+	tags, err := s.r.TagGetAll(userUUID, visibility)
+	if err != nil {
+		return []string{}, err
+	}
+
+	tagNames := make([]string, len(tags))
+
+	for _, tag := range tags {
+		tagNames = append(tagNames, tag.Name)
+	}
+
+	return tagNames, nil
+}
+
 // TagsByPage returns a Page containing a limited and offset number of tags.
 func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uint) (TagPage, error) {
 	owner, err := s.r.OwnerGetByUUID(ownerUUID)

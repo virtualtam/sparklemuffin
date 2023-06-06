@@ -38,7 +38,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     /* Nord Theme (Dark)*/
-    --accent-bg: var(--nord3);
+    --accent-bg: var(--nord1);
     --bg: var(--nord0);
     --border: var(--nord3);
     --code: var(--nord4);
@@ -195,7 +195,7 @@ blockquote {
 }
 
 .tag a {
-  color: #d8dee9;
+  color: var(--text);
   text-decoration: none;
 }
 

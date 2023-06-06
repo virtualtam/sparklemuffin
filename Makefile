@@ -1,7 +1,7 @@
 BUILD_DIR ?= build
 SRC_FILES := $(shell find . -name "*.go")
 
-all: lint cover build
+all: lint race cover build
 .PHONY: all
 
 build: $(BUILD_DIR)/sparklemuffin
@@ -21,9 +21,9 @@ coverhtml: cover
 	go tool cover -html=coverage.out
 .PHONY: coverhtml
 
-test:
-	go test ./...
-.PHONY: test
+race:
+	go test -race ./...
+.PHONY: race
 
 psql:
 	@PGPASSWORD=sparklemuffin psql -h localhost -p 15432 -U sparklemuffin
@@ -35,6 +35,13 @@ live:
 	@echo "== Watching for changes... (hit Ctrl+C when done)"
 	@watchexec --restart --exts css,go,gohtml -- go run ./cmd/sparklemuffin/ run
 .PHONY: live
+
+live-race:
+	@echo "== Starting database"
+	docker compose -f docker-compose.dev.yml up --remove-orphans -d
+	@echo "== Watching for changes... (hit Ctrl+C when done)"
+	@watchexec --restart --exts css,go,gohtml -- go run -race ./cmd/sparklemuffin/ run
+.PHONY: live-race
 
 dev-migrate:
 	go run ./cmd/sparklemuffin migrate

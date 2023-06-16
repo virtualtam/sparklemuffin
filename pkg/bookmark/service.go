@@ -57,6 +57,28 @@ func (s *Service) ByUID(userUUID string, uid string) (Bookmark, error) {
 	return s.r.BookmarkGetByUID(userUUID, uid)
 }
 
+func (s *Service) ByURL(userUUID string, u string) (Bookmark, error) {
+	b := &Bookmark{
+		UserUUID: userUUID,
+		URL:      u,
+	}
+
+	b.Normalize()
+
+	fns := []func() error{
+		b.requireURL,
+		b.requireUserUUID,
+	}
+
+	for _, fn := range fns {
+		if err := fn(); err != nil {
+			return Bookmark{}, err
+		}
+	}
+
+	return s.r.BookmarkGetByURL(userUUID, b.URL)
+}
+
 func (s *Service) Delete(userUUID, uid string) error {
 	b := Bookmark{
 		UserUUID: userUUID,

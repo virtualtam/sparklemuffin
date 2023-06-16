@@ -24,6 +24,7 @@ require (
 	github.com/yuin/goldmark v1.5.4
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
 	golang.org/x/crypto v0.6.0
+	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
 )
 
 require (

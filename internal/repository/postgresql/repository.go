@@ -178,13 +178,13 @@ func (r *Repository) BookmarkDelete(userUUID, uid string) error {
 	}
 
 	if rowsAffected != 1 {
-		return user.ErrNotFound
+		return bookmark.ErrNotFound
 	}
 
 	return nil
 }
 
-func (r *Repository) bookmarkGetQuery(query string, queryParams ...any) ([]bookmark.Bookmark, error) {
+func (r *Repository) bookmarkGetManyQuery(query string, queryParams ...any) ([]bookmark.Bookmark, error) {
 	rows, err := r.db.Queryx(query, queryParams...)
 	if err != nil {
 		return []bookmark.Bookmark{}, err
@@ -219,66 +219,10 @@ func (r *Repository) bookmarkGetQuery(query string, queryParams ...any) ([]bookm
 	return bookmarks, nil
 }
 
-func (r *Repository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error) {
-	return r.bookmarkGetQuery(
-		`
-SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
-FROM bookmarks
-WHERE user_uuid=$1
-ORDER BY created_at DESC`,
-		userUUID,
-	)
-}
-
-func (r *Repository) BookmarkGetAllPrivate(userUUID string) ([]bookmark.Bookmark, error) {
-	return r.bookmarkGetQuery(
-		`
-SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
-FROM bookmarks
-WHERE user_uuid=$1
-AND   private=TRUE
-ORDER BY created_at DESC`,
-		userUUID,
-	)
-}
-
-func (r *Repository) BookmarkGetAllPublic(userUUID string) ([]bookmark.Bookmark, error) {
-	return r.bookmarkGetQuery(
-		`
-SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
-FROM bookmarks
-WHERE user_uuid=$1
-AND   private=FALSE
-ORDER BY created_at DESC`,
-		userUUID,
-	)
-}
-
-func (r *Repository) BookmarkGetByTag(userUUID string, tag string) ([]bookmark.Bookmark, error) {
-	return r.bookmarkGetQuery(
-		`
-SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
-FROM bookmarks
-WHERE user_uuid=$1
-AND   $2=ANY(tags)
-		`,
-		userUUID,
-		tag,
-	)
-}
-
-func (r *Repository) BookmarkGetByUID(userUUID, uid string) (bookmark.Bookmark, error) {
+func (r *Repository) bookmarkGetQuery(query string, queryParams ...any) (bookmark.Bookmark, error) {
 	dbBookmark := &Bookmark{}
 
-	err := r.db.QueryRowx(
-		`
-SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
-FROM bookmarks
-WHERE user_uuid=$1
-AND uid=$2`,
-		userUUID,
-		uid,
-	).StructScan(dbBookmark)
+	err := r.db.QueryRowx(query, queryParams...).StructScan(dbBookmark)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return bookmark.Bookmark{}, bookmark.ErrNotFound
@@ -300,6 +244,74 @@ AND uid=$2`,
 		CreatedAt:   dbBookmark.CreatedAt,
 		UpdatedAt:   dbBookmark.UpdatedAt,
 	}, nil
+}
+
+func (r *Repository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error) {
+	return r.bookmarkGetManyQuery(
+		`
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+ORDER BY created_at DESC`,
+		userUUID,
+	)
+}
+
+func (r *Repository) BookmarkGetAllPrivate(userUUID string) ([]bookmark.Bookmark, error) {
+	return r.bookmarkGetManyQuery(
+		`
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+AND   private=TRUE
+ORDER BY created_at DESC`,
+		userUUID,
+	)
+}
+
+func (r *Repository) BookmarkGetAllPublic(userUUID string) ([]bookmark.Bookmark, error) {
+	return r.bookmarkGetManyQuery(
+		`
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+AND   private=FALSE
+ORDER BY created_at DESC`,
+		userUUID,
+	)
+}
+
+func (r *Repository) BookmarkGetByTag(userUUID string, tag string) ([]bookmark.Bookmark, error) {
+	return r.bookmarkGetManyQuery(
+		`
+SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+FROM bookmarks
+WHERE user_uuid=$1
+AND   $2=ANY(tags)
+		`,
+		userUUID,
+		tag,
+	)
+}
+
+func (r *Repository) BookmarkGetByUID(userUUID, uid string) (bookmark.Bookmark, error) {
+	query := `
+	SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+	FROM bookmarks
+	WHERE user_uuid=$1
+	AND uid=$2`
+
+	return r.bookmarkGetQuery(query, userUUID, uid)
+}
+
+func (r *Repository) BookmarkGetByURL(userUUID, u string) (bookmark.Bookmark, error) {
+	query := `
+	SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+	FROM bookmarks
+	WHERE user_uuid=$1
+	AND url=$2`
+
+	return r.bookmarkGetQuery(query, userUUID, u)
 }
 
 func (r *Repository) BookmarkGetCount(userUUID string, visibility querying.Visibility) (uint, error) {
@@ -372,7 +384,7 @@ func (r *Repository) BookmarkGetN(userUUID string, visibility querying.Visibilit
 		LIMIT $2 OFFSET $3`
 	}
 
-	return r.bookmarkGetQuery(
+	return r.bookmarkGetManyQuery(
 		query,
 		userUUID,
 		n,
@@ -496,7 +508,7 @@ func (r *Repository) BookmarkSearchN(userUUID string, visibility querying.Visibi
 
 	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
 
-	return r.bookmarkGetQuery(
+	return r.bookmarkGetManyQuery(
 		query,
 		userUUID,
 		fullTextSearchTerms,

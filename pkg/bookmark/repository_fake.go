@@ -58,6 +58,16 @@ func (r *FakeRepository) BookmarkGetByUID(userUUID, uid string) (Bookmark, error
 	return Bookmark{}, ErrNotFound
 }
 
+func (r *FakeRepository) BookmarkGetByURL(userUUID, u string) (Bookmark, error) {
+	for _, b := range r.Bookmarks {
+		if b.UserUUID == userUUID && b.URL == u {
+			return b, nil
+		}
+	}
+
+	return Bookmark{}, ErrNotFound
+}
+
 func (r *FakeRepository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {
 	for _, b := range r.Bookmarks {
 		if b.UserUUID == userUUID && b.URL == url {

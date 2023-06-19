@@ -28,6 +28,7 @@ COPY --from=builder /app/build/sparklemuffin /usr/local/bin/sparklemuffin
 
 ENV \
     SPARKLEMUFFIN_DB_ADDR="postgres:5432" \
+    SPARKLEMUFFIN_DB_SSLMODE="disable" \
     SPARKLEMUFFIN_DB_NAME="sparklemuffin" \
     SPARKLEMUFFIN_DB_USER="sparklemuffin" \
     SPARKLEMUFFIN_DB_PASSWORD="sparklemuffin" \

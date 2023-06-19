@@ -30,6 +30,7 @@ const (
 	databaseDriver string = "pgx"
 
 	defaultDatabaseAddr     string = "localhost:15432"
+	defaultDatabaseSSLMode  string = "disable"
 	defaultDatabaseName     string = "sparklemuffin"
 	defaultDatabaseUser     string = "sparklemuffin"
 	defaultDatabasePassword string = "sparklemuffin"
@@ -42,6 +43,7 @@ var (
 	hmacKey string
 
 	databaseAddr     string
+	databaseSSLMode  string
 	databaseName     string
 	databaseUser     string
 	databasePassword string
@@ -97,11 +99,12 @@ func NewRootCommand() *cobra.Command {
 			// https://datatracker.ietf.org/doc/html/rfc3986#section-2.1
 			databasePassword = url.QueryEscape(databasePassword)
 			databaseURI := fmt.Sprintf(
-				"postgres://%s:%s@%s/%s?sslmode=disable",
+				"postgres://%s:%s@%s/%s?sslmode=%s",
 				databaseUser,
 				databasePassword,
 				databaseAddr,
 				databaseName,
+				databaseSSLMode,
 			)
 
 			db, err = sqlx.Connect(databaseDriver, databaseURI)
@@ -160,6 +163,12 @@ func NewRootCommand() *cobra.Command {
 		"db-addr",
 		defaultDatabaseAddr,
 		"Database address (host:port)",
+	)
+	cmd.PersistentFlags().StringVar(
+		&databaseSSLMode,
+		"db-sslmode",
+		defaultDatabaseSSLMode,
+		"Database sslmode",
 	)
 	cmd.PersistentFlags().StringVar(
 		&databaseName,

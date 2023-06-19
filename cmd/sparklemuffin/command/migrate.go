@@ -41,7 +41,11 @@ func NewMigrateCommand() *cobra.Command {
 
 			driver, err := migratepgx.WithInstance(db.DB, &migratepgx.Config{})
 			if err != nil {
-				log.Error().Err(err).Msg("failed to prepare the database driver")
+				log.Error().
+					Err(err).
+					Str("database_driver", databaseDriver).
+					Str("database_addr", databaseAddr).
+					Msg("migrate: failed to prepare the database driver")
 			}
 
 			migrater, err := migrate.NewWithInstance(
@@ -51,7 +55,11 @@ func NewMigrateCommand() *cobra.Command {
 				driver,
 			)
 			if err != nil {
-				log.Error().Err(err).Msg("failed to load database migrations")
+				log.Error().
+					Err(err).
+					Str("database_driver", databaseDriver).
+					Str("database_addr", databaseAddr).
+					Msg("migrate: failed to load database migrations")
 				return err
 			}
 
@@ -63,11 +71,21 @@ func NewMigrateCommand() *cobra.Command {
 
 			err = migrater.Up()
 			if errors.Is(err, migrate.ErrNoChange) {
-				log.Info().Msg("The database schema is up to date")
+				log.Info().
+					Str("database_driver", databaseDriver).
+					Str("database_addr", databaseAddr).
+					Msg("migrate: the database schema is up to date")
 			} else if err != nil {
-				log.Error().Err(err).Msg("Failed to apply database migrations")
+				log.Error().
+					Err(err).
+					Str("database_driver", databaseDriver).
+					Str("database_addr", databaseAddr).
+					Msg("migrate: failed to apply database migrations")
 			} else {
-				log.Info().Msg("All database migrations have been applied")
+				log.Info().
+					Str("database_driver", databaseDriver).
+					Str("database_addr", databaseAddr).
+					Msg("migrate: all database migrations have been applied")
 			}
 
 			return nil

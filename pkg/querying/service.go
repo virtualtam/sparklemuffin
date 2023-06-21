@@ -137,8 +137,8 @@ func (s *Service) TagNamesByCount(userUUID string, visibility Visibility) ([]str
 
 	tagNames := make([]string, len(tags))
 
-	for _, tag := range tags {
-		tagNames = append(tagNames, tag.Name)
+	for i, tag := range tags {
+		tagNames[i] = tag.Name
 	}
 
 	return tagNames, nil

@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/config"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
@@ -79,7 +80,8 @@ func NewRootCommand() *cobra.Command {
 			//
 			// This is required to let Viper load environment variables and
 			// configuration entries before invoking nested commands.
-			if err := venom.Inject(cmd, config.EnvPrefix, configPaths, config.ConfigName, false); err != nil {
+			v := viper.New()
+			if err := venom.InjectTo(v, cmd, config.EnvPrefix, configPaths, config.ConfigName, false); err != nil {
 				return err
 			}
 
@@ -93,6 +95,12 @@ func NewRootCommand() *cobra.Command {
 
 			log.Info().Str("log_level", logLevelValue).Msg("setting log level")
 			zerolog.SetGlobalLevel(logLevel)
+
+			if configFileUsed := v.ConfigFileUsed(); configFileUsed != "" {
+				log.Info().Str("config_file", v.ConfigFileUsed()).Msg("using configuration file")
+			} else {
+				log.Info().Strs("config_paths", configPaths).Msg("no configuration file found")
+			}
 
 			// Encode the database password with percent encoding in case it contains special characters.
 			// https://www.postgresql.org/docs/current/libpq-connect.html

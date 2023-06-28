@@ -22,7 +22,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 	"github.com/virtualtam/venom"
 
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 const (

@@ -1,11 +1,14 @@
 package postgresql
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
-	"github.com/jmoiron/sqlx"
-	"github.com/rs/zerolog/log"
+	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
 	"github.com/virtualtam/sparklemuffin/pkg/importing"
@@ -23,62 +26,78 @@ var _ user.Repository = &Repository{}
 
 // Repository provides a PostgreSQL persistence layer.
 type Repository struct {
-	db *sqlx.DB
+	pool *pgxpool.Pool
 }
 
 // NewRepository initializes and returns a PostgreSQL Repository.
-func NewRepository(db *sqlx.DB) *Repository {
+func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{
-		db: db,
+		pool: pool,
 	}
 }
 
-func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
-	dbTags := tagsToTextArray(b.Tags)
-	fullTextSearchString := bookmarkToFullTextSearchString(b)
+func (r *Repository) rowExistsByQuery(query string, queryParams ...any) (bool, error) {
+	var exists int64
 
-	dbBookmark := Bookmark{
-		UID:                  b.UID,
-		UserUUID:             b.UserUUID,
-		URL:                  b.URL,
-		Title:                b.Title,
-		Description:          b.Description,
-		Private:              b.Private,
-		Tags:                 dbTags,
-		FullTextSearchString: fullTextSearchString,
-		CreatedAt:            b.CreatedAt,
-		UpdatedAt:            b.UpdatedAt,
+	err := r.pool.QueryRow(
+		context.Background(),
+		query,
+		queryParams...,
+	).Scan(&exists)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
 	}
 
-	_, err := r.db.NamedExec(
-		`
-INSERT INTO bookmarks(
-	uid,
-	user_uuid,
-	url,
-	title,
-	description,
-	private,
-	tags,
-	fulltextsearch_tsv,
-	created_at,
-	updated_at
-)
-VALUES(
-	:uid,
-	:user_uuid,
-	:url,
-	:title,
-	:description,
-	:private,
-	:tags,
-	to_tsvector(:fulltextsearch_string),
-	:created_at,
-	:updated_at
-)
-`,
-		dbBookmark,
+	return true, nil
+}
+
+func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
+	query := `
+	INSERT INTO bookmarks(
+		uid,
+		user_uuid,
+		url,
+		title,
+		description,
+		private,
+		tags,
+		fulltextsearch_tsv,
+		created_at,
+		updated_at
 	)
+	VALUES(
+		@uid,
+		@user_uuid,
+		@url,
+		@title,
+		@description,
+		@private,
+		@tags,
+		to_tsvector(@fulltextsearch_string),
+		@created_at,
+		@updated_at
+	)`
+
+	fullTextSearchString := bookmarkToFullTextSearchString(b)
+
+	args := pgx.NamedArgs{
+		"uid":                   b.UID,
+		"user_uuid":             b.UserUUID,
+		"url":                   b.URL,
+		"title":                 b.Title,
+		"description":           b.Description,
+		"private":               b.Private,
+		"tags":                  b.Tags,
+		"fulltextsearch_string": fullTextSearchString,
+		"created_at":            b.CreatedAt,
+		"updated_at":            b.UpdatedAt,
+	}
+
+	_, err := r.pool.Exec(context.Background(), query, args)
 
 	return err
 }
@@ -105,77 +124,85 @@ SET
 }
 
 func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookmark.Bookmark) (int64, error) {
-	dbBookmarks := make([]Bookmark, len(bookmarks))
-
-	for index, b := range bookmarks {
-		dbTags := tagsToTextArray(b.Tags)
-		fullTextSearchString := bookmarkToFullTextSearchString(b)
-
-		dbBookmark := Bookmark{
-			UID:                  b.UID,
-			UserUUID:             b.UserUUID,
-			URL:                  b.URL,
-			Title:                b.Title,
-			Description:          b.Description,
-			Private:              b.Private,
-			Tags:                 dbTags,
-			FullTextSearchString: fullTextSearchString,
-			CreatedAt:            b.CreatedAt,
-			UpdatedAt:            b.UpdatedAt,
-		}
-		dbBookmarks[index] = dbBookmark
-	}
-
 	insertQuery := `
-INSERT INTO bookmarks(
-	uid,
-	user_uuid,
-	url,
-	title,
-	description,
-	private,
-	tags,
-	fulltextsearch_tsv,
-	created_at,
-	updated_at
-)
-VALUES(
-	:uid,
-	:user_uuid,
-	:url,
-	:title,
-	:description,
-	:private,
-	:tags,
-	to_tsvector(:fulltextsearch_string),
-	:created_at,
-	:updated_at
-)`
+	INSERT INTO bookmarks(
+		uid,
+		user_uuid,
+		url,
+		title,
+		description,
+		private,
+		tags,
+		fulltextsearch_tsv,
+		created_at,
+		updated_at
+	)
+	VALUES(
+		@uid,
+		@user_uuid,
+		@url,
+		@title,
+		@description,
+		@private,
+		@tags,
+		to_tsvector(@fulltextsearch_string),
+		@created_at,
+		@updated_at
+	)`
 
 	query := insertQuery + onConflictStmt
-	res, err := r.db.NamedExec(query, dbBookmarks)
-	if err != nil {
-		return 0, err
+
+	batch := &pgx.Batch{}
+
+	for _, b := range bookmarks {
+		fullTextSearchString := bookmarkToFullTextSearchString(b)
+
+		args := pgx.NamedArgs{
+			"uid":                   b.UID,
+			"user_uuid":             b.UserUUID,
+			"url":                   b.URL,
+			"title":                 b.Title,
+			"description":           b.Description,
+			"private":               b.Private,
+			"tags":                  b.Tags,
+			"fulltextsearch_string": fullTextSearchString,
+			"created_at":            b.CreatedAt,
+			"updated_at":            b.UpdatedAt,
+		}
+
+		batch.Queue(query, args)
 	}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return 0, err
+	ctx := context.Background()
+
+	batchResults := r.pool.SendBatch(ctx, batch)
+
+	var rowsAffected int64
+
+	for i := 0; i < len(bookmarks); i++ {
+		commandTag, qerr := batchResults.Exec()
+		if qerr != nil {
+			return 0, qerr
+		}
+
+		rowsAffected += commandTag.RowsAffected()
 	}
 
-	return rowsAffected, err
+	return rowsAffected, nil
 }
 
 func (r *Repository) BookmarkDelete(userUUID, uid string) error {
-	result, err := r.db.Exec("DELETE FROM bookmarks WHERE user_uuid=$1 AND uid=$2", userUUID, uid)
+	commandTag, err := r.pool.Exec(
+		context.Background(),
+		"DELETE FROM bookmarks WHERE user_uuid=$1 AND uid=$2",
+		userUUID,
+		uid,
+	)
 	if err != nil {
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
+	rowsAffected := commandTag.RowsAffected()
 
 	if rowsAffected != 1 {
 		return bookmark.ErrNotFound
@@ -185,22 +212,20 @@ func (r *Repository) BookmarkDelete(userUUID, uid string) error {
 }
 
 func (r *Repository) bookmarkGetManyQuery(query string, queryParams ...any) ([]bookmark.Bookmark, error) {
-	rows, err := r.db.Queryx(query, queryParams...)
+	rows, err := r.pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
+		return []bookmark.Bookmark{}, err
+	}
+
+	dbBookmarks := []Bookmark{}
+
+	if err := pgxscan.ScanAll(&dbBookmarks, rows); err != nil {
 		return []bookmark.Bookmark{}, err
 	}
 
 	bookmarks := []bookmark.Bookmark{}
 
-	for rows.Next() {
-		dbBookmark := Bookmark{}
-
-		if err := rows.StructScan(&dbBookmark); err != nil {
-			return []bookmark.Bookmark{}, err
-		}
-
-		tags := textArrayToTags(dbBookmark.Tags)
-
+	for _, dbBookmark := range dbBookmarks {
 		bookmark := bookmark.Bookmark{
 			UserUUID:    dbBookmark.UserUUID,
 			UID:         dbBookmark.UID,
@@ -208,7 +233,7 @@ func (r *Repository) bookmarkGetManyQuery(query string, queryParams ...any) ([]b
 			Title:       dbBookmark.Title,
 			Description: dbBookmark.Description,
 			Private:     dbBookmark.Private,
-			Tags:        tags,
+			Tags:        dbBookmark.Tags,
 			CreatedAt:   dbBookmark.CreatedAt,
 			UpdatedAt:   dbBookmark.UpdatedAt,
 		}
@@ -220,18 +245,20 @@ func (r *Repository) bookmarkGetManyQuery(query string, queryParams ...any) ([]b
 }
 
 func (r *Repository) bookmarkGetQuery(query string, queryParams ...any) (bookmark.Bookmark, error) {
+	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	if err != nil {
+		return bookmark.Bookmark{}, err
+	}
+
 	dbBookmark := &Bookmark{}
+	err = pgxscan.ScanOne(dbBookmark, rows)
 
-	err := r.db.QueryRowx(query, queryParams...).StructScan(dbBookmark)
-
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return bookmark.Bookmark{}, bookmark.ErrNotFound
 	}
 	if err != nil {
 		return bookmark.Bookmark{}, err
 	}
-
-	tags := textArrayToTags(dbBookmark.Tags)
 
 	return bookmark.Bookmark{
 		UserUUID:    dbBookmark.UserUUID,
@@ -240,7 +267,7 @@ func (r *Repository) bookmarkGetQuery(query string, queryParams ...any) (bookmar
 		Title:       dbBookmark.Title,
 		Description: dbBookmark.Description,
 		Private:     dbBookmark.Private,
-		Tags:        tags,
+		Tags:        dbBookmark.Tags,
 		CreatedAt:   dbBookmark.CreatedAt,
 		UpdatedAt:   dbBookmark.UpdatedAt,
 	}, nil
@@ -282,13 +309,14 @@ ORDER BY created_at DESC`,
 }
 
 func (r *Repository) BookmarkGetByTag(userUUID string, tag string) ([]bookmark.Bookmark, error) {
+	query := `
+	SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+	FROM bookmarks
+	WHERE user_uuid=$1
+	AND   $2=ANY(tags)`
+
 	return r.bookmarkGetManyQuery(
-		`
-SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
-FROM bookmarks
-WHERE user_uuid=$1
-AND   $2=ANY(tags)
-		`,
+		query,
 		userUUID,
 		tag,
 	)
@@ -341,11 +369,11 @@ func (r *Repository) BookmarkGetCount(userUUID string, visibility querying.Visib
 
 	var count uint
 
-	err := r.db.Get(
-		&count,
+	err := r.pool.QueryRow(
+		context.Background(),
 		query,
 		userUUID,
-	)
+	).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
@@ -393,39 +421,14 @@ func (r *Repository) BookmarkGetN(userUUID string, visibility querying.Visibilit
 }
 
 func (r *Repository) BookmarkGetPublicByUID(userUUID, uid string) (bookmark.Bookmark, error) {
-	dbBookmark := &Bookmark{}
+	query := `
+	SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
+	FROM bookmarks
+	WHERE user_uuid=$1
+	AND uid=$2
+	AND private=false`
 
-	err := r.db.QueryRowx(
-		`
-SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
-FROM bookmarks
-WHERE user_uuid=$1
-AND uid=$2
-AND private=false`,
-		userUUID,
-		uid,
-	).StructScan(dbBookmark)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return bookmark.Bookmark{}, bookmark.ErrNotFound
-	}
-	if err != nil {
-		return bookmark.Bookmark{}, err
-	}
-
-	tags := textArrayToTags(dbBookmark.Tags)
-
-	return bookmark.Bookmark{
-		UserUUID:    dbBookmark.UserUUID,
-		UID:         dbBookmark.UID,
-		URL:         dbBookmark.URL,
-		Title:       dbBookmark.Title,
-		Description: dbBookmark.Description,
-		Private:     dbBookmark.Private,
-		Tags:        tags,
-		CreatedAt:   dbBookmark.CreatedAt,
-		UpdatedAt:   dbBookmark.UpdatedAt,
-	}, nil
+	return r.bookmarkGetQuery(query, userUUID, uid)
 }
 
 func (r *Repository) BookmarkSearchCount(userUUID string, visibility querying.Visibility, searchTerms string) (uint, error) {
@@ -459,12 +462,12 @@ func (r *Repository) BookmarkSearchCount(userUUID string, visibility querying.Vi
 	var count uint
 	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
 
-	err := r.db.Get(
-		&count,
+	err := r.pool.QueryRow(
+		context.Background(),
 		query,
 		userUUID,
 		fullTextSearchTerms,
-	)
+	).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
@@ -518,42 +521,20 @@ func (r *Repository) BookmarkSearchN(userUUID string, visibility querying.Visibi
 }
 
 func (r *Repository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {
-	dbBookmark := &Bookmark{}
-
-	err := r.db.QueryRowx(
-		"SELECT url FROM bookmarks WHERE user_uuid=$1 AND url=$2",
+	return r.rowExistsByQuery(
+		"SELECT 1 FROM bookmarks WHERE user_uuid=$1 AND url=$2",
 		userUUID,
 		url,
-	).StructScan(dbBookmark)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
+	)
 }
 
 func (r *Repository) BookmarkIsURLRegisteredToAnotherUID(userUUID, url, uid string) (bool, error) {
-	dbBookmark := &Bookmark{}
-
-	err := r.db.QueryRowx(
-		"SELECT url FROM bookmarks WHERE user_uuid=$1 AND url=$2 AND uid!=$3",
+	return r.rowExistsByQuery(
+		"SELECT 1 FROM bookmarks WHERE user_uuid=$1 AND url=$2 AND uid!=$3",
 		userUUID,
 		url,
 		uid,
-	).StructScan(dbBookmark)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
+	)
 }
 
 func (r *Repository) BookmarkTagUpdateMany(bookmarks []bookmark.Bookmark) (int64, error) {
@@ -564,49 +545,60 @@ func (r *Repository) BookmarkTagUpdateMany(bookmarks []bookmark.Bookmark) (int64
 }
 
 func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
-	dbTags := tagsToTextArray(b.Tags)
+	query := `
+	UPDATE bookmarks
+	SET
+		url=@url,
+		title=@title,
+		description=@description,
+		private=@private,
+		tags=@tags,
+		fulltextsearch_tsv=to_tsvector(@fulltextsearch_string),
+		updated_at=@updated_at
+	WHERE user_uuid=@user_uuid
+	AND uid=@uid
+			`
+
 	fullTextSearchString := bookmarkToFullTextSearchString(b)
 
-	dbBookmark := Bookmark{
-		UserUUID:             b.UserUUID,
-		UID:                  b.UID,
-		URL:                  b.URL,
-		Title:                b.Title,
-		Description:          b.Description,
-		Private:              b.Private,
-		Tags:                 dbTags,
-		FullTextSearchString: fullTextSearchString,
-		UpdatedAt:            b.UpdatedAt,
+	args := pgx.NamedArgs{
+		"user_uuid":             b.UserUUID,
+		"uid":                   b.UID,
+		"url":                   b.URL,
+		"title":                 b.Title,
+		"description":           b.Description,
+		"private":               b.Private,
+		"tags":                  b.Tags,
+		"fulltextsearch_string": fullTextSearchString,
+		"updated_at":            b.UpdatedAt,
 	}
 
-	_, err := r.db.NamedExec(
-		`
-UPDATE bookmarks
-SET
-	url=:url,
-	title=:title,
-	description=:description,
-	private=:private,
-	tags=:tags,
-	fulltextsearch_tsv=to_tsvector(:fulltextsearch_string),
-	updated_at=:updated_at
-WHERE user_uuid=:user_uuid
-AND uid=:uid
-		`,
-		dbBookmark,
+	_, err := r.pool.Exec(
+		context.Background(),
+		query,
+		args,
 	)
 	return err
 }
 
 func (r *Repository) OwnerGetByUUID(userUUID string) (querying.Owner, error) {
+	query := `
+	SELECT uuid, nick_name, display_name
+	FROM users
+	WHERE uuid=$1`
+
 	dbUser := &User{}
 
-	err := r.db.QueryRowx(
-		`SELECT uuid, nick_name, display_name
-FROM users
-WHERE uuid=$1`,
+	rows, err := r.pool.Query(
+		context.Background(),
+		query,
 		userUUID,
-	).StructScan(dbUser)
+	)
+	if err != nil {
+		return querying.Owner{}, err
+	}
+
+	err = pgxscan.ScanOne(dbUser, rows)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return querying.Owner{}, querying.ErrOwnerNotFound
@@ -623,41 +615,49 @@ WHERE uuid=$1`,
 }
 
 func (r *Repository) SessionAdd(sess session.Session) error {
-	dbSession := Session{
-		UserUUID:               sess.UserUUID,
-		RememberTokenHash:      sess.RememberTokenHash,
-		RememberTokenExpiresAt: sess.RememberTokenExpiresAt,
+	query := `
+	INSERT INTO sessions(
+		user_uuid,
+		remember_token_hash,
+		remember_token_expires_at
+	)
+	VALUES(
+		@user_uuid,
+		@remember_token_hash,
+		@remember_token_expires_at
+	)`
+
+	args := pgx.NamedArgs{
+		"user_uuid":                 sess.UserUUID,
+		"remember_token_hash":       sess.RememberTokenHash,
+		"remember_token_expires_at": sess.RememberTokenExpiresAt,
 	}
 
-	_, err := r.db.NamedExec(
-		`
-INSERT INTO sessions(
-	user_uuid,
-	remember_token_hash,
-	remember_token_expires_at
-)
-VALUES(
-	:user_uuid,
-	:remember_token_hash,
-	:remember_token_expires_at
-)`,
-		dbSession,
-	)
+	_, err := r.pool.Exec(context.Background(), query, args)
 
 	return err
 }
 
 func (r *Repository) SessionGetByRememberTokenHash(hash string) (session.Session, error) {
+	query := `
+	SELECT user_uuid, remember_token_hash
+	FROM sessions
+	WHERE remember_token_hash=$1`
+
 	dbSession := &Session{}
 
-	err := r.db.QueryRowx(
-		`SELECT user_uuid, remember_token_hash
-FROM sessions
-WHERE remember_token_hash=$1`,
+	rows, err := r.pool.Query(
+		context.Background(),
+		query,
 		hash,
-	).StructScan(dbSession)
+	)
+	if err != nil {
+		return session.Session{}, err
+	}
 
-	if errors.Is(err, sql.ErrNoRows) {
+	err = pgxscan.ScanOne(dbSession, rows)
+
+	if errors.Is(err, pgx.ErrNoRows) {
 		return session.Session{}, session.ErrNotFound
 	}
 	if err != nil {
@@ -671,22 +671,21 @@ WHERE remember_token_hash=$1`,
 }
 
 func (r *Repository) tagGetQuery(query string, queryParams ...any) ([]querying.Tag, error) {
-	rows, err := r.db.Queryx(query, queryParams...)
+	rows, err := r.pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
 		return []querying.Tag{}, err
 	}
 
-	tags := []querying.Tag{}
+	var dbTags []Tag
 
-	for rows.Next() {
-		dbTag := Tag{}
+	if err := pgxscan.ScanAll(&dbTags, rows); err != nil {
+		return []querying.Tag{}, err
+	}
 
-		if err := rows.StructScan(&dbTag); err != nil {
-			return []querying.Tag{}, err
-		}
+	var tags []querying.Tag
 
+	for _, dbTag := range dbTags {
 		tag := querying.NewTag(dbTag.Name, dbTag.Count)
-
 		tags = append(tags, tag)
 	}
 
@@ -729,11 +728,11 @@ func (r *Repository) TagGetCount(userUUID string, visibility querying.Visibility
 
 	var count uint
 
-	err := r.db.Get(
-		&count,
+	err := r.pool.QueryRow(
+		context.Background(),
 		query,
 		userUUID,
-	)
+	).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
@@ -869,14 +868,13 @@ func (r *Repository) TagFilterCount(userUUID string, visibility querying.Visibil
 
 	var count uint
 
-	err := r.db.Get(
-		&count,
+	err := r.pool.QueryRow(
+		context.Background(),
 		query,
 		userUUID,
 		"%"+filterTerm+"%",
-	)
+	).Scan(&count)
 	if err != nil {
-		log.Warn().Msg("plop")
 		return 0, err
 	}
 
@@ -933,55 +931,55 @@ func (r *Repository) TagFilterN(userUUID string, visibility querying.Visibility,
 }
 
 func (r *Repository) UserAdd(u user.User) error {
-	dbUser := User{
-		UUID:         u.UUID,
-		Email:        u.Email,
-		NickName:     u.NickName,
-		DisplayName:  u.DisplayName,
-		PasswordHash: u.PasswordHash,
-		IsAdmin:      u.IsAdmin,
-		CreatedAt:    u.CreatedAt,
-		UpdatedAt:    u.UpdatedAt,
+	query := `
+	INSERT INTO users(
+		uuid,
+		email,
+		nick_name,
+		display_name,
+		password_hash,
+		is_admin,
+		created_at,
+		updated_at
+	)
+	VALUES(
+		@uuid,
+		@email,
+		@nick_name,
+		@display_name,
+		@password_hash,
+		@is_admin,
+		@created_at,
+		@updated_at
+	)`
+
+	args := pgx.NamedArgs{
+		"uuid":          u.UUID,
+		"email":         u.Email,
+		"nick_name":     u.NickName,
+		"display_name":  u.DisplayName,
+		"password_hash": u.PasswordHash,
+		"is_admin":      u.IsAdmin,
+		"created_at":    u.CreatedAt,
+		"updated_at":    u.UpdatedAt,
 	}
 
-	_, err := r.db.NamedExec(
-		`
-INSERT INTO users(
-	uuid,
-	email,
-	nick_name,
-	display_name,
-	password_hash,
-	is_admin,
-	created_at,
-	updated_at
-)
-VALUES(
-	:uuid,
-	:email,
-	:nick_name,
-	:display_name,
-	:password_hash,
-	:is_admin,
-	:created_at,
-	:updated_at
-)`,
-		dbUser,
-	)
+	_, err := r.pool.Exec(context.Background(), query, args)
 
 	return err
 }
 
 func (r *Repository) UserDeleteByUUID(userUUID string) error {
-	result, err := r.db.Exec("DELETE FROM users WHERE uuid=$1", userUUID)
+	commandTag, err := r.pool.Exec(
+		context.Background(),
+		"DELETE FROM users WHERE uuid=$1",
+		userUUID,
+	)
 	if err != nil {
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
+	rowsAffected := commandTag.RowsAffected()
 
 	if rowsAffected != 1 {
 		return user.ErrNotFound
@@ -991,20 +989,24 @@ func (r *Repository) UserDeleteByUUID(userUUID string) error {
 }
 
 func (r *Repository) UserGetAll() ([]user.User, error) {
-	rows, err := r.db.Queryx("SELECT uuid, email, nick_name, display_name, is_admin, created_at, updated_at FROM users")
+	query := `
+	SELECT uuid, email, nick_name, display_name, is_admin, created_at, updated_at
+	FROM users`
+
+	rows, err := r.pool.Query(context.Background(), query)
 	if err != nil {
 		return []user.User{}, err
 	}
 
-	users := []user.User{}
+	var dbUsers []User
 
-	for rows.Next() {
-		dbUser := User{}
+	if err := pgxscan.ScanAll(&dbUsers, rows); err != nil {
+		return []user.User{}, err
+	}
 
-		if err := rows.StructScan(&dbUser); err != nil {
-			return []user.User{}, err
-		}
+	var users []user.User
 
+	for _, dbUser := range dbUsers {
 		user := user.User{
 			UUID:        dbUser.UUID,
 			Email:       dbUser.Email,
@@ -1021,17 +1023,21 @@ func (r *Repository) UserGetAll() ([]user.User, error) {
 	return users, nil
 }
 
-func (r *Repository) UserGetByEmail(email string) (user.User, error) {
-	dbUser := &User{}
+func (r *Repository) userGetByQuery(query string, queryParams ...any) (user.User, error) {
+	rows, err := r.pool.Query(
+		context.Background(),
+		query,
+		queryParams...,
+	)
+	if err != nil {
+		return user.User{}, err
+	}
 
-	err := r.db.QueryRowx(
-		`SELECT uuid, email, nick_name, display_name, password_hash, is_admin, created_at, updated_at
-FROM users
-WHERE email=$1`,
-		email,
-	).StructScan(dbUser)
+	dbUser := User{}
 
-	if errors.Is(err, sql.ErrNoRows) {
+	err = pgxscan.ScanOne(&dbUser, rows)
+
+	if errors.Is(err, pgx.ErrNoRows) {
 		return user.User{}, user.ErrNotFound
 	}
 	if err != nil {
@@ -1048,170 +1054,126 @@ WHERE email=$1`,
 		CreatedAt:    dbUser.CreatedAt,
 		UpdatedAt:    dbUser.UpdatedAt,
 	}, nil
+}
+
+func (r *Repository) UserGetByEmail(email string) (user.User, error) {
+	query := `
+	SELECT uuid, email, nick_name, display_name, password_hash, is_admin, created_at, updated_at
+	FROM users
+	WHERE email=$1`
+
+	return r.userGetByQuery(query, email)
 }
 
 func (r *Repository) UserGetByNickName(nick string) (user.User, error) {
-	dbUser := &User{}
+	query := `
+	SELECT uuid, email, nick_name, display_name, password_hash, is_admin, created_at, updated_at
+	FROM users
+	WHERE nick_name=$1`
 
-	err := r.db.QueryRowx(
-		`SELECT uuid, email, nick_name, display_name, password_hash, is_admin, created_at, updated_at
-FROM users
-WHERE nick_name=$1`,
-		nick,
-	).StructScan(dbUser)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return user.User{}, user.ErrNotFound
-	}
-	if err != nil {
-		return user.User{}, err
-	}
-
-	return user.User{
-		UUID:         dbUser.UUID,
-		Email:        dbUser.Email,
-		NickName:     dbUser.NickName,
-		DisplayName:  dbUser.DisplayName,
-		PasswordHash: dbUser.PasswordHash,
-		IsAdmin:      dbUser.IsAdmin,
-		CreatedAt:    dbUser.CreatedAt,
-		UpdatedAt:    dbUser.UpdatedAt,
-	}, nil
+	return r.userGetByQuery(query, nick)
 }
 
 func (r *Repository) UserGetByUUID(userUUID string) (user.User, error) {
-	dbUser := &User{}
+	query := `
+	SELECT uuid, email, nick_name, display_name, password_hash, is_admin, created_at, updated_at
+	FROM users
+	WHERE uuid=$1`
 
-	err := r.db.QueryRowx(
-		`SELECT uuid, email, nick_name, display_name, password_hash, is_admin, created_at, updated_at
-FROM users
-WHERE uuid=$1`,
-		userUUID,
-	).StructScan(dbUser)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return user.User{}, user.ErrNotFound
-	}
-	if err != nil {
-		return user.User{}, err
-	}
-
-	return user.User{
-		UUID:         dbUser.UUID,
-		Email:        dbUser.Email,
-		NickName:     dbUser.NickName,
-		DisplayName:  dbUser.DisplayName,
-		PasswordHash: dbUser.PasswordHash,
-		IsAdmin:      dbUser.IsAdmin,
-		CreatedAt:    dbUser.CreatedAt,
-		UpdatedAt:    dbUser.UpdatedAt,
-	}, nil
+	return r.userGetByQuery(query, userUUID)
 }
 
 func (r *Repository) UserIsEmailRegistered(email string) (bool, error) {
-	dbUser := &User{}
-
-	err := r.db.QueryRowx("SELECT email FROM users WHERE email=$1", email).StructScan(dbUser)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return r.rowExistsByQuery(
+		"SELECT 1 FROM users WHERE email=$1",
+		email,
+	)
 }
 
 func (r *Repository) UserIsNickNameRegistered(nick string) (bool, error) {
-	dbUser := &User{}
-
-	err := r.db.QueryRowx("SELECT email FROM users WHERE nick_name=$1", nick).StructScan(dbUser)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return r.rowExistsByQuery(
+		"SELECT 1 FROM users WHERE nick_name=$1",
+		nick,
+	)
 }
 
 func (r *Repository) UserUpdate(u user.User) error {
-	dbUser := User{
-		UUID:         u.UUID,
-		Email:        u.Email,
-		NickName:     u.NickName,
-		DisplayName:  u.DisplayName,
-		PasswordHash: u.PasswordHash,
-		IsAdmin:      u.IsAdmin,
-		UpdatedAt:    u.UpdatedAt,
+	query := `
+	UPDATE users
+	SET
+		email=@email,
+		nick_name=@nick_name,
+		display_name=@display_name,
+		password_hash=@password_hash,
+		is_admin=@is_admin,
+		updated_at=@updated_at
+	WHERE uuid=@uuid`
+
+	args := pgx.NamedArgs{
+		"uuid":          u.UUID,
+		"email":         u.Email,
+		"nick_name":     u.NickName,
+		"display_name":  u.DisplayName,
+		"password_hash": u.PasswordHash,
+		"is_admin":      u.IsAdmin,
+		"updated_at":    u.UpdatedAt,
 	}
 
-	_, err := r.db.NamedExec(`UPDATE users
-SET
-	email=:email,
-	nick_name=:nick_name,
-	display_name=:display_name,
-	password_hash=:password_hash,
-	is_admin=:is_admin,
-	updated_at=:updated_at
-WHERE uuid=:uuid`,
-		dbUser,
+	_, err := r.pool.Exec(
+		context.Background(),
+		query,
+		args,
 	)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (r *Repository) UserUpdateInfo(info user.InfoUpdate) error {
-	dbUser := User{
-		UUID:        info.UUID,
-		Email:       info.Email,
-		NickName:    info.NickName,
-		DisplayName: info.DisplayName,
-		UpdatedAt:   info.UpdatedAt,
+	query := `
+	UPDATE users
+	SET
+		email=@email,
+		nick_name=@nick_name,
+		display_name=@display_name,
+		updated_at=@updated_at
+	WHERE uuid=@uuid`
+
+	args := pgx.NamedArgs{
+		"uuid":         info.UUID,
+		"email":        info.Email,
+		"nick_name":    info.NickName,
+		"display_name": info.DisplayName,
+		"updated_at":   info.UpdatedAt,
 	}
 
-	_, err := r.db.NamedExec(`UPDATE users
-SET
-	email=:email,
-	nick_name=:nick_name,
-	display_name=:display_name,
-	updated_at=:updated_at
-WHERE uuid=:uuid`,
-		dbUser,
+	_, err := r.pool.Exec(
+		context.Background(),
+		query,
+		args,
 	)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (r *Repository) UserUpdatePasswordHash(passwordHash user.PasswordHashUpdate) error {
-	dbUser := User{
-		UUID:         passwordHash.UUID,
-		PasswordHash: passwordHash.PasswordHash,
-		UpdatedAt:    passwordHash.UpdatedAt,
+	query := `
+	UPDATE users
+	SET
+		password_hash=@password_hash,
+		updated_at=@updated_at
+	WHERE uuid=@uuid`
+
+	args := pgx.NamedArgs{
+		"uuid":          passwordHash.UUID,
+		"password_hash": passwordHash.PasswordHash,
+		"updated_at":    passwordHash.UpdatedAt,
 	}
 
-	_, err := r.db.NamedExec(`UPDATE users
-SET
-	password_hash=:password_hash,
-	updated_at=:updated_at
-WHERE uuid=:uuid`,
-		dbUser,
+	_, err := r.pool.Exec(
+		context.Background(),
+		query,
+		args,
 	)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

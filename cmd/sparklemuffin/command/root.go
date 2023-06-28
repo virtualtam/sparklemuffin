@@ -1,13 +1,13 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -22,6 +22,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 	"github.com/virtualtam/venom"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -49,7 +50,10 @@ var (
 	databaseUser     string
 	databasePassword string
 
-	db *sqlx.DB
+	// Database connection URI. Populated by the root command.
+	databaseURI string
+
+	pgxPool *pgxpool.Pool
 
 	bookmarkService  *bookmark.Service
 	exportingService *exporting.Service
@@ -106,7 +110,7 @@ func NewRootCommand() *cobra.Command {
 			// https://www.postgresql.org/docs/current/libpq-connect.html
 			// https://datatracker.ietf.org/doc/html/rfc3986#section-2.1
 			databasePassword = url.QueryEscape(databasePassword)
-			databaseURI := fmt.Sprintf(
+			databaseURI = fmt.Sprintf(
 				"postgres://%s:%s@%s/%s?sslmode=%s",
 				databaseUser,
 				databasePassword,
@@ -115,24 +119,25 @@ func NewRootCommand() *cobra.Command {
 				databaseSSLMode,
 			)
 
-			db, err = sqlx.Connect(databaseDriver, databaseURI)
+			pgxPool, err = pgxpool.New(context.Background(), databaseURI)
+			// TODO create a config, open, register ping callback
 			if err != nil {
 				log.Error().
 					Err(err).
 					Str("database_driver", databaseDriver).
 					Str("database_addr", databaseAddr).
 					Str("database_name", databaseName).
-					Msg("failed to connect to database")
+					Msg("failed to create database connection pool")
 				return err
 			}
 			log.Info().
 				Str("database_driver", databaseDriver).
 				Str("database_addr", databaseAddr).
 				Str("database_name", databaseName).
-				Msg("successfully connected to database")
+				Msg("successfully created database connection pool")
 
 			// Main database repository
-			repository := postgresql.NewRepository(db)
+			repository := postgresql.NewRepository(pgxPool)
 
 			// sparklemuffin services
 			bookmarkService = bookmark.NewService(repository)

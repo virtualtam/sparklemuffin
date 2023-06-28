@@ -1,6 +1,7 @@
 package command
 
 import (
+	"database/sql"
 	"errors"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -39,7 +40,23 @@ func NewMigrateCommand() *cobra.Command {
 				log.Error().Err(err).Msg("failed to open the database migration filesystem")
 			}
 
-			driver, err := migratepgx.WithInstance(db.DB, &migratepgx.Config{})
+			db, err := sql.Open(databaseDriver, databaseURI)
+			if err != nil {
+				log.Error().
+					Err(err).
+					Str("database_driver", databaseDriver).
+					Str("database_addr", databaseAddr).
+					Str("database_name", databaseName).
+					Msg("failed to open database connection")
+				return err
+			}
+			log.Info().
+				Str("database_driver", databaseDriver).
+				Str("database_addr", databaseAddr).
+				Str("database_name", databaseName).
+				Msg("successfully opened database connection")
+
+			driver, err := migratepgx.WithInstance(db, &migratepgx.Config{})
 			if err != nil {
 				log.Error().
 					Err(err).

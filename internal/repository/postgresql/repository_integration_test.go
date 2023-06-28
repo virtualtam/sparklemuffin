@@ -2,6 +2,7 @@ package postgresql_test
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"math/rand"
 	"sort"
@@ -12,9 +13,9 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	migratepgx "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jaswdr/faker"
-	"github.com/jmoiron/sqlx"
 	"github.com/testcontainers/testcontainers-go"
 	testpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -34,7 +35,7 @@ const (
 	databasePassword = "testpass"
 )
 
-func createTestDatabase(t *testing.T, ctx context.Context) *sqlx.DB {
+func createTestDatabase(t *testing.T, ctx context.Context) *pgxpool.Pool {
 	t.Helper()
 
 	pgContainer, err := testpostgres.RunContainer(ctx,
@@ -64,23 +65,33 @@ func createTestDatabase(t *testing.T, ctx context.Context) *sqlx.DB {
 		t.Fatalf("failed to obtain postgres connection string: %q", err)
 	}
 
-	db, err := sqlx.Connect(databaseDriver, databaseURI)
+	db, err := sql.Open(databaseDriver, databaseURI)
+	if err != nil {
+		t.Fatalf("failed to open database connection: %q", err)
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Fatalf("failed to close database connection used for migrations: %q", err)
+		}
+	}()
+
+	migrateTestDatabase(t, db)
+
+	pool, err := pgxpool.New(context.Background(), databaseURI)
 	if err != nil {
 		t.Fatalf("failed to open database connection: %q", err)
 	}
 
-	migrateTestDatabase(t, db)
-
-	return db
+	return pool
 }
 
-func migrateTestDatabase(t *testing.T, db *sqlx.DB) {
+func migrateTestDatabase(t *testing.T, db *sql.DB) {
 	migrationsSource, err := iofs.New(migrations.FS, ".")
 	if err != nil {
 		t.Fatalf("failed to open the database migration filesystem: %q", err)
 	}
 
-	driver, err := migratepgx.WithInstance(db.DB, &migratepgx.Config{})
+	driver, err := migratepgx.WithInstance(db, &migratepgx.Config{})
 	if err != nil {
 		t.Fatalf("failed to prepare the database driver: %q", err)
 	}
@@ -166,8 +177,8 @@ func assertBookmarksEqual(t *testing.T, got, want bookmark.Bookmark) {
 
 func TestBookmarkService(t *testing.T) {
 	ctx := context.Background()
-	db := createTestDatabase(t, ctx)
-	r := postgresql.NewRepository(db)
+	pool := createTestDatabase(t, ctx)
+	r := postgresql.NewRepository(pool)
 	bs := bookmark.NewService(r)
 	us := user.NewService(r)
 
@@ -425,8 +436,8 @@ func TestBookmarkService(t *testing.T) {
 
 func TestQueryingService(t *testing.T) {
 	ctx := context.Background()
-	db := createTestDatabase(t, ctx)
-	r := postgresql.NewRepository(db)
+	pool := createTestDatabase(t, ctx)
+	r := postgresql.NewRepository(pool)
 	bs := bookmark.NewService(r)
 	qs := querying.NewService(r)
 	us := user.NewService(r)
@@ -572,8 +583,8 @@ func generateFakeBookmark(fake *faker.Faker, userUUID string, private bool) book
 
 func TestUserService(t *testing.T) {
 	ctx := context.Background()
-	db := createTestDatabase(t, ctx)
-	r := postgresql.NewRepository(db)
+	pool := createTestDatabase(t, ctx)
+	r := postgresql.NewRepository(pool)
 	s := user.NewService(r)
 
 	fake := faker.New()

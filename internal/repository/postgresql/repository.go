@@ -37,6 +37,27 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	}
 }
 
+func (r *Repository) rollback(ctx context.Context, tx pgx.Tx, domain string, operation string) {
+	err := tx.Rollback(ctx)
+	if errors.Is(err, pgx.ErrTxClosed) {
+		return
+	}
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("domain", domain).
+			Str("operation", operation).
+			Msg("failed to rollback transaction")
+		return
+	}
+
+	log.Warn().
+		Err(err).
+		Str("domain", domain).
+		Str("operation", operation).
+		Msg("transaction rolled back")
+}
+
 func (r *Repository) rowExistsByQuery(query string, queryParams ...any) (bool, error) {
 	var exists int64
 
@@ -98,9 +119,21 @@ func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
 		"updated_at":            b.UpdatedAt,
 	}
 
-	_, err := r.pool.Exec(context.Background(), query, args)
+	ctx := context.Background()
 
-	return err
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "bookmarks", "add")
+
+	_, err = tx.Exec(ctx, query, args)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *Repository) BookmarkAddMany(bookmarks []bookmark.Bookmark) (int64, error) {
@@ -179,7 +212,11 @@ func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookm
 	batchResults := r.pool.SendBatch(ctx, batch)
 	defer func() {
 		if err := batchResults.Close(); err != nil {
-			log.Error().Err(err).Msg("bookmarks: failed to close batch results")
+			log.Error().
+				Err(err).
+				Str("domain", "bookmarks").
+				Str("operation", "upsert_many").
+				Msg("failed to close batch results")
 		}
 	}()
 
@@ -198,7 +235,16 @@ func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookm
 }
 
 func (r *Repository) BookmarkDelete(userUUID, uid string) error {
-	commandTag, err := r.pool.Exec(
+	ctx := context.Background()
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "bookmarks", "delete")
+
+	commandTag, err := tx.Exec(
 		context.Background(),
 		"DELETE FROM bookmarks WHERE user_uuid=$1 AND uid=$2",
 		userUUID,
@@ -214,7 +260,7 @@ func (r *Repository) BookmarkDelete(userUUID, uid string) error {
 		return bookmark.ErrNotFound
 	}
 
-	return nil
+	return tx.Commit(ctx)
 }
 
 func (r *Repository) bookmarkGetManyQuery(query string, queryParams ...any) ([]bookmark.Bookmark, error) {
@@ -546,9 +592,6 @@ func (r *Repository) BookmarkIsURLRegisteredToAnotherUID(userUUID, url, uid stri
 }
 
 func (r *Repository) BookmarkTagUpdateMany(bookmarks []bookmark.Bookmark) (int64, error) {
-	// sqlx does not support PostgreSQL's bulk update syntax.
-	// As a workaround, we perform a bulk upsert to update existing bookmarks.
-	// https://github.com/jmoiron/sqlx/issues/796
 	return r.BookmarkUpsertMany(bookmarks)
 }
 
@@ -581,12 +624,21 @@ func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
 		"updated_at":            b.UpdatedAt,
 	}
 
-	_, err := r.pool.Exec(
-		context.Background(),
-		query,
-		args,
-	)
-	return err
+	ctx := context.Background()
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "bookmarks", "update")
+
+	_, err = tx.Exec(ctx, query, args)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *Repository) OwnerGetByUUID(userUUID string) (querying.Owner, error) {
@@ -642,9 +694,21 @@ func (r *Repository) SessionAdd(sess session.Session) error {
 		"remember_token_expires_at": sess.RememberTokenExpiresAt,
 	}
 
-	_, err := r.pool.Exec(context.Background(), query, args)
+	ctx := context.Background()
 
-	return err
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "sessions", "add")
+
+	_, err = tx.Exec(ctx, query, args)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *Repository) SessionGetByRememberTokenHash(hash string) (session.Session, error) {
@@ -975,13 +1039,34 @@ func (r *Repository) UserAdd(u user.User) error {
 		"updated_at":    u.UpdatedAt,
 	}
 
-	_, err := r.pool.Exec(context.Background(), query, args)
+	ctx := context.Background()
 
-	return err
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "users", "add")
+
+	_, err = tx.Exec(ctx, query, args)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *Repository) UserDeleteByUUID(userUUID string) error {
-	commandTag, err := r.pool.Exec(
+	ctx := context.Background()
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "users", "delete")
+
+	commandTag, err := tx.Exec(
 		context.Background(),
 		"DELETE FROM users WHERE uuid=$1",
 		userUUID,
@@ -996,7 +1081,7 @@ func (r *Repository) UserDeleteByUUID(userUUID string) error {
 		return user.ErrNotFound
 	}
 
-	return nil
+	return tx.Commit(ctx)
 }
 
 func (r *Repository) UserGetAll() ([]user.User, error) {
@@ -1132,13 +1217,21 @@ func (r *Repository) UserUpdate(u user.User) error {
 		"updated_at":    u.UpdatedAt,
 	}
 
-	_, err := r.pool.Exec(
-		context.Background(),
-		query,
-		args,
-	)
+	ctx := context.Background()
 
-	return err
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "users", "update")
+
+	_, err = tx.Exec(ctx, query, args)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *Repository) UserUpdateInfo(info user.InfoUpdate) error {
@@ -1159,13 +1252,21 @@ func (r *Repository) UserUpdateInfo(info user.InfoUpdate) error {
 		"updated_at":   info.UpdatedAt,
 	}
 
-	_, err := r.pool.Exec(
-		context.Background(),
-		query,
-		args,
-	)
+	ctx := context.Background()
 
-	return err
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "users", "update_info")
+
+	_, err = tx.Exec(ctx, query, args)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *Repository) UserUpdatePasswordHash(passwordHash user.PasswordHashUpdate) error {
@@ -1182,11 +1283,19 @@ func (r *Repository) UserUpdatePasswordHash(passwordHash user.PasswordHashUpdate
 		"updated_at":    passwordHash.UpdatedAt,
 	}
 
-	_, err := r.pool.Exec(
-		context.Background(),
-		query,
-		args,
-	)
+	ctx := context.Background()
 
-	return err
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "users", "update_password_hash")
+
+	_, err = tx.Exec(ctx, query, args)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }

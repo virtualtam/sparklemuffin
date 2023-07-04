@@ -120,7 +120,6 @@ func NewRootCommand() *cobra.Command {
 			)
 
 			pgxPool, err = pgxpool.New(context.Background(), databaseURI)
-			// TODO create a config, open, register ping callback
 			if err != nil {
 				log.Error().
 					Err(err).
@@ -130,6 +129,17 @@ func NewRootCommand() *cobra.Command {
 					Msg("failed to create database connection pool")
 				return err
 			}
+
+			if err := pgxPool.Ping(context.Background()); err != nil {
+				log.Error().
+					Err(err).
+					Str("database_driver", databaseDriver).
+					Str("database_addr", databaseAddr).
+					Str("database_name", databaseName).
+					Msg("failed to ping database")
+				return err
+			}
+
 			log.Info().
 				Str("database_driver", databaseDriver).
 				Str("database_addr", databaseAddr).

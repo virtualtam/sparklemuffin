@@ -8,6 +8,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
@@ -176,6 +177,11 @@ func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookm
 	ctx := context.Background()
 
 	batchResults := r.pool.SendBatch(ctx, batch)
+	defer func() {
+		if err := batchResults.Close(); err != nil {
+			log.Error().Err(err).Msg("bookmarks: failed to close batch results")
+		}
+	}()
 
 	var rowsAffected int64
 
@@ -216,6 +222,7 @@ func (r *Repository) bookmarkGetManyQuery(query string, queryParams ...any) ([]b
 	if err != nil {
 		return []bookmark.Bookmark{}, err
 	}
+	defer rows.Close()
 
 	dbBookmarks := []Bookmark{}
 
@@ -249,6 +256,7 @@ func (r *Repository) bookmarkGetQuery(query string, queryParams ...any) (bookmar
 	if err != nil {
 		return bookmark.Bookmark{}, err
 	}
+	defer rows.Close()
 
 	dbBookmark := &Bookmark{}
 	err = pgxscan.ScanOne(dbBookmark, rows)
@@ -597,6 +605,7 @@ func (r *Repository) OwnerGetByUUID(userUUID string) (querying.Owner, error) {
 	if err != nil {
 		return querying.Owner{}, err
 	}
+	defer rows.Close()
 
 	err = pgxscan.ScanOne(dbUser, rows)
 
@@ -654,6 +663,7 @@ func (r *Repository) SessionGetByRememberTokenHash(hash string) (session.Session
 	if err != nil {
 		return session.Session{}, err
 	}
+	defer rows.Close()
 
 	err = pgxscan.ScanOne(dbSession, rows)
 
@@ -675,6 +685,7 @@ func (r *Repository) tagGetQuery(query string, queryParams ...any) ([]querying.T
 	if err != nil {
 		return []querying.Tag{}, err
 	}
+	defer rows.Close()
 
 	var dbTags []Tag
 
@@ -997,6 +1008,7 @@ func (r *Repository) UserGetAll() ([]user.User, error) {
 	if err != nil {
 		return []user.User{}, err
 	}
+	defer rows.Close()
 
 	var dbUsers []User
 
@@ -1032,6 +1044,7 @@ func (r *Repository) userGetByQuery(query string, queryParams ...any) (user.User
 	if err != nil {
 		return user.User{}, err
 	}
+	defer rows.Close()
 
 	dbUser := User{}
 

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/sparklemuffin/internal/rand"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
@@ -24,7 +24,7 @@ type sessionHandlerContext struct {
 }
 
 func registerSessionHandlers(
-	r *mux.Router,
+	r *chi.Mux,
 	sessionService *session.Service,
 	userService *user.Service,
 ) {
@@ -36,9 +36,9 @@ func registerSessionHandlers(
 	}
 
 	// authentication
-	r.HandleFunc("/login", hc.userLoginView.handle).Methods(http.MethodGet)
-	r.HandleFunc("/login", hc.handleUserLogin()).Methods(http.MethodPost)
-	r.HandleFunc("/logout", hc.handleUserLogout()).Methods(http.MethodPost)
+	r.Get("/login", hc.userLoginView.handle)
+	r.Post("/login", hc.handleUserLogin())
+	r.Post("/logout", hc.handleUserLogout())
 }
 
 // handleUserLogin processes data submitted through the user login form.

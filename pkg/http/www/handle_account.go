@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
+
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -16,7 +17,7 @@ type accountHandlerContext struct {
 }
 
 func registerAccounthandlers(
-	r *mux.Router,
+	r *chi.Mux,
 	userService *user.Service,
 ) {
 	hc := accountHandlerContext{
@@ -26,14 +27,14 @@ func registerAccounthandlers(
 	}
 
 	// user account
-	accountRouter := r.PathPrefix("/account").Subrouter()
+	r.Route("/account", func(r chi.Router) {
+		r.Use(func(h http.Handler) http.Handler {
+			return authenticatedUser(h.ServeHTTP)
+		})
 
-	accountRouter.HandleFunc("", hc.handleAccountView()).Methods(http.MethodGet)
-	accountRouter.HandleFunc("/info", hc.handleAccountInfoUpdate()).Methods(http.MethodPost)
-	accountRouter.HandleFunc("/password", hc.handleAccountPasswordUpdate()).Methods(http.MethodPost)
-
-	accountRouter.Use(func(h http.Handler) http.Handler {
-		return authenticatedUser(h.ServeHTTP)
+		r.Get("/", hc.handleAccountView())
+		r.Post("/info", hc.handleAccountInfoUpdate())
+		r.Post("/password", hc.handleAccountPasswordUpdate())
 	})
 }
 

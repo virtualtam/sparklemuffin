@@ -8,9 +8,10 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/netscape-go/v2"
+
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
 	"github.com/virtualtam/sparklemuffin/pkg/importing"
 )
@@ -25,7 +26,7 @@ type toolsHandlerContext struct {
 }
 
 func registerToolsHandlers(
-	r *mux.Router,
+	r *chi.Mux,
 	exportingService *exporting.Service,
 	importingService *importing.Service,
 ) {
@@ -39,16 +40,16 @@ func registerToolsHandlers(
 	}
 
 	// bookmark management tools
-	toolsRouter := r.PathPrefix("/tools").Subrouter()
+	r.Route("/tools", func(r chi.Router) {
+		r.Use(func(h http.Handler) http.Handler {
+			return authenticatedUser(h.ServeHTTP)
+		})
 
-	toolsRouter.HandleFunc("", hc.handleToolsView()).Methods(http.MethodGet)
-	toolsRouter.HandleFunc("/export", hc.handleToolsExportView()).Methods(http.MethodGet)
-	toolsRouter.HandleFunc("/export", hc.handleToolsExport()).Methods(http.MethodPost)
-	toolsRouter.HandleFunc("/import", hc.handleToolsImportView()).Methods(http.MethodGet)
-	toolsRouter.HandleFunc("/import", hc.handleToolsImport()).Methods(http.MethodPost)
-
-	toolsRouter.Use(func(h http.Handler) http.Handler {
-		return authenticatedUser(h.ServeHTTP)
+		r.Get("/", hc.handleToolsView())
+		r.Get("/export", hc.handleToolsExportView())
+		r.Post("/export", hc.handleToolsExport())
+		r.Get("/import", hc.handleToolsImportView())
+		r.Post("/import", hc.handleToolsImport())
 	})
 }
 

@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
+
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -36,7 +37,7 @@ type bookmarkFormContent struct {
 }
 
 func registerBookmarkHandlers(
-	r *mux.Router,
+	r *chi.Mux,
 	publicURL *url.URL,
 	bookmarkService *bookmark.Service,
 	queryingService *querying.Service,
@@ -58,24 +59,26 @@ func registerBookmarkHandlers(
 	}
 
 	// bookmarks
-	bookmarkRouter := r.PathPrefix("/bookmarks").Subrouter()
-	bookmarkRouter.HandleFunc("", hc.handleBookmarkListView()).Methods(http.MethodGet)
-	bookmarkRouter.HandleFunc("/add", hc.handleBookmarkAddView()).Methods(http.MethodGet)
-	bookmarkRouter.HandleFunc("/add", hc.handleBookmarkAdd()).Methods(http.MethodPost)
-	bookmarkRouter.HandleFunc("/{uid}/delete", hc.handleBookmarkDeleteView()).Methods(http.MethodGet)
-	bookmarkRouter.HandleFunc("/{uid}/delete", hc.handleBookmarkDelete()).Methods(http.MethodPost)
-	bookmarkRouter.HandleFunc("/{uid}/edit", hc.handleBookmarkEditView()).Methods(http.MethodGet)
-	bookmarkRouter.HandleFunc("/{uid}/edit", hc.handleBookmarkEdit()).Methods(http.MethodPost)
+	r.Route("/bookmarks", func(r chi.Router) {
+		r.Use(func(h http.Handler) http.Handler {
+			return authenticatedUser(h.ServeHTTP)
+		})
 
-	bookmarkRouter.Use(func(h http.Handler) http.Handler {
-		return authenticatedUser(h.ServeHTTP)
+		r.Get("/", hc.handleBookmarkListView())
+		r.Get("/add", hc.handleBookmarkAddView())
+		r.Post("/add", hc.handleBookmarkAdd())
+		r.Get("/{uid}/delete", hc.handleBookmarkDeleteView())
+		r.Post("/{uid}/delete", hc.handleBookmarkDelete())
+		r.Get("/{uid}/edit", hc.handleBookmarkEditView())
+		r.Post("/{uid}/edit", hc.handleBookmarkEdit())
 	})
 
 	// public bookmarks
-	publicBookmarkRouter := r.PathPrefix("/u/{nickname}").Subrouter()
-	publicBookmarkRouter.HandleFunc("/bookmarks", hc.handlePublicBookmarkListView()).Methods(http.MethodGet)
-	publicBookmarkRouter.HandleFunc("/bookmarks/{uid}", hc.handlePublicBookmarkPermalinkView()).Methods(http.MethodGet)
-	publicBookmarkRouter.HandleFunc("/feed/atom", hc.handlePublicBookmarkFeedAtom()).Methods(http.MethodGet)
+	r.Route("/u/{nickname}", func(r chi.Router) {
+		r.Get("/bookmarks", hc.handlePublicBookmarkListView())
+		r.Get("/bookmarks/{uid}", hc.handlePublicBookmarkPermalinkView())
+		r.Get("/feed/atom", hc.handlePublicBookmarkFeedAtom())
+	})
 }
 
 // handleBookmarkAddView renders the bookmark addition form.
@@ -146,9 +149,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkAdd() func(w http.ResponseWriter
 // handleBookmarkDeleteView renders the bookmark deletion form.
 func (hc *bookmarkHandlerContext) handleBookmarkDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		uid := vars["uid"]
-
+		uid := chi.URLParam(r, "uid")
 		user := userValue(r.Context())
 
 		bookmark, err := hc.bookmarkService.ByUID(user.UUID, uid)
@@ -171,8 +172,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkDeleteView() func(w http.Respons
 // handleBookmarkDelete processes the bookmark deletion form.
 func (hc *bookmarkHandlerContext) handleBookmarkDelete() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		uid := vars["uid"]
+		uid := chi.URLParam(r, "uid")
 
 		user := userValue(r.Context())
 
@@ -190,8 +190,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkDelete() func(w http.ResponseWri
 // handleBookmarkEditView renders the bookmark edition form.
 func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		uid := vars["uid"]
+		uid := chi.URLParam(r, "uid")
 
 		user := userValue(r.Context())
 
@@ -243,8 +242,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkEdit() func(w http.ResponseWrite
 			return
 		}
 
-		vars := mux.Vars(r)
-		uid := vars["uid"]
+		uid := chi.URLParam(r, "uid")
 
 		user := userValue(r.Context())
 
@@ -340,8 +338,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 	return func(w http.ResponseWriter, r *http.Request) {
 		var viewData Data
 
-		vars := mux.Vars(r)
-		nickName := vars["nickname"]
+		nickName := chi.URLParam(r, "nickname")
 
 		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
 		// in querying.Service.
@@ -422,9 +419,8 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkPermalinkView() func(w htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		var viewData Data
 
-		vars := mux.Vars(r)
-		nickName := vars["nickname"]
-		uid := vars["uid"]
+		nickName := chi.URLParam(r, "nickname")
+		uid := chi.URLParam(r, "uid")
 
 		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
 		// in querying.Service.
@@ -456,8 +452,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkPermalinkView() func(w htt
 // handlePublicBookmarkFeedAtom renders the public Atom feed for a registered user.
 func (hc *bookmarkHandlerContext) handlePublicBookmarkFeedAtom() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		nickName := vars["nickname"]
+		nickName := chi.URLParam(r, "nickname")
 
 		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
 		// in querying.Service.

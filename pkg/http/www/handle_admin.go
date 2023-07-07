@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
+
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -19,7 +20,7 @@ type adminHandlerContext struct {
 }
 
 func registerAdminHandlers(
-	r *mux.Router,
+	r *chi.Mux,
 	userService *user.Service,
 ) {
 	hc := adminHandlerContext{
@@ -32,18 +33,18 @@ func registerAdminHandlers(
 	}
 
 	// administration
-	adminRouter := r.PathPrefix("/admin").Subrouter()
+	r.Route("/admin", func(r chi.Router) {
+		r.Use(func(h http.Handler) http.Handler {
+			return adminUser(h.ServeHTTP)
+		})
 
-	adminRouter.HandleFunc("", hc.handleAdmin()).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/users/add", hc.handleAdminUserAddView()).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/users", hc.handleAdminUserAdd()).Methods(http.MethodPost)
-	adminRouter.HandleFunc("/users/{uuid}", hc.handleAdminUserEditView()).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/users/{uuid}", hc.handleAdminUserEdit()).Methods(http.MethodPost)
-	adminRouter.HandleFunc("/users/{uuid}/delete", hc.handleAdminUserDeleteView()).Methods(http.MethodGet)
-	adminRouter.HandleFunc("/users/{uuid}/delete", hc.handleAdminUserDelete()).Methods(http.MethodPost)
-
-	adminRouter.Use(func(h http.Handler) http.Handler {
-		return adminUser(h.ServeHTTP)
+		r.Get("/", hc.handleAdmin())
+		r.Get("/users/add", hc.handleAdminUserAddView())
+		r.Post("/users", hc.handleAdminUserAdd())
+		r.Get("/users/{uuid}", hc.handleAdminUserEditView())
+		r.Post("/users/{uuid}", hc.handleAdminUserEdit())
+		r.Get("/users/{uuid}/delete", hc.handleAdminUserDeleteView())
+		r.Get("/users/{uuid}/delete", hc.handleAdminUserDelete())
 	})
 }
 
@@ -115,8 +116,7 @@ func (hc *adminHandlerContext) handleAdminUserAdd() func(w http.ResponseWriter, 
 // handleAdminUserDeleteView renders the user deletion form.
 func (hc *adminHandlerContext) handleAdminUserDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		userUUID := vars["uuid"]
+		userUUID := chi.URLParam(r, "uuid")
 
 		var viewData Data
 
@@ -138,8 +138,7 @@ func (hc *adminHandlerContext) handleAdminUserDeleteView() func(w http.ResponseW
 // handleAdminUserDelete processes the user deletion form.
 func (hc *adminHandlerContext) handleAdminUserDelete() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		userUUID := vars["uuid"]
+		userUUID := chi.URLParam(r, "uuid")
 
 		user, err := hc.userService.ByUUID(userUUID)
 		if err != nil {
@@ -164,8 +163,7 @@ func (hc *adminHandlerContext) handleAdminUserDelete() func(w http.ResponseWrite
 // handleAdminUserEditView renders the user edition form.
 func (hc *adminHandlerContext) handleAdminUserEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		userUUID := vars["uuid"]
+		userUUID := chi.URLParam(r, "uuid")
 
 		user, err := hc.userService.ByUUID(userUUID)
 		if err != nil {
@@ -196,8 +194,7 @@ func (hc *adminHandlerContext) handleAdminUserEdit() func(w http.ResponseWriter,
 	var form userEditForm
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		userUUID := vars["uuid"]
+		userUUID := chi.URLParam(r, "uuid")
 
 		if err := parseForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user edition form")

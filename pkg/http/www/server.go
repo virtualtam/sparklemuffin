@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
@@ -19,7 +19,7 @@ var _ http.Handler = &Server{}
 
 // Server represents the Web service.
 type Server struct {
-	router    *mux.Router
+	router    *chi.Mux
 	publicURL *url.URL
 
 	bookmarkService  *bookmark.Service
@@ -37,7 +37,7 @@ type optionFunc func(*Server)
 // NewServer initializes and returns a new Server.
 func NewServer(optionFuncs ...optionFunc) *Server {
 	s := &Server{
-		router: mux.NewRouter(),
+		router: chi.NewRouter(),
 
 		homeView: newView("static/home.gohtml"),
 	}
@@ -53,14 +53,28 @@ func NewServer(optionFuncs ...optionFunc) *Server {
 
 // registerHandlers registers all HTTP handlers for the Web interface.
 func (s *Server) registerHandlers() {
+	// Global middleware
+	s.router.Use(func(h http.Handler) http.Handler {
+		return s.rememberUser(h.ServeHTTP)
+	})
+
 	// Static pages
-	s.router.HandleFunc("/", s.handleHomeView())
+	s.router.Get("/", s.handleHomeView())
 
 	// Static assets
-	s.router.HandleFunc("/static/", http.NotFound)
-	s.router.PathPrefix("/static/").Handler(http.StripPrefix(
-		"/static/",
-		staticCacheControl(http.FileServer(http.FS(static.FS)))))
+	s.router.Route("/static", func(r chi.Router) {
+		r.Get("/", http.NotFound)
+
+		r.Handle(
+			"/*",
+			http.StripPrefix(
+				"/static/",
+				staticCacheControl(
+					http.FileServer(http.FS(static.FS)),
+				),
+			),
+		)
+	})
 
 	// Register domain handlers
 	registerSessionHandlers(s.router, s.sessionService, s.userService)
@@ -69,11 +83,6 @@ func (s *Server) registerHandlers() {
 	registerBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.queryingService, s.userService)
 	registerTagHandlers(s.router, s.bookmarkService, s.queryingService)
 	registerToolsHandlers(s.router, s.exportingService, s.importingService)
-
-	// Global middleware
-	s.router.Use(func(h http.Handler) http.Handler {
-		return s.rememberUser(h.ServeHTTP)
-	})
 }
 
 // ServeHTTP satisfies the http.Handler interface,

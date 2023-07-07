@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
+
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
 )
@@ -22,7 +23,7 @@ type tagHandlerContext struct {
 }
 
 func registerTagHandlers(
-	r *mux.Router,
+	r *chi.Mux,
 	bookmarkService *bookmark.Service,
 	queryingService *querying.Service,
 ) {
@@ -36,23 +37,23 @@ func registerTagHandlers(
 	}
 
 	// bookmark tags
-	tagRouter := r.PathPrefix("/tags").Subrouter()
-	tagRouter.HandleFunc("", tc.handleTagListView()).Methods(http.MethodGet)
-	tagRouter.HandleFunc("/{name}/delete", tc.handleTagDeleteView()).Methods(http.MethodGet)
-	tagRouter.HandleFunc("/{name}/delete", tc.handleTagDelete()).Methods(http.MethodPost)
-	tagRouter.HandleFunc("/{name}/edit", tc.handleTagEditView()).Methods(http.MethodGet)
-	tagRouter.HandleFunc("/{name}/edit", tc.handleTagEdit()).Methods(http.MethodPost)
+	r.Route("/tags", func(r chi.Router) {
+		r.Use(func(h http.Handler) http.Handler {
+			return authenticatedUser(h.ServeHTTP)
+		})
 
-	tagRouter.Use(func(h http.Handler) http.Handler {
-		return authenticatedUser(h.ServeHTTP)
+		r.Get("/", tc.handleTagListView())
+		r.Get("/{name}/delete", tc.handleTagDeleteView())
+		r.Post("/{name}/delete", tc.handleTagDelete())
+		r.Get("/{name}/edit", tc.handleTagEditView())
+		r.Post("/{name}/edit", tc.handleTagEdit())
 	})
 }
 
 // handleTagDeleteView renders the tag deletion form.
 func (tc *tagHandlerContext) handleTagDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		nameBase64 := vars["name"]
+		nameBase64 := chi.URLParam(r, "name")
 
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
@@ -90,8 +91,7 @@ func (tc *tagHandlerContext) handleTagDelete() func(w http.ResponseWriter, r *ht
 			return
 		}
 
-		vars := mux.Vars(r)
-		nameBase64 := vars["name"]
+		nameBase64 := chi.URLParam(r, "name")
 
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
@@ -126,8 +126,7 @@ func (tc *tagHandlerContext) handleTagDelete() func(w http.ResponseWriter, r *ht
 // handleTagEditView renders the tag edition form.
 func (tc *tagHandlerContext) handleTagEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		nameBase64 := vars["name"]
+		nameBase64 := chi.URLParam(r, "name")
 
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
@@ -165,8 +164,7 @@ func (tc *tagHandlerContext) handleTagEdit() func(w http.ResponseWriter, r *http
 			return
 		}
 
-		vars := mux.Vars(r)
-		nameBase64 := vars["name"]
+		nameBase64 := chi.URLParam(r, "name")
 
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {

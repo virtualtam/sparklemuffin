@@ -1,6 +1,29 @@
 package www
 
-import "net/http"
+import (
+	"net/http"
+	"time"
+
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/rs/zerolog/hlog"
+)
+
+// accessLogger logs information about incoming HTTP requests.
+func accessLogger(r *http.Request, status, size int, dur time.Duration) {
+	reqID := middleware.GetReqID(r.Context())
+
+	hlog.FromRequest(r).
+		Info().
+		Dur("duration_ms", dur).
+		Str("host", r.Host).
+		Str("method", r.Method).
+		Str("path", r.URL.Path).
+		Str("remote_addr", r.RemoteAddr).
+		Str("request_id", reqID).
+		Int("size", size).
+		Int("status", status).
+		Msg("handle request")
+}
 
 // adminUser requires the user to have administration privileges to
 // access content.

@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/justinas/alice"
-	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/virtualtam/sparklemuffin/pkg/http/www"
@@ -44,12 +42,9 @@ func NewRunCommand() *cobra.Command {
 				www.WithUserService(userService),
 			)
 
-			// Structured logging
-			chain := alice.New(hlog.NewHandler(log.Logger), hlog.AccessHandler(accessLogger))
-
 			httpServer := &http.Server{
 				Addr:         listenAddr,
-				Handler:      chain.Then(server),
+				Handler:      server,
 				ReadTimeout:  15 * time.Second,
 				WriteTimeout: 15 * time.Second,
 			}
@@ -74,15 +69,4 @@ func NewRunCommand() *cobra.Command {
 	)
 
 	return cmd
-}
-
-func accessLogger(r *http.Request, status, size int, dur time.Duration) {
-	hlog.FromRequest(r).Info().
-		Dur("duration_ms", dur).
-		Str("host", r.Host).
-		Str("method", r.Method).
-		Str("path", r.URL.Path).
-		Int("size", size).
-		Int("status", status).
-		Msg("handle request")
 }

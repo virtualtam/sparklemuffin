@@ -12,7 +12,6 @@ require (
 	github.com/gorilla/feeds v1.1.1
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/jaswdr/faker v1.18.0
-	github.com/justinas/alice v1.2.0
 	github.com/rs/zerolog v1.29.1
 	github.com/segmentio/ksuid v1.0.4
 	github.com/spf13/cobra v1.7.0

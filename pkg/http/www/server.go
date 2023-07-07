@@ -5,6 +5,9 @@ import (
 	"net/url"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/rs/zerolog/hlog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
@@ -54,6 +57,12 @@ func NewServer(optionFuncs ...optionFunc) *Server {
 // registerHandlers registers all HTTP handlers for the Web interface.
 func (s *Server) registerHandlers() {
 	// Global middleware
+	s.router.Use(middleware.RequestID)
+	s.router.Use(middleware.RealIP)
+
+	// Structured logging
+	s.router.Use(hlog.NewHandler(log.Logger), hlog.AccessHandler(accessLogger))
+
 	s.router.Use(func(h http.Handler) http.Handler {
 		return s.rememberUser(h.ServeHTTP)
 	})

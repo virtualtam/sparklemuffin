@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
@@ -107,17 +108,17 @@ func (hc *bookmarkHandlerContext) handleBookmarkAddView() func(w http.ResponseWr
 // handleBookmarkAdd processes the bookmark addition form.
 func (hc *bookmarkHandlerContext) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request) {
 	type bookmarkAddForm struct {
-		URL         string `schema:"url"`
-		Title       string `schema:"title"`
-		Description string `schema:"description"`
-		Private     bool   `schema:"private"`
-		Tags        string `schema:"tags"`
+		URL         string `form:"url"`
+		Title       string `form:"title"`
+		Description string `form:"description"`
+		Private     bool   `form:"private"`
+		Tags        string `form:"tags"`
 	}
 
 	var form bookmarkAddForm
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := parseForm(r, &form); err != nil {
+		if err := render.DecodeForm(r.Body, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark creation form")
 			PutFlashError(w, "failed to process form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -225,17 +226,17 @@ func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseW
 // handleBookmarkEdit processes the bookmark edition form.
 func (hc *bookmarkHandlerContext) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Request) {
 	type bookmarkEditForm struct {
-		URL         string `schema:"url"`
-		Title       string `schema:"title"`
-		Description string `schema:"description"`
-		Private     bool   `schema:"private"`
-		Tags        string `schema:"tags"`
+		URL         string `form:"url"`
+		Title       string `form:"title"`
+		Description string `form:"description"`
+		Private     bool   `form:"private"`
+		Tags        string `form:"tags"`
 	}
 
 	var form bookmarkEditForm
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := parseForm(r, &form); err != nil {
+		if err := render.DecodeForm(r.Body, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark edition form")
 			PutFlashError(w, "failed to process form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)

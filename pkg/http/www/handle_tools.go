@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/netscape-go/v2"
 
@@ -83,13 +84,13 @@ func (hc *toolsHandlerContext) handleToolsExportView() func(w http.ResponseWrite
 // corresponding file to the client.
 func (hc *toolsHandlerContext) handleToolsExport() func(w http.ResponseWriter, r *http.Request) {
 	type exportForm struct {
-		Visibility exporting.Visibility `schema:"visibility"`
+		Visibility exporting.Visibility `form:"visibility"`
 	}
 
 	var form exportForm
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := parseForm(r, &form); err != nil {
+		if err := render.DecodeForm(r.Body, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark export form")
 			PutFlashError(w, "failed to process form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)

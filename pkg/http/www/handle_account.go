@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -54,9 +55,9 @@ func (hc *accountHandlerContext) handleAccountView() func(w http.ResponseWriter,
 // handleAccountInfoUpdate processes the account information update form.
 func (hc *accountHandlerContext) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type infoUpdateForm struct {
-		Email       string `schema:"email"`
-		NickName    string `schema:"nick_name"`
-		DisplayName string `schema:"display_name"`
+		Email       string `form:"email"`
+		NickName    string `form:"nick_name"`
+		DisplayName string `form:"display_name"`
 	}
 
 	var form infoUpdateForm
@@ -64,7 +65,7 @@ func (hc *accountHandlerContext) handleAccountInfoUpdate() func(w http.ResponseW
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := userValue(r.Context())
 
-		if err := parseForm(r, &form); err != nil {
+		if err := render.DecodeForm(r.Body, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account information update form")
 			PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -93,9 +94,9 @@ func (hc *accountHandlerContext) handleAccountInfoUpdate() func(w http.ResponseW
 // handleAccountPasswordUpdate processes the user account password update form.
 func (hc *accountHandlerContext) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type passwordUpdateForm struct {
-		CurrentPassword         string `schema:"current_password"`
-		NewPassword             string `schema:"new_password"`
-		NewPasswordConfirmation string `schema:"new_password_confirmation"`
+		CurrentPassword         string `form:"current_password"`
+		NewPassword             string `form:"new_password"`
+		NewPasswordConfirmation string `form:"new_password_confirmation"`
 	}
 
 	var form passwordUpdateForm
@@ -103,7 +104,7 @@ func (hc *accountHandlerContext) handleAccountPasswordUpdate() func(w http.Respo
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := userValue(r.Context())
 
-		if err := parseForm(r, &form); err != nil {
+		if err := render.DecodeForm(r.Body, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account password update form")
 			PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, "/account", http.StatusSeeOther)

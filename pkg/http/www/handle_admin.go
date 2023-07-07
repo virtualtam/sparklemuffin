@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -76,17 +77,17 @@ func (hc *adminHandlerContext) handleAdminUserAddView() func(w http.ResponseWrit
 // handleAdminUserAdd processes data submitted through the user creation form.
 func (hc *adminHandlerContext) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Request) {
 	type userAddForm struct {
-		Email       string `schema:"email"`
-		NickName    string `schema:"nick_name"`
-		DisplayName string `schema:"display_name"`
-		Password    string `schema:"password"`
-		IsAdmin     bool   `schema:"is_admin"`
+		Email       string `form:"email"`
+		NickName    string `form:"nick_name"`
+		DisplayName string `form:"display_name"`
+		Password    string `form:"password"`
+		IsAdmin     bool   `form:"is_admin"`
 	}
 
 	var form userAddForm
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := parseForm(r, &form); err != nil {
+		if err := render.DecodeForm(r.Body, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user creation form")
 			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -184,11 +185,11 @@ func (hc *adminHandlerContext) handleAdminUserEditView() func(w http.ResponseWri
 // handleAdminUserEdit processes the user edition form.
 func (hc *adminHandlerContext) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Request) {
 	type userEditForm struct {
-		Email       string `schema:"email"`
-		NickName    string `schema:"nick_name"`
-		DisplayName string `schema:"display_name"`
-		Password    string `schema:"password"`
-		IsAdmin     bool   `schema:"is_admin"`
+		Email       string `form:"email"`
+		NickName    string `form:"nick_name"`
+		DisplayName string `form:"display_name"`
+		Password    string `form:"password"`
+		IsAdmin     bool   `form:"is_admin"`
 	}
 
 	var form userEditForm
@@ -196,7 +197,7 @@ func (hc *adminHandlerContext) handleAdminUserEdit() func(w http.ResponseWriter,
 	return func(w http.ResponseWriter, r *http.Request) {
 		userUUID := chi.URLParam(r, "uuid")
 
-		if err := parseForm(r, &form); err != nil {
+		if err := render.DecodeForm(r.Body, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user edition form")
 			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)

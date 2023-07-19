@@ -11,6 +11,7 @@ import (
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/pkg/http/www/static"
 	"github.com/virtualtam/sparklemuffin/pkg/importing"
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
@@ -26,6 +27,7 @@ type Server struct {
 	publicURL *url.URL
 
 	bookmarkService  *bookmark.Service
+	csrfService      *csrf.Service
 	exportingService *exporting.Service
 	importingService *importing.Service
 	queryingService  *querying.Service
@@ -87,9 +89,9 @@ func (s *Server) registerHandlers() {
 
 	// Register domain handlers
 	registerSessionHandlers(s.router, s.sessionService, s.userService)
-	registerAdminHandlers(s.router, s.userService)
-	registerAccounthandlers(s.router, s.userService)
-	registerBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.queryingService, s.userService)
+	registerAdminHandlers(s.router, s.csrfService, s.userService)
+	registerAccounthandlers(s.router, s.csrfService, s.userService)
+	registerBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.queryingService, s.userService)
 	registerTagHandlers(s.router, s.bookmarkService, s.queryingService)
 	registerToolsHandlers(s.router, s.exportingService, s.importingService)
 }

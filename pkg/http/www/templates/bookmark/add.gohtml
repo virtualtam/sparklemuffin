@@ -1,6 +1,7 @@
 {{define "content"}}
 <h2>Add bookmark</h2>
 <form action="/bookmarks/add" method="POST">
+  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
   <label for="url">URL</label>
   <input type="url"
          id="url"

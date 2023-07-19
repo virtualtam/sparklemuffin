@@ -1,7 +1,8 @@
 {{define "content"}}
 <h2>Delete bookmark</h2>
-<form action="/bookmarks/{{.UID}}/delete" method="POST">
-  <p>Delete bookmark: <a href="{{.URL}}">{{.Title}}</a>?
+<form action="/bookmarks/{{.Content.UID}}/delete" method="POST">
+  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+  <p>Delete bookmark: <a href="{{.Content.URL}}">{{.Content.Title}}</a>?
   <p>
     <button type="submit">Delete</button>
   </p>

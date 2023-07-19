@@ -216,7 +216,7 @@ func NewRootCommand() *cobra.Command {
 		&hmacKey,
 		"hmac-key",
 		defaultHMACKey,
-		"Secret HMAC key for token hashing",
+		"Secret key for HMAC session token hashing",
 	)
 
 	return cmd

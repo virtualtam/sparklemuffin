@@ -9,38 +9,39 @@
 
 {{define "informationUpdateForm"}}
 <form action="/account/info" method="POST">
+  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
   <p>
     <label for="email">Email address</label>
     <br>
     <input
-      type="email"
-      id="email"
-      name="email"
-      placeholder="Email"
-      value="{{.Email}}"
-      required="">
+           type="email"
+           id="email"
+           name="email"
+           placeholder="Email"
+           value="{{.Content.Email}}"
+           required="">
   </p>
   <p>
     <label for="nick_name">Nickname</label>
     <br>
     <input
-      type="text"
-      id="nick_name"
-      name="nick_name"
-      placeholder="Nickname"
-      value="{{.NickName}}"
-      required="">
+           type="text"
+           id="nick_name"
+           name="nick_name"
+           placeholder="Nickname"
+           value="{{.Content.NickName}}"
+           required="">
   </p>
   <p>
     <label for="display_name">Display Name</label>
     <br>
     <input
-      type="text"
-      id="display_name"
-      name="display_name"
-      placeholder="Display Name"
-      value="{{.DisplayName}}"
-      required="">
+           type="text"
+           id="display_name"
+           name="display_name"
+           placeholder="Display Name"
+           value="{{.Content.DisplayName}}"
+           required="">
   </p>
   <p>
     <button type="submit">Update information</button>
@@ -50,35 +51,36 @@
 
 {{define "passwordUpdateForm"}}
 <form action="/account/password" method="POST">
+  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
   <p>
     <label for="current_password">Current password</label>
     <br>
     <input
-      type="password"
-      id="current_password"
-      name="current_password"
-      placeholder="Current password"
-      required="">
+           type="password"
+           id="current_password"
+           name="current_password"
+           placeholder="Current password"
+           required="">
   </p>
   <p>
     <label for="new_password">New password</label>
     <br>
     <input
-      type="password"
-      id="new_password"
-      name="new_password"
-      placeholder="New password"
-      required="">
+           type="password"
+           id="new_password"
+           name="new_password"
+           placeholder="New password"
+           required="">
   </p>
   <p>
     <label for="new_password_confirmation">New password (confirmation)</label>
     <br>
     <input
-      type="password"
-      id="new_password_confirmation"
-      name="new_password_confirmation"
-      placeholder="New password (confirmation)"
-      required="">
+           type="password"
+           id="new_password_confirmation"
+           name="new_password_confirmation"
+           placeholder="New password (confirmation)"
+           required="">
   </p>
   <p>
     <button type="submit">Update password</button>

@@ -5,11 +5,18 @@ import (
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/pkg/importing"
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
+
+func WithCSRFKey(csrfKey string) optionFunc {
+	return func(s *Server) {
+		s.csrfService = csrf.NewService(csrfKey)
+	}
+}
 
 func WithPublicURL(publicURL *url.URL) optionFunc {
 	return func(s *Server) {

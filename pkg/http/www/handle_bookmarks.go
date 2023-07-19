@@ -13,14 +13,22 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
+)
+
+const (
+	actionBookmarkAdd    string = "bookmark-add"
+	actionBookmarkEdit   string = "bookmark-edit"
+	actionBookmarkDelete string = "bookmark-delete"
 )
 
 type bookmarkHandlerContext struct {
 	publicURL *url.URL
 
 	bookmarkService *bookmark.Service
+	csrfService     *csrf.Service
 	queryingService *querying.Service
 	userService     *user.Service
 
@@ -33,14 +41,16 @@ type bookmarkHandlerContext struct {
 }
 
 type bookmarkFormContent struct {
-	Bookmark *bookmark.Bookmark
-	Tags     []string
+	CSRFToken string
+	Bookmark  *bookmark.Bookmark
+	Tags      []string
 }
 
 func registerBookmarkHandlers(
 	r *chi.Mux,
 	publicURL *url.URL,
 	bookmarkService *bookmark.Service,
+	csrfService *csrf.Service,
 	queryingService *querying.Service,
 	userService *user.Service,
 ) {
@@ -48,6 +58,7 @@ func registerBookmarkHandlers(
 		publicURL: publicURL,
 
 		bookmarkService: bookmarkService,
+		csrfService:     csrfService,
 		queryingService: queryingService,
 		userService:     userService,
 
@@ -86,6 +97,7 @@ func registerBookmarkHandlers(
 func (hc *bookmarkHandlerContext) handleBookmarkAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := userValue(r.Context())
+		csrfToken := hc.csrfService.Generate(user.UUID, actionBookmarkAdd)
 
 		tags, err := hc.queryingService.TagNamesByCount(user.UUID, querying.VisibilityAll)
 		if err != nil {
@@ -97,7 +109,8 @@ func (hc *bookmarkHandlerContext) handleBookmarkAddView() func(w http.ResponseWr
 
 		viewData := Data{
 			Content: bookmarkFormContent{
-				Tags: tags,
+				CSRFToken: csrfToken,
+				Tags:      tags,
 			},
 			Title: "Add bookmark",
 		}
@@ -108,6 +121,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkAddView() func(w http.ResponseWr
 // handleBookmarkAdd processes the bookmark addition form.
 func (hc *bookmarkHandlerContext) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request) {
 	type bookmarkAddForm struct {
+		CSRFToken   string `form:"csrf_token"`
 		URL         string `form:"url"`
 		Title       string `form:"title"`
 		Description string `form:"description"`
@@ -118,17 +132,24 @@ func (hc *bookmarkHandlerContext) handleBookmarkAdd() func(w http.ResponseWriter
 	var form bookmarkAddForm
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := userValue(r.Context())
+
 		if err := render.DecodeForm(r.Body, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark creation form")
-			PutFlashError(w, "failed to process form")
+			PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		user := userValue(r.Context())
+		if !hc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionBookmarkAdd) {
+			log.Warn().Msg("failed to validate CSRF token")
+			PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
 
 		newBookmark := bookmark.Bookmark{
-			UserUUID:    user.UUID,
+			UserUUID:    ctxUser.UUID,
 			URL:         form.URL,
 			Title:       form.Title,
 			Description: form.Description,
@@ -152,6 +173,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkDeleteView() func(w http.Respons
 	return func(w http.ResponseWriter, r *http.Request) {
 		uid := chi.URLParam(r, "uid")
 		user := userValue(r.Context())
+		csrfToken := hc.csrfService.Generate(user.UUID, actionBookmarkDelete)
 
 		bookmark, err := hc.bookmarkService.ByUID(user.UUID, uid)
 		if err != nil {
@@ -162,8 +184,11 @@ func (hc *bookmarkHandlerContext) handleBookmarkDeleteView() func(w http.Respons
 		}
 
 		viewData := Data{
-			Content: bookmark,
-			Title:   fmt.Sprintf("Delete bookmark: %s", bookmark.Title),
+			Content: FormContent{
+				CSRFToken: csrfToken,
+				Content:   bookmark,
+			},
+			Title: fmt.Sprintf("Delete bookmark: %s", bookmark.Title),
 		}
 
 		hc.bookmarkDeleteView.render(w, r, viewData)
@@ -172,12 +197,30 @@ func (hc *bookmarkHandlerContext) handleBookmarkDeleteView() func(w http.Respons
 
 // handleBookmarkDelete processes the bookmark deletion form.
 func (hc *bookmarkHandlerContext) handleBookmarkDelete() func(w http.ResponseWriter, r *http.Request) {
+	type bookmarkDeleteForm struct {
+		CSRFToken string `form:"csrf_token"`
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		uid := chi.URLParam(r, "uid")
+		ctxUser := userValue(r.Context())
 
-		user := userValue(r.Context())
+		var form bookmarkDeleteForm
+		if err := render.DecodeForm(r.Body, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse bookmark deletion form")
+			PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
 
-		if err := hc.bookmarkService.Delete(user.UUID, uid); err != nil {
+		if !hc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionBookmarkDelete) {
+			log.Warn().Msg("failed to validate CSRF token")
+			PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if err := hc.bookmarkService.Delete(ctxUser.UUID, uid); err != nil {
 			log.Error().Err(err).Msg("failed to delete bookmark")
 			PutFlashError(w, "failed to delete bookmark")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -192,8 +235,8 @@ func (hc *bookmarkHandlerContext) handleBookmarkDelete() func(w http.ResponseWri
 func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		uid := chi.URLParam(r, "uid")
-
 		user := userValue(r.Context())
+		csrfToken := hc.csrfService.Generate(user.UUID, actionBookmarkEdit)
 
 		tags, err := hc.queryingService.TagNamesByCount(user.UUID, querying.VisibilityAll)
 		if err != nil {
@@ -213,8 +256,9 @@ func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseW
 
 		viewData := Data{
 			Content: bookmarkFormContent{
-				Bookmark: &bookmark,
-				Tags:     tags,
+				CSRFToken: csrfToken,
+				Bookmark:  &bookmark,
+				Tags:      tags,
 			},
 			Title: fmt.Sprintf("Edit bookmark: %s", bookmark.Title),
 		}
@@ -226,6 +270,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseW
 // handleBookmarkEdit processes the bookmark edition form.
 func (hc *bookmarkHandlerContext) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Request) {
 	type bookmarkEditForm struct {
+		CSRFToken   string `form:"csrf_token"`
 		URL         string `form:"url"`
 		Title       string `form:"title"`
 		Description string `form:"description"`
@@ -236,6 +281,9 @@ func (hc *bookmarkHandlerContext) handleBookmarkEdit() func(w http.ResponseWrite
 	var form bookmarkEditForm
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		uid := chi.URLParam(r, "uid")
+		ctxUser := userValue(r.Context())
+
 		if err := render.DecodeForm(r.Body, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark edition form")
 			PutFlashError(w, "failed to process form")
@@ -243,12 +291,15 @@ func (hc *bookmarkHandlerContext) handleBookmarkEdit() func(w http.ResponseWrite
 			return
 		}
 
-		uid := chi.URLParam(r, "uid")
-
-		user := userValue(r.Context())
+		if !hc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionBookmarkEdit) {
+			log.Warn().Msg("failed to validate CSRF token")
+			PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
 
 		editedBookmark := bookmark.Bookmark{
-			UserUUID:    user.UUID,
+			UserUUID:    ctxUser.UUID,
 			UID:         uid,
 			URL:         form.URL,
 			Title:       form.Title,

@@ -14,11 +14,15 @@ import (
 const (
 	defaultListenAddr     string = "0.0.0.0:8080"
 	defaultPublicHTTPAddr string = "http://localhost:8080"
+
+	defaultCSRFKey string = "csrf-secret-key"
 )
 
 var (
 	listenAddr     string
 	publicHTTPAddr string
+
+	csrfKey string
 )
 
 // NewRunCommand initializes a CLI command to start the HTTP server.
@@ -33,6 +37,7 @@ func NewRunCommand() *cobra.Command {
 			}
 
 			server := www.NewServer(
+				www.WithCSRFKey(csrfKey),
 				www.WithPublicURL(publicURL),
 				www.WithBookmarkService(bookmarkService),
 				www.WithExportingService(exportingService),
@@ -53,6 +58,13 @@ func NewRunCommand() *cobra.Command {
 			return httpServer.ListenAndServe()
 		},
 	}
+
+	cmd.PersistentFlags().StringVar(
+		&csrfKey,
+		"csrf-key",
+		defaultCSRFKey,
+		"Secret key for CSRF token hashing",
+	)
 
 	cmd.Flags().StringVar(
 		&listenAddr,

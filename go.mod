@@ -5,13 +5,13 @@ go 1.20
 require (
 	github.com/alecthomas/chroma v0.10.0
 	github.com/georgysavva/scany/v2 v2.0.0
-	github.com/go-chi/chi/v5 v5.0.8
-	github.com/go-chi/render v1.0.2
+	github.com/go-chi/chi/v5 v5.0.10
+	github.com/go-chi/render v1.0.3
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/feeds v1.1.1
-	github.com/jackc/pgx/v5 v5.3.1
-	github.com/jaswdr/faker v1.18.0
+	github.com/jackc/pgx/v5 v5.4.2
+	github.com/jaswdr/faker v1.18.1
 	github.com/rs/zerolog v1.29.1
 	github.com/segmentio/ksuid v1.0.4
 	github.com/spf13/cobra v1.7.0
@@ -20,11 +20,11 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.21.0
 	github.com/virtualtam/netscape-go/v2 v2.1.0
 	github.com/virtualtam/venom v1.1.0
-	github.com/yuin/goldmark v1.5.4
+	github.com/yuin/goldmark v1.5.5
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
-	golang.org/x/crypto v0.10.0
-	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
-	golang.org/x/net v0.11.0
+	golang.org/x/crypto v0.11.0
+	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
+	golang.org/x/net v0.12.0
 )
 
 require (
@@ -81,8 +81,8 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/mod v0.11.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
-	golang.org/x/text v0.10.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/tools v0.10.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230626202813-9b080da550b3 // indirect
 	google.golang.org/grpc v1.56.1 // indirect

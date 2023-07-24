@@ -33,7 +33,10 @@
          data-list="{{Join .Tags ","}}">
 
   <label for="private">Private?</label>
-  <input type="checkbox" id="private" name="private" {{if .Bookmark.Private}}checked{{end}}>
+  <input type="checkbox"
+         id="private"
+         name="private"
+         {{if .Bookmark.Private}}checked{{end}}>
   <br>
   <button type="submit">Save changes</button>
 </form>

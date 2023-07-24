@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
@@ -121,12 +120,12 @@ func (hc *bookmarkHandlerContext) handleBookmarkAddView() func(w http.ResponseWr
 // handleBookmarkAdd processes the bookmark addition form.
 func (hc *bookmarkHandlerContext) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request) {
 	type bookmarkAddForm struct {
-		CSRFToken   string `form:"csrf_token"`
-		URL         string `form:"url"`
-		Title       string `form:"title"`
-		Description string `form:"description"`
-		Private     bool   `form:"private"`
-		Tags        string `form:"tags"`
+		CSRFToken   string `schema:"csrf_token"`
+		URL         string `schema:"url"`
+		Title       string `schema:"title"`
+		Description string `schema:"description"`
+		Private     bool   `schema:"private"`
+		Tags        string `schema:"tags"`
 	}
 
 	var form bookmarkAddForm
@@ -134,7 +133,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkAdd() func(w http.ResponseWriter
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := userValue(r.Context())
 
-		if err := render.DecodeForm(r.Body, &form); err != nil {
+		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark creation form")
 			PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -198,7 +197,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkDeleteView() func(w http.Respons
 // handleBookmarkDelete processes the bookmark deletion form.
 func (hc *bookmarkHandlerContext) handleBookmarkDelete() func(w http.ResponseWriter, r *http.Request) {
 	type bookmarkDeleteForm struct {
-		CSRFToken string `form:"csrf_token"`
+		CSRFToken string `schema:"csrf_token"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -206,7 +205,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkDelete() func(w http.ResponseWri
 		ctxUser := userValue(r.Context())
 
 		var form bookmarkDeleteForm
-		if err := render.DecodeForm(r.Body, &form); err != nil {
+		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark deletion form")
 			PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -270,12 +269,12 @@ func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseW
 // handleBookmarkEdit processes the bookmark edition form.
 func (hc *bookmarkHandlerContext) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Request) {
 	type bookmarkEditForm struct {
-		CSRFToken   string `form:"csrf_token"`
-		URL         string `form:"url"`
-		Title       string `form:"title"`
-		Description string `form:"description"`
-		Private     bool   `form:"private"`
-		Tags        string `form:"tags"`
+		CSRFToken   string `schema:"csrf_token"`
+		URL         string `schema:"url"`
+		Title       string `schema:"title"`
+		Description string `schema:"description"`
+		Private     bool   `schema:"private"`
+		Tags        string `schema:"tags"`
 	}
 
 	var form bookmarkEditForm
@@ -284,7 +283,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkEdit() func(w http.ResponseWrite
 		uid := chi.URLParam(r, "uid")
 		ctxUser := userValue(r.Context())
 
-		if err := render.DecodeForm(r.Body, &form); err != nil {
+		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark edition form")
 			PutFlashError(w, "failed to process form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)

@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
@@ -79,13 +78,13 @@ func (tc *tagHandlerContext) handleTagDeleteView() func(w http.ResponseWriter, r
 // handleTagDelete processes the tag deletion form.
 func (tc *tagHandlerContext) handleTagDelete() func(w http.ResponseWriter, r *http.Request) {
 	type tagDeleteForm struct {
-		Name string `form:"name"`
+		Name string `schema:"name"`
 	}
 
 	var form tagDeleteForm
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := render.DecodeForm(r.Body, &form); err != nil {
+		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse tag deletion form")
 			PutFlashError(w, "failed to process form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -152,13 +151,13 @@ func (tc *tagHandlerContext) handleTagEditView() func(w http.ResponseWriter, r *
 // handleTagEdit processes the tag edition form.
 func (tc *tagHandlerContext) handleTagEdit() func(w http.ResponseWriter, r *http.Request) {
 	type tagEditForm struct {
-		Name string `form:"name"`
+		Name string `schema:"name"`
 	}
 
 	var form tagEditForm
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := render.DecodeForm(r.Body, &form); err != nil {
+		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse tag edition form")
 			PutFlashError(w, "failed to process form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)

@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/http/www/csrf"
@@ -95,19 +94,19 @@ func (hc *adminHandlerContext) handleAdminUserAddView() func(w http.ResponseWrit
 // handleAdminUserAdd processes data submitted through the user creation form.
 func (hc *adminHandlerContext) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Request) {
 	type userAddForm struct {
-		CSRFToken   string `form:"csrf_token"`
-		Email       string `form:"email"`
-		NickName    string `form:"nick_name"`
-		DisplayName string `form:"display_name"`
-		Password    string `form:"password"`
-		IsAdmin     bool   `form:"is_admin"`
+		CSRFToken   string `schema:"csrf_token"`
+		Email       string `schema:"email"`
+		NickName    string `schema:"nick_name"`
+		DisplayName string `schema:"display_name"`
+		Password    string `schema:"password"`
+		IsAdmin     bool   `schema:"is_admin"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		adminUser := userValue(r.Context())
 
 		var form userAddForm
-		if err := render.DecodeForm(r.Body, &form); err != nil {
+		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user creation form")
 			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -172,7 +171,7 @@ func (hc *adminHandlerContext) handleAdminUserDeleteView() func(w http.ResponseW
 // handleAdminUserDelete processes the user deletion form.
 func (hc *adminHandlerContext) handleAdminUserDelete() func(w http.ResponseWriter, r *http.Request) {
 	type userDeleteForm struct {
-		CSRFToken string `form:"csrf_token"`
+		CSRFToken string `schema:"csrf_token"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -180,7 +179,7 @@ func (hc *adminHandlerContext) handleAdminUserDelete() func(w http.ResponseWrite
 		userUUID := chi.URLParam(r, "uuid")
 
 		var form userDeleteForm
-		if err := render.DecodeForm(r.Body, &form); err != nil {
+		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user deletion form")
 			PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -244,12 +243,12 @@ func (hc *adminHandlerContext) handleAdminUserEditView() func(w http.ResponseWri
 // handleAdminUserEdit processes the user edition form.
 func (hc *adminHandlerContext) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Request) {
 	type userEditForm struct {
-		CSRFToken   string `form:"csrf_token"`
-		Email       string `form:"email"`
-		NickName    string `form:"nick_name"`
-		DisplayName string `form:"display_name"`
-		Password    string `form:"password"`
-		IsAdmin     bool   `form:"is_admin"`
+		CSRFToken   string `schema:"csrf_token"`
+		Email       string `schema:"email"`
+		NickName    string `schema:"nick_name"`
+		DisplayName string `schema:"display_name"`
+		Password    string `schema:"password"`
+		IsAdmin     bool   `schema:"is_admin"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -257,7 +256,7 @@ func (hc *adminHandlerContext) handleAdminUserEdit() func(w http.ResponseWriter,
 		userUUID := chi.URLParam(r, "uuid")
 
 		var form userEditForm
-		if err := render.DecodeForm(r.Body, &form); err != nil {
+		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user edition form")
 			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)

@@ -6,10 +6,10 @@ require (
 	github.com/alecthomas/chroma v0.10.0
 	github.com/georgysavva/scany/v2 v2.0.0
 	github.com/go-chi/chi/v5 v5.0.10
-	github.com/go-chi/render v1.0.3
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/feeds v1.1.1
+	github.com/gorilla/schema v1.2.0
 	github.com/jackc/pgx/v5 v5.4.2
 	github.com/jaswdr/faker v1.18.1
 	github.com/rs/zerolog v1.29.1
@@ -30,13 +30,12 @@ require (
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/ajg/form v1.5.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/containerd/containerd v1.7.2 // indirect
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
-	github.com/docker/docker v24.0.2+incompatible // indirect
+	github.com/docker/docker v24.0.5+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -68,8 +67,8 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc3 // indirect
-	github.com/opencontainers/runc v1.1.7 // indirect
-	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
+	github.com/opencontainers/runc v1.1.8 // indirect
+	github.com/pelletier/go-toml/v2 v2.0.9 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/xid v1.5.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect

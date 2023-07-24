@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/sparklemuffin/internal/rand"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
@@ -45,14 +44,14 @@ func registerSessionHandlers(
 // handleUserLogin processes data submitted through the user login form.
 func (hc *sessionHandlerContext) handleUserLogin() func(w http.ResponseWriter, r *http.Request) {
 	type loginForm struct {
-		Email    string `form:"email"`
-		Password string `form:"password"`
+		Email    string `schema:"email"`
+		Password string `schema:"password"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var form loginForm
 
-		if err := render.DecodeForm(r.Body, &form); err != nil {
+		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse login form")
 			PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)

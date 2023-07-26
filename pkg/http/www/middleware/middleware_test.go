@@ -1,10 +1,11 @@
-package www
+package middleware
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -42,13 +43,13 @@ func TestAdminUser(t *testing.T) {
 				gotCalls++
 			})
 
-			handler = adminUser(handler)
+			handler = AdminUser(handler)
 
 			w := httptest.NewRecorder()
 
 			r := httptest.NewRequest(http.MethodGet, "/", nil)
 			if tc.user != nil {
-				ctx := withUser(r.Context(), *tc.user)
+				ctx := httpcontext.WithUser(r.Context(), *tc.user)
 				r = r.WithContext(ctx)
 			}
 
@@ -98,13 +99,13 @@ func TestAuthenticatedUser(t *testing.T) {
 				gotCalls++
 			})
 
-			handler = authenticatedUser(handler)
+			handler = AuthenticatedUser(handler)
 
 			w := httptest.NewRecorder()
 
 			r := httptest.NewRequest(http.MethodGet, "/", nil)
 			if tc.user != nil {
-				ctx := withUser(r.Context(), *tc.user)
+				ctx := httpcontext.WithUser(r.Context(), *tc.user)
 				r = r.WithContext(ctx)
 			}
 
@@ -124,7 +125,7 @@ func TestServerStaticCacheControl(t *testing.T) {
 	want := "max-age=2592000"
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	handler = staticCacheControl(handler)
+	handler = StaticCacheControl(handler)
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/", nil)

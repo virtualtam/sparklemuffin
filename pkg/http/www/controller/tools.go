@@ -1,4 +1,4 @@
-package www
+package controller
 
 import (
 	"bufio"
@@ -13,6 +13,9 @@ import (
 	"github.com/virtualtam/netscape-go/v2"
 
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/middleware"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/importing"
 )
 
@@ -20,12 +23,12 @@ type toolsHandlerContext struct {
 	exportingService *exporting.Service
 	importingService *importing.Service
 
-	toolsView       *view
-	toolsExportView *view
-	toolsImportView *view
+	toolsView       *view.View
+	toolsExportView *view.View
+	toolsImportView *view.View
 }
 
-func registerToolsHandlers(
+func RegisterToolsHandlers(
 	r *chi.Mux,
 	exportingService *exporting.Service,
 	importingService *importing.Service,
@@ -34,15 +37,15 @@ func registerToolsHandlers(
 		exportingService: exportingService,
 		importingService: importingService,
 
-		toolsView:       newView("tools/tools.gohtml"),
-		toolsExportView: newView("tools/export.gohtml"),
-		toolsImportView: newView("tools/import.gohtml"),
+		toolsView:       view.New("tools/tools.gohtml"),
+		toolsExportView: view.New("tools/export.gohtml"),
+		toolsImportView: view.New("tools/import.gohtml"),
 	}
 
 	// bookmark management tools
 	r.Route("/tools", func(r chi.Router) {
 		r.Use(func(h http.Handler) http.Handler {
-			return authenticatedUser(h.ServeHTTP)
+			return middleware.AuthenticatedUser(h.ServeHTTP)
 		})
 
 		r.Get("/", hc.handleToolsView())
@@ -56,26 +59,26 @@ func registerToolsHandlers(
 // handleToolsView renders the tools page.
 func (hc *toolsHandlerContext) handleToolsView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := userValue(r.Context())
-		viewData := Data{
+		user := httpcontext.UserValue(r.Context())
+		viewData := view.Data{
 			Content: user,
 			Title:   "Tools",
 		}
 
-		hc.toolsView.render(w, r, viewData)
+		hc.toolsView.Render(w, r, viewData)
 	}
 }
 
 // handleToolsExportView renders the bookmark export page.
 func (hc *toolsHandlerContext) handleToolsExportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := userValue(r.Context())
-		viewData := Data{
+		user := httpcontext.UserValue(r.Context())
+		viewData := view.Data{
 			Content: user,
 			Title:   "Export bookmarks",
 		}
 
-		hc.toolsExportView.render(w, r, viewData)
+		hc.toolsExportView.Render(w, r, viewData)
 	}
 }
 
@@ -91,17 +94,17 @@ func (hc *toolsHandlerContext) handleToolsExport() func(w http.ResponseWriter, r
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark export form")
-			PutFlashError(w, "failed to process form")
+			view.PutFlashError(w, "failed to process form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		user := userValue(r.Context())
+		user := httpcontext.UserValue(r.Context())
 
 		document, err := hc.exportingService.ExportAsNetscapeDocument(user.UUID, form.Visibility)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmarks")
-			PutFlashError(w, "failed to export bookmarks")
+			view.PutFlashError(w, "failed to export bookmarks")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -109,7 +112,7 @@ func (hc *toolsHandlerContext) handleToolsExport() func(w http.ResponseWriter, r
 		marshaled, err := netscape.Marshal(document)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to marshal Netscape bookmarks")
-			PutFlashError(w, "failed to export bookmarks")
+			view.PutFlashError(w, "failed to export bookmarks")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -129,13 +132,13 @@ func (hc *toolsHandlerContext) handleToolsExport() func(w http.ResponseWriter, r
 // handleToolsExportView renders the bookmark import page.
 func (hc *toolsHandlerContext) handleToolsImportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := userValue(r.Context())
-		viewData := Data{
+		user := httpcontext.UserValue(r.Context())
+		viewData := view.Data{
 			Content: user,
 			Title:   "Import bookmarks",
 		}
 
-		hc.toolsImportView.render(w, r, viewData)
+		hc.toolsImportView.Render(w, r, viewData)
 	}
 }
 
@@ -145,7 +148,7 @@ func (hc *toolsHandlerContext) handleToolsImport() func(w http.ResponseWriter, r
 		multipartReader, err := r.MultipartReader()
 		if err != nil {
 			log.Error().Err(err).Msg("failed to access multipart reader")
-			PutFlashError(w, "failed to process import form")
+			view.PutFlashError(w, "failed to process import form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -169,7 +172,7 @@ func (hc *toolsHandlerContext) handleToolsImport() func(w http.ResponseWriter, r
 
 			if err != nil {
 				log.Error().Err(err).Msg("failed to access multipart form data")
-				PutFlashError(w, "failed to process import form")
+				view.PutFlashError(w, "failed to process import form")
 				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 				return
 			}
@@ -187,7 +190,7 @@ func (hc *toolsHandlerContext) handleToolsImport() func(w http.ResponseWriter, r
 
 			if err != nil {
 				log.Error().Err(err).Msg(fmt.Sprintf("failed to process multipart form part %q", part.FormName()))
-				PutFlashError(w, "failed to process import form")
+				view.PutFlashError(w, "failed to process import form")
 				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 				return
 			}
@@ -196,24 +199,24 @@ func (hc *toolsHandlerContext) handleToolsImport() func(w http.ResponseWriter, r
 		document, err := netscape.Unmarshal(importFileBuffer.Bytes())
 		if err != nil {
 			log.Error().Err(err).Msg("failed to process Netscape bookmark file")
-			PutFlashError(w, "failed to import bookmarks from the uploaded file")
+			view.PutFlashError(w, "failed to import bookmarks from the uploaded file")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		user := userValue(r.Context())
+		user := httpcontext.UserValue(r.Context())
 		overwrite := importing.OnConflictStrategy(onConflictStrategyBuffer.String())
 		visibility := importing.Visibility(visibilityBuffer.String())
 
 		importStatus, err := hc.importingService.ImportFromNetscapeDocument(user.UUID, document, visibility, overwrite)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to save imported bookmarks")
-			PutFlashError(w, "failed to save imported bookmarks")
+			view.PutFlashError(w, "failed to save imported bookmarks")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		PutFlashSuccess(w, fmt.Sprintf("Import status: %s", importStatus.Summary()))
+		view.PutFlashSuccess(w, fmt.Sprintf("Import status: %s", importStatus.Summary()))
 		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 	}
 }

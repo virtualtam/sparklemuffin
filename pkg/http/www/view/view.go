@@ -1,4 +1,4 @@
-package www
+package view
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/pkg/http/www/templates"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -24,7 +25,7 @@ const (
 type Data struct {
 	AtomFeedURL string
 	Content     any
-	Flash       *Flash
+	Flash       *flash
 	Title       string
 	User        *user.User
 }
@@ -35,21 +36,21 @@ type FormContent struct {
 	Content   any
 }
 
-// view represents a Web view that will be rendered by the server in response to
+// View represents a Web View that will be rendered by the server in response to
 // an HTTP client request.
-type view struct {
+type View struct {
 	Template *template.Template
 }
 
-// newView returns an initialized View, preconfigured with the default
+// New returns an initialized View, preconfigured with the default
 // application templates and page-specific templates.
-func newView(templateFiles ...string) *view {
+func New(templateFiles ...string) *View {
 	templateFiles = append(templateFiles, layoutTemplateFiles()...)
 
 	t, err := template.New("base").
 		Funcs(template.FuncMap{
 			"Join":           strings.Join,
-			"MarkdownToHTML": markdownToHTMLFunc(),
+			"MarkdownToHTML": MarkdownToHTMLFunc(),
 		}).
 		ParseFS(templates.FS, templateFiles...)
 
@@ -57,16 +58,16 @@ func newView(templateFiles ...string) *view {
 		panic(err)
 	}
 
-	return &view{
+	return &View{
 		Template: t,
 	}
 }
 
-func (v *view) handle(w http.ResponseWriter, r *http.Request) {
-	v.render(w, r, nil)
+func (v *View) Handle(w http.ResponseWriter, r *http.Request) {
+	v.Render(w, r, nil)
 }
 
-func (v *view) render(w http.ResponseWriter, r *http.Request, data interface{}) {
+func (v *View) Render(w http.ResponseWriter, r *http.Request, data interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 
 	var viewData Data
@@ -85,7 +86,7 @@ func (v *view) render(w http.ResponseWriter, r *http.Request, data interface{}) 
 	}
 
 	viewData.popFlash(w, r)
-	viewData.User = userValue(r.Context())
+	viewData.User = httpcontext.UserValue(r.Context())
 
 	var buf bytes.Buffer
 
@@ -108,7 +109,7 @@ func (d *Data) popFlash(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	flash := &Flash{}
+	flash := &flash{}
 	if err := flash.base64URLDecode(cookie.Value); err != nil {
 		log.Error().Err(err).Msg("failed to decode flash cookie")
 		return

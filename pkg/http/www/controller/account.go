@@ -1,4 +1,4 @@
-package www
+package controller
 
 import (
 	"fmt"
@@ -8,6 +8,9 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/http/www/csrf"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/middleware"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -19,10 +22,10 @@ type accountHandlerContext struct {
 	csrfService *csrf.Service
 	userService *user.Service
 
-	accountView *view
+	accountView *view.View
 }
 
-func registerAccounthandlers(
+func RegisterAccounthandlers(
 	r *chi.Mux,
 	csrfService *csrf.Service,
 	userService *user.Service,
@@ -31,13 +34,13 @@ func registerAccounthandlers(
 		csrfService: csrfService,
 		userService: userService,
 
-		accountView: newView("account/account.gohtml"),
+		accountView: view.New("account/account.gohtml"),
 	}
 
 	// user account
 	r.Route("/account", func(r chi.Router) {
 		r.Use(func(h http.Handler) http.Handler {
-			return authenticatedUser(h.ServeHTTP)
+			return middleware.AuthenticatedUser(h.ServeHTTP)
 		})
 
 		r.Get("/", hc.handleAccountView())
@@ -49,18 +52,18 @@ func registerAccounthandlers(
 // handleAccountView renders the user account management page.
 func (hc *accountHandlerContext) handleAccountView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := userValue(r.Context())
+		user := httpcontext.UserValue(r.Context())
 		csrfToken := hc.csrfService.Generate(user.UUID, actionAccountUpdate)
 
-		viewData := Data{
-			Content: FormContent{
+		viewData := view.Data{
+			Content: view.FormContent{
 				CSRFToken: csrfToken,
 				Content:   user,
 			},
 			Title: "Account",
 		}
 
-		hc.accountView.render(w, r, viewData)
+		hc.accountView.Render(w, r, viewData)
 	}
 }
 
@@ -74,19 +77,19 @@ func (hc *accountHandlerContext) handleAccountInfoUpdate() func(w http.ResponseW
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctxUser := userValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 
 		var form infoUpdateForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account information update form")
-			PutFlashError(w, "There was an error processing the form")
+			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
 		if !hc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionAccountUpdate) {
 			log.Warn().Msg("failed to validate CSRF token")
-			PutFlashError(w, "There was an error processing the form")
+			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
@@ -100,12 +103,12 @@ func (hc *accountHandlerContext) handleAccountInfoUpdate() func(w http.ResponseW
 
 		if err := hc.userService.UpdateInfo(userInfo); err != nil {
 			log.Error().Err(err).Msg("failed to update account information")
-			PutFlashError(w, "There was an error updating your information")
+			view.PutFlashError(w, "There was an error updating your information")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
-		PutFlashSuccess(w, "Your account information has been successfully updated")
+		view.PutFlashSuccess(w, "Your account information has been successfully updated")
 		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 	}
 }
@@ -120,19 +123,19 @@ func (hc *accountHandlerContext) handleAccountPasswordUpdate() func(w http.Respo
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctxUser := userValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 
 		var form passwordUpdateForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account password update form")
-			PutFlashError(w, "There was an error processing the form")
+			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
 		if !hc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionAccountUpdate) {
 			log.Warn().Msg("failed to validate CSRF token")
-			PutFlashError(w, "There was an error processing the form")
+			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
@@ -146,12 +149,12 @@ func (hc *accountHandlerContext) handleAccountPasswordUpdate() func(w http.Respo
 
 		if err := hc.userService.UpdatePassword(userPassword); err != nil {
 			log.Error().Err(err).Msg("failed to update account password")
-			PutFlashError(w, fmt.Sprintf("There was an error updating your password: %s", err))
+			view.PutFlashError(w, fmt.Sprintf("There was an error updating your password: %s", err))
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
-		PutFlashSuccess(w, "Your account password has been successfully updated")
+		view.PutFlashSuccess(w, "Your account password has been successfully updated")
 		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 	}
 }

@@ -1,4 +1,4 @@
-package www
+package view
 
 import (
 	"fmt"
@@ -39,8 +39,8 @@ var (
 	)
 )
 
-// markdownToHTML renders a Markdown string as HTML.
-func markdownToHTML(str string) (string, error) {
+// MarkdownToHTML renders a Markdown string as HTML.
+func MarkdownToHTML(str string) (string, error) {
 	var buf strings.Builder
 	if err := markdown.Convert([]byte(str), &buf); err != nil {
 		return "", fmt.Errorf("failed to render Markdown as HTML: %w", err)
@@ -49,8 +49,8 @@ func markdownToHTML(str string) (string, error) {
 	return buf.String(), nil
 }
 
-// markdownToHTMLFunc returns a function suitable for usage with html/template.
-func markdownToHTMLFunc() func(str string) template.HTML {
+// MarkdownToHTMLFunc returns a function suitable for usage with html/template.
+func MarkdownToHTMLFunc() func(str string) template.HTML {
 	return func(str string) template.HTML {
 		var buf strings.Builder
 		if err := markdown.Convert([]byte(str), &buf); err != nil {

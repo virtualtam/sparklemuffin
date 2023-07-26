@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/controller"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -24,7 +26,7 @@ func TestServerRememberUser(t *testing.T) {
 		{
 			tname: "remember token cookie set, no corresponding user",
 			rememberTokenCookie: &http.Cookie{
-				Name:     UserRememberTokenCookieName,
+				Name:     controller.UserRememberTokenCookieName,
 				Value:    "tdk_BrK5adfbUapWUIeQO1VPMkGCtaQFjvF4A0KHy2g=",
 				HttpOnly: true,
 			},
@@ -44,7 +46,7 @@ func TestServerRememberUser(t *testing.T) {
 				},
 			},
 			rememberTokenCookie: &http.Cookie{
-				Name:     UserRememberTokenCookieName,
+				Name:     controller.UserRememberTokenCookieName,
 				Value:    "tdk_BrK5adfbUapWUIeQO1VPMkGCtaQFjvF4A0KHy2g=",
 				HttpOnly: true,
 			},
@@ -89,7 +91,7 @@ func TestServerRememberUser(t *testing.T) {
 				return
 			}
 
-			got := userValue(gotContext)
+			got := httpcontext.UserValue(gotContext)
 
 			if got.Email != tc.wantUser.Email {
 				t.Errorf("want user email %q, got %q", tc.wantUser.Email, got.Email)

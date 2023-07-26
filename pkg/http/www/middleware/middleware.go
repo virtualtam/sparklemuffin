@@ -1,4 +1,4 @@
-package www
+package middleware
 
 import (
 	"net/http"
@@ -6,10 +6,11 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/hlog"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
 )
 
-// accessLogger logs information about incoming HTTP requests.
-func accessLogger(r *http.Request, status, size int, dur time.Duration) {
+// AccessLogger logs information about incoming HTTP requests.
+func AccessLogger(r *http.Request, status, size int, dur time.Duration) {
 	reqID := middleware.GetReqID(r.Context())
 
 	hlog.FromRequest(r).
@@ -25,11 +26,11 @@ func accessLogger(r *http.Request, status, size int, dur time.Duration) {
 		Msg("handle request")
 }
 
-// adminUser requires the user to have administration privileges to
+// AdminUser requires the user to have administration privileges to
 // access content.
-func adminUser(h http.HandlerFunc) http.HandlerFunc {
+func AdminUser(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := userValue(r.Context())
+		user := httpcontext.UserValue(r.Context())
 
 		if user == nil {
 			http.Error(w, "Not Found", http.StatusNotFound)
@@ -45,10 +46,10 @@ func adminUser(h http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-// authenticatedUser requires the user to be authenticated.
-func authenticatedUser(h http.HandlerFunc) http.HandlerFunc {
+// AuthenticatedUser requires the user to be authenticated.
+func AuthenticatedUser(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := userValue(r.Context())
+		user := httpcontext.UserValue(r.Context())
 
 		if user == nil {
 			http.Error(w, "Not Found", http.StatusNotFound)
@@ -59,8 +60,8 @@ func authenticatedUser(h http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-// staticCacheControl sets the Cache-Control header for static assets.
-func staticCacheControl(h http.Handler) http.HandlerFunc {
+// StaticCacheControl sets the Cache-Control header for static assets.
+func StaticCacheControl(h http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "max-age=2592000") // 30 days
 		h.ServeHTTP(w, r)

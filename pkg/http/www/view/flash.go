@@ -1,4 +1,4 @@
-package www
+package view
 
 import (
 	"encoding/base64"
@@ -24,14 +24,14 @@ const (
 	flashCookieName string = "flash"
 )
 
-// Flash represents a message that wilshl be displayed to the user when
+// flash represents a message that wilshl be displayed to the user when
 // rendering a View.
-type Flash struct {
+type flash struct {
 	Level   flashLevel `json:"level"`
 	Message string     `json:"message"`
 }
 
-func (f *Flash) base64URLDecode(src string) error {
+func (f *flash) base64URLDecode(src string) error {
 	flashBytes, err := base64.URLEncoding.DecodeString(src)
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func (f *Flash) base64URLDecode(src string) error {
 	return nil
 }
 
-func (f *Flash) base64URLEncode() (string, error) {
+func (f *flash) base64URLEncode() (string, error) {
 	flashJSON, err := json.Marshal(f)
 	if err != nil {
 		return "", err
@@ -56,7 +56,7 @@ func (f *Flash) base64URLEncode() (string, error) {
 // putFlash sets a session flash message to be displayed by the next rendered
 // view.
 func putFlash(w http.ResponseWriter, level flashLevel, message string) {
-	flash := Flash{
+	flash := flash{
 		Level:   level,
 		Message: message,
 	}

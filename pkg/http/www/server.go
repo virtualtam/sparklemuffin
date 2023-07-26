@@ -5,14 +5,18 @@ import (
 	"net/url"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/controller"
 	"github.com/virtualtam/sparklemuffin/pkg/http/www/csrf"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/pkg/http/www/static"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/importing"
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
@@ -34,7 +38,7 @@ type Server struct {
 	sessionService   *session.Service
 	userService      *user.Service
 
-	homeView *view
+	homeView *view.View
 }
 
 type optionFunc func(*Server)
@@ -44,7 +48,7 @@ func NewServer(optionFuncs ...optionFunc) *Server {
 	s := &Server{
 		router: chi.NewRouter(),
 
-		homeView: newView("static/home.gohtml"),
+		homeView: view.New("static/home.gohtml"),
 	}
 
 	for _, optionFunc := range optionFuncs {
@@ -59,11 +63,11 @@ func NewServer(optionFuncs ...optionFunc) *Server {
 // registerHandlers registers all HTTP handlers for the Web interface.
 func (s *Server) registerHandlers() {
 	// Global middleware
-	s.router.Use(middleware.RequestID)
-	s.router.Use(middleware.RealIP)
+	s.router.Use(chimiddleware.RequestID)
+	s.router.Use(chimiddleware.RealIP)
 
 	// Structured logging
-	s.router.Use(hlog.NewHandler(log.Logger), hlog.AccessHandler(accessLogger))
+	s.router.Use(hlog.NewHandler(log.Logger), hlog.AccessHandler(middleware.AccessLogger))
 
 	s.router.Use(func(h http.Handler) http.Handler {
 		return s.rememberUser(h.ServeHTTP)
@@ -80,7 +84,7 @@ func (s *Server) registerHandlers() {
 			"/*",
 			http.StripPrefix(
 				"/static/",
-				staticCacheControl(
+				middleware.StaticCacheControl(
 					http.FileServer(http.FS(static.FS)),
 				),
 			),
@@ -88,12 +92,12 @@ func (s *Server) registerHandlers() {
 	})
 
 	// Register domain handlers
-	registerSessionHandlers(s.router, s.sessionService, s.userService)
-	registerAdminHandlers(s.router, s.csrfService, s.userService)
-	registerAccounthandlers(s.router, s.csrfService, s.userService)
-	registerBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.queryingService, s.userService)
-	registerTagHandlers(s.router, s.bookmarkService, s.queryingService)
-	registerToolsHandlers(s.router, s.exportingService, s.importingService)
+	controller.RegisterSessionHandlers(s.router, s.sessionService, s.userService)
+	controller.RegisterAdminHandlers(s.router, s.csrfService, s.userService)
+	controller.RegisterAccounthandlers(s.router, s.csrfService, s.userService)
+	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.queryingService, s.userService)
+	controller.RegisterBookmarkTagHandlers(s.router, s.bookmarkService, s.queryingService)
+	controller.RegisterToolsHandlers(s.router, s.exportingService, s.importingService)
 }
 
 // ServeHTTP satisfies the http.Handler interface,
@@ -104,8 +108,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // handleHomeView renders the application's home page.
 func (s *Server) handleHomeView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		viewData := Data{Title: "Home"}
-		s.homeView.render(w, r, viewData)
+		viewData := view.Data{Title: "Home"}
+		s.homeView.Render(w, r, viewData)
 	}
 }
 
@@ -113,7 +117,7 @@ func (s *Server) handleHomeView() func(w http.ResponseWriter, r *http.Request) {
 // remember token cookie is set.
 func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie(UserRememberTokenCookieName)
+		cookie, err := r.Cookie(controller.UserRememberTokenCookieName)
 		if err != nil {
 			h(w, r)
 			return
@@ -132,7 +136,7 @@ func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		ctx = withUser(ctx, user)
+		ctx = httpcontext.WithUser(ctx, user)
 		r = r.WithContext(ctx)
 
 		h(w, r)

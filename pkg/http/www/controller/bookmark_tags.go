@@ -1,4 +1,4 @@
-package www
+package controller
 
 import (
 	"encoding/base64"
@@ -10,6 +10,9 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/middleware"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
 )
 
@@ -17,12 +20,12 @@ type tagHandlerContext struct {
 	bookmarkService *bookmark.Service
 	queryingService *querying.Service
 
-	tagDeleteView *view
-	tagEditView   *view
-	tagListView   *view
+	tagDeleteView *view.View
+	tagEditView   *view.View
+	tagListView   *view.View
 }
 
-func registerTagHandlers(
+func RegisterBookmarkTagHandlers(
 	r *chi.Mux,
 	bookmarkService *bookmark.Service,
 	queryingService *querying.Service,
@@ -31,15 +34,15 @@ func registerTagHandlers(
 		bookmarkService: bookmarkService,
 		queryingService: queryingService,
 
-		tagDeleteView: newView("tag/delete.gohtml"),
-		tagEditView:   newView("tag/edit.gohtml"),
-		tagListView:   newView("tag/list.gohtml"),
+		tagDeleteView: view.New("tag/delete.gohtml"),
+		tagEditView:   view.New("tag/edit.gohtml"),
+		tagListView:   view.New("tag/list.gohtml"),
 	}
 
 	// bookmark tags
 	r.Route("/tags", func(r chi.Router) {
 		r.Use(func(h http.Handler) http.Handler {
-			return authenticatedUser(h.ServeHTTP)
+			return middleware.AuthenticatedUser(h.ServeHTTP)
 		})
 
 		r.Get("/", tc.handleTagListView())
@@ -58,7 +61,7 @@ func (tc *tagHandlerContext) handleTagDeleteView() func(w http.ResponseWriter, r
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
 			log.Error().Err(err).Msg("invalid tag")
-			PutFlashError(w, "invalid tag")
+			view.PutFlashError(w, "invalid tag")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -66,12 +69,12 @@ func (tc *tagHandlerContext) handleTagDeleteView() func(w http.ResponseWriter, r
 		name := string(nameBytes)
 		tag := querying.NewTag(name, 0)
 
-		viewData := Data{
+		viewData := view.Data{
 			Content: tag,
 			Title:   fmt.Sprintf("Delete tag: %s", name),
 		}
 
-		tc.tagDeleteView.render(w, r, viewData)
+		tc.tagDeleteView.Render(w, r, viewData)
 	}
 }
 
@@ -86,7 +89,7 @@ func (tc *tagHandlerContext) handleTagDelete() func(w http.ResponseWriter, r *ht
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse tag deletion form")
-			PutFlashError(w, "failed to process form")
+			view.PutFlashError(w, "failed to process form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -96,14 +99,14 @@ func (tc *tagHandlerContext) handleTagDelete() func(w http.ResponseWriter, r *ht
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
 			log.Error().Err(err).Msg("invalid tag")
-			PutFlashError(w, "invalid tag")
+			view.PutFlashError(w, "invalid tag")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		name := string(nameBytes)
 
-		user := userValue(r.Context())
+		user := httpcontext.UserValue(r.Context())
 
 		tagDelete := bookmark.TagDeleteQuery{
 			UserUUID: user.UUID,
@@ -113,12 +116,12 @@ func (tc *tagHandlerContext) handleTagDelete() func(w http.ResponseWriter, r *ht
 		updated, err := tc.bookmarkService.DeleteTag(tagDelete)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to delete tag")
-			PutFlashError(w, "failed to delete tag")
+			view.PutFlashError(w, "failed to delete tag")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		PutFlashSuccess(w, fmt.Sprintf("Tag deleted from %d bookmarks", updated))
+		view.PutFlashSuccess(w, fmt.Sprintf("Tag deleted from %d bookmarks", updated))
 		http.Redirect(w, r, "/tags", http.StatusSeeOther)
 	}
 }
@@ -131,7 +134,7 @@ func (tc *tagHandlerContext) handleTagEditView() func(w http.ResponseWriter, r *
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
 			log.Error().Err(err).Msg("invalid tag")
-			PutFlashError(w, "invalid tag")
+			view.PutFlashError(w, "invalid tag")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -139,12 +142,12 @@ func (tc *tagHandlerContext) handleTagEditView() func(w http.ResponseWriter, r *
 		name := string(nameBytes)
 		tag := querying.NewTag(name, 0)
 
-		viewData := Data{
+		viewData := view.Data{
 			Content: tag,
 			Title:   fmt.Sprintf("Edit tag: %s", name),
 		}
 
-		tc.tagEditView.render(w, r, viewData)
+		tc.tagEditView.Render(w, r, viewData)
 	}
 }
 
@@ -159,7 +162,7 @@ func (tc *tagHandlerContext) handleTagEdit() func(w http.ResponseWriter, r *http
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse tag edition form")
-			PutFlashError(w, "failed to process form")
+			view.PutFlashError(w, "failed to process form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -169,14 +172,14 @@ func (tc *tagHandlerContext) handleTagEdit() func(w http.ResponseWriter, r *http
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
 			log.Error().Err(err).Msg("invalid tag")
-			PutFlashError(w, "invalid tag")
+			view.PutFlashError(w, "invalid tag")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		name := string(nameBytes)
 
-		user := userValue(r.Context())
+		user := httpcontext.UserValue(r.Context())
 
 		tagNameUpdate := bookmark.TagUpdateQuery{
 			UserUUID:    user.UUID,
@@ -187,12 +190,12 @@ func (tc *tagHandlerContext) handleTagEdit() func(w http.ResponseWriter, r *http
 		updated, err := tc.bookmarkService.UpdateTag(tagNameUpdate)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to rename tag")
-			PutFlashError(w, "failed to rename tag")
+			view.PutFlashError(w, "failed to rename tag")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		PutFlashSuccess(w, fmt.Sprintf("Tag updated for %d bookmarks", updated))
+		view.PutFlashSuccess(w, fmt.Sprintf("Tag updated for %d bookmarks", updated))
 		http.Redirect(w, r, "/tags", http.StatusSeeOther)
 	}
 }
@@ -200,14 +203,14 @@ func (tc *tagHandlerContext) handleTagEdit() func(w http.ResponseWriter, r *http
 // handleTagListView renders the tag list view for the current authenticated user.
 func (tc *tagHandlerContext) handleTagListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var viewData Data
-		user := userValue(r.Context())
+		var viewData view.Data
+		user := httpcontext.UserValue(r.Context())
 
 		pageNumberParam := r.URL.Query().Get("page")
 		pageNumber, err := getPageNumber(pageNumberParam)
 		if err != nil {
 			log.Error().Err(err).Str("page_number", pageNumberParam).Msg("invalid page number")
-			PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
+			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
 			http.Redirect(w, r, "/tags", http.StatusSeeOther)
 			return
 		}
@@ -225,12 +228,12 @@ func (tc *tagHandlerContext) handleTagListView() func(w http.ResponseWriter, r *
 			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
-				PutFlashError(w, msg)
+				view.PutFlashError(w, msg)
 				http.Redirect(w, r, "/tags", http.StatusSeeOther)
 				return
 			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve tags")
-				PutFlashError(w, "failed to retrieve tags")
+				view.PutFlashError(w, "failed to retrieve tags")
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 				return
 			}
@@ -248,12 +251,12 @@ func (tc *tagHandlerContext) handleTagListView() func(w http.ResponseWriter, r *
 			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
-				PutFlashError(w, msg)
+				view.PutFlashError(w, msg)
 				http.Redirect(w, r, "/tags", http.StatusSeeOther)
 				return
 			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve tags")
-				PutFlashError(w, "failed to retrieve tags")
+				view.PutFlashError(w, "failed to retrieve tags")
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 				return
 			}
@@ -262,6 +265,6 @@ func (tc *tagHandlerContext) handleTagListView() func(w http.ResponseWriter, r *
 			viewData.Content = tagPage
 		}
 
-		tc.tagListView.render(w, r, viewData)
+		tc.tagListView.Render(w, r, viewData)
 	}
 }

@@ -1,4 +1,4 @@
-package www
+package controller
 
 import (
 	"net/http"

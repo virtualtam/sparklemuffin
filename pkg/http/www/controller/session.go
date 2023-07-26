@@ -1,4 +1,4 @@
-package www
+package controller
 
 import (
 	"net/http"
@@ -7,6 +7,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/sparklemuffin/internal/rand"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -20,10 +22,10 @@ type sessionHandlerContext struct {
 	sessionService *session.Service
 	userService    *user.Service
 
-	userLoginView *view
+	userLoginView *view.View
 }
 
-func registerSessionHandlers(
+func RegisterSessionHandlers(
 	r *chi.Mux,
 	sessionService *session.Service,
 	userService *user.Service,
@@ -32,11 +34,11 @@ func registerSessionHandlers(
 		sessionService: sessionService,
 		userService:    userService,
 
-		userLoginView: newView("session/login.gohtml"),
+		userLoginView: view.New("session/login.gohtml"),
 	}
 
 	// authentication
-	r.Get("/login", hc.userLoginView.handle)
+	r.Get("/login", hc.userLoginView.Handle)
 	r.Post("/login", hc.handleUserLogin())
 	r.Post("/logout", hc.handleUserLogout())
 }
@@ -53,7 +55,7 @@ func (hc *sessionHandlerContext) handleUserLogin() func(w http.ResponseWriter, r
 
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse login form")
-			PutFlashError(w, err.Error())
+			view.PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -61,14 +63,14 @@ func (hc *sessionHandlerContext) handleUserLogin() func(w http.ResponseWriter, r
 		user, err := hc.userService.Authenticate(form.Email, form.Password)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to authenticate user")
-			PutFlashError(w, "invalid email or password")
+			view.PutFlashError(w, "invalid email or password")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		if err := hc.setUserRememberToken(w, user.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to set remember token")
-			PutFlashError(w, "failed to save session cookie")
+			view.PutFlashError(w, "failed to save session cookie")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -89,7 +91,7 @@ func (hc *sessionHandlerContext) handleUserLogout() func(w http.ResponseWriter, 
 		}
 		http.SetCookie(w, &cookie)
 
-		user := userValue(r.Context())
+		user := httpcontext.UserValue(r.Context())
 		if user == nil {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return

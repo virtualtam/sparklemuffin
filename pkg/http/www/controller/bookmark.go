@@ -1,4 +1,4 @@
-package www
+package controller
 
 import (
 	"errors"
@@ -13,6 +13,9 @@ import (
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/http/www/csrf"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/middleware"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -31,12 +34,12 @@ type bookmarkHandlerContext struct {
 	queryingService *querying.Service
 	userService     *user.Service
 
-	bookmarkAddView    *view
-	bookmarkDeleteView *view
-	bookmarkEditView   *view
-	bookmarkListView   *view
+	bookmarkAddView    *view.View
+	bookmarkDeleteView *view.View
+	bookmarkEditView   *view.View
+	bookmarkListView   *view.View
 
-	publicBookmarkListView *view
+	publicBookmarkListView *view.View
 }
 
 type bookmarkFormContent struct {
@@ -45,7 +48,7 @@ type bookmarkFormContent struct {
 	Tags      []string
 }
 
-func registerBookmarkHandlers(
+func RegisterBookmarkHandlers(
 	r *chi.Mux,
 	publicURL *url.URL,
 	bookmarkService *bookmark.Service,
@@ -61,18 +64,18 @@ func registerBookmarkHandlers(
 		queryingService: queryingService,
 		userService:     userService,
 
-		bookmarkAddView:    newView("bookmark/add.gohtml"),
-		bookmarkDeleteView: newView("bookmark/delete.gohtml"),
-		bookmarkEditView:   newView("bookmark/edit.gohtml"),
-		bookmarkListView:   newView("bookmark/list.gohtml"),
+		bookmarkAddView:    view.New("bookmark/add.gohtml"),
+		bookmarkDeleteView: view.New("bookmark/delete.gohtml"),
+		bookmarkEditView:   view.New("bookmark/edit.gohtml"),
+		bookmarkListView:   view.New("bookmark/list.gohtml"),
 
-		publicBookmarkListView: newView("public/bookmark_list.gohtml"),
+		publicBookmarkListView: view.New("public/bookmark_list.gohtml"),
 	}
 
 	// bookmarks
 	r.Route("/bookmarks", func(r chi.Router) {
 		r.Use(func(h http.Handler) http.Handler {
-			return authenticatedUser(h.ServeHTTP)
+			return middleware.AuthenticatedUser(h.ServeHTTP)
 		})
 
 		r.Get("/", hc.handleBookmarkListView())
@@ -95,25 +98,25 @@ func registerBookmarkHandlers(
 // handleBookmarkAddView renders the bookmark addition form.
 func (hc *bookmarkHandlerContext) handleBookmarkAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := userValue(r.Context())
+		user := httpcontext.UserValue(r.Context())
 		csrfToken := hc.csrfService.Generate(user.UUID, actionBookmarkAdd)
 
 		tags, err := hc.queryingService.TagNamesByCount(user.UUID, querying.VisibilityAll)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve tags")
-			PutFlashError(w, "failed to retrieve existing tags")
+			view.PutFlashError(w, "failed to retrieve existing tags")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		viewData := Data{
+		viewData := view.Data{
 			Content: bookmarkFormContent{
 				CSRFToken: csrfToken,
 				Tags:      tags,
 			},
 			Title: "Add bookmark",
 		}
-		hc.bookmarkAddView.render(w, r, viewData)
+		hc.bookmarkAddView.Render(w, r, viewData)
 	}
 }
 
@@ -131,18 +134,18 @@ func (hc *bookmarkHandlerContext) handleBookmarkAdd() func(w http.ResponseWriter
 	var form bookmarkAddForm
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctxUser := userValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark creation form")
-			PutFlashError(w, "There was an error processing the form")
+			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		if !hc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionBookmarkAdd) {
 			log.Warn().Msg("failed to validate CSRF token")
-			PutFlashError(w, "There was an error processing the form")
+			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
@@ -158,7 +161,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkAdd() func(w http.ResponseWriter
 
 		if err := hc.bookmarkService.Add(newBookmark); err != nil {
 			log.Error().Err(err).Msg("failed to add bookmark")
-			PutFlashError(w, "failed to add bookmark")
+			view.PutFlashError(w, "failed to add bookmark")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -171,26 +174,26 @@ func (hc *bookmarkHandlerContext) handleBookmarkAdd() func(w http.ResponseWriter
 func (hc *bookmarkHandlerContext) handleBookmarkDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		uid := chi.URLParam(r, "uid")
-		user := userValue(r.Context())
+		user := httpcontext.UserValue(r.Context())
 		csrfToken := hc.csrfService.Generate(user.UUID, actionBookmarkDelete)
 
 		bookmark, err := hc.bookmarkService.ByUID(user.UUID, uid)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmark")
-			PutFlashError(w, "failed to retrieve bookmark")
+			view.PutFlashError(w, "failed to retrieve bookmark")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		viewData := Data{
-			Content: FormContent{
+		viewData := view.Data{
+			Content: view.FormContent{
 				CSRFToken: csrfToken,
 				Content:   bookmark,
 			},
 			Title: fmt.Sprintf("Delete bookmark: %s", bookmark.Title),
 		}
 
-		hc.bookmarkDeleteView.render(w, r, viewData)
+		hc.bookmarkDeleteView.Render(w, r, viewData)
 	}
 }
 
@@ -202,26 +205,26 @@ func (hc *bookmarkHandlerContext) handleBookmarkDelete() func(w http.ResponseWri
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		uid := chi.URLParam(r, "uid")
-		ctxUser := userValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 
 		var form bookmarkDeleteForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark deletion form")
-			PutFlashError(w, "There was an error processing the form")
+			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
 		if !hc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionBookmarkDelete) {
 			log.Warn().Msg("failed to validate CSRF token")
-			PutFlashError(w, "There was an error processing the form")
+			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
 		if err := hc.bookmarkService.Delete(ctxUser.UUID, uid); err != nil {
 			log.Error().Err(err).Msg("failed to delete bookmark")
-			PutFlashError(w, "failed to delete bookmark")
+			view.PutFlashError(w, "failed to delete bookmark")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -234,13 +237,13 @@ func (hc *bookmarkHandlerContext) handleBookmarkDelete() func(w http.ResponseWri
 func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		uid := chi.URLParam(r, "uid")
-		user := userValue(r.Context())
+		user := httpcontext.UserValue(r.Context())
 		csrfToken := hc.csrfService.Generate(user.UUID, actionBookmarkEdit)
 
 		tags, err := hc.queryingService.TagNamesByCount(user.UUID, querying.VisibilityAll)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve tags")
-			PutFlashError(w, "failed to retrieve existing tags")
+			view.PutFlashError(w, "failed to retrieve existing tags")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -248,12 +251,12 @@ func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseW
 		bookmark, err := hc.bookmarkService.ByUID(user.UUID, uid)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmark")
-			PutFlashError(w, "failed to retrieve bookmark")
+			view.PutFlashError(w, "failed to retrieve bookmark")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
-		viewData := Data{
+		viewData := view.Data{
 			Content: bookmarkFormContent{
 				CSRFToken: csrfToken,
 				Bookmark:  &bookmark,
@@ -262,7 +265,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseW
 			Title: fmt.Sprintf("Edit bookmark: %s", bookmark.Title),
 		}
 
-		hc.bookmarkEditView.render(w, r, viewData)
+		hc.bookmarkEditView.Render(w, r, viewData)
 	}
 }
 
@@ -281,18 +284,18 @@ func (hc *bookmarkHandlerContext) handleBookmarkEdit() func(w http.ResponseWrite
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		uid := chi.URLParam(r, "uid")
-		ctxUser := userValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark edition form")
-			PutFlashError(w, "failed to process form")
+			view.PutFlashError(w, "failed to process form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		if !hc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionBookmarkEdit) {
 			log.Warn().Msg("failed to validate CSRF token")
-			PutFlashError(w, "There was an error processing the form")
+			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
@@ -309,7 +312,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkEdit() func(w http.ResponseWrite
 
 		if err := hc.bookmarkService.Update(editedBookmark); err != nil {
 			log.Error().Err(err).Msg("failed to edit bookmark")
-			PutFlashError(w, "failed to edit bookmark")
+			view.PutFlashError(w, "failed to edit bookmark")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -321,14 +324,14 @@ func (hc *bookmarkHandlerContext) handleBookmarkEdit() func(w http.ResponseWrite
 // handleBookmarkListView renders the bookmark list for the current authenticated user.
 func (hc *bookmarkHandlerContext) handleBookmarkListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var viewData Data
-		user := userValue(r.Context())
+		var viewData view.Data
+		user := httpcontext.UserValue(r.Context())
 
 		pageNumberParam := r.URL.Query().Get("page")
 		pageNumber, err := getPageNumber(pageNumberParam)
 		if err != nil {
 			log.Error().Err(err).Str("page_number", pageNumberParam).Msg("invalid page number")
-			PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
+			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
 			http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
 			return
 		}
@@ -344,12 +347,12 @@ func (hc *bookmarkHandlerContext) handleBookmarkListView() func(w http.ResponseW
 			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
-				PutFlashError(w, msg)
+				view.PutFlashError(w, msg)
 				http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
 				return
 			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve bookmarks")
-				PutFlashError(w, "failed to retrieve bookmarks")
+				view.PutFlashError(w, "failed to retrieve bookmarks")
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 				return
 			}
@@ -366,12 +369,12 @@ func (hc *bookmarkHandlerContext) handleBookmarkListView() func(w http.ResponseW
 			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
-				PutFlashError(w, msg)
+				view.PutFlashError(w, msg)
 				http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
 				return
 			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve bookmarks")
-				PutFlashError(w, "failed to retrieve bookmarks")
+				view.PutFlashError(w, "failed to retrieve bookmarks")
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 				return
 			}
@@ -380,14 +383,14 @@ func (hc *bookmarkHandlerContext) handleBookmarkListView() func(w http.ResponseW
 			viewData.Content = bookmarksPage
 		}
 
-		hc.bookmarkListView.render(w, r, viewData)
+		hc.bookmarkListView.Render(w, r, viewData)
 	}
 }
 
 // handlePublicBookmarkListView renders the public bookmark list for a registered user.
 func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var viewData Data
+		var viewData view.Data
 
 		nickName := chi.URLParam(r, "nickname")
 
@@ -397,7 +400,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 		owner, err := hc.userService.ByNickName(nickName)
 		if err != nil {
 			log.Error().Err(err).Str("nickname", nickName).Msg("failed to retrieve user")
-			PutFlashError(w, "unknown user")
+			view.PutFlashError(w, "unknown user")
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
@@ -406,7 +409,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 		pageNumber, err := getPageNumber(pageNumberParam)
 		if err != nil {
 			log.Error().Err(err).Str("page_number", pageNumberParam).Msg("invalid page number")
-			PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
+			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -423,12 +426,12 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
-				PutFlashError(w, msg)
+				view.PutFlashError(w, msg)
 				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 				return
 			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve bookmarks")
-				PutFlashError(w, "failed to retrieve bookmarks")
+				view.PutFlashError(w, "failed to retrieve bookmarks")
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 				return
 			}
@@ -444,12 +447,12 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
-				PutFlashError(w, msg)
+				view.PutFlashError(w, msg)
 				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 				return
 			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve bookmarks")
-				PutFlashError(w, "failed to retrieve bookmarks")
+				view.PutFlashError(w, "failed to retrieve bookmarks")
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 				return
 			}
@@ -461,14 +464,14 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 		viewData.AtomFeedURL = fmt.Sprintf("/u/%s/feed/atom", bookmarkPage.Owner.NickName)
 		viewData.Content = bookmarkPage
 
-		hc.publicBookmarkListView.render(w, r, viewData)
+		hc.publicBookmarkListView.Render(w, r, viewData)
 	}
 }
 
 // handlePublicBookmarkPermalinkView renders a given public bookmark for a registered user.
 func (hc *bookmarkHandlerContext) handlePublicBookmarkPermalinkView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var viewData Data
+		var viewData view.Data
 
 		nickName := chi.URLParam(r, "nickname")
 		uid := chi.URLParam(r, "uid")
@@ -479,7 +482,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkPermalinkView() func(w htt
 		owner, err := hc.userService.ByNickName(nickName)
 		if err != nil {
 			log.Error().Err(err).Str("nickname", nickName).Msg("failed to retrieve user")
-			PutFlashError(w, "unknown user")
+			view.PutFlashError(w, "unknown user")
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
@@ -487,7 +490,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkPermalinkView() func(w htt
 		bookmarkPage, err := hc.queryingService.PublicBookmarkByUID(owner.UUID, uid)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmarks")
-			PutFlashError(w, "failed to retrieve bookmarks")
+			view.PutFlashError(w, "failed to retrieve bookmarks")
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
@@ -496,7 +499,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkPermalinkView() func(w htt
 		viewData.Title = fmt.Sprintf("%s's bookmarks", owner.DisplayName)
 		viewData.Content = bookmarkPage
 
-		hc.publicBookmarkListView.render(w, r, viewData)
+		hc.publicBookmarkListView.Render(w, r, viewData)
 	}
 }
 

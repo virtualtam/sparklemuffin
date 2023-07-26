@@ -1,4 +1,4 @@
-package www
+package controller
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/feeds"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
 )
 
@@ -27,7 +28,7 @@ func bookmarksToFeed(publicURL *url.URL, owner querying.Owner, bookmarks []bookm
 		}
 
 		if b.Description != "" {
-			htmlDescription, err := markdownToHTML(b.Description)
+			htmlDescription, err := view.MarkdownToHTML(b.Description)
 			if err != nil {
 				return &feeds.Feed{}, fmt.Errorf("failed to render Markdown description: %w", err)
 			}

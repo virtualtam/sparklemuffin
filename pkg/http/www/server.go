@@ -8,6 +8,9 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
+	slokmetrics "github.com/slok/go-http-metrics/metrics/prometheus"
+	slokmiddleware "github.com/slok/go-http-metrics/middleware"
+	slokstd "github.com/slok/go-http-metrics/middleware/std"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
@@ -65,6 +68,17 @@ func (s *Server) registerHandlers() {
 	// Global middleware
 	s.router.Use(chimiddleware.RequestID)
 	s.router.Use(chimiddleware.RealIP)
+
+	prometheusMiddleware := slokmiddleware.New(
+		slokmiddleware.Config{
+			Recorder: slokmetrics.NewRecorder(
+				slokmetrics.Config{
+					Prefix: metricsPrefix,
+				},
+			),
+		},
+	)
+	s.router.Use(slokstd.HandlerProvider("", prometheusMiddleware))
 
 	// Structured logging
 	s.router.Use(hlog.NewHandler(log.Logger), hlog.AccessHandler(middleware.AccessLogger))

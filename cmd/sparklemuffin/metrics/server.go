@@ -1,0 +1,41 @@
+package metrics
+
+import (
+	"net/http"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+const (
+	webroot = `<html>
+<head><title>SparkleMuffin</title></head>
+<body>
+  <h1>SparkleMuffin</h1>
+  <p><a href="/metrics">Metrics</a></p>
+</body>
+</html>`
+)
+
+// NewServer initializes a Prometheus metrics registry, registers metrics collectors
+// and returns a HTTP server to expose them.
+func NewServer(metricsListenAddr string) *http.Server {
+	router := http.NewServeMux()
+
+	router.Handle("/metrics", promhttp.Handler())
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(webroot))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
+
+	metricsServer := &http.Server{
+		Addr:         metricsListenAddr,
+		Handler:      router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+	}
+
+	return metricsServer
+}

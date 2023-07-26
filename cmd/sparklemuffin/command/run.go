@@ -8,6 +8,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/metrics"
 	"github.com/virtualtam/sparklemuffin/pkg/http/www"
 )
 
@@ -15,12 +16,16 @@ const (
 	defaultListenAddr     string = "0.0.0.0:8080"
 	defaultPublicHTTPAddr string = "http://localhost:8080"
 
+	defaultMetricsListenAddr string = "127.0.0.1:8081"
+
 	defaultCSRFKey string = "csrf-secret-key"
 )
 
 var (
 	listenAddr     string
 	publicHTTPAddr string
+
+	metricsListenAddr string
 
 	csrfKey string
 )
@@ -31,6 +36,17 @@ func NewRunCommand() *cobra.Command {
 		Use:   "run",
 		Short: "Start the HTTP server",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Metrics server
+			go func() {
+				metricsServer := metrics.NewServer(metricsListenAddr)
+				log.Info().Str("metrics_addr", metricsListenAddr).Msg("starting metrics server")
+
+				if err := metricsServer.ListenAndServe(); err != nil {
+					log.Error().Err(err).Msg("metrics server stopped")
+				}
+			}()
+
+			// SparkleMuffin server
 			publicURL, err := url.Parse(publicHTTPAddr)
 			if err != nil {
 				return fmt.Errorf("failed to parse public HTTP address: %w", err)
@@ -54,7 +70,7 @@ func NewRunCommand() *cobra.Command {
 				WriteTimeout: 15 * time.Second,
 			}
 
-			log.Info().Str("addr", listenAddr).Msg("starting HTTP server")
+			log.Info().Str("http_addr", listenAddr).Msg("starting HTTP server")
 			return httpServer.ListenAndServe()
 		},
 	}
@@ -70,7 +86,14 @@ func NewRunCommand() *cobra.Command {
 		&listenAddr,
 		"listen-addr",
 		defaultListenAddr,
-		"Listen to this address",
+		"Listen to this address (host:port)",
+	)
+
+	cmd.Flags().StringVar(
+		&metricsListenAddr,
+		"metrics-listen-addr",
+		defaultMetricsListenAddr,
+		"Listen to this address for Prometheus metrics (host:port)",
 	)
 
 	cmd.Flags().StringVar(

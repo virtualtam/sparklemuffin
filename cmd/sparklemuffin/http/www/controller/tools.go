@@ -12,10 +12,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/netscape-go/v2"
 
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/middleware"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
-	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
-	"github.com/virtualtam/sparklemuffin/pkg/http/www/middleware"
-	"github.com/virtualtam/sparklemuffin/pkg/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/importing"
 )
 

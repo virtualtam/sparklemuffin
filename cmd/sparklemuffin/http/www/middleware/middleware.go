@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/hlog"
-	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
 )
 
 // AccessLogger logs information about incoming HTTP requests.

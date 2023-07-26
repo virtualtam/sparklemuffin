@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
-	"github.com/virtualtam/sparklemuffin/pkg/http/www/templates"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/templates"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 

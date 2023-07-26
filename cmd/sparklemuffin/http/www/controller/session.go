@@ -6,9 +6,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
 	"github.com/virtualtam/sparklemuffin/internal/rand"
-	"github.com/virtualtam/sparklemuffin/pkg/http/www/httpcontext"
-	"github.com/virtualtam/sparklemuffin/pkg/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )

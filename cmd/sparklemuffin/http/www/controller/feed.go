@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/feeds"
 
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
 )
 

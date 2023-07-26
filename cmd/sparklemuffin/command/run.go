@@ -8,8 +8,8 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/metrics"
-	"github.com/virtualtam/sparklemuffin/pkg/http/www"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/metrics"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www"
 )
 
 const (

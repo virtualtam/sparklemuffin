@@ -3,9 +3,9 @@ package www
 import (
 	"net/url"
 
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
-	"github.com/virtualtam/sparklemuffin/pkg/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/pkg/importing"
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"

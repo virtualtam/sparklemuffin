@@ -9,7 +9,7 @@ import (
 
 // A BookmarkPage holds a set of paginated bookmarks.
 type BookmarkPage struct {
-	// Owner exposes public matadata for the User owning the bookmarks.
+	// Owner exposes public metadata for the User owning the bookmarks.
 	Owner Owner
 
 	PageNumber         uint
@@ -78,7 +78,7 @@ func NewTag(name string, count uint) Tag {
 
 // A TagPage holds a set of paginated bookmark tags.
 type TagPage struct {
-	// Owner exposes public matadata for the User owning the bookmarks.
+	// Owner exposes public metadata for the User owning the bookmarks.
 	Owner Owner
 
 	PageNumber         uint

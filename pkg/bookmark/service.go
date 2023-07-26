@@ -9,13 +9,14 @@ type Service struct {
 	r Repository
 }
 
-// NewService initializes and returns a Bookmark Service.
+// NewService initializes and returns a bookmark Service.
 func NewService(r Repository) *Service {
 	return &Service{
 		r: r,
 	}
 }
 
+// Add creates a new bookmark.
 func (s *Service) Add(bookmark Bookmark) error {
 	now := time.Now().UTC()
 
@@ -32,10 +33,12 @@ func (s *Service) Add(bookmark Bookmark) error {
 	return s.r.BookmarkAdd(bookmark)
 }
 
+// All returns all bookmarks for a given user.
 func (s *Service) All(userUUID string) ([]Bookmark, error) {
 	return s.r.BookmarkGetAll(userUUID)
 }
 
+// ByUID returns a bookmark for a given user and UID.
 func (s *Service) ByUID(userUUID string, uid string) (Bookmark, error) {
 	b := &Bookmark{
 		UserUUID: userUUID,
@@ -57,6 +60,7 @@ func (s *Service) ByUID(userUUID string, uid string) (Bookmark, error) {
 	return s.r.BookmarkGetByUID(userUUID, uid)
 }
 
+// ByUID returns a bookmark for a given user and URL.
 func (s *Service) ByURL(userUUID string, u string) (Bookmark, error) {
 	b := &Bookmark{
 		UserUUID: userUUID,
@@ -79,6 +83,7 @@ func (s *Service) ByURL(userUUID string, u string) (Bookmark, error) {
 	return s.r.BookmarkGetByURL(userUUID, b.URL)
 }
 
+// Delete permanently deletes a bookmark.
 func (s *Service) Delete(userUUID, uid string) error {
 	b := Bookmark{
 		UserUUID: userUUID,
@@ -100,6 +105,7 @@ func (s *Service) Delete(userUUID, uid string) error {
 	return s.r.BookmarkDelete(userUUID, uid)
 }
 
+// Update updates all data for an existing bookmark.
 func (s *Service) Update(bookmark Bookmark) error {
 	now := time.Now().UTC()
 	bookmark.UpdatedAt = now
@@ -113,6 +119,7 @@ func (s *Service) Update(bookmark Bookmark) error {
 	return s.r.BookmarkUpdate(bookmark)
 }
 
+// DeleteTag deletes a given tag from all bookmarks for a given user.
 func (s *Service) DeleteTag(dq TagDeleteQuery) (int64, error) {
 	now := time.Now().UTC()
 
@@ -151,6 +158,7 @@ func (s *Service) DeleteTag(dq TagDeleteQuery) (int64, error) {
 	return s.r.BookmarkTagUpdateMany(bookmarks)
 }
 
+// UpdateTag updates a given tag for all bookmarks for a given user.
 func (s *Service) UpdateTag(uq TagUpdateQuery) (int64, error) {
 	now := time.Now().UTC()
 

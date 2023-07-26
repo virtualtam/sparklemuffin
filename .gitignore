@@ -1,7 +1,7 @@
 bench/
 build/
 
-yawbe.test
+sparklemuffin.test
 
 coverage.out
 coverage.html

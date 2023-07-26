@@ -2,12 +2,19 @@ package importing
 
 import "errors"
 
+// Visibility defines how bookmarks are imported.
 type Visibility string
 
 const (
+	// Keep the existing value for imported bookmarks; if missing,
+	// bookmarks will be imported as public.
 	VisibilityDefault Visibility = "default"
+
+	// Import all bookmarks as private.
 	VisibilityPrivate Visibility = "private"
-	VisibilityPublic  Visibility = "public"
+
+	// Import all bookmarks as public.
+	VisibilityPublic Visibility = "public"
 )
 
 var (

@@ -1,6 +1,6 @@
 package querying
 
-// Owner exposes public matadata for the User owning the displayed bookmarks.
+// Owner exposes public metadata for the User owning the displayed bookmarks.
 type Owner struct {
 	// UUID is the internal identifier for this User.
 	UUID string

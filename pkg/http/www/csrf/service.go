@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	// CSRF tokens older than this duration will be considered invalid.
 	defaultCSRFTokenTimeout time.Duration = 1 * time.Hour
 )
 

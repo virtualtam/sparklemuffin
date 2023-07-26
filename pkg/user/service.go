@@ -244,6 +244,7 @@ func (s *Service) UpdatePassword(passwordUpdate PasswordUpdate) error {
 	return s.UpdatePasswordHash(user)
 }
 
+// UpdatePasswordHash updates an existing user's password hash.
 func (s *Service) UpdatePasswordHash(user User) error {
 	err := s.runValidationFuncs(
 		&user,

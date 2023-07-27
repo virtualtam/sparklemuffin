@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -19,10 +21,17 @@ const (
 
 // NewServer initializes a Prometheus metrics registry, registers metrics collectors
 // and returns a HTTP server to expose them.
-func NewServer(metricsListenAddr string) *http.Server {
+func NewServer(metricsListenAddr string) (*http.Server, *prometheus.Registry) {
+	metricsRegistry := prometheus.NewRegistry()
+	metricsRegistry.MustRegister(
+		collectors.NewGoCollector(),
+	)
+
+	opts := promhttp.HandlerOpts{}
+
 	router := http.NewServeMux()
 
-	router.Handle("/metrics", promhttp.Handler())
+	router.Handle("/metrics", promhttp.HandlerFor(metricsRegistry, opts))
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte(webroot))
 		if err != nil {
@@ -37,5 +46,5 @@ func NewServer(metricsListenAddr string) *http.Server {
 		WriteTimeout: 15 * time.Second,
 	}
 
-	return metricsServer
+	return metricsServer, metricsRegistry
 }

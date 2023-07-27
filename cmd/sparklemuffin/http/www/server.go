@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 	slokmetrics "github.com/slok/go-http-metrics/metrics/prometheus"
@@ -32,6 +33,8 @@ var _ http.Handler = &Server{}
 type Server struct {
 	router    *chi.Mux
 	publicURL *url.URL
+
+	metricsRegistry *prometheus.Registry
 
 	bookmarkService  *bookmark.Service
 	csrfService      *csrf.Service
@@ -69,16 +72,19 @@ func (s *Server) registerHandlers() {
 	s.router.Use(chimiddleware.RequestID)
 	s.router.Use(chimiddleware.RealIP)
 
-	prometheusMiddleware := slokmiddleware.New(
-		slokmiddleware.Config{
-			Recorder: slokmetrics.NewRecorder(
-				slokmetrics.Config{
-					Prefix: metricsPrefix,
-				},
-			),
-		},
-	)
-	s.router.Use(slokstd.HandlerProvider("", prometheusMiddleware))
+	if s.metricsRegistry != nil {
+		prometheusMiddleware := slokmiddleware.New(
+			slokmiddleware.Config{
+				Recorder: slokmetrics.NewRecorder(
+					slokmetrics.Config{
+						Prefix:   metricsPrefix,
+						Registry: s.metricsRegistry,
+					},
+				),
+			},
+		)
+		s.router.Use(slokstd.HandlerProvider("", prometheusMiddleware))
+	}
 
 	// Structured logging
 	s.router.Use(hlog.NewHandler(log.Logger), hlog.AccessHandler(middleware.AccessLogger))

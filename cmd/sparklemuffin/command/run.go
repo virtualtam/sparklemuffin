@@ -37,8 +37,9 @@ func NewRunCommand() *cobra.Command {
 		Short: "Start the HTTP server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Metrics server
+			metricsServer, metricsRegistry := metrics.NewServer(metricsListenAddr)
+
 			go func() {
-				metricsServer := metrics.NewServer(metricsListenAddr)
 				log.Info().Str("metrics_addr", metricsListenAddr).Msg("starting metrics server")
 
 				if err := metricsServer.ListenAndServe(); err != nil {
@@ -54,6 +55,7 @@ func NewRunCommand() *cobra.Command {
 
 			server := www.NewServer(
 				www.WithCSRFKey(csrfKey),
+				www.WithMetricsRegistry(metricsRegistry),
 				www.WithPublicURL(publicURL),
 				www.WithBookmarkService(bookmarkService),
 				www.WithExportingService(exportingService),

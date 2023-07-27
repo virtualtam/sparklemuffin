@@ -3,6 +3,8 @@ package www
 import (
 	"net/url"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
@@ -15,6 +17,12 @@ import (
 func WithCSRFKey(csrfKey string) optionFunc {
 	return func(s *Server) {
 		s.csrfService = csrf.NewService(csrfKey)
+	}
+}
+
+func WithMetricsRegistry(registry *prometheus.Registry) optionFunc {
+	return func(s *Server) {
+		s.metricsRegistry = registry
 	}
 }
 

@@ -43,7 +43,7 @@ func NewRunCommand() *cobra.Command {
 				Msg("global: setting up services")
 
 			// Metrics server
-			metricsServer, metricsRegistry := metrics.NewServer(metricsListenAddr)
+			metricsServer, metricsRegistry := metrics.NewServer(rootCmdName, metricsListenAddr, versionDetails)
 
 			go func() {
 				log.Info().Str("metrics_addr", metricsListenAddr).Msg("metrics: listening for HTTP requests")
@@ -61,7 +61,7 @@ func NewRunCommand() *cobra.Command {
 
 			server := www.NewServer(
 				www.WithCSRFKey(csrfKey),
-				www.WithMetricsRegistry(metricsRegistry),
+				www.WithMetricsRegistry(rootCmdName, metricsRegistry),
 				www.WithPublicURL(publicURL),
 				www.WithBookmarkService(bookmarkService),
 				www.WithExportingService(exportingService),

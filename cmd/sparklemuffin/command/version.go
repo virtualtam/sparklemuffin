@@ -7,7 +7,6 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/carlmjohnson/versioninfo"
 	"github.com/spf13/cobra"
 )
 
@@ -20,37 +19,14 @@ var (
 	versionFormatJson bool
 )
 
-type versionDetails struct {
-	Short       string     `json:"short"`
-	Revision    string     `json:"revision"`
-	CommittedAt *time.Time `json:"last_commit,omitempty"`
-	DirtyBuild  bool       `json:"dirty_build"`
-}
-
-func newVersionDetails() *versionDetails {
-	v := &versionDetails{
-		Short:      versioninfo.Short(),
-		Revision:   versioninfo.Revision,
-		DirtyBuild: versioninfo.DirtyBuild,
-	}
-
-	if !versioninfo.LastCommit.IsZero() {
-		v.CommittedAt = &versioninfo.LastCommit
-	}
-
-	return v
-}
-
 // NewVersionCommand initializes and returns a CLI command to display the program version.
 func NewVersionCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   versionCmdName,
 		Short: "Display the prorgam version",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			details := newVersionDetails()
-
 			if versionFormatJson {
-				detailsBytes, err := json.Marshal(details)
+				detailsBytes, err := json.Marshal(versionDetails)
 				if err != nil {
 					return fmt.Errorf("failed to marshal version details as JSON: %w", err)
 				}
@@ -63,21 +39,21 @@ func NewVersionCommand() *cobra.Command {
 			if versionVerbose {
 				tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
 
-				fmt.Fprintf(tw, "Version:\t%s\n", details.Short)
-				fmt.Fprintf(tw, "Revision:\t%s\n", details.Revision)
+				fmt.Fprintf(tw, "Version:\t%s\n", versionDetails.Short)
+				fmt.Fprintf(tw, "Revision:\t%s\n", versionDetails.Revision)
 
-				if details.CommittedAt != nil && !details.CommittedAt.IsZero() {
-					fmt.Fprintf(tw, "Committed At:\t%s\n", details.CommittedAt.Format(time.UnixDate))
+				if versionDetails.CommittedAt != nil && !versionDetails.CommittedAt.IsZero() {
+					fmt.Fprintf(tw, "Committed At:\t%s\n", versionDetails.CommittedAt.Format(time.UnixDate))
 				}
 
-				fmt.Fprintf(tw, "Dirty Build:\t%t\n", details.DirtyBuild)
+				fmt.Fprintf(tw, "Dirty Build:\t%t\n", versionDetails.DirtyBuild)
 
 				tw.Flush()
 
 				return nil
 			}
 
-			fmt.Println(rootCmdName, "version", details.Short)
+			fmt.Println(rootCmdName, "version", versionDetails.Short)
 
 			return nil
 		},

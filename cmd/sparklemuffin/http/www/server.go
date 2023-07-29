@@ -34,6 +34,7 @@ type Server struct {
 	router    *chi.Mux
 	publicURL *url.URL
 
+	metricsPrefix   string
 	metricsRegistry *prometheus.Registry
 
 	bookmarkService  *bookmark.Service
@@ -77,7 +78,7 @@ func (s *Server) registerHandlers() {
 			slokmiddleware.Config{
 				Recorder: slokmetrics.NewRecorder(
 					slokmetrics.Config{
-						Prefix:   metricsPrefix,
+						Prefix:   s.metricsPrefix,
 						Registry: s.metricsRegistry,
 					},
 				),

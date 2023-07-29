@@ -8,11 +8,16 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/virtualtam/venom"
+
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/config"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/version"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/exporting"
@@ -20,10 +25,6 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
-	"github.com/virtualtam/venom"
-
-	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 const (
@@ -43,6 +44,8 @@ const (
 var (
 	defaultLogLevelValue string = zerolog.LevelInfoValue
 	logLevelValue        string
+
+	versionDetails *version.Details
 
 	hmacKey string
 
@@ -71,6 +74,8 @@ func NewRootCommand() *cobra.Command {
 		Use:   rootCmdName,
 		Short: "Web Bookmark Manager",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			versionDetails = version.NewDetails()
+
 			if cmd.Name() == versionCmdName {
 				// Do not setup the service stack for these commands
 				return nil

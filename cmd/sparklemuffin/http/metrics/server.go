@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/version"
 )
 
 const (
@@ -21,10 +22,11 @@ const (
 
 // NewServer initializes a Prometheus metrics registry, registers metrics collectors
 // and returns a HTTP server to expose them.
-func NewServer(metricsListenAddr string) (*http.Server, *prometheus.Registry) {
+func NewServer(metricsPrefix string, metricsListenAddr string, versionDetails *version.Details) (*http.Server, *prometheus.Registry) {
 	metricsRegistry := prometheus.NewRegistry()
 	metricsRegistry.MustRegister(
 		collectors.NewGoCollector(),
+		newVersionCollector(metricsPrefix, versionDetails),
 	)
 
 	opts := promhttp.HandlerOpts{}

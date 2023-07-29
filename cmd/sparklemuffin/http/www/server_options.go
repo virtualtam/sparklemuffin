@@ -20,8 +20,9 @@ func WithCSRFKey(csrfKey string) optionFunc {
 	}
 }
 
-func WithMetricsRegistry(registry *prometheus.Registry) optionFunc {
+func WithMetricsRegistry(prefix string, registry *prometheus.Registry) optionFunc {
 	return func(s *Server) {
+		s.metricsPrefix = prefix
 		s.metricsRegistry = registry
 	}
 }

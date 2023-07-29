@@ -27,6 +27,8 @@ import (
 )
 
 const (
+	rootCmdName string = "sparklemuffin"
+
 	defaultHMACKey string = "hmac-secret-key"
 
 	databaseDriver string = "pgx"
@@ -66,9 +68,14 @@ var (
 // NewRootCommand initializes the main CLI entrypoint and common command flags.
 func NewRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "sparklemuffin",
+		Use:   rootCmdName,
 		Short: "Web Bookmark Manager",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if cmd.Name() == versionCmdName {
+				// Do not setup the service stack for these commands
+				return nil
+			}
+
 			var err error
 
 			// Configuration file lookup paths
@@ -97,13 +104,12 @@ func NewRootCommand() *cobra.Command {
 				return err
 			}
 
-			log.Info().Str("log_level", logLevelValue).Msg("setting log level")
 			zerolog.SetGlobalLevel(logLevel)
 
 			if configFileUsed := v.ConfigFileUsed(); configFileUsed != "" {
-				log.Info().Str("config_file", v.ConfigFileUsed()).Msg("using configuration file")
+				log.Info().Str("config_file", v.ConfigFileUsed()).Msg("configuration: using file")
 			} else {
-				log.Info().Strs("config_paths", configPaths).Msg("no configuration file found")
+				log.Info().Strs("config_paths", configPaths).Msg("configuration: no file found")
 			}
 
 			// Encode the database password with percent encoding in case it contains special characters.
@@ -126,7 +132,7 @@ func NewRootCommand() *cobra.Command {
 					Str("database_driver", databaseDriver).
 					Str("database_addr", databaseAddr).
 					Str("database_name", databaseName).
-					Msg("failed to create database connection pool")
+					Msg("database: failed to create connection pool")
 				return err
 			}
 
@@ -136,7 +142,7 @@ func NewRootCommand() *cobra.Command {
 					Str("database_driver", databaseDriver).
 					Str("database_addr", databaseAddr).
 					Str("database_name", databaseName).
-					Msg("failed to ping database")
+					Msg("database: failed to ping")
 				return err
 			}
 
@@ -144,7 +150,7 @@ func NewRootCommand() *cobra.Command {
 				Str("database_driver", databaseDriver).
 				Str("database_addr", databaseAddr).
 				Str("database_name", databaseName).
-				Msg("successfully created database connection pool")
+				Msg("database: successfully created connection pool")
 
 			// Main database repository
 			repository := postgresql.NewRepository(pgxPool)

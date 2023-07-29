@@ -23,11 +23,10 @@ func main() {
 		command.NewCreateAdminUserCommand(),
 		command.NewMigrateCommand(),
 		command.NewRunCommand(),
+		command.NewVersionCommand(),
 	}
 
-	for _, cmd := range commands {
-		rootCommand.AddCommand(cmd)
-	}
+	rootCommand.AddCommand(commands...)
 
 	cobra.CheckErr(rootCommand.Execute())
 }

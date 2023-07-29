@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/carlmjohnson/versioninfo"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/metrics"
@@ -36,21 +37,26 @@ func NewRunCommand() *cobra.Command {
 		Use:   "run",
 		Short: "Start the HTTP server",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			log.Info().
+				Str("log_level", logLevelValue).
+				Str("version", versioninfo.Short()).
+				Msg("global: setting up services")
+
 			// Metrics server
 			metricsServer, metricsRegistry := metrics.NewServer(metricsListenAddr)
 
 			go func() {
-				log.Info().Str("metrics_addr", metricsListenAddr).Msg("starting metrics server")
+				log.Info().Str("metrics_addr", metricsListenAddr).Msg("metrics: listening for HTTP requests")
 
 				if err := metricsServer.ListenAndServe(); err != nil {
-					log.Error().Err(err).Msg("metrics server stopped")
+					log.Error().Err(err).Msg("metrics: server stopped")
 				}
 			}()
 
 			// SparkleMuffin server
 			publicURL, err := url.Parse(publicHTTPAddr)
 			if err != nil {
-				return fmt.Errorf("failed to parse public HTTP address: %w", err)
+				return fmt.Errorf("%s: failed to parse public HTTP address: %w", rootCmdName, err)
 			}
 
 			server := www.NewServer(
@@ -72,12 +78,12 @@ func NewRunCommand() *cobra.Command {
 				WriteTimeout: 15 * time.Second,
 			}
 
-			log.Info().Str("http_addr", listenAddr).Msg("starting HTTP server")
+			log.Info().Str("http_addr", listenAddr).Msgf("%s: listening for HTTP requests", rootCmdName)
 			return httpServer.ListenAndServe()
 		},
 	}
 
-	cmd.PersistentFlags().StringVar(
+	cmd.Flags().StringVar(
 		&csrfKey,
 		"csrf-key",
 		defaultCSRFKey,

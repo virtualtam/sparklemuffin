@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/alecthomas/chroma v0.10.0
+	github.com/carlmjohnson/versioninfo v0.22.4
 	github.com/georgysavva/scany/v2 v2.0.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/golang-migrate/migrate/v4 v4.16.2

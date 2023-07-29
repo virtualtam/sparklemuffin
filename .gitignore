@@ -5,3 +5,5 @@ sparklemuffin.test
 
 coverage.out
 coverage.html
+
+.vscode/

@@ -10,7 +10,7 @@ import (
 type Details struct {
 	Short       string     `json:"short"`
 	Revision    string     `json:"revision"`
-	CommittedAt *time.Time `json:"last_commit,omitempty"`
+	CommittedAt *time.Time `json:"commited_at,omitempty"`
 	DirtyBuild  bool       `json:"dirty_build"`
 }
 

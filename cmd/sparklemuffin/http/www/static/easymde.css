@@ -1,5 +1,8 @@
 .EasyMDEContainer {
-  width: 97ch;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  width: 96ch;
 }
 
 .EasyMDEContainer .CodeMirror {

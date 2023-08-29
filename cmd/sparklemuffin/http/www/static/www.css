@@ -26,10 +26,11 @@
   --nord15: #b48ead;
 
   /* Nord Theme (Light) */
-  --accent: var(--nord13);
+  --accent: var(--nord10);
   --accent-bg: var(--nord5);
+  --anchor: var(--nord10);
   --bg: var(--nord4);
-  --border: var(--nord1);
+  --border: var(--nord3);
   --code: var(--nord1);
   --text: var(--nord1);
   --text-light: var(--nord2);
@@ -37,8 +38,10 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Nord Theme (Dark)*/
+    /* Nord Theme (Dark) */
+    --accent: var(--nord13);
     --accent-bg: var(--nord1);
+    --anchor: var(--nord9);
     --bg: var(--nord0);
     --border: var(--nord3);
     --code: var(--nord4);
@@ -95,22 +98,24 @@ body>header nav>form>button {
   padding: 0 .5rem;
   border: none;
   background: none;
-  color: #bf616a;
+  color: var(--nord11);
   font-family: var(--sans-font);
+  font-weight: bold;
 }
 
 body>header nav>form>button:hover {
-  color: #bf616a;
+  color: var(--nord11);
   text-decoration: underline;
 }
 
-body>main,
 body>footer {
+  border-top: 1px solid var(--accent-bg);
   grid-column: 1;
-  padding-left: 2rem;
 }
 
 body>main {
+  grid-column: 1;
+  padding-left: 2rem;
   padding-top: 0;
 }
 
@@ -131,6 +136,10 @@ blockquote {
   margin: 0 0 1rem 1rem;
   padding: 0 .8rem;
   border-left-color: var(--text);
+}
+
+p {
+  margin: .5rem 0 .5rem 1.5rem;
 }
 
 .search {
@@ -157,8 +166,8 @@ blockquote {
 
 .bookmark .private {
   border-radius: 5px;
-  background-color: #bf616a;
-  color: #2e3440;
+  background-color: var(--nord11);
+  color: var(--nord0);
   font-size: .9rem;
   padding: .1rem .5rem;
 }
@@ -173,15 +182,15 @@ blockquote {
 }
 
 .bookmark .description a {
-  color: #81a1c1;
+  color: var(--anchor);
 }
 
 .bookmark .description a:visited {
-  color: #b48ead;
+  color: var(--nord15);
 }
 
 .tag {
-  border: 1px solid var(--accent-bg);
+  border: 2px solid var(--accent-bg);
   border-radius: 5px;
   background-color: var(--accent-bg);
   font-size: .9rem;
@@ -189,9 +198,9 @@ blockquote {
 }
 
 .tag:hover {
-  color: #eceff4;
-  background-color: #4c566a;
-  border: 1px solid #8fbcbb;
+  color: var(--nord6);
+  /* background-color: var(--nord3); */
+  border: 2px solid var(--nord7);
 }
 
 .tag a {
@@ -206,7 +215,7 @@ blockquote {
 }
 
 .tag-delete a {
-  color: #bf616a;
+  color: var(--nord11);
 }
 
 .tag-delete a:hover {
@@ -215,7 +224,7 @@ blockquote {
 }
 
 .tag-edit a {
-  color: #81a1c1;
+  color: var(--nord9);
 }
 
 .tag-edit a:hover {
@@ -265,23 +274,23 @@ blockquote {
 }
 
 .flash-error {
-  color: #bf616a;
+  color: var(--nord11);
 }
 
 .flash-info {
-  color: #4c566a;
+  color: var(--nord3);
 }
 
 .flash-success {
-  color: #a3be8c;
+  color: var(--nord14);
 }
 
 .flash-warning {
-  color: #d08770;
+  color: var(--nord12);
 }
 
 .logo {
-  color: #a3be8c;
+  color: var(--nord14);
   font-family: 'DejaVu Sans Mono', 'Consolas', 'Lucida Console', monospace;
 }
 

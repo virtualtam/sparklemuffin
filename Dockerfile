@@ -1,5 +1,5 @@
 # Step 1: Build Go binaries
-FROM golang:1.20-bullseye as builder
+FROM golang:1.21-bookworm as builder
 
 ARG CGO_ENABLED=1
 
@@ -11,7 +11,7 @@ ADD . .
 RUN --mount=type=cache,target=/root/.cache/go-build make build
 
 # Step 2: Build the actual image
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 RUN groupadd \
         --gid 1000 \

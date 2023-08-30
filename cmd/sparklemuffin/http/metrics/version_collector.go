@@ -8,31 +8,31 @@ import (
 )
 
 type versionCollector struct {
-	commitedAtEpoch string
-	isDirty         string
-	revision        string
-	version         string
+	committedAtEpoch string
+	isDirty          string
+	revision         string
+	version          string
 
 	versionDesc *prometheus.Desc
 }
 
 func newVersionCollector(metricsPrefix string, versionDetails *version.Details) prometheus.Collector {
-	var commitedAtEpoch string
+	var committedAtEpoch string
 
 	if versionDetails.CommittedAt != nil && !versionDetails.CommittedAt.IsZero() {
-		commitedAtEpoch = strconv.FormatInt(versionDetails.CommittedAt.Unix(), 10)
+		committedAtEpoch = strconv.FormatInt(versionDetails.CommittedAt.Unix(), 10)
 	}
 
 	return &versionCollector{
-		commitedAtEpoch: commitedAtEpoch,
-		isDirty:         strconv.FormatBool(versionDetails.DirtyBuild),
-		revision:        versionDetails.Revision,
-		version:         versionDetails.Short,
+		committedAtEpoch: committedAtEpoch,
+		isDirty:          strconv.FormatBool(versionDetails.DirtyBuild),
+		revision:         versionDetails.Revision,
+		version:          versionDetails.Short,
 
 		versionDesc: prometheus.NewDesc(
 			prometheus.BuildFQName(metricsPrefix, "", "version"),
 			"Build Version",
-			[]string{"commited_at_seconds", "is_dirty", "revision", "version"},
+			[]string{"committed_at_seconds", "is_dirty", "revision", "version"},
 			nil,
 		),
 	}
@@ -50,7 +50,7 @@ func (vc *versionCollector) Collect(ch chan<- prometheus.Metric) {
 		vc.versionDesc,
 		prometheus.UntypedValue,
 		1,
-		vc.commitedAtEpoch,
+		vc.committedAtEpoch,
 		vc.isDirty,
 		vc.revision,
 		vc.version,

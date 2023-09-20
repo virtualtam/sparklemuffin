@@ -124,6 +124,10 @@ body>main>form>label {
   padding-top: .8rem;
 }
 
+textarea {
+  height: auto;
+}
+
 a {
   text-decoration: none;
 }

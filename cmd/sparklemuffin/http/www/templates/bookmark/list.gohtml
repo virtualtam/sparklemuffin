@@ -21,18 +21,20 @@
           <a href="/bookmarks/{{.UID}}/edit">Edit</a>
           -
           <a href="/bookmarks/{{.UID}}/delete">Delete</a>
+        {{- with .Tags}}
+          <div>
+          tags:
+          {{- range $index, $tag := .}}
+          {{- if $index}},{{end}}
+          <a href="/bookmarks?search={{$tag}}">{{$tag}}</a>
+          {{- end}}
+          </div>
+        {{- end}}
       </div>
       {{- with .Description}}
       <div class="description">
         {{. | MarkdownToHTML}}
       </div>
-      {{- end}}
-      {{- with .Tags}}
-        <div>
-        {{- range .}}
-        <span class="tag"><a href="/bookmarks?search={{.}}">{{.}}</a></span>
-        {{- end}}
-        </div>
       {{- end}}
     </div>
     </li>

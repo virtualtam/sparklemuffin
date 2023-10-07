@@ -48,18 +48,20 @@
           {{.CreatedAt.Format "2006-01-02"}}
           -
           <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">Permalink</a>
+        {{- with .Tags}}
+          <div>
+          tags:
+          {{- range $index, $tag := .}}
+          {{- if $index}},{{end}}
+          <a href="/u/{{$.Owner.NickName}}/bookmarks?search={{$tag}}">{{$tag}}</a>
+          {{- end}}
+          </div>
+        {{- end}}
       </div>
       {{- with .Description}}
       <div class="description">
         {{. | MarkdownToHTML}}
       </div>
-      {{- end}}
-      {{- with .Tags}}
-        <div>
-        {{- range .}}
-        <span class="tag"><a href="/u/{{$.Owner.NickName}}/bookmarks?search={{.}}">{{.}}</a></span>
-        {{- end}}
-        </div>
       {{- end}}
     </div>
   </li>

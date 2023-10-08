@@ -107,3 +107,12 @@ body>header nav>form>button:hover {
   cursor: pointer;
   text-decoration: 2px var(--text) underline;
 }
+
+body>footer {
+  border-top: 2px solid var(--text);
+  text-align: center;
+}
+
+.logo {
+  color: green;
+}

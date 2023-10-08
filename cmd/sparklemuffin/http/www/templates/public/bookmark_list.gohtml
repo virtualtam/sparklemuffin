@@ -20,19 +20,7 @@
 {{end}}
 </div>
 
-<div class="center pagination">
-  <p>
-    {{if lt .PreviousPageNumber .PageNumber }}
-    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page=1">&lt;&lt;</a>
-    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}">&lt;</a>
-    {{end}}
-    {{.PageNumber}} / {{.TotalPages}}
-    {{if lt .PageNumber .TotalPages }}
-    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">&gt;</a>
-    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}">&gt;&gt;</a>
-    {{end}}
-  </p>
-</div>
+{{template "pagination" .}}
 
 <ol start="{{.Offset}}">
 {{range .Bookmarks}}
@@ -68,16 +56,22 @@
 {{end}}
 </ol>
 
-<div class="center pagination">
+{{template "pagination" .}}
+{{end}}
+{{define "pagination"}}
+<div class="pagination">
   <p>
+    Page <span class="page-number">{{.PageNumber}}</span> of <span class="page-number">{{.TotalPages}}</span>
+    <br>
+    Go to:
     {{if lt .PreviousPageNumber .PageNumber }}
-    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page=1">&lt;&lt;</a>
-    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}">&lt;</a>
+    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page=1">first</a>,
+    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}">previous</a>
+    {{if ne .PageNumber .TotalPages}},{{end}}
     {{end}}
-    {{.PageNumber}} / {{.TotalPages}}
     {{if lt .PageNumber .TotalPages }}
-    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">&gt;</a>
-    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}">&gt;&gt;</a>
+    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">next</a>,
+    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}">last</a>
     {{end}}
   </p>
 </div>

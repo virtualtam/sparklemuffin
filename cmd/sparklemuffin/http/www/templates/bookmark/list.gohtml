@@ -65,16 +65,19 @@
 {{end}}
 
 {{define "pagination"}}
-<div class="center pagination">
+<div class="pagination">
   <p>
+    Page <span class="page-number">{{.PageNumber}}</span> of <span class="page-number">{{.TotalPages}}</span>
+    <br>
+    Go to:
     {{if lt .PreviousPageNumber .PageNumber }}
-    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page=1">&lt;&lt;</a>
-    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}">&lt;</a>
+    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page=1">first</a>,
+    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}">previous</a>
+    {{if ne .PageNumber .TotalPages}},{{end}}
     {{end}}
-    {{.PageNumber}} / {{.TotalPages}}
     {{if lt .PageNumber .TotalPages }}
-    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">&gt;</a>
-    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}">&gt;&gt;</a>
+    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">next</a>,
+    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}">last</a>
     {{end}}
   </p>
 </div>

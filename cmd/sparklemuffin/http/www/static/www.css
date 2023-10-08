@@ -116,3 +116,18 @@ body>footer {
 .logo {
   color: green;
 }
+
+/* Bookmarks */
+.page-number {
+  font-weight: bold;
+}
+
+.pagination a {
+  color: var(--text);
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.pagination a:hover {
+  text-decoration: underline;
+}

@@ -19,6 +19,7 @@
   font-display: block;
 }
 
+/* Global */
 * {
   font-size: 16px;
 }
@@ -34,4 +35,75 @@ html {
   padding-right: 3%;
   margin: 0 auto;
   background: #F5F5F0;
+}
+
+/* Theme */
+:root {
+  --text: black;
+  --important: red;
+}
+
+/* Navigation */
+body>header {
+  display: grid;
+  text-align: left;
+}
+
+@media(min-width: 500px) {
+  body>header {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  #nav-account {
+    text-align: right;
+  }
+
+  #nav-account,
+  #nav-categories
+  {
+    border-bottom: 2px solid var(--text);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+  }
+}
+
+#nav-account,
+#nav-categories
+{
+  text-transform: uppercase;
+}
+
+body>header nav>a {
+  color: var(--text);
+  font-weight: bold;
+  margin-right: 10px;
+  text-decoration: none;
+}
+
+body>header nav>a:hover {
+  text-decoration: 2px var(--text) underline;
+}
+
+body>header nav>a:visited {
+  color: var(--text);
+}
+
+body>header nav>form {
+  display: inline;
+}
+
+body>header nav>form>button {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--important);
+  font-family: exo2, sans;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+body>header nav>form>button:hover {
+  cursor: pointer;
+  text-decoration: 2px var(--text) underline;
 }

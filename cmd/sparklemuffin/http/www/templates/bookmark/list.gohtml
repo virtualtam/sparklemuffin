@@ -5,31 +5,36 @@
   {{range .Bookmarks}}
     <li>
     <div class="bookmark">
-      <div>
-        {{- if .Private}}
-          <span class="private">Private</span>
-        {{- end}}
-        <span class="title"><a href="{{.URL}}">{{.Title}}</a></span>
+      <div class="title">
+        <span>
+          {{- if .Private}}
+            <span class="private">[Private]</span>
+          {{- end}}
+          <a href="{{.URL}}">{{.Title}}</a>
+        </span>
+        <date>{{.CreatedAt.Format "2006-01-02"}}<date>
       </div>
       <div class="metadata">
-          {{.CreatedAt.Format "2006-01-02"}}
-          {{- if not .Private}}
-          -
-          <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">Permalink</a>
-          {{- end}}
-          -
-          <a href="/bookmarks/{{.UID}}/edit">Edit</a>
-          -
-          <a href="/bookmarks/{{.UID}}/delete">Delete</a>
-        {{- with .Tags}}
-          <div>
+        <div class="metadata-tags">
+          {{- with .Tags}}
           tags:
-          {{- range $index, $tag := .}}
-          {{- if $index}},{{end}}
-          <a href="/bookmarks?search={{$tag}}">{{$tag}}</a>
+            {{- range $index, $tag := .}}
+            {{- if $index}},{{end}}
+            <a href="/bookmarks?search={{$tag}}">{{$tag}}</a>
+            {{- end}}
           {{- end}}
-          </div>
-        {{- end}}
+        </div>
+        <div class="metadata-actions">
+          [
+          {{- if not .Private}}
+          <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">permalink</a>
+          ,
+          {{- end}}
+          <a href="/bookmarks/{{.UID}}/edit">edit</a>
+          ,
+          <a href="/bookmarks/{{.UID}}/delete">delete</a>
+          ]
+        </div>
       </div>
       {{- with .Description}}
       <div class="description">
@@ -68,6 +73,7 @@
 <div class="pagination">
   <p>
     Page <span class="page-number">{{.PageNumber}}</span> of <span class="page-number">{{.TotalPages}}</span>
+  {{if gt .TotalPages 1}}
     <br>
     Go to:
     {{if lt .PreviousPageNumber .PageNumber }}
@@ -79,6 +85,7 @@
     <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">next</a>,
     <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}">last</a>
     {{end}}
+  {{end}}
   </p>
 </div>
 {{end}}

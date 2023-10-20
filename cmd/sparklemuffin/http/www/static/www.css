@@ -30,17 +30,18 @@
 }
 
 html {
+  background: #F5F5F0;
   font-family: exo2, sans;
   padding-left: 2%;
   padding-right: 3%;
-  margin: 0 auto;
-  background: #F5F5F0;
+  margin: 0 auto 0 0;
+  max-width: 1200px;
 }
 
 /* Theme */
 :root {
   --text: black;
-  --important: red;
+  --important: maroon;
 }
 
 /* Navigation */
@@ -110,6 +111,7 @@ body>header nav>form>button:hover {
 
 body>footer {
   border-top: 2px solid var(--text);
+  font-weight: bold;
   text-align: center;
 }
 
@@ -118,6 +120,76 @@ body>footer {
 }
 
 /* Bookmarks */
+ol {
+  padding: 1em;
+}
+
+ol>li {
+  margin-bottom: 1em;
+}
+
+.bookmark a:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.private {
+  color: var(--important);
+  font-weight: bold;
+}
+
+@media(min-width: 700px) {
+  .title {
+    display: grid;
+    grid-template-columns: fit-content(80ch) 1fr;
+  }
+
+  .title date {
+    border-bottom: 1px dotted var(--text);
+  }
+
+  .metadata {
+    display: grid;
+    grid-template-columns: fit-content(80ch) 1fr;
+  }
+
+  .metadata-actions {
+    text-align: right;
+  }
+}
+
+.title a {
+  color: var(--text);
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.title a:hover {
+  text-decoration: underline;
+}
+
+.title date {
+  text-align: right;
+}
+
+.description ol,
+.description ul
+{
+  padding-left: 1em;
+  padding-top: 0.5em;
+}
+
+.description blockquote {
+  border-left: 4px solid #cccccc;
+  margin-left: 0;
+  padding-left: 1em;
+}
+
+.description blockquote p {
+  color: gray;
+  font-style: italic;
+}
+
 .page-number {
   font-weight: bold;
 }

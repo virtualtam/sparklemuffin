@@ -26,25 +26,28 @@
 {{range .Bookmarks}}
   <li>
     <div class="bookmark">
-      <div>
-        {{- if .Private}}
-          <span class="private">Private</span>
-        {{- end}}
-        <span class="title"><a href="{{.URL}}">{{.Title}}</a></span>
+      <div class="title">
+        <span>
+          {{- if .Private}}
+            <span class="private">[Private]</span>
+          {{- end}}
+          <a href="{{.URL}}">{{.Title}}</a>
+        </span>
+        <date>{{.CreatedAt.Format "2006-01-02"}}<date>
       </div>
       <div class="metadata">
-          {{.CreatedAt.Format "2006-01-02"}}
-          -
-          <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">Permalink</a>
+        <div class="metadata-tags">
         {{- with .Tags}}
-          <div>
           tags:
           {{- range $index, $tag := .}}
           {{- if $index}},{{end}}
           <a href="/u/{{$.Owner.NickName}}/bookmarks?search={{$tag}}">{{$tag}}</a>
           {{- end}}
-          </div>
         {{- end}}
+        </div>
+        <div class="metadata-actions">
+          [ <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">permalink</a> ]
+        </div>
       </div>
       {{- with .Description}}
       <div class="description">
@@ -62,6 +65,7 @@
 <div class="pagination">
   <p>
     Page <span class="page-number">{{.PageNumber}}</span> of <span class="page-number">{{.TotalPages}}</span>
+  {{if gt .TotalPages 1}}
     <br>
     Go to:
     {{if lt .PreviousPageNumber .PageNumber }}
@@ -73,6 +77,7 @@
     <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">next</a>,
     <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}">last</a>
     {{end}}
+  {{end}}
   </p>
 </div>
 {{end}}

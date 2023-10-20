@@ -30,7 +30,7 @@ var (
 			// https://github.com/alecthomas/chroma
 			// https://github.com/alecthomas/chroma/tree/master/styles
 			highlighting.NewHighlighting(
-				highlighting.WithStyle("nord"),
+				highlighting.WithStyle("solarized-light"),
 				highlighting.WithFormatOptions(
 					html.WithLineNumbers(true),
 				),

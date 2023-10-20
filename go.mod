@@ -3,7 +3,7 @@ module github.com/virtualtam/sparklemuffin
 go 1.21
 
 require (
-	github.com/alecthomas/chroma v0.10.0
+	github.com/alecthomas/chroma/v2 v2.9.1
 	github.com/carlmjohnson/versioninfo v0.22.5
 	github.com/georgysavva/scany/v2 v2.0.0
 	github.com/go-chi/chi/v5 v5.0.10
@@ -24,7 +24,7 @@ require (
 	github.com/virtualtam/netscape-go/v2 v2.1.0
 	github.com/virtualtam/venom v1.1.0
 	github.com/yuin/goldmark v1.5.6
-	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
+	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
 	golang.org/x/crypto v0.12.0
 	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea
 	golang.org/x/net v0.14.0

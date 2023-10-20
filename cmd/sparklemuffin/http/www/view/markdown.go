@@ -5,10 +5,10 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/alecthomas/chroma/formatters/html"
+	"github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/rs/zerolog/log"
 	"github.com/yuin/goldmark"
-	highlighting "github.com/yuin/goldmark-highlighting"
+	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
 )
 
@@ -30,7 +30,7 @@ var (
 			// https://github.com/alecthomas/chroma
 			// https://github.com/alecthomas/chroma/tree/master/styles
 			highlighting.NewHighlighting(
-				highlighting.WithStyle("solarized-light"),
+				highlighting.WithStyle("catppuccin-latte"),
 				highlighting.WithFormatOptions(
 					html.WithLineNumbers(true),
 				),

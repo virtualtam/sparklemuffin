@@ -136,6 +136,21 @@ body>footer {
 }
 
 /* Bookmarks */
+#nav-actions nav>a {
+  color: var(--text);
+  font-weight: bold;
+  margin-right: 10px;
+  text-decoration: none;
+}
+
+#nav-actions nav>a:hover {
+  text-decoration: 2px var(--text) underline;
+}
+
+#nav-actions nav>a:visited {
+  color: var(--text);
+}
+
 ol {
   padding: 1em;
 }

@@ -1,4 +1,9 @@
 {{define "content"}}
+  <div id="nav-actions">
+    <nav>
+      <a href="/bookmarks/add">+ Add bookmark</a>
+    </nav>
+  </div>
   {{template "bookmarkSearchForm" .}}
   {{template "pagination" .}}
   <ol start="{{.Offset}}">

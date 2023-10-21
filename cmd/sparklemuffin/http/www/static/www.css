@@ -203,3 +203,51 @@ ol>li {
 .pagination a:hover {
   text-decoration: underline;
 }
+
+/* Tags list */
+.tag-list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(90, auto);
+}
+
+@media (min-width: 600px) {
+  .tag-list {
+    grid-template-rows: repeat(60, auto);
+  }
+}
+
+@media (min-width: 1200px) {
+  .tag-list {
+    grid-template-rows: repeat(30, auto);
+  }
+}
+
+.tag-count {
+  display: inline-block;
+  text-align: right;
+  width: 4em;
+}
+
+.tag-delete a {
+  color: maroon;
+}
+
+.tag-delete a:hover {
+  filter: brightness(1.5);
+  text-decoration: none;
+}
+
+.tag-edit a {
+  color: navy;
+}
+
+.tag-edit a:hover {
+  filter: brightness(1.5);
+  text-decoration: none;
+}
+
+.tag a:hover {
+  color: var(--text);
+  text-decoration: none;
+}

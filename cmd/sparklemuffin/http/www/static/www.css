@@ -44,6 +44,21 @@ html {
   --important: maroon;
 }
 
+/* Headers */
+h1 {
+  font-size: 2em;
+}
+
+h2 {
+  font-size: 1.5em;
+  margin-top: 0.5em;
+}
+
+h3 {
+  font-size: 1.2em;
+  margin-top: 0;
+}
+
 /* Navigation */
 body>header {
   display: grid;
@@ -112,6 +127,7 @@ body>header nav>form>button:hover {
 body>footer {
   border-top: 2px solid var(--text);
   font-weight: bold;
+  margin-top: 1em;
   text-align: center;
 }
 
@@ -250,4 +266,21 @@ ol>li {
 .tag a:hover {
   color: var(--text);
   text-decoration: none;
+}
+
+/* Tools */
+.tools {
+  display: grid;
+}
+
+@media(min-width: 600px) {
+  .tools {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media(min-width: 900px) {
+  .tools {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }

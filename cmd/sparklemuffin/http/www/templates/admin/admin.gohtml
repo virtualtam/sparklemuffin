@@ -1,7 +1,12 @@
 {{define "content"}}
 <h2>Administration</h2>
-<h3>Users</h3>
-<p><a href="/admin/users/add">Add user</a></p>
+<div id="nav-actions">
+  <nav>
+    <a href="/admin/users/add">+ Add user</a>
+  </nav>
+</div>
+<br>
+
 {{template "userTable" .}}
 {{end}}
 
@@ -27,10 +32,10 @@
   <td>{{.Email}}</td>
   <td>{{.NickName}}</td>
   <td>{{.DisplayName}}</td>
-  <td>{{.IsAdmin}}</td>
+  <td>{{if .IsAdmin}}yes{{else}}no{{end}}</td>
   <td>
-    <a href="/admin/users/{{.UUID}}">Edit</a>
-    <a href="/admin/users/{{.UUID}}/delete">Delete</a>
+    <a href="/admin/users/{{.UUID}}">edit</a>,
+    <a href="/admin/users/{{.UUID}}/delete">delete</a>
   </td>
 </tr>
 {{end}}

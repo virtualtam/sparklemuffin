@@ -84,7 +84,7 @@
     {{if lt .PreviousPageNumber .PageNumber }}
     <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page=1">first</a>,
     <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}">previous</a>
-    {{if ne .PageNumber .TotalPages}},{{end}}
+    {{- if ne .PageNumber .TotalPages}},{{end}}
     {{end}}
     {{if lt .PageNumber .TotalPages }}
     <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">next</a>,

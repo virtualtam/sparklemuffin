@@ -36,15 +36,20 @@
 {{define "pagination"}}
 <div class="center pagination">
   <p>
+    Page <span class="page-number">{{.PageNumber}}</span> of <span class="page-number">{{.TotalPages}}</span>
+  {{if gt .TotalPages 1}}
+    <br>
+    Go to:
     {{if lt .PreviousPageNumber .PageNumber }}
-    <a href="/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page=1">&lt;&lt;</a>
-    <a href="/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.PreviousPageNumber}}">&lt;</a>
+    <a href="/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page=1">first</a>,
+    <a href="/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.PreviousPageNumber}}">previous</a>
+    {{- if ne .PageNumber .TotalPages}},{{end}}
     {{end}}
-    {{.PageNumber}} / {{.TotalPages}}
     {{if lt .PageNumber .TotalPages }}
-    <a href="/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.NextPageNumber}}">&gt;</a>
-    <a href="/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.TotalPages}}">&gt;&gt;</a>
+    <a href="/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.NextPageNumber}}">next</a>,
+    <a href="/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.TotalPages}}">last</a>
     {{end}}
+  {{end}}
   </p>
 </div>
 {{end}}

@@ -1,7 +1,7 @@
 {{define "content"}}
 <h2>Administration</h2>
 <h3>Edit user: {{.Content.Email}}</h3>
-<form action="/admin/users/{{.Content.UUID}}" method="POST">
+<form action="/admin/users/{{.Content.UUID}}" class="item-form" method="POST">
   <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
   <label for="email">Email address</label>
   <input
@@ -9,7 +9,6 @@
          id="email"
          name="email"
          placeholder="Email"
-         size="40"
          value="{{.Content.Email}}"
          required="">
 
@@ -19,7 +18,6 @@
          id="nick_name"
          name="nick_name"
          placeholder="Nickname"
-         size="40"
          value="{{.Content.NickName}}"
          required="">
 
@@ -29,7 +27,6 @@
          id="display_name"
          name="display_name"
          placeholder="Display Name"
-         size="40"
          value="{{.Content.DisplayName}}"
          required="">
 
@@ -39,17 +36,20 @@
          id="password"
          name="password"
          placeholder="Password"
-         size="40"
          required="">
 
   <label for="is_admin">Administrator?</label>
-  <input
-         type="checkbox"
-         {{if .Content.IsAdmin}}checked{{end}}
-         id="is_admin"
-         name="is_admin">
+  <span>
+    <input
+           type="checkbox"
+           {{if .Content.IsAdmin}}checked{{end}}
+           id="is_admin"
+           name="is_admin">
+  </span>
 
   <br>
-  <button type="submit">Save changes</button>
+  <span>
+    <button type="submit">Save changes</button>
+  </span>
 </form>
 {{end}}

@@ -1,7 +1,7 @@
 {{define "content"}}
 <h2>Administration</h2>
 <h3>Add user</h3>
-<form action="/admin/users" method="POST">
+<form action="/admin/users" class="item-form" method="POST">
   <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
   <label for="email">Email address</label>
   <input
@@ -9,7 +9,6 @@
          id="email"
          name="email"
          placeholder="Email"
-         size="40"
          required="">
 
   <label for="nick_name">Nickname</label>
@@ -18,7 +17,6 @@
          id="nick_name"
          name="nick_name"
          placeholder="Nickname"
-         size="40"
          required="">
 
   <label for="display_name">Display Name</label>
@@ -27,7 +25,6 @@
          id="display_name"
          name="display_name"
          placeholder="Display Name"
-         size="40"
          required="">
 
   <label for="password">Password</label>
@@ -36,16 +33,19 @@
          id="password"
          name="password"
          placeholder="Password"
-         size="40"
          required="">
 
   <label for="is_admin">Administrator?</label>
-  <input
-         type="checkbox"
-         id="is_admin"
-         name="is_admin">
+  <span>
+    <input
+           type="checkbox"
+           id="is_admin"
+           name="is_admin">
+  </span>
 
   <br>
-  <button type="submit">Save</button>
+  <span>
+    <button type="submit">Save</button>
+  </span>
 </form>
 {{end}}

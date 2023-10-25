@@ -1,13 +1,12 @@
 {{define "content"}}
 <h2>Edit bookmark</h2>
-<form action="/bookmarks/{{.Bookmark.UID}}/edit" method="POST">
+<form action="/bookmarks/{{.Bookmark.UID}}/edit" class="item-form" method="POST">
   <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
   <label for="url">URL</label>
   <input type="url"
          id="url"
          name="url"
          placeholder="URL"
-         size="80"
          value="{{.Bookmark.URL}}"
          required="">
 
@@ -16,29 +15,32 @@
          id="title"
          name="title"
          placeholder="Title"
-         size="80"
          value="{{.Bookmark.Title}}"
          required="">
 
   <label for="description">Description</label>
-  <textarea id="description" name="description" rows="10" cols="80">{{.Bookmark.Description}}</textarea>
+  <textarea id="description" name="description" rows="10">{{.Bookmark.Description}}</textarea>
 
   <label for="tags">Tags</label>
   <input type="text"
          id="tags"
          name="tags"
          placeholder="Tags, separated by spaces"
-         size="80"
          value="{{Join .Bookmark.Tags " "}}"
          data-list="{{Join .Tags ","}}">
 
   <label for="private">Private?</label>
-  <input type="checkbox"
-         id="private"
-         name="private"
-         {{if .Bookmark.Private}}checked{{end}}>
+  <span>
+    <input type="checkbox"
+           id="private"
+           name="private"
+           {{if .Bookmark.Private}}checked{{end}}>
+  </span>
+
   <br>
-  <button type="submit">Save changes</button>
+  <span class="submit">
+    <button type="submit">Save changes</button>
+  </span>
 </form>
 {{template "awesomplete"}}
 {{end}}

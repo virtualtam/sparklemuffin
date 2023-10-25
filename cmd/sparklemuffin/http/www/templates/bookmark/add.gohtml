@@ -1,13 +1,12 @@
 {{define "content"}}
 <h2>Add bookmark</h2>
-<form action="/bookmarks/add" method="POST">
+<form action="/bookmarks/add" class="item-form" method="POST">
   <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
   <label for="url">URL</label>
   <input type="url"
          id="url"
          name="url"
          placeholder="URL"
-         size="80"
          required="">
 
   <label for="title">Title</label>
@@ -15,26 +14,29 @@
          id="title"
          name="title"
          placeholder="Title"
-         size="80"
          required="">
 
   <label for="description">Description</label>
-  <textarea id="description" name="description" placeholder="Description" rows="10" cols="80"></textarea>
+  <textarea id="description" name="description" placeholder="Description" rows="10"></textarea>
 
   <label for="tags">Tags</label>
   <input type="text"
          id="tags"
          name="tags"
          placeholder="Tags, separated by spaces"
-         size="80"
          data-list="{{Join .Tags ","}}">
 
   <label for="private">Private?</label>
-  <input type="checkbox"
-         id="private"
-         name="private">
+  <div>
+    <input type="checkbox"
+           id="private"
+           name="private">
+  </div>
+
   <br>
-  <button type="submit">Save</button>
+  <span class="submit">
+    <button type="submit">Save</button>
+  </span>
 </form>
 {{template "awesomplete"}}
 {{end}}

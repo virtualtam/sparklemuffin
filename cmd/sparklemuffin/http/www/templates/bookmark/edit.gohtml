@@ -31,9 +31,11 @@
 
   <label for="private">Private?</label>
   <span>
+    <input type="hidden" name="private" value="false">
     <input type="checkbox"
            id="private"
            name="private"
+           value="true"
            {{if .Bookmark.Private}}checked{{end}}>
   </span>
 

@@ -40,11 +40,13 @@
 
   <label for="is_admin">Administrator?</label>
   <span>
+    <input type="hidden" name="is_admin" value="false">
     <input
            type="checkbox"
-           {{if .Content.IsAdmin}}checked{{end}}
            id="is_admin"
-           name="is_admin">
+           name="is_admin"
+           value="true"
+           {{if .Content.IsAdmin}}checked{{end}}>
   </span>
 
   <br>

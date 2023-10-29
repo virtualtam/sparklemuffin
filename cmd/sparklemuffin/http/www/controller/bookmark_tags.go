@@ -84,9 +84,8 @@ func (tc *tagHandlerContext) handleTagDelete() func(w http.ResponseWriter, r *ht
 		Name string `schema:"name"`
 	}
 
-	var form tagDeleteForm
-
 	return func(w http.ResponseWriter, r *http.Request) {
+		var form tagDeleteForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse tag deletion form")
 			view.PutFlashError(w, "failed to process form")
@@ -157,9 +156,8 @@ func (tc *tagHandlerContext) handleTagEdit() func(w http.ResponseWriter, r *http
 		Name string `schema:"name"`
 	}
 
-	var form tagEditForm
-
 	return func(w http.ResponseWriter, r *http.Request) {
+		var form tagEditForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse tag edition form")
 			view.PutFlashError(w, "failed to process form")

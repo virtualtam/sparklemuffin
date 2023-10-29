@@ -89,9 +89,8 @@ func (hc *toolsHandlerContext) handleToolsExport() func(w http.ResponseWriter, r
 		Visibility exporting.Visibility `schema:"visibility"`
 	}
 
-	var form exportForm
-
 	return func(w http.ResponseWriter, r *http.Request) {
+		var form exportForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark export form")
 			view.PutFlashError(w, "failed to process form")

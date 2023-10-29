@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
+
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
 	"github.com/virtualtam/sparklemuffin/internal/rand"
@@ -52,7 +53,6 @@ func (hc *sessionHandlerContext) handleUserLogin() func(w http.ResponseWriter, r
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var form loginForm
-
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse login form")
 			view.PutFlashError(w, err.Error())

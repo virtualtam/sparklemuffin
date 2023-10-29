@@ -131,11 +131,10 @@ func (hc *bookmarkHandlerContext) handleBookmarkAdd() func(w http.ResponseWriter
 		Tags        string `schema:"tags"`
 	}
 
-	var form bookmarkAddForm
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := httpcontext.UserValue(r.Context())
 
+		var form bookmarkAddForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark creation form")
 			view.PutFlashError(w, "There was an error processing the form")
@@ -280,12 +279,11 @@ func (hc *bookmarkHandlerContext) handleBookmarkEdit() func(w http.ResponseWrite
 		Tags        string `schema:"tags"`
 	}
 
-	var form bookmarkEditForm
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		uid := chi.URLParam(r, "uid")
 		ctxUser := httpcontext.UserValue(r.Context())
 
+		var form bookmarkEditForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark edition form")
 			view.PutFlashError(w, "failed to process form")

@@ -8,7 +8,13 @@
   border-color: var(--border);
   border-radius: 0;
   color: var(--text);
-  font-family: monospace;
+  font-family: firacode, monospace;
+  font-size: 14px;
+}
+@media (max-width: 500px) {
+  .EasyMDEContainer .CodeMirror {
+    font-size: 12px;
+  }
 }
 
 .cm-s-easymde .cm-link {

@@ -11,9 +11,9 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/exporting"
-	"github.com/virtualtam/sparklemuffin/pkg/importing"
-	"github.com/virtualtam/sparklemuffin/pkg/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )

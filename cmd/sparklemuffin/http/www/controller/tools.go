@@ -15,8 +15,8 @@ import (
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
-	"github.com/virtualtam/sparklemuffin/pkg/exporting"
-	"github.com/virtualtam/sparklemuffin/pkg/importing"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
 )
 
 type toolsHandlerContext struct {

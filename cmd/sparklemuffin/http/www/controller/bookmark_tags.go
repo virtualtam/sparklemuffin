@@ -13,7 +13,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 )
 
 type tagHandlerContext struct {

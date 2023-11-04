@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/feeds"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 )
 
 func TestBookmarksToFeed(t *testing.T) {

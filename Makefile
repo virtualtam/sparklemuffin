@@ -25,10 +25,7 @@ race:
 	go test -race ./...
 .PHONY: race
 
-psql:
-	@PGPASSWORD=sparklemuffin psql -h localhost -p 15432 -U sparklemuffin
-.PHONY: psql
-
+# Live development server
 live:
 	@echo "== Starting database"
 	docker compose -f docker-compose.dev.yml up --remove-orphans -d
@@ -36,6 +33,7 @@ live:
 	@watchexec --restart --exts css,go,gohtml -- go run ./cmd/sparklemuffin/ run
 .PHONY: live
 
+# Live development server (with race detection enabled)
 live-race:
 	@echo "== Starting database"
 	docker compose -f docker-compose.dev.yml up --remove-orphans -d
@@ -43,10 +41,17 @@ live-race:
 	@watchexec --restart --exts css,go,gohtml -- go run -race ./cmd/sparklemuffin/ run
 .PHONY: live-race
 
+# Live development server - PostgreSQL console
+psql:
+	@PGPASSWORD=sparklemuffin psql -h localhost -p 15432 -U sparklemuffin
+.PHONY: psql
+
+# Live development server - Database migrations
 dev-migrate:
 	go run ./cmd/sparklemuffin migrate
 .PHONY: dev-migrate
 
+# Live development server - Create administrator user
 dev-admin:
 	go run ./cmd/sparklemuffin createadmin \
 		--displayname Admin \

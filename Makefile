@@ -58,3 +58,17 @@ dev-admin:
 		--email admin@dev.local \
 		--nickname admin
 .PHONY: dev-admin
+
+# Documentation
+DOCS_DIR := docs
+DOCS_FILES := $(shell find docs -name "*.md")
+
+docs: docs/book
+.PHONY: docs
+
+docs/book: $(DOCS_FILES)
+	mdbook build $(DOCS_DIR)
+
+live-docs:
+	mdbook serve $(DOCS_DIR)
+.PHONY: live-docs

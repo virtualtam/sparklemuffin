@@ -1,10 +1,15 @@
-# SparkleMuffin: Documentation
+# SparkleMuffin
 
 **SparkleMuffin** is a Web application to save, tag and share personal Web bookmarks.
 
+It provides a minimalist interface thait aims at being simple to use, clutter-free and
+accessible.
+
+## Documentation
+
 The present documentation is addressed to both users and developers, and provides information
-on how to use SparkleMuffin, how to run it on your own server, and how to contribute to its
-code.
+on how to use SparkleMuffin, how to run it on your own server, and how to contribute to the
+project.
 
 ## Contributing
 

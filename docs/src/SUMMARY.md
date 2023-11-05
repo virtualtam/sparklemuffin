@@ -17,6 +17,7 @@
     - [Getting the Source Code](./developers/setup/getting-the-source-code.md)
     - [Running Tests](./developers/setup/running-tests.md)
     - [Compiling](./developers/setup/compiling.md)
+    - [Live Development Server](./developers/setup/live-development-server.md)
 - [Architecture](./developers/architecture/introduction.md)
     - [Project Structure](./developers/architecture/project-structure.md)
     - [Database](./developers/architecture/database.md)

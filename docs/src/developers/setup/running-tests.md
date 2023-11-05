@@ -1,5 +1,5 @@
 # Running tests
-## Dependencies
+## Prerequisites
 - [GNU Make](https://www.gnu.org/software/make/)
 - [golangci-lint](https://github.com/golangci/golangci-lint)
 - [Docker](https://docs.docker.com/) for integration tests with [Testcontainers](https://testcontainers.com/)

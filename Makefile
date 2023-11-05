@@ -25,6 +25,10 @@ race:
 	go test -race ./...
 .PHONY: race
 
+test:
+	go test ./...
+.PHONY: test
+
 # Live development server
 live:
 	@echo "== Starting database"

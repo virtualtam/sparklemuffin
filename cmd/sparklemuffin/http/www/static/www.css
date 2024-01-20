@@ -127,22 +127,6 @@ body>header nav>form {
   display: inline;
 }
 
-body>header nav>form>button {
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--important);
-  font-family: exo2, sans;
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
-body>header nav>form>button:hover {
-  cursor: pointer;
-  text-decoration: 2px var(--text) underline;
-}
-
 body>footer {
   border-top: 2px solid var(--text);
   font-weight: bold;
@@ -359,4 +343,24 @@ ol {
   .tools {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+.tools a:hover {
+  text-decoration: none;
+}
+
+.tools form>button {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--important);
+  font-family: exo2, sans !important;
+  font-size: 16px !important;
+  text-decoration: 2px var(--important) underline;
+}
+
+.tools form>button:hover {
+  cursor: pointer;
+  text-decoration: none;
 }

@@ -22,7 +22,9 @@ type accountHandlerContext struct {
 	csrfService *csrf.Service
 	userService *user.Service
 
-	accountView *view.View
+	accountView         *view.View
+	accountInfoView     *view.View
+	accountPasswordView *view.View
 }
 
 func RegisterAccounthandlers(
@@ -34,7 +36,9 @@ func RegisterAccounthandlers(
 		csrfService: csrfService,
 		userService: userService,
 
-		accountView: view.New("account/account.gohtml"),
+		accountView:         view.New("account/account.gohtml"),
+		accountInfoView:     view.New("account/info.gohtml"),
+		accountPasswordView: view.New("account/password.gohtml"),
 	}
 
 	// user account
@@ -44,7 +48,9 @@ func RegisterAccounthandlers(
 		})
 
 		r.Get("/", hc.handleAccountView())
+		r.Get("/info", hc.handleAccountInfoView())
 		r.Post("/info", hc.handleAccountInfoUpdate())
+		r.Get("/password", hc.handleAccountPasswordView())
 		r.Post("/password", hc.handleAccountPasswordUpdate())
 	})
 }
@@ -113,6 +119,24 @@ func (hc *accountHandlerContext) handleAccountInfoUpdate() func(w http.ResponseW
 	}
 }
 
+// handleAccountInfoView renders the user account information page.
+func (hc *accountHandlerContext) handleAccountInfoView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+		csrfToken := hc.csrfService.Generate(user.UUID, actionAccountUpdate)
+
+		viewData := view.Data{
+			Content: view.FormContent{
+				CSRFToken: csrfToken,
+				Content:   user,
+			},
+			Title: "Account Information",
+		}
+
+		hc.accountInfoView.Render(w, r, viewData)
+	}
+}
+
 // handleAccountPasswordUpdate processes the user account password update form.
 func (hc *accountHandlerContext) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type passwordUpdateForm struct {
@@ -156,5 +180,23 @@ func (hc *accountHandlerContext) handleAccountPasswordUpdate() func(w http.Respo
 
 		view.PutFlashSuccess(w, "Your account password has been successfully updated")
 		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+	}
+}
+
+// handleAccountPasswordView renders the user account password page.
+func (hc *accountHandlerContext) handleAccountPasswordView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+		csrfToken := hc.csrfService.Generate(user.UUID, actionAccountUpdate)
+
+		viewData := view.Data{
+			Content: view.FormContent{
+				CSRFToken: csrfToken,
+				Content:   user,
+			},
+			Title: "Account Password",
+		}
+
+		hc.accountPasswordView.Render(w, r, viewData)
 	}
 }

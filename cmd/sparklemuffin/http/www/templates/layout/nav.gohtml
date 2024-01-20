@@ -5,23 +5,17 @@
     <a href="/bookmarks">Bookmarks</a>
     <a href="/tags">Tags</a>
     <a href="/tools">Tools</a>
-      {{- if .User.IsAdmin}}
+    {{- if .User.IsAdmin}}
     <a href="/admin">Admin</a>
-      {{- end}}
+    {{- end}}
     {{- end}}
   </nav>
   <nav id="nav-account">
     {{- if .User}}
     <a href="/account">Account</a>
-    {{- template "logoutForm"}}
     {{- else}}
     <a href="/login">Login</a>
     {{- end}}
   </nav>
 </header>
-{{- end}}
-{{- define "logoutForm"}}
-      <form action="/logout" method="POST">
-        <button type=submit>Log out</button>
-      </form>
 {{- end}}

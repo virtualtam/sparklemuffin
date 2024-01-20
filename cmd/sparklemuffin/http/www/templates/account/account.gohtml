@@ -1,89 +1,23 @@
 {{define "content"}}
-<h2>Account</h2>
-<h3>Personal information</h3>
-{{template "informationUpdateForm" .}}
+<h2>Account: {{.Content.Email}}</h2>
 
-<h3>Password</h3>
-{{template "passwordUpdateForm" .}}
-{{end}}
-
-{{define "informationUpdateForm"}}
-<form action="/account/info" method="POST">
-  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-  <p>
-    <label for="email">Email address</label>
-    <br>
-    <input
-           type="email"
-           id="email"
-           name="email"
-           placeholder="Email"
-           value="{{.Content.Email}}"
-           required="">
-  </p>
-  <p>
-    <label for="nick_name">Nickname</label>
-    <br>
-    <input
-           type="text"
-           id="nick_name"
-           name="nick_name"
-           placeholder="Nickname"
-           value="{{.Content.NickName}}"
-           required="">
-  </p>
-  <p>
-    <label for="display_name">Display Name</label>
-    <br>
-    <input
-           type="text"
-           id="display_name"
-           name="display_name"
-           placeholder="Display Name"
-           value="{{.Content.DisplayName}}"
-           required="">
-  </p>
-  <p>
-    <button type="submit">Update information</button>
-  </p>
-</form>
-{{end}}
-
-{{define "passwordUpdateForm"}}
-<form action="/account/password" method="POST">
-  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-  <p>
-    <label for="current_password">Current password</label>
-    <br>
-    <input
-           type="password"
-           id="current_password"
-           name="current_password"
-           placeholder="Current password"
-           required="">
-  </p>
-  <p>
-    <label for="new_password">New password</label>
-    <br>
-    <input
-           type="password"
-           id="new_password"
-           name="new_password"
-           placeholder="New password"
-           required="">
-  </p>
-  <p>
-    <label for="new_password_confirmation">New password (confirmation)</label>
-    <br>
-    <input
-           type="password"
-           id="new_password_confirmation"
-           name="new_password_confirmation"
-           placeholder="New password (confirmation)"
-           required="">
-  </p>
-  <p>
-    <button type="submit">Update password</button>
-  </p>
-</form>
-{{end}}
+<div class="tools">
+  <div>
+    <h3>Information</h3>
+    <ul>
+      <li><a href="/account/info">Update information</a></li>
+      <li><a href="/account/password">Update password</a></li>
+    </ul>
+  </div>
+  <div>
+    <h3>Session</h3>
+    <ul>
+      <li>
+        <form action="/logout" method="POST">
+          <button type=submit>Log out</button>
+        </form>
+      </li>
+    </ul>
+  </div>
+</div>
+{{- end}}

@@ -97,7 +97,7 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request, data interface{}) 
 	}
 
 	// Skip error checking as the HTTP headers have already been sent
-	_, _ = io.Copy(w, &buf)
+	_, _ = io.Copy(w, &buf) // nolint:errcheck
 }
 
 func (d *Data) popFlash(w http.ResponseWriter, r *http.Request) {

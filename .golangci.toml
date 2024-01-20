@@ -1,0 +1,12 @@
+[run]
+tests = true
+
+[linters]
+enable = [
+    "unparam",
+]
+
+[linters-settings.errcheck]
+# Don't allow setting of error to the blank identifier. If there is a legitimate
+# reason, there should be a nolint with an explanation.
+check-blank = true

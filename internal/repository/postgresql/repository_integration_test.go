@@ -106,6 +106,8 @@ func migrateTestDatabase(t *testing.T, db *sql.DB) {
 }
 
 func generateFakeUser(t *testing.T, fake *faker.Faker) user.User {
+	t.Helper()
+
 	person := fake.Person()
 	internet := fake.Internet()
 

@@ -1,3 +1,6 @@
+-- Copyright (c) VirtualTam
+-- SPDX-License-Identifier: MIT
+
 ALTER TABLE bookmarks
 ADD COLUMN fulltextsearch_tsv TSVECTOR;
 

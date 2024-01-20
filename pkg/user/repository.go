@@ -1,3 +1,6 @@
+// Copyright (c) VirtualTam
+// SPDX-License-Identifier: MIT
+
 package user
 
 // Repository provides access to the User repository.

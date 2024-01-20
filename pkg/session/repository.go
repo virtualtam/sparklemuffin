@@ -1,3 +1,6 @@
+// Copyright (c) VirtualTam
+// SPDX-License-Identifier: MIT
+
 package session
 
 // Repository provides access to the user Web Session repoository.

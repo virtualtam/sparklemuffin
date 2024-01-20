@@ -1,3 +1,6 @@
+// Copyright (c) VirtualTam
+// SPDX-License-Identifier: MIT
+
 // Package hash provides hashing helpers to generate application tokens that can
 // be used in a web application.
 package hash

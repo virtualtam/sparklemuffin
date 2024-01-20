@@ -1,3 +1,6 @@
+// Copyright (c) VirtualTam
+// SPDX-License-Identifier: MIT
+
 package querying
 
 // Owner exposes public metadata for the User owning the displayed bookmarks.

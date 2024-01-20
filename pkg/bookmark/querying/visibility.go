@@ -1,3 +1,6 @@
+// Copyright (c) VirtualTam
+// SPDX-License-Identifier: MIT
+
 package querying
 
 // Visibility represents a visibility filter for bookmarks.

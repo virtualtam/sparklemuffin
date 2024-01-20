@@ -1,3 +1,6 @@
+# Copyright (c) VirtualTam
+# SPDX-License-Identifier: MIT
+
 # Step 1: Build Go binaries
 FROM golang:1.21-bookworm as builder
 

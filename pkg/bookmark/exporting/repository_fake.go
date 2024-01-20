@@ -1,3 +1,6 @@
+// Copyright (c) VirtualTam
+// SPDX-License-Identifier: MIT
+
 package exporting
 
 import "github.com/virtualtam/sparklemuffin/pkg/bookmark"

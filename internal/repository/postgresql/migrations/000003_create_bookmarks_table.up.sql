@@ -1,3 +1,6 @@
+-- Copyright (c) VirtualTam
+-- SPDX-License-Identifier: MIT
+
 CREATE TABLE IF NOT EXISTS bookmarks(
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),

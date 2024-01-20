@@ -20,8 +20,10 @@ Here are some good ways to start contributing:
 - providing suggestions to improve accessibility;
 - providing sugegstions to improve User Interface (UI) and User Experience (UX).
 
+<div class="warning">
 Before submitting a new issue, please check the existing issues (open and closed)
 for similar reports, known issues and planned work.
+</div>
 
 Feel free to attach any relevant information that may be helpful in fixing the issue, such as:
 
@@ -57,4 +59,4 @@ first by opening a new issue on the [Github issue tracker](https://github.com/vi
 This will ensure:
 
 - the improvement or feature is aligned with the project's goals;
-- contributed code is on-par with
+- the contribution's quality is on-par with the SparkleMuffin codebase.

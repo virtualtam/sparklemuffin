@@ -72,7 +72,7 @@ var (
 func NewRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   rootCmdName,
-		Short: "Web Bookmark Manager",
+		Short: "SparkleMuffin - Web Bookmark Manager",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			versionDetails = version.NewDetails()
 

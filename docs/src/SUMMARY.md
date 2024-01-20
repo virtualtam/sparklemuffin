@@ -6,6 +6,7 @@
 - [User Guide](./users/guide.md)
     - [Features](./users/features.md)
     - [Quickstart](./users/quickstart.md)
+    - [Command-line flags](./users/cli.md)
     - [Configuration](./users/configuration.md)
     - [Observability](./users/observability.md)
 

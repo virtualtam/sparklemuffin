@@ -47,6 +47,7 @@ const (
 var (
 	defaultLogLevelValue string = zerolog.LevelInfoValue
 	logLevelValue        string
+	logFormat            string
 
 	versionDetails *version.Details
 
@@ -84,8 +85,6 @@ func NewRootCommand() *cobra.Command {
 				return nil
 			}
 
-			var err error
-
 			// Configuration file lookup paths
 			home, err := os.UserHomeDir()
 			if err != nil {
@@ -105,14 +104,9 @@ func NewRootCommand() *cobra.Command {
 			}
 
 			// Global logger configuration
-			var logLevel zerolog.Level
-
-			if err := logLevel.UnmarshalText([]byte(logLevelValue)); err != nil {
-				log.Error().Err(err).Msg("invalid log level")
+			if err := config.SetupGlobalLogger(logFormat, logLevelValue); err != nil {
 				return err
 			}
-
-			zerolog.SetGlobalLevel(logLevel)
 
 			if configFileUsed := v.ConfigFileUsed(); configFileUsed != "" {
 				log.Info().Str("config_file", v.ConfigFileUsed()).Msg("configuration: using file")
@@ -175,23 +169,19 @@ func NewRootCommand() *cobra.Command {
 		},
 	}
 
-	var logLevelValues = []string{
-		zerolog.LevelTraceValue,
-		zerolog.LevelDebugValue,
-		zerolog.LevelInfoValue,
-		zerolog.LevelWarnValue,
-		zerolog.LevelErrorValue,
-		zerolog.LevelFatalValue,
-		zerolog.LevelPanicValue,
-	}
-
+	cmd.PersistentFlags().StringVar(
+		&logFormat,
+		"log-format",
+		config.LogFormatConsole,
+		fmt.Sprintf("Log format (%s, %s)", config.LogFormatJSON, config.LogFormatConsole),
+	)
 	cmd.PersistentFlags().StringVar(
 		&logLevelValue,
 		"log-level",
 		defaultLogLevelValue,
 		fmt.Sprintf(
 			"Log level (%s)",
-			strings.Join(logLevelValues, ", "),
+			strings.Join(config.LogLevelValues, ", "),
 		),
 	)
 

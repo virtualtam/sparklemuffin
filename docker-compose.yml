@@ -32,6 +32,7 @@ services:
         condition: service_healthy
     environment:
       SPARKLEMUFFIN_PUBLIC_ADDR: https://sparklemuffin.domain.tld
+      SPARKLEMUFFIN_LOG_FORMAT: console
       SPARKLEMUFFIN_LOG_LEVEL: debug
       SPARKLEMUFFIN_METRICS_LISTEN_ADDR: "0.0.0.0:8081"
     ports:

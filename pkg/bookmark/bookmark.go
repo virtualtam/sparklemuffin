@@ -56,7 +56,7 @@ func (b *Bookmark) ValidateForAddition(r ValidationRepository) error {
 	fns := []func() error{
 		b.requireUserUUID,
 		b.requireURL,
-		b.ensureURLIsParseable,
+		b.ensureURLIsValid,
 		b.ensureURLIsNotRegistered(r),
 		b.requireTitle,
 		b.validateUID,
@@ -79,7 +79,7 @@ func (b *Bookmark) ValidateForUpdate(r Repository) error {
 		b.validateUID,
 		b.requireUserUUID,
 		b.requireURL,
-		b.ensureURLIsParseable,
+		b.ensureURLIsValid,
 		b.ensureURLIsNotRegisteredToAnotherBookmark(r),
 		b.requireTitle,
 	}
@@ -145,10 +145,18 @@ func (b *Bookmark) generateUID() {
 	b.UID = ksuid.New().String()
 }
 
-func (b *Bookmark) ensureURLIsParseable() error {
-	_, err := url.Parse(b.URL)
+func (b *Bookmark) ensureURLIsValid() error {
+	parsedURL, err := url.Parse(b.URL)
 	if err != nil {
 		return ErrURLInvalid
+	}
+
+	if parsedURL.Scheme == "" {
+		return ErrURLNoScheme
+	}
+
+	if parsedURL.Host == "" {
+		return ErrURLNoHost
 	}
 
 	return nil

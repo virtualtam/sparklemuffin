@@ -53,6 +53,22 @@ func TestServiceAdd(t *testing.T) {
 			wantErr: ErrURLInvalid,
 		},
 		{
+			tname: "URL with no scheme",
+			bookmark: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "domain.tld",
+			},
+			wantErr: ErrURLNoScheme,
+		},
+		{
+			tname: "URL with no host",
+			bookmark: Bookmark{
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https:///path/to/page",
+			},
+			wantErr: ErrURLNoHost,
+		},
+		{
 			tname: "duplicate URL",
 			repositoryBookmarks: []Bookmark{
 				{

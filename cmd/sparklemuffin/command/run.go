@@ -72,6 +72,7 @@ func NewRunCommand() *cobra.Command {
 					bookmarkImportingService,
 					bookmarkQueryingService,
 				),
+				www.WithFeedServices(feedService, feedQueryingService),
 				www.WithSessionService(sessionService),
 				www.WithUserService(userService),
 			)

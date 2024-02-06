@@ -26,6 +26,8 @@ import (
 	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/feed"
+	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -68,6 +70,8 @@ var (
 	bookmarkExportingService *bookmarkexporting.Service
 	bookmarkImportingService *bookmarkimporting.Service
 	bookmarkQueryingService  *bookmarkquerying.Service
+	feedService              *feed.Service
+	feedQueryingService      *feedquerying.Service
 	sessionService           *session.Service
 	userService              *user.Service
 )
@@ -162,6 +166,8 @@ func NewRootCommand() *cobra.Command {
 			bookmarkExportingService = bookmarkexporting.NewService(repository)
 			bookmarkImportingService = bookmarkimporting.NewService(repository)
 			bookmarkQueryingService = bookmarkquerying.NewService(repository)
+			feedService = feed.NewService(repository)
+			feedQueryingService = feedquerying.NewService(repository)
 			sessionService = session.NewService(repository, hmacKey)
 			userService = user.NewService(repository)
 

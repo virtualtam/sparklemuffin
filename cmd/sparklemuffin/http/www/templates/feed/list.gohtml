@@ -1,3 +1,46 @@
 {{define "content"}}
+<div class="feeds">
+  <div class="feed-category-list">
+    <h3>Feeds</h3>
+    <ul>
+      <li>
+        <span class="feed-category">All <span class="unread">57</span></span>
+      </li>
+      {{- range .Categories}}
+      <li>
+        <span class="feed-category">{{.Name}} <span class="unread">{{.Unread}}</span></span>
+        <ul>
+          {{- range .Feeds}}
+          <li><span class="feed">{{.Title}} <span class="unread">{{.Unread}}</span></span></li>
+          {{- end}}
+        </ul>
+      </li>
+      {{- end}}
+    </ul>
+  </div>
+
+  <div class="feed-entry-list">
+    {{- with .FeedEntries}}
+    <h3>{{.Category.Name}} / {{.Feed.Title}}</h3>
+    <ol>
+      {{- range .Entries}}
+      <li>
+        <div class="feed-entry">
+          <div class="title">
+            <span><a href="{{.URL}}">{{.Title}}</a></span>
+            <date>{{.PublishedAt.Format "2006-01-02"}}</date>
+          </div>
+          {{- with .Description}}
+          <div class="description">
+            {{.}}
+          </div>
+          {{- end}}
+        </div>
+      </li>
+      {{- end}}
+    </ol>
+    {{- end}}
+  </div>
+</div>
 
 {{end}}

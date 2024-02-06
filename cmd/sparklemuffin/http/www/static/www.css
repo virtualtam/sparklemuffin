@@ -1,8 +1,7 @@
 /**
  * SparkleMuffin
- *
- * SparkleMuffin is licensed under the MIT License (MIT)
  * Copyright (c) 2022 VirtualTam <virtualtam@flibidi.net>
+ * SPDX-License-Identifier: MIT
  */
 
 /**
@@ -326,6 +325,59 @@ ol {
 .tag a:hover {
   color: var(--text);
   text-decoration: none;
+}
+
+/* Feeds */
+.feeds {
+  display: grid;
+  grid-template-columns: minmax(20ch, 30ch) 1fr;
+}
+
+.feed-category-list {
+  padding-right: 2em;
+}
+
+.feed-category-list ul {
+  list-style: none;
+}
+
+.feed-category-list>ul {
+  margin: 0;
+  padding: 0;
+}
+
+.feed-category {
+  display: grid;
+  grid-template-columns: fit-content(80ch) 1fr;
+  font-weight: bold;
+}
+
+.feed-category-list>ul>li>ul {
+  padding-left: 1em;
+}
+
+.feed {
+  display: grid;
+  grid-template-columns: fit-content(80ch) 1fr;
+}
+
+.feed-category:hover,
+.feed:hover {
+  background-color: var(--bg-accent);
+}
+
+.feed-category>.unread,
+.feed>.unread {
+  text-align: right;
+  border-bottom: 1px dotted var(--text);
+}
+
+.feed-entry {
+  margin-bottom: 1em;
+}
+
+.feed-entry:hover {
+  background-color: var(--bg-accent);
 }
 
 /* Tools */

@@ -7,18 +7,27 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
+
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
+	"github.com/virtualtam/sparklemuffin/pkg/feed"
+	fquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 // RegisterFeedHandlers registers HTTP handlers for syndication feed operations.
 func RegisterFeedHandlers(
 	r *chi.Mux,
+	feedService *feed.Service,
+	feedQueryingService *fquerying.Service,
 	userService *user.Service,
 ) {
 	fc := feedHandlerContext{
-		userService: userService,
+		feedService:         feedService,
+		feedQueryingService: feedQueryingService,
+		userService:         userService,
 
 		feedListView: view.New("feed/list.gohtml"),
 	}
@@ -34,7 +43,9 @@ func RegisterFeedHandlers(
 }
 
 type feedHandlerContext struct {
-	userService *user.Service
+	feedService         *feed.Service
+	feedQueryingService *fquerying.Service
+	userService         *user.Service
 
 	feedListView *view.View
 }
@@ -42,9 +53,19 @@ type feedHandlerContext struct {
 // handleFeedListView renders the syndication feed for the current authenticated user.
 func (fc *feedHandlerContext) handleFeedListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var viewData view.Data
+		user := httpcontext.UserValue(r.Context())
 
+		feedPage, err := fc.feedQueryingService.FeedsByPage(user.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feeds")
+			view.PutFlashError(w, "failed to retrieve feeds")
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		var viewData view.Data
 		viewData.Title = "Feeds"
+		viewData.Content = feedPage
 
 		fc.feedListView.Render(w, r, viewData)
 	}

@@ -26,6 +26,8 @@ import (
 	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/feed"
+	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -40,13 +42,20 @@ type Server struct {
 	metricsPrefix   string
 	metricsRegistry *prometheus.Registry
 
+	// Bookmark services
 	bookmarkService          *bookmark.Service
-	csrfService              *csrf.Service
 	bookmarkExportingService *bookmarkexporting.Service
 	bookmarkImportingService *bookmarkimporting.Service
 	bookmarkQueryingService  *bookmarkquerying.Service
-	sessionService           *session.Service
-	userService              *user.Service
+
+	// Feed services
+	feedService         *feed.Service
+	feedQueryingService *feedquerying.Service
+
+	// User and session management services
+	csrfService    *csrf.Service
+	sessionService *session.Service
+	userService    *user.Service
 
 	homeView *view.View
 }
@@ -120,7 +129,7 @@ func (s *Server) registerHandlers() {
 	controller.RegisterAdminHandlers(s.router, s.csrfService, s.userService)
 	controller.RegisterAccounthandlers(s.router, s.csrfService, s.userService)
 	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.bookmarkQueryingService, s.userService)
-	controller.RegisterFeedHandlers(s.router, s.userService)
+	controller.RegisterFeedHandlers(s.router, s.feedService, s.feedQueryingService, s.userService)
 	controller.RegisterToolsHandlers(s.router, s.bookmarkExportingService, s.bookmarkImportingService)
 }
 

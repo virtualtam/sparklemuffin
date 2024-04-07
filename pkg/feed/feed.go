@@ -15,7 +15,7 @@ type Feed struct {
 	Title   string
 	Slug    string
 
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	SynchronizedAt time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	FetchedAt time.Time
 }

@@ -331,6 +331,7 @@ ol {
 .feeds {
   display: grid;
   grid-template-columns: minmax(20ch, 30ch) 1fr;
+  margin-top: 1em;
 }
 
 .feed-category-list {
@@ -346,12 +347,6 @@ ol {
   padding: 0;
 }
 
-.feed-category {
-  display: grid;
-  grid-template-columns: fit-content(80ch) 1fr;
-  font-weight: bold;
-}
-
 .feed-category-list>ul>li>ul {
   padding-left: 1em;
 }
@@ -359,6 +354,12 @@ ol {
 .feed {
   display: grid;
   grid-template-columns: fit-content(80ch) 1fr;
+}
+
+.feed-category {
+  display: grid;
+  grid-template-columns: fit-content(80ch) 1fr;
+  font-weight: bold;
 }
 
 .feed-category:hover,

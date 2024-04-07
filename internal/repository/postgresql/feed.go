@@ -76,6 +76,36 @@ func (f *DBSubscribedFeed) asSubscribedFeed() fquerying.SubscribedFeed {
 	}
 }
 
+func (r *Repository) FeedGetCategories(userUUID string) ([]feed.Category, error) {
+	query := `
+SELECT uuid, name, slug
+FROM feed_categories
+WHERE user_uuid=$1
+ORDER BY name`
+
+	rows, err := r.pool.Query(context.Background(), query, userUUID)
+	if err != nil {
+		return []feed.Category{}, err
+	}
+	defer rows.Close()
+
+	var dbCategories []DBCategory
+	if err := pgxscan.ScanAll(&dbCategories, rows); err != nil {
+		return []feed.Category{}, err
+	}
+
+	categories := make([]feed.Category, len(dbCategories))
+	for i, dbCategory := range dbCategories {
+		categories[i] = feed.Category{
+			UUID: dbCategory.UUID,
+			Name: dbCategory.Name,
+			Slug: dbCategory.Slug,
+		}
+	}
+
+	return categories, nil
+}
+
 func (r *Repository) feedGetCategories(userUUID string) ([]DBCategory, error) {
 	query := `SELECT uuid, name, slug FROM feed_categories WHERE user_uuid=$1`
 

@@ -14,3 +14,8 @@ func NewService(r Repository) *Service {
 		r: r,
 	}
 }
+
+// Categories returns all categories for a given user.
+func (s *Service) Categories(userUUID string) ([]Category, error) {
+	return s.r.FeedGetCategories(userUUID)
+}

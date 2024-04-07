@@ -12,9 +12,8 @@ type Entry struct {
 	UID      string
 	FeedUUID string
 
-	URL         string
-	Title       string
-	Description string
+	URL   string
+	Title string
 
 	PublishedAt time.Time
 	UpdatedAt   time.Time

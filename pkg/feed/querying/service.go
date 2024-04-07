@@ -17,7 +17,7 @@ func NewService(r Repository) *Service {
 
 // FeedsByPage returns a Page containing a limited and offset number of feeds.
 func (s *Service) FeedsByPage(userUUID string) (FeedPage, error) {
-	feedCategories, err := s.r.FeedGetCategories(userUUID)
+	categories, err := s.r.FeedGetSubscriptionsByCategories(userUUID)
 	if err != nil {
 		// TODO error handling
 		return FeedPage{}, err
@@ -26,14 +26,14 @@ func (s *Service) FeedsByPage(userUUID string) (FeedPage, error) {
 	// TODO: paginate results
 	// TODO: query by category
 	// TODO: query by feed
-	feedEntries, err := s.r.FeedGetEntriesByPage(userUUID)
+	entries, err := s.r.FeedGetEntriesByPage(userUUID)
 	if err != nil {
 		// TODO error handling
 		return FeedPage{}, err
 	}
 
 	return FeedPage{
-		Categories:  feedCategories,
-		FeedEntries: feedEntries,
+		Categories: categories,
+		Entries:    entries,
 	}, nil
 }

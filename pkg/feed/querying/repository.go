@@ -3,8 +3,10 @@
 
 package querying
 
-type Repository interface {
-	FeedGetCategories(userUUID string) ([]Category, error)
+import "github.com/virtualtam/sparklemuffin/pkg/feed"
 
-	FeedGetEntriesByPage(userUUID string) (FeedEntries, error)
+type Repository interface {
+	FeedGetSubscriptionsByCategories(userUUID string) ([]Category, error)
+
+	FeedGetEntriesByPage(userUUID string) ([]feed.Entry, error)
 }

@@ -5,9 +5,11 @@ package postgresql
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/jackc/pgx/v5"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	fquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 )
@@ -24,6 +26,30 @@ type DBCategory struct {
 
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
+}
+
+type DBFeed struct {
+	UUID string `db:"uuid"`
+
+	URL   string `db:"url"`
+	Title string `db:"title"`
+	Slug  string `db:"slug"`
+
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+	FetchedAt time.Time `db:"fetched_at"`
+}
+
+func (f *DBFeed) asFeed() feed.Feed {
+	return feed.Feed{
+		UUID:      f.UUID,
+		URL:       f.URL,
+		Title:     f.Title,
+		Slug:      f.Slug,
+		CreatedAt: f.CreatedAt,
+		UpdatedAt: f.UpdatedAt,
+		FetchedAt: f.FetchedAt,
+	}
 }
 
 type DBEntry struct {
@@ -74,6 +100,80 @@ func (f *DBSubscribedFeed) asSubscribedFeed() fquerying.SubscribedFeed {
 		},
 		Unread: f.Unread,
 	}
+}
+
+func (r *Repository) FeedCreate(f feed.Feed) error {
+	query := `
+	INSERT INTO feed_feeds(
+		uuid,
+		url,
+		title,
+		slug,
+		created_at,
+		updated_at
+	)
+	VALUES(
+		@uuid,
+		@url,
+		@title,
+		@slug,
+		@created_at,
+		@updated_at
+	)`
+
+	args := pgx.NamedArgs{
+		"uuid":       f.UUID,
+		"url":        f.URL,
+		"title":      f.Title,
+		"slug":       f.Slug,
+		"created_at": f.CreatedAt,
+		"updated_at": f.UpdatedAt,
+	}
+
+	ctx := context.Background()
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "bookmarks", "add")
+
+	_, err = tx.Exec(ctx, query, args)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *Repository) feedGetQuery(query string, queryParams ...any) (feed.Feed, error) {
+	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	if err != nil {
+		return feed.Feed{}, err
+	}
+	defer rows.Close()
+
+	dbFeed := &DBFeed{}
+	err = pgxscan.ScanOne(dbFeed, rows)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return feed.Feed{}, feed.ErrFeedNotFound
+	}
+	if err != nil {
+		return feed.Feed{}, err
+	}
+
+	return dbFeed.asFeed(), nil
+}
+
+func (r *Repository) FeedGetByURL(feedURL string) (feed.Feed, error) {
+	query := `
+SELECT uuid, url, title, slug
+FROM feed_feeds
+WHERE url=$1`
+
+	return r.feedGetQuery(query, feedURL)
 }
 
 func (r *Repository) FeedGetCategories(userUUID string) ([]feed.Category, error) {

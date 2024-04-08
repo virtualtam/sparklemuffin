@@ -48,8 +48,7 @@ func RegisterFeedHandlers(
 
 		r.Get("/", fc.handleFeedListView())
 		r.Get("/add", fc.handleFeedAddView())
-		//TODO
-		//r.Post("/add", fc.handleFeedAdd())
+		r.Post("/add", fc.handleFeedAdd())
 	})
 }
 
@@ -91,6 +90,43 @@ func (fc *feedHandlerContext) handleFeedAddView() func(w http.ResponseWriter, r 
 		}
 
 		fc.feedAddView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedAdd processes the feed addition form.
+func (fc *feedHandlerContext) handleFeedAdd() func(w http.ResponseWriter, r *http.Request) {
+	type feedAddForm struct {
+		CSRFToken    string `schema:"csrf_token"`
+		URL          string `schema:"url"`
+		CategoryUUID string `schema:"category"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+
+		var form feedAddForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed subscription form")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedAdd) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if err := fc.feedService.Subscribe(ctxUser.UUID, form.CategoryUUID, form.URL); err != nil {
+			log.Error().Err(err).Msg("failed to subscribe to feed")
+			view.PutFlashError(w, "failed to subscribe to feed")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		http.Redirect(w, r, "/feeds", http.StatusSeeOther)
 	}
 }
 

@@ -6,6 +6,7 @@ package command
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -166,7 +167,7 @@ func NewRootCommand() *cobra.Command {
 			bookmarkExportingService = bookmarkexporting.NewService(repository)
 			bookmarkImportingService = bookmarkimporting.NewService(repository)
 			bookmarkQueryingService = bookmarkquerying.NewService(repository)
-			feedService = feed.NewService(repository)
+			feedService = feed.NewService(repository, &http.Client{})
 			feedQueryingService = feedquerying.NewService(repository)
 			sessionService = session.NewService(repository, hmacKey)
 			userService = user.NewService(repository)

@@ -137,7 +137,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 		return err
 	}
 
-	defer r.rollback(ctx, tx, "bookmarks", "add")
+	defer r.rollback(ctx, tx, "feeds", "create feed")
 
 	_, err = tx.Exec(ctx, query, args)
 	if err != nil {
@@ -313,4 +313,57 @@ ORDER BY fe.published_at DESC`
 	}
 
 	return entries, nil
+}
+
+func (r *Repository) FeedIsSubscriptionRegistered(userUUID string, feedUUID string) (bool, error) {
+	return r.rowExistsByQuery(
+		"SELECT 1 FROM feed_subscriptions WHERE user_uuid=$1 AND feed_uuid=$2",
+		userUUID,
+		feedUUID,
+	)
+}
+
+func (r *Repository) FeedSubscriptionCreate(s feed.Subscription) error {
+	query := `
+	INSERT INTO feed_subscriptions(
+		uuid,
+		feed_uuid,
+		category_uuid,
+		user_uuid,
+		created_at,
+		updated_at
+	)
+	VALUES(
+		@uuid,
+		@feed_uuid,
+		@category_uuid,
+		@user_uuid,
+		@created_at,
+		@updated_at
+	)`
+
+	args := pgx.NamedArgs{
+		"uuid":          s.UUID,
+		"feed_uuid":     s.FeedUUID,
+		"category_uuid": s.CategoryUUID,
+		"user_uuid":     s.UserUUID,
+		"created_at":    s.CreatedAt,
+		"updated_at":    s.UpdatedAt,
+	}
+
+	ctx := context.Background()
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "feeds", "create subscription")
+
+	_, err = tx.Exec(ctx, query, args)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }

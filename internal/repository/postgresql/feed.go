@@ -10,6 +10,7 @@ import (
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
+	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	fquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 )
@@ -221,6 +222,67 @@ func (r *Repository) feedGetCategories(userUUID string) ([]DBCategory, error) {
 	}
 
 	return dbCategories, nil
+}
+
+func (r *Repository) FeedEntryCreateMany(entries []feed.Entry) (int64, error) {
+	query := `
+	INSERT INTO feed_entries(
+		uid,
+		feed_uuid,
+		url,
+		title,
+		published_at,
+		updated_at
+	)
+	VALUES(
+		@uid,
+		@feed_uuid,
+		@url,
+		@title,
+		@published_at,
+		@updated_at
+	)`
+
+	batch := &pgx.Batch{}
+
+	for _, b := range entries {
+		args := pgx.NamedArgs{
+			"uid":          b.UID,
+			"feed_uuid":    b.FeedUUID,
+			"url":          b.URL,
+			"title":        b.Title,
+			"published_at": b.PublishedAt,
+			"updated_at":   b.UpdatedAt,
+		}
+
+		batch.Queue(query, args)
+	}
+
+	ctx := context.Background()
+
+	batchResults := r.pool.SendBatch(ctx, batch)
+	defer func() {
+		if err := batchResults.Close(); err != nil {
+			log.Error().
+				Err(err).
+				Str("domain", "feeds").
+				Str("operation", "create_many").
+				Msg("failed to close batch results")
+		}
+	}()
+
+	var rowsAffected int64
+
+	for i := 0; i < len(entries); i++ {
+		commandTag, qerr := batchResults.Exec()
+		if qerr != nil {
+			return 0, qerr
+		}
+
+		rowsAffected += commandTag.RowsAffected()
+	}
+
+	return rowsAffected, nil
 }
 
 func (r *Repository) feedGetSubscriptionsByCategory(userUUID string, categoryUUID string) ([]DBSubscribedFeed, error) {

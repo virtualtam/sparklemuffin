@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/feeds"
 )
@@ -16,8 +17,32 @@ import (
 type testRoundTripper struct{}
 
 func (testRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
+	now := time.Now().UTC()
+	yesterday := now.Add(-24 * time.Hour)
+
 	feed := &feeds.Feed{
-		Title: "Local Test",
+		Title:   "Local Test",
+		Updated: now,
+		Items: []*feeds.Item{
+			{
+				Id:    "http://test.local/first-post",
+				Title: "First post!",
+				Link: &feeds.Link{
+					Href: "http://test.local/first-post",
+				},
+				Created: now,
+				Updated: now,
+			},
+			{
+				Id:    "http://test.local/hello-world",
+				Title: "Hello World",
+				Link: &feeds.Link{
+					Href: "http://test.local/hello-world",
+				},
+				Created: yesterday,
+				Updated: yesterday,
+			},
+		},
 	}
 
 	feedStr, err := feed.ToAtom()
@@ -37,26 +62,38 @@ func (testRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-func TestServiceGetOrCreateFeed(t *testing.T) {
+func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 	testClient := &http.Client{
 		Transport: testRoundTripper{},
 	}
 
 	cases := []struct {
-		tname           string
-		feedURL         string
-		repositoryFeeds []Feed
-		want            Feed
-		wantErr         error
+		tname             string
+		feedURL           string
+		repositoryFeeds   []Feed
+		repositoryEntries []Entry
+		wantFeed          Feed
+		wantEntries       []Entry
+		wantErr           error
 	}{
 		// nominal cases
 		{
 			tname:   "new feed (resolve metadata)",
 			feedURL: "http://test.local",
-			want: Feed{
+			wantFeed: Feed{
 				URL:   "http://test.local",
 				Title: "Local Test",
 				Slug:  "local-test",
+			},
+			wantEntries: []Entry{
+				{
+					URL:   "http://test.local/first-post",
+					Title: "First post!",
+				},
+				{
+					URL:   "http://test.local/hello-world",
+					Title: "Hello World",
+				},
 			},
 		},
 		{
@@ -69,7 +106,7 @@ func TestServiceGetOrCreateFeed(t *testing.T) {
 					Slug:  "existing-test",
 				},
 			},
-			want: Feed{
+			wantFeed: Feed{
 				URL:   "http://test.local",
 				Title: "Existing Test",
 				Slug:  "existing-test",
@@ -106,11 +143,12 @@ func TestServiceGetOrCreateFeed(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
 			r := &fakeRepository{
-				Feeds: tc.repositoryFeeds,
+				Entries: tc.repositoryEntries,
+				Feeds:   tc.repositoryFeeds,
 			}
 			s := NewService(r, testClient)
 
-			got, err := s.getOrCreateFeed(tc.feedURL)
+			gotFeed, gotEntries, err := s.getOrCreateFeedAndEntries(tc.feedURL)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -126,7 +164,13 @@ func TestServiceGetOrCreateFeed(t *testing.T) {
 				t.Fatalf("want no error, got %q", err)
 			}
 
-			assertFeedEquals(t, got, tc.want)
+			// Update expected FeedUUID
+			for i := 0; i < len(tc.wantEntries); i++ {
+				tc.wantEntries[i].FeedUUID = gotFeed.UUID
+			}
+
+			assertFeedEquals(t, gotFeed, tc.wantFeed)
+			assertEntriesEqual(t, gotEntries, tc.wantEntries)
 		})
 	}
 }

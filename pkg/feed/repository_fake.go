@@ -6,6 +6,7 @@ package feed
 var _ Repository = &fakeRepository{}
 
 type fakeRepository struct {
+	Entries       []Entry
 	Feeds         []Feed
 	Subscriptions []Subscription
 }
@@ -29,8 +30,13 @@ func (r *fakeRepository) FeedGetCategories(userUUID string) ([]Category, error) 
 	panic("unimplemented")
 }
 
-func (f *fakeRepository) FeedIsSubscriptionRegistered(userUUID string, feedUUID string) (bool, error) {
-	for _, s := range f.Subscriptions {
+func (r *fakeRepository) FeedEntryCreateMany(entries []Entry) (int64, error) {
+	r.Entries = append(r.Entries, entries...)
+	return int64(len(entries)), nil
+}
+
+func (r *fakeRepository) FeedIsSubscriptionRegistered(userUUID string, feedUUID string) (bool, error) {
+	for _, s := range r.Subscriptions {
 		if s.UserUUID == userUUID && s.FeedUUID == feedUUID {
 			return true, nil
 		}

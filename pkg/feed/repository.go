@@ -23,6 +23,9 @@ type Repository interface {
 	// FeedGetCategories returns all categories for a giver user.
 	FeedGetCategories(userUUID string) ([]Category, error)
 
+	// FeedEntryCreateMany creates a collection of new Entries.
+	FeedEntryCreateMany(entries []Entry) (int64, error)
+
 	// FeedSubscriptionCreate creates a new Feed subscription for a given user.
 	FeedSubscriptionCreate(subscription Subscription) error
 }

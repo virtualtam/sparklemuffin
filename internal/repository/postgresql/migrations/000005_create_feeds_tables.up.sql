@@ -20,7 +20,6 @@ CREATE TABLE IF NOT EXISTS feed_entries(
     feed_uuid   UUID NOT NULL,
     url         TEXT NOT NULL,
     title       TEXT NOT NULL,
-    description TEXT DEFAULT '',
 
     CONSTRAINT fk_feed FOREIGN KEY(feed_uuid) REFERENCES feed_feeds(uuid) ON DELETE CASCADE
 );

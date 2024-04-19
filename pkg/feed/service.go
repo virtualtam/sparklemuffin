@@ -87,7 +87,7 @@ func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) ([]Entry,
 }
 
 func (s *Service) createFeedAndEntries(feed Feed) (Feed, []Entry, error) {
-	syndicationFeed, err := s.feedParser.ParseURL(feed.URL)
+	syndicationFeed, err := s.feedParser.ParseURL(feed.FeedURL)
 	if err != nil {
 		return Feed{}, []Entry{}, err
 	}
@@ -120,8 +120,15 @@ func (s *Service) getOrCreateFeedAndEntries(feedURL string) (Feed, []Entry, erro
 	var entries []Entry
 
 	// Attempt to retrieve an existing feed
-	feed, err = s.r.FeedGetByURL(newFeed.URL)
-	if errors.Is(err, ErrFeedNotFound) {
+	feed, err = s.r.FeedGetByURL(newFeed.FeedURL)
+	if err == nil {
+		// Retrieve at most 10 existing entries for this feed
+		entries, err = s.r.FeedEntryGetN(feed.UUID, 10)
+		if err != nil {
+			return Feed{}, []Entry{}, err
+		}
+
+	} else if errors.Is(err, ErrFeedNotFound) {
 		// Else, create it
 		feed, entries, err = s.createFeedAndEntries(newFeed)
 		if err != nil {

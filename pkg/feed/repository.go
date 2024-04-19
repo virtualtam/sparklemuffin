@@ -26,6 +26,9 @@ type Repository interface {
 	// FeedEntryCreateMany creates a collection of new Entries.
 	FeedEntryCreateMany(entries []Entry) (int64, error)
 
+	// FeedEntryGetN returns at most N entries for a given Feed.
+	FeedEntryGetN(feedUUID string, n uint) ([]Entry, error)
+
 	// FeedSubscriptionCreate creates a new Feed subscription for a given user.
 	FeedSubscriptionCreate(subscription Subscription) error
 }

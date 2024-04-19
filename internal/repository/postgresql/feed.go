@@ -32,9 +32,9 @@ type DBCategory struct {
 type DBFeed struct {
 	UUID string `db:"uuid"`
 
-	URL   string `db:"url"`
-	Title string `db:"title"`
-	Slug  string `db:"slug"`
+	FeedURL string `db:"feed_url"`
+	Title   string `db:"title"`
+	Slug    string `db:"slug"`
 
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
@@ -44,7 +44,7 @@ type DBFeed struct {
 func (f *DBFeed) asFeed() feed.Feed {
 	return feed.Feed{
 		UUID:      f.UUID,
-		URL:       f.URL,
+		FeedURL:   f.FeedURL,
 		Title:     f.Title,
 		Slug:      f.Slug,
 		CreatedAt: f.CreatedAt,
@@ -107,7 +107,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 	query := `
 	INSERT INTO feed_feeds(
 		uuid,
-		url,
+		feed_url,
 		title,
 		slug,
 		created_at,
@@ -115,7 +115,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 	)
 	VALUES(
 		@uuid,
-		@url,
+		@feed_url,
 		@title,
 		@slug,
 		@created_at,
@@ -124,7 +124,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 
 	args := pgx.NamedArgs{
 		"uuid":       f.UUID,
-		"url":        f.URL,
+		"feed_url":   f.FeedURL,
 		"title":      f.Title,
 		"slug":       f.Slug,
 		"created_at": f.CreatedAt,
@@ -170,9 +170,9 @@ func (r *Repository) feedGetQuery(query string, queryParams ...any) (feed.Feed, 
 
 func (r *Repository) FeedGetByURL(feedURL string) (feed.Feed, error) {
 	query := `
-SELECT uuid, url, title, slug
+SELECT uuid, feed_url, title, slug
 FROM feed_feeds
-WHERE url=$1`
+WHERE feed_url=$1`
 
 	return r.feedGetQuery(query, feedURL)
 }
@@ -283,6 +283,35 @@ func (r *Repository) FeedEntryCreateMany(entries []feed.Entry) (int64, error) {
 	}
 
 	return rowsAffected, nil
+}
+
+func (r *Repository) FeedEntryGetN(feedUUID string, n uint) ([]feed.Entry, error) {
+	query := `
+	SELECT feed_uuid, uid, url, title, published_at, updated_at
+	FROM  feed_entries
+	WHERE feed_uuid=$1
+	ORDER BY published_at DESC
+	LIMIT $2`
+
+	rows, err := r.pool.Query(context.Background(), query, feedUUID, n)
+	if err != nil {
+		return []feed.Entry{}, err
+	}
+	defer rows.Close()
+
+	dbEntries := []DBEntry{}
+
+	if err := pgxscan.ScanAll(&dbEntries, rows); err != nil {
+		return []feed.Entry{}, err
+	}
+
+	entries := make([]feed.Entry, len(dbEntries))
+
+	for i, dbEntry := range dbEntries {
+		entries[i] = dbEntry.asEntry()
+	}
+
+	return entries, nil
 }
 
 func (r *Repository) feedGetSubscriptionsByCategory(userUUID string, categoryUUID string) ([]DBSubscribedFeed, error) {

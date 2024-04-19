@@ -18,7 +18,7 @@ func (r *fakeRepository) FeedCreate(feed Feed) error {
 
 func (r *fakeRepository) FeedGetByURL(feedURL string) (Feed, error) {
 	for _, f := range r.Feeds {
-		if f.URL == feedURL {
+		if f.FeedURL == feedURL {
 			return f, nil
 		}
 	}
@@ -33,6 +33,26 @@ func (r *fakeRepository) FeedGetCategories(userUUID string) ([]Category, error) 
 func (r *fakeRepository) FeedEntryCreateMany(entries []Entry) (int64, error) {
 	r.Entries = append(r.Entries, entries...)
 	return int64(len(entries)), nil
+}
+
+func (r *fakeRepository) FeedEntryGetN(feedUUID string, n uint) ([]Entry, error) {
+	var entries []Entry
+	var count uint
+
+	for _, entry := range r.Entries {
+		if entry.FeedUUID != feedUUID {
+			continue
+		}
+
+		count++
+		entries = append(entries, entry)
+
+		if count == n {
+			break
+		}
+	}
+
+	return entries, nil
 }
 
 func (r *fakeRepository) FeedIsSubscriptionRegistered(userUUID string, feedUUID string) (bool, error) {

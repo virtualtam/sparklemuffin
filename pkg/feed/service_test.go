@@ -81,9 +81,9 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			tname:   "new feed (resolve metadata)",
 			feedURL: "http://test.local",
 			wantFeed: Feed{
-				URL:   "http://test.local",
-				Title: "Local Test",
-				Slug:  "local-test",
+				FeedURL: "http://test.local",
+				Title:   "Local Test",
+				Slug:    "local-test",
 			},
 			wantEntries: []Entry{
 				{
@@ -101,15 +101,40 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			feedURL: "http://test.local",
 			repositoryFeeds: []Feed{
 				{
-					URL:   "http://test.local",
-					Title: "Existing Test",
-					Slug:  "existing-test",
+					UUID:    "a8920612-b469-4729-85f3-2c8c30cb897f",
+					FeedURL: "http://test.local",
+					Title:   "Existing Test",
+					Slug:    "existing-test",
+				},
+			},
+			repositoryEntries: []Entry{
+				{
+					FeedUUID: "a8920612-b469-4729-85f3-2c8c30cb897f",
+					URL:      "http://test.local/first-post",
+					Title:    "First post!",
+				},
+				{
+					FeedUUID: "a8920612-b469-4729-85f3-2c8c30cb897f",
+					URL:      "http://test.local/hello-world",
+					Title:    "Hello World",
 				},
 			},
 			wantFeed: Feed{
-				URL:   "http://test.local",
-				Title: "Existing Test",
-				Slug:  "existing-test",
+				FeedURL: "http://test.local",
+				Title:   "Existing Test",
+				Slug:    "existing-test",
+			},
+			wantEntries: []Entry{
+				{
+					FeedUUID: "a8920612-b469-4729-85f3-2c8c30cb897f",
+					URL:      "http://test.local/first-post",
+					Title:    "First post!",
+				},
+				{
+					FeedUUID: "a8920612-b469-4729-85f3-2c8c30cb897f",
+					URL:      "http://test.local/hello-world",
+					Title:    "Hello World",
+				},
 			},
 		},
 
@@ -178,10 +203,10 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 func TestServiceCreateSubscription(t *testing.T) {
 	repositoryFeeds := []Feed{
 		{
-			UUID:  "c2b0fc18-c234-456e-a18c-6d453cfe11ab",
-			URL:   "http://test.local",
-			Title: "Local Test",
-			Slug:  "local-test",
+			UUID:    "c2b0fc18-c234-456e-a18c-6d453cfe11ab",
+			FeedURL: "http://test.local",
+			Title:   "Local Test",
+			Slug:    "local-test",
 		},
 	}
 

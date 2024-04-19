@@ -41,7 +41,7 @@ func NewFeed(feedURL string) (Feed, error) {
 
 	f := Feed{
 		UUID:      generatedUUID.String(),
-		URL:       feedURL,
+		FeedURL:   feedURL,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -62,7 +62,7 @@ func (f *Feed) normalizeTitle() {
 }
 
 func (f *Feed) normalizeURL() {
-	f.URL = strings.TrimSpace(f.URL)
+	f.FeedURL = strings.TrimSpace(f.FeedURL)
 }
 
 func (f *Feed) slugify() {
@@ -102,7 +102,7 @@ func (f *Feed) ValidateURL() error {
 }
 
 func (f *Feed) requireURL() error {
-	if f.URL == "" {
+	if f.FeedURL == "" {
 		return ErrFeedURLInvalid
 	}
 
@@ -110,7 +110,7 @@ func (f *Feed) requireURL() error {
 }
 
 func (f *Feed) ensureURLIsValid() error {
-	parsedURL, err := url.Parse(f.URL)
+	parsedURL, err := url.Parse(f.FeedURL)
 	if err != nil {
 		return ErrFeedURLInvalid
 	}

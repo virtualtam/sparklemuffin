@@ -37,22 +37,19 @@ func (s *Service) Categories(userUUID string) ([]Category, error) {
 // Subscribe creates a new Feed if needed, and adds the corresponding Subscription
 // for a given user.
 func (s *Service) Subscribe(userUUID string, categoryUUID string, feedURL string) error {
-	feed, entries, err := s.getOrCreateFeedAndEntries(feedURL)
+	feed, _, err := s.getOrCreateFeedAndEntries(feedURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create or retrieve feed: %w", err)
 	}
 
 	subscription, err := NewSubscription(categoryUUID, feed.UUID, userUUID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create subscription: %w", err)
 	}
 
 	if err := s.createSubscription(subscription); err != nil {
-		return err
+		return fmt.Errorf("failed to create subscription: %w", err)
 	}
-
-	// TODO sync entry statuses (at most 10)
-	_ = entries
 
 	return nil
 }

@@ -245,14 +245,14 @@ func (r *Repository) FeedEntryCreateMany(entries []feed.Entry) (int64, error) {
 
 	batch := &pgx.Batch{}
 
-	for _, b := range entries {
+	for _, entry := range entries {
 		args := pgx.NamedArgs{
-			"uid":          b.UID,
-			"feed_uuid":    b.FeedUUID,
-			"url":          b.URL,
-			"title":        b.Title,
-			"published_at": b.PublishedAt,
-			"updated_at":   b.UpdatedAt,
+			"uid":          entry.UID,
+			"feed_uuid":    entry.FeedUUID,
+			"url":          entry.URL,
+			"title":        entry.Title,
+			"published_at": entry.PublishedAt,
+			"updated_at":   entry.UpdatedAt,
 		}
 
 		batch.Queue(query, args)
@@ -266,7 +266,7 @@ func (r *Repository) FeedEntryCreateMany(entries []feed.Entry) (int64, error) {
 			log.Error().
 				Err(err).
 				Str("domain", "feeds").
-				Str("operation", "create_many").
+				Str("operation", "entries_create_many").
 				Msg("failed to close batch results")
 		}
 	}()

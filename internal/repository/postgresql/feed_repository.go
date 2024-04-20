@@ -70,7 +70,7 @@ WHERE feed_url=$1`
 	return r.feedGetQuery(query, feedURL)
 }
 
-func (r *Repository) FeedGetCategories(userUUID string) ([]feed.Category, error) {
+func (r *Repository) FeedCategoryGetMany(userUUID string) ([]feed.Category, error) {
 	query := `
 SELECT uuid, user_uuid, name, slug
 FROM feed_categories
@@ -191,7 +191,7 @@ func (r *Repository) FeedEntryGetN(feedUUID string, n uint) ([]feed.Entry, error
 	return entries, nil
 }
 
-func (r *Repository) FeedGetSubscriptionsByCategories(userUUID string) ([]fquerying.Category, error) {
+func (r *Repository) FeedCategorySubscribedFeedGetMany(userUUID string) ([]fquerying.Category, error) {
 	dbCategories, err := r.feedGetCategories(userUUID)
 	if err != nil {
 		return []fquerying.Category{}, err
@@ -229,7 +229,7 @@ func (r *Repository) FeedGetSubscriptionsByCategories(userUUID string) ([]fquery
 	return categories, nil
 }
 
-func (r *Repository) FeedGetEntriesByPage(userUUID string) ([]feed.Entry, error) {
+func (r *Repository) FeedEntryGetManyByPage(userUUID string) ([]feed.Entry, error) {
 	query := `
 SELECT fe.url, fe.title, fe.published_at
 FROM feed_entries fe
@@ -258,7 +258,7 @@ ORDER BY fe.published_at DESC`
 	return entries, nil
 }
 
-func (r *Repository) FeedIsSubscriptionRegistered(userUUID string, feedUUID string) (bool, error) {
+func (r *Repository) FeedSubscriptionIsRegistered(userUUID string, feedUUID string) (bool, error) {
 	return r.rowExistsByQuery(
 		"SELECT 1 FROM feed_subscriptions WHERE user_uuid=$1 AND feed_uuid=$2",
 		userUUID,

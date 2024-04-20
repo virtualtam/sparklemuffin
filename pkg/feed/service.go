@@ -31,7 +31,7 @@ func NewService(r Repository, httpClient *http.Client) *Service {
 
 // Categories returns all categories for a given user.
 func (s *Service) Categories(userUUID string) ([]Category, error) {
-	return s.r.FeedGetCategories(userUUID)
+	return s.r.FeedCategoryGetMany(userUUID)
 }
 
 // Subscribe creates a new Feed if needed, and adds the corresponding Subscription

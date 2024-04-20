@@ -48,7 +48,7 @@ func (s *Subscription) ValidateForCreation(v ValidationRepository) error {
 }
 
 func (s *Subscription) ensureSubscriptionIsNotRegistered(v ValidationRepository) error {
-	registered, err := v.FeedIsSubscriptionRegistered(s.UserUUID, s.FeedUUID)
+	registered, err := v.FeedSubscriptionIsRegistered(s.UserUUID, s.FeedUUID)
 	if err != nil {
 		return err
 	}

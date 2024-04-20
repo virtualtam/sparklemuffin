@@ -26,7 +26,7 @@ func (r *fakeRepository) FeedGetByURL(feedURL string) (Feed, error) {
 	return Feed{}, ErrFeedNotFound
 }
 
-func (r *fakeRepository) FeedGetCategories(userUUID string) ([]Category, error) {
+func (r *fakeRepository) FeedCategoryGetMany(userUUID string) ([]Category, error) {
 	panic("unimplemented")
 }
 
@@ -55,7 +55,7 @@ func (r *fakeRepository) FeedEntryGetN(feedUUID string, n uint) ([]Entry, error)
 	return entries, nil
 }
 
-func (r *fakeRepository) FeedIsSubscriptionRegistered(userUUID string, feedUUID string) (bool, error) {
+func (r *fakeRepository) FeedSubscriptionIsRegistered(userUUID string, feedUUID string) (bool, error) {
 	for _, s := range r.Subscriptions {
 		if s.UserUUID == userUUID && s.FeedUUID == feedUUID {
 			return true, nil

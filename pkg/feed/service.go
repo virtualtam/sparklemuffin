@@ -90,6 +90,11 @@ func (s *Service) createFeedAndEntries(feed Feed) (Feed, []Entry, error) {
 	}
 
 	feed.Title = syndicationFeed.Title
+	feed.Normalize()
+
+	if err := feed.ValidateForCreation(); err != nil {
+		return Feed{}, []Entry{}, err
+	}
 
 	if err := s.r.FeedCreate(feed); err != nil {
 		return Feed{}, []Entry{}, err

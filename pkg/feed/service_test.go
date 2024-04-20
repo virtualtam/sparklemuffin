@@ -115,6 +115,15 @@ func TestServiceCreateEntries(t *testing.T) {
 				},
 			},
 		},
+		{
+			tname: "title not set, skip",
+			feedItems: []*gofeed.Item{
+				{
+					Link:  "http://test.local/dates",
+					Title: "",
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {

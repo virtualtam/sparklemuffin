@@ -77,19 +77,19 @@ func (e *Entry) normalizeURL() {
 func (e *Entry) ensureURLIsValid() error {
 	parsedURL, err := url.Parse(e.URL)
 	if err != nil {
-		return ErrFeedURLInvalid
+		return ErrEntryURLInvalid
 	}
 
 	if parsedURL.Scheme == "" {
-		return ErrFeedURLNoScheme
+		return ErrEntryURLNoScheme
 	}
 
 	if !slices.Contains(allowedFeedURLSchemes, parsedURL.Scheme) {
-		return ErrFeedURLUnsupportedScheme
+		return ErrEntryURLUnsupportedScheme
 	}
 
 	if parsedURL.Host == "" {
-		return ErrFeedURLNoHost
+		return ErrEntryURLNoHost
 	}
 
 	return nil
@@ -97,14 +97,14 @@ func (e *Entry) ensureURLIsValid() error {
 
 func (e *Entry) requireTitle() error {
 	if e.Title == "" {
-		return ErrFeedTitleRequired
+		return ErrEntryTitleRequired
 	}
 	return nil
 }
 
 func (e *Entry) requireURL() error {
 	if e.URL == "" {
-		return ErrFeedURLRequired
+		return ErrEntryURLRequired
 	}
 	return nil
 }
@@ -112,7 +112,7 @@ func (e *Entry) requireURL() error {
 func (e *Entry) validateUID() error {
 	_, err := ksuid.Parse(e.UID)
 	if err != nil {
-		return ErrFeedUUIDInvalid
+		return ErrEntryUUIDInvalid
 	}
 
 	return nil

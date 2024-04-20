@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mmcdole/gofeed"
+	"github.com/rs/zerolog/log"
 )
 
 // Service handles operations for the feed domain.
@@ -56,10 +57,10 @@ func (s *Service) Subscribe(userUUID string, categoryUUID string, feedURL string
 }
 
 func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) ([]Entry, error) {
-	entries := make([]Entry, len(items))
+	var entries []Entry
 	now := time.Now().UTC()
 
-	for i, item := range items {
+	for _, item := range items {
 		publishedAt := now
 		if item.PublishedParsed != nil {
 			publishedAt = *item.PublishedParsed
@@ -78,10 +79,11 @@ func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) ([]Entry,
 			updatedAt,
 		)
 		if err := entry.ValidateForAddition(); err != nil {
-			return []Entry{}, err
+			log.Warn().Err(err).Msg("skipping invalid entry")
+			continue
 		}
 
-		entries[i] = entry
+		entries = append(entries, entry)
 	}
 
 	n, err := s.r.FeedEntryCreateMany(entries)

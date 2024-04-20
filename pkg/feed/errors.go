@@ -21,6 +21,15 @@ var (
 	// Feed Category
 	ErrCategoryUUIDRequired error = errors.New("category: UUID required")
 
+	// Feed Entry
+	ErrEntryTitleRequired        error = errors.New("entry: title required")
+	ErrEntryURLInvalid           error = errors.New("entry: invalid URL")
+	ErrEntryURLNoScheme          error = errors.New("entry: missing URL scheme")
+	ErrEntryURLNoHost            error = errors.New("entry: missing URL host")
+	ErrEntryURLRequired          error = errors.New("entry: URL required")
+	ErrEntryURLUnsupportedScheme error = errors.New("entry: unsupported URL scheme")
+	ErrEntryUUIDInvalid          error = errors.New("entry: invalid UUID")
+
 	// Feed Subscription
 	ErrSubscriptionAlreadyRegistered error = errors.New("subscription: already registered")
 	ErrSubscriptionUUIDRequired      error = errors.New("subscription: UUID required")

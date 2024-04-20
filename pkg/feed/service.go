@@ -19,9 +19,9 @@ type Service struct {
 }
 
 // NewService initializes and returns a Feed Service.
-func NewService(r Repository, client *http.Client) *Service {
+func NewService(r Repository, httpClient *http.Client) *Service {
 	feedParser := gofeed.NewParser()
-	feedParser.Client = client
+	feedParser.Client = httpClient
 
 	return &Service{
 		r:          r,
@@ -120,9 +120,10 @@ func (s *Service) getOrCreateFeedAndEntries(feedURL string) (Feed, []Entry, erro
 	feed, err = s.r.FeedGetByURL(newFeed.FeedURL)
 	if err == nil {
 		// Retrieve at most 10 existing entries for this feed
-		entries, err = s.r.FeedEntryGetN(feed.UUID, 10)
-		if err != nil {
-			return Feed{}, []Entry{}, err
+		var err2 error
+		entries, err2 = s.r.FeedEntryGetN(feed.UUID, 10)
+		if err2 != nil {
+			return Feed{}, []Entry{}, err2
 		}
 
 	} else if errors.Is(err, ErrFeedNotFound) {
@@ -132,7 +133,7 @@ func (s *Service) getOrCreateFeedAndEntries(feedURL string) (Feed, []Entry, erro
 			return Feed{}, []Entry{}, err
 		}
 
-	} else if err != nil {
+	} else {
 		return Feed{}, []Entry{}, err
 	}
 

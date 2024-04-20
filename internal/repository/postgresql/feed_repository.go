@@ -51,7 +51,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 		return err
 	}
 
-	defer r.rollback(ctx, tx, "feeds", "create feed")
+	defer r.rollback(ctx, tx, "feeds", "FeedCreate")
 
 	_, err = tx.Exec(ctx, query, args)
 	if err != nil {
@@ -72,7 +72,7 @@ WHERE feed_url=$1`
 
 func (r *Repository) FeedGetCategories(userUUID string) ([]feed.Category, error) {
 	query := `
-SELECT uuid, name, slug
+SELECT uuid, user_uuid, name, slug
 FROM feed_categories
 WHERE user_uuid=$1
 ORDER BY name`
@@ -91,9 +91,10 @@ ORDER BY name`
 	categories := make([]feed.Category, len(dbCategories))
 	for i, dbCategory := range dbCategories {
 		categories[i] = feed.Category{
-			UUID: dbCategory.UUID,
-			Name: dbCategory.Name,
-			Slug: dbCategory.Slug,
+			UUID:     dbCategory.UUID,
+			UserUUID: dbCategory.UserUUID,
+			Name:     dbCategory.Name,
+			Slug:     dbCategory.Slug,
 		}
 	}
 
@@ -142,7 +143,7 @@ func (r *Repository) FeedEntryCreateMany(entries []feed.Entry) (int64, error) {
 			log.Error().
 				Err(err).
 				Str("domain", "feeds").
-				Str("operation", "entries_create_many").
+				Str("operation", "FeedEntryCreateMany").
 				Msg("failed to close batch results")
 		}
 	}()

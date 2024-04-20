@@ -104,6 +104,7 @@ func (s *Service) createFeedAndEntries(feed Feed) (Feed, []Entry, error) {
 	}
 
 	feed.Title = syndicationFeed.Title
+	feed.FetchedAt = time.Now().UTC()
 	feed.Normalize()
 
 	if err := feed.ValidateForCreation(); err != nil {

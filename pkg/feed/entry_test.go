@@ -3,7 +3,16 @@
 
 package feed
 
-import "testing"
+import (
+	"testing"
+	"time"
+
+	"github.com/virtualtam/sparklemuffin/internal/assert"
+)
+
+const (
+	entryDateComparisonDelta time.Duration = 1 * time.Second
+)
 
 func assertEntriesEqual(t *testing.T, gotEntries []Entry, wantEntries []Entry) {
 	t.Helper()
@@ -24,5 +33,8 @@ func assertEntriesEqual(t *testing.T, gotEntries []Entry, wantEntries []Entry) {
 		if gotEntry.URL != wantEntry.URL {
 			t.Errorf("want URL %q, got %q", wantEntry.URL, gotEntry.URL)
 		}
+
+		assert.DatesAlmostEqual(t, "PublishedAt", gotEntry.PublishedAt, wantEntry.PublishedAt, entryDateComparisonDelta)
+		assert.DatesAlmostEqual(t, "UpdatedAt", gotEntry.UpdatedAt, wantEntry.UpdatedAt, entryDateComparisonDelta)
 	}
 }

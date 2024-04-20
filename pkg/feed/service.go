@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/mmcdole/gofeed"
 )
@@ -56,14 +57,25 @@ func (s *Service) Subscribe(userUUID string, categoryUUID string, feedURL string
 
 func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) ([]Entry, error) {
 	entries := make([]Entry, len(items))
+	now := time.Now().UTC()
 
 	for i, item := range items {
+		publishedAt := now
+		if item.PublishedParsed != nil {
+			publishedAt = *item.PublishedParsed
+		}
+
+		updatedAt := publishedAt
+		if item.UpdatedParsed != nil {
+			updatedAt = *item.UpdatedParsed
+		}
+
 		entry := NewEntry(
 			feedUUID,
 			item.Link,
 			item.Title,
-			*item.PublishedParsed,
-			*item.UpdatedParsed,
+			publishedAt,
+			updatedAt,
 		)
 		if err := entry.ValidateForAddition(); err != nil {
 			return []Entry{}, err

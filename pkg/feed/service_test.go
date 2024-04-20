@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/feeds"
+	"github.com/mmcdole/gofeed"
 )
 
 type testRoundTripper struct{}
@@ -62,10 +63,93 @@ func (testRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
+func TestServiceCreateEntries(t *testing.T) {
+	feedUUID := "26b0aafc-4de6-46be-91ea-0f6e111c660c"
+	now := time.Now().UTC()
+	yesterday := now.Add(-24 * time.Hour)
+
+	cases := []struct {
+		tname     string
+		feedItems []*gofeed.Item
+		want      []Entry
+		wantErr   error
+	}{
+		// edge cases
+		{
+			tname: "publication and update dates not set, default to now",
+			feedItems: []*gofeed.Item{
+				{
+					Link:            "http://test.local/dates",
+					Title:           "Date test",
+					PublishedParsed: nil,
+					UpdatedParsed:   nil,
+				},
+			},
+			want: []Entry{
+				{
+					FeedUUID:    feedUUID,
+					URL:         "http://test.local/dates",
+					Title:       "Date test",
+					PublishedAt: now,
+					UpdatedAt:   now,
+				},
+			},
+		},
+		{
+			tname: "update date not set, default to published date",
+			feedItems: []*gofeed.Item{
+				{
+					Link:            "http://test.local/dates",
+					Title:           "Date test",
+					PublishedParsed: &yesterday,
+					UpdatedParsed:   nil,
+				},
+			},
+			want: []Entry{
+				{
+					FeedUUID:    feedUUID,
+					URL:         "http://test.local/dates",
+					Title:       "Date test",
+					PublishedAt: yesterday,
+					UpdatedAt:   yesterday,
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{}
+			s := NewService(r, nil)
+
+			got, err := s.createEntries(feedUUID, tc.feedItems)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertEntriesEqual(t, got, tc.want)
+		})
+	}
+}
+
 func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 	testClient := &http.Client{
 		Transport: testRoundTripper{},
 	}
+
+	now := time.Now().UTC()
+	yesterday := now.Add(-24 * time.Hour)
 
 	cases := []struct {
 		tname             string
@@ -87,12 +171,16 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			},
 			wantEntries: []Entry{
 				{
-					URL:   "http://test.local/first-post",
-					Title: "First post!",
+					URL:         "http://test.local/first-post",
+					Title:       "First post!",
+					PublishedAt: now,
+					UpdatedAt:   now,
 				},
 				{
-					URL:   "http://test.local/hello-world",
-					Title: "Hello World",
+					URL:         "http://test.local/hello-world",
+					Title:       "Hello World",
+					PublishedAt: yesterday,
+					UpdatedAt:   yesterday,
 				},
 			},
 		},
@@ -109,14 +197,18 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			},
 			repositoryEntries: []Entry{
 				{
-					FeedUUID: "a8920612-b469-4729-85f3-2c8c30cb897f",
-					URL:      "http://test.local/first-post",
-					Title:    "First post!",
+					FeedUUID:    "a8920612-b469-4729-85f3-2c8c30cb897f",
+					URL:         "http://test.local/first-post",
+					Title:       "First post!",
+					PublishedAt: now,
+					UpdatedAt:   now,
 				},
 				{
-					FeedUUID: "a8920612-b469-4729-85f3-2c8c30cb897f",
-					URL:      "http://test.local/hello-world",
-					Title:    "Hello World",
+					FeedUUID:    "a8920612-b469-4729-85f3-2c8c30cb897f",
+					URL:         "http://test.local/hello-world",
+					Title:       "Hello World",
+					PublishedAt: yesterday,
+					UpdatedAt:   yesterday,
 				},
 			},
 			wantFeed: Feed{
@@ -126,14 +218,18 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			},
 			wantEntries: []Entry{
 				{
-					FeedUUID: "a8920612-b469-4729-85f3-2c8c30cb897f",
-					URL:      "http://test.local/first-post",
-					Title:    "First post!",
+					FeedUUID:    "a8920612-b469-4729-85f3-2c8c30cb897f",
+					URL:         "http://test.local/first-post",
+					Title:       "First post!",
+					PublishedAt: now,
+					UpdatedAt:   now,
 				},
 				{
-					FeedUUID: "a8920612-b469-4729-85f3-2c8c30cb897f",
-					URL:      "http://test.local/hello-world",
-					Title:    "Hello World",
+					FeedUUID:    "a8920612-b469-4729-85f3-2c8c30cb897f",
+					URL:         "http://test.local/hello-world",
+					Title:       "Hello World",
+					PublishedAt: yesterday,
+					UpdatedAt:   yesterday,
 				},
 			},
 		},

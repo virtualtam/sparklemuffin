@@ -238,7 +238,7 @@ func TestServiceCreateSubscription(t *testing.T) {
 		{
 			tname:        "existing subscription (identical)",
 			subscription: existingSubscription,
-			wantErr:      ErrFeedSubscriptionAlreadyRegistered,
+			wantErr:      ErrSubscriptionAlreadyRegistered,
 		},
 		{
 			tname: "existing subscription (different category)",
@@ -248,7 +248,7 @@ func TestServiceCreateSubscription(t *testing.T) {
 				FeedUUID:     existingSubscription.FeedUUID,
 				UserUUID:     existingSubscription.UserUUID,
 			},
-			wantErr: ErrFeedSubscriptionAlreadyRegistered,
+			wantErr: ErrSubscriptionAlreadyRegistered,
 		},
 	}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Subscription represents a given user's subscription to a Feed.
 type Subscription struct {
 	UUID         string
 	CategoryUUID string
@@ -19,6 +20,7 @@ type Subscription struct {
 	UpdatedAt time.Time
 }
 
+// NewSubscription initializes and returns a new Subscription.
 func NewSubscription(categoryUUID string, feedUUID string, userUUID string) (Subscription, error) {
 	now := time.Now().UTC()
 
@@ -40,22 +42,62 @@ func NewSubscription(categoryUUID string, feedUUID string, userUUID string) (Sub
 }
 
 func (s *Subscription) ValidateForCreation(v ValidationRepository) error {
-	if err := s.ensureSubscriptionIsNotRegistered(v); err != nil {
-		return err
+	fns := []func() error{
+		s.requireUUID,
+		s.requireCategoryUUID,
+		s.requireFeedUUID,
+		s.requireUserUUID,
+		s.ensureSubscriptionIsNotRegistered(v),
+	}
+
+	for _, fn := range fns {
+		if err := fn(); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (s *Subscription) ensureSubscriptionIsNotRegistered(v ValidationRepository) error {
-	registered, err := v.FeedSubscriptionIsRegistered(s.UserUUID, s.FeedUUID)
-	if err != nil {
-		return err
-	}
+func (s *Subscription) ensureSubscriptionIsNotRegistered(v ValidationRepository) func() error {
+	return func() error {
+		registered, err := v.FeedSubscriptionIsRegistered(s.UserUUID, s.FeedUUID)
+		if err != nil {
+			return err
+		}
 
-	if registered {
-		return ErrFeedSubscriptionAlreadyRegistered
-	}
+		if registered {
+			return ErrSubscriptionAlreadyRegistered
+		}
 
+		return nil
+	}
+}
+
+func (s *Subscription) requireCategoryUUID() error {
+	if s.CategoryUUID == "" {
+		return ErrCategoryUUIDRequired
+	}
+	return nil
+}
+
+func (s *Subscription) requireFeedUUID() error {
+	if s.FeedUUID == "" {
+		return ErrFeedUUIDRequired
+	}
+	return nil
+}
+
+func (s *Subscription) requireUserUUID() error {
+	if s.UserUUID == "" {
+		return ErrUserUUIDRequired
+	}
+	return nil
+}
+
+func (s *Subscription) requireUUID() error {
+	if s.UUID == "" {
+		return ErrSubscriptionUUIDRequired
+	}
 	return nil
 }

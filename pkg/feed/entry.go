@@ -112,7 +112,7 @@ func (e *Entry) requireURL() error {
 func (e *Entry) validateUID() error {
 	_, err := ksuid.Parse(e.UID)
 	if err != nil {
-		return ErrFeedUIDInvalid
+		return ErrFeedUUIDInvalid
 	}
 
 	return nil

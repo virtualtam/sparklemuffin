@@ -11,7 +11,7 @@ type fakeRepository struct {
 	Subscriptions []Subscription
 }
 
-func (r *fakeRepository) FeedCreate(feed Feed) error {
+func (r *fakeRepository) FeedAdd(feed Feed) error {
 	r.Feeds = append(r.Feeds, feed)
 	return nil
 }
@@ -30,7 +30,7 @@ func (r *fakeRepository) FeedCategoryGetMany(userUUID string) ([]Category, error
 	panic("unimplemented")
 }
 
-func (r *fakeRepository) FeedEntryCreateMany(entries []Entry) (int64, error) {
+func (r *fakeRepository) FeedEntryAddMany(entries []Entry) (int64, error) {
 	r.Entries = append(r.Entries, entries...)
 	return int64(len(entries)), nil
 }
@@ -65,7 +65,7 @@ func (r *fakeRepository) FeedSubscriptionIsRegistered(userUUID string, feedUUID 
 	return false, nil
 }
 
-func (r *fakeRepository) FeedSubscriptionCreate(subscription Subscription) error {
+func (r *fakeRepository) FeedSubscriptionAdd(subscription Subscription) error {
 	r.Subscriptions = append(r.Subscriptions, subscription)
 	return nil
 }

@@ -14,8 +14,8 @@ type ValidationRepository interface {
 type Repository interface {
 	ValidationRepository
 
-	// FeedCreate creates a new Feed.
-	FeedCreate(feed Feed) error
+	// FeedAdd creates a new Feed.
+	FeedAdd(feed Feed) error
 
 	// FeedGetByURL returns the Feed for a given URL.
 	FeedGetByURL(feedURL string) (Feed, error)
@@ -23,12 +23,12 @@ type Repository interface {
 	// FeedCategoryGetMany returns all categories for a giver user.
 	FeedCategoryGetMany(userUUID string) ([]Category, error)
 
-	// FeedEntryCreateMany creates a collection of new Entries.
-	FeedEntryCreateMany(entries []Entry) (int64, error)
+	// FeedEntryAddMany creates a collection of new Entries.
+	FeedEntryAddMany(entries []Entry) (int64, error)
 
 	// FeedEntryGetN returns at most N entries for a given Feed.
 	FeedEntryGetN(feedUUID string, n uint) ([]Entry, error)
 
-	// FeedSubscriptionCreate creates a new Feed subscription for a given user.
-	FeedSubscriptionCreate(subscription Subscription) error
+	// FeedSubscriptionAdd creates a new Feed subscription for a given user.
+	FeedSubscriptionAdd(subscription Subscription) error
 }

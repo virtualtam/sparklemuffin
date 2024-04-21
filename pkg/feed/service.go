@@ -86,7 +86,7 @@ func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) ([]Entry,
 		entries = append(entries, entry)
 	}
 
-	n, err := s.r.FeedEntryCreateMany(entries)
+	n, err := s.r.FeedEntryAddMany(entries)
 	if err != nil {
 		return []Entry{}, err
 	}
@@ -111,7 +111,7 @@ func (s *Service) createFeedAndEntries(feed Feed) (Feed, []Entry, error) {
 		return Feed{}, []Entry{}, err
 	}
 
-	if err := s.r.FeedCreate(feed); err != nil {
+	if err := s.r.FeedAdd(feed); err != nil {
 		return Feed{}, []Entry{}, err
 	}
 
@@ -165,5 +165,5 @@ func (s *Service) createSubscription(subscription Subscription) error {
 		return err
 	}
 
-	return s.r.FeedSubscriptionCreate(subscription)
+	return s.r.FeedSubscriptionAdd(subscription)
 }

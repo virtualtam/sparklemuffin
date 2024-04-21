@@ -16,7 +16,7 @@ import (
 var _ feed.Repository = &Repository{}
 var _ fquerying.Repository = &Repository{}
 
-func (r *Repository) FeedCreate(f feed.Feed) error {
+func (r *Repository) FeedAdd(f feed.Feed) error {
 	query := `
 	INSERT INTO feed_feeds(
 		uuid,
@@ -51,7 +51,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 		return err
 	}
 
-	defer r.rollback(ctx, tx, "feeds", "FeedCreate")
+	defer r.rollback(ctx, tx, "feeds", "FeedAdd")
 
 	_, err = tx.Exec(ctx, query, args)
 	if err != nil {
@@ -101,7 +101,7 @@ ORDER BY name`
 	return categories, nil
 }
 
-func (r *Repository) FeedEntryCreateMany(entries []feed.Entry) (int64, error) {
+func (r *Repository) FeedEntryAddMany(entries []feed.Entry) (int64, error) {
 	query := `
 	INSERT INTO feed_entries(
 		uid,
@@ -143,7 +143,7 @@ func (r *Repository) FeedEntryCreateMany(entries []feed.Entry) (int64, error) {
 			log.Error().
 				Err(err).
 				Str("domain", "feeds").
-				Str("operation", "FeedEntryCreateMany").
+				Str("operation", "FeedEntryAddMany").
 				Msg("failed to close batch results")
 		}
 	}()
@@ -266,7 +266,7 @@ func (r *Repository) FeedSubscriptionIsRegistered(userUUID string, feedUUID stri
 	)
 }
 
-func (r *Repository) FeedSubscriptionCreate(s feed.Subscription) error {
+func (r *Repository) FeedSubscriptionAdd(s feed.Subscription) error {
 	query := `
 	INSERT INTO feed_subscriptions(
 		uuid,

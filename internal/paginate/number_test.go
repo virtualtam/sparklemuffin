@@ -1,13 +1,16 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package controller
+package paginate
 
-import "testing"
+import (
+	"net/url"
+	"testing"
+)
 
 func TestGetPageNumber(t *testing.T) {
 	t.Run("empty (param not set)", func(t *testing.T) {
-		got, err := getPageNumber("")
+		got, _, err := GetPageNumber(url.Values{})
 		if err != nil {
 			t.Fatalf("expected no error, got %q", err)
 		}
@@ -18,7 +21,11 @@ func TestGetPageNumber(t *testing.T) {
 	})
 
 	t.Run("positive integer", func(t *testing.T) {
-		got, err := getPageNumber("12")
+		queryParams := url.Values{
+			"page": []string{"12"},
+		}
+
+		got, _, err := GetPageNumber(queryParams)
 		if err != nil {
 			t.Fatalf("expected no error, got %q", err)
 		}
@@ -44,7 +51,11 @@ func TestGetPageNumber(t *testing.T) {
 
 	for _, tc := range errorCases {
 		t.Run(tc.tname, func(t *testing.T) {
-			_, err := getPageNumber(tc.tname)
+			queryParams := url.Values{
+				"page": []string{tc.input},
+			}
+
+			_, _, err := GetPageNumber(queryParams)
 			if err == nil {
 				t.Fatal("expected an error, got none")
 			}

@@ -14,7 +14,7 @@ const (
 	categoryDateComparisonDelta time.Duration = 1 * time.Second
 )
 
-func assertCategoriesEqual(t *testing.T, got, want Category) {
+func assertCategoryEquals(t *testing.T, got, want Category) {
 	t.Helper()
 
 	if got.Name != want.Name {
@@ -24,6 +24,6 @@ func assertCategoriesEqual(t *testing.T, got, want Category) {
 		t.Errorf("want Slug %q, got %q", want.Slug, got.Slug)
 	}
 
-	assert.DatesAlmostEqual(t, "CreatedAt", got.CreatedAt, want.CreatedAt, categoryDateComparisonDelta)
-	assert.DatesAlmostEqual(t, "UpdatedAt", got.UpdatedAt, want.UpdatedAt, categoryDateComparisonDelta)
+	assert.TimeAlmostEquals(t, "CreatedAt", got.CreatedAt, want.CreatedAt, categoryDateComparisonDelta)
+	assert.TimeAlmostEquals(t, "UpdatedAt", got.UpdatedAt, want.UpdatedAt, categoryDateComparisonDelta)
 }

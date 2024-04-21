@@ -1,18 +1,17 @@
 {{define "content"}}
-<div id="nav-actions">
-  <nav>
-    <a href="/feeds/add">+ Add feed</a>
-  </nav>
-  <nav>
-    <a href="/feeds/categories/add">+ Add category</a>
-  </nav>
-</div>
 <div class="feeds">
   <div class="feed-category-list">
-    <h3>Feeds</h3>
+    <div id="nav-actions">
+      <nav>
+        <a href="/feeds/add">+ Add feed</a>
+      </nav>
+      <nav>
+        <a href="/feeds/categories/add">+ Add category</a>
+      </nav>
+    </div>
     <ul>
       <li>
-        <span class="feed-category">All <span class="unread">57</span></span>
+        <span class="feed-category">All <span class="unread">{{.Unread}}</span></span>
       </li>
       {{- range .Categories}}
       <li>
@@ -28,7 +27,8 @@
   </div>
 
   <div class="feed-entry-list">
-    <ol>
+    {{template "pagination" .}}
+    <ol start="{{.Offset}}">
       {{- range .Entries}}
       <li>
         <div class="feed-entry">
@@ -40,7 +40,28 @@
       </li>
       {{- end}}
     </ol>
+    {{template "pagination" .}}
   </div>
 </div>
+{{end}}
 
+{{define "pagination"}}
+<div class="pagination">
+  <p>
+    Page <span class="page-number">{{.PageNumber}}</span> of <span class="page-number">{{.TotalPages}}</span>
+    {{if gt .TotalPages 1}}
+    <br>
+    Go to:
+    {{if lt .PreviousPageNumber .PageNumber }}
+    <a href="/feeds?page=1">first</a>,
+    <a href="/feeds?page={{.PreviousPageNumber}}">previous</a>
+    {{- if ne .PageNumber .TotalPages}},{{end}}
+    {{end}}
+    {{if lt .PageNumber .TotalPages }}
+    <a href="/feeds?page={{.NextPageNumber}}">next</a>,
+    <a href="/feeds?page={{.TotalPages}}">last</a>
+    {{end}}
+    {{end}}
+  </p>
+</div>
 {{end}}

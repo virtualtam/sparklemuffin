@@ -67,6 +67,19 @@ func (e *DBEntry) asEntry() feed.Entry {
 	}
 }
 
+type DBQueryingEntry struct {
+	DBEntry
+
+	Read bool `db:"read"`
+}
+
+func (qe *DBQueryingEntry) asQueryingEntry() fquerying.SubscriptionEntry {
+	return fquerying.SubscriptionEntry{
+		Entry: qe.asEntry(),
+		Read:  qe.Read,
+	}
+}
+
 type DBSubscribedFeed struct {
 	UUID    string `db:"uuid"`
 	FeedURL string `db:"feed_url"`

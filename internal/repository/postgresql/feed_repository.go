@@ -217,18 +217,18 @@ func (r *Repository) FeedEntryGetN(feedUUID string, n uint) ([]feed.Entry, error
 	return entries, nil
 }
 
-func (r *Repository) FeedCategorySubscribedFeedGetMany(userUUID string) ([]fquerying.Category, error) {
+func (r *Repository) FeedSubscriptionCategoryGetAll(userUUID string) ([]fquerying.SubscriptionCategory, error) {
 	dbCategories, err := r.feedGetCategories(userUUID)
 	if err != nil {
-		return []fquerying.Category{}, err
+		return []fquerying.SubscriptionCategory{}, err
 	}
 
-	categories := make([]fquerying.Category, len(dbCategories))
+	categories := make([]fquerying.SubscriptionCategory, len(dbCategories))
 
 	for i, dbCategory := range dbCategories {
 		dbFeeds, err := r.feedGetSubscriptionsByCategory(userUUID, dbCategory.UUID)
 		if err != nil {
-			return []fquerying.Category{}, err
+			return []fquerying.SubscriptionCategory{}, err
 		}
 
 		var unread uint
@@ -239,7 +239,7 @@ func (r *Repository) FeedCategorySubscribedFeedGetMany(userUUID string) ([]fquer
 			unread += dbFeed.Unread
 		}
 
-		category := fquerying.Category{
+		category := fquerying.SubscriptionCategory{
 			Category: feed.Category{
 				UUID: dbCategory.UUID,
 				Name: dbCategory.Name,
@@ -255,33 +255,55 @@ func (r *Repository) FeedCategorySubscribedFeedGetMany(userUUID string) ([]fquer
 	return categories, nil
 }
 
-func (r *Repository) FeedEntryGetManyByPage(userUUID string) ([]feed.Entry, error) {
+func (r *Repository) FeedSubscriptionEntryGetCount(userUUID string) (uint, error) {
 	query := `
-SELECT fe.url, fe.title, fe.published_at
-FROM feed_entries fe
-JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-WHERE user_uuid=$1
-ORDER BY fe.published_at DESC`
+	SELECT COUNT(*)
+	FROM feed_entries fe
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	WHERE fs.user_uuid=$1`
 
-	rows, err := r.pool.Query(context.Background(), query, userUUID)
+	var count uint
+
+	err := r.pool.QueryRow(
+		context.Background(),
+		query,
+		userUUID,
+	).Scan(&count)
 	if err != nil {
-		return []feed.Entry{}, err
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]fquerying.SubscriptionEntry, error) {
+	query := `
+	SELECT fe.url, fe.title, fe.published_at, FALSE AS "read"
+	FROM feed_entries fe
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	WHERE fs.user_uuid=$1
+	ORDER BY fe.published_at DESC
+	LIMIT $2 OFFSET $3`
+
+	rows, err := r.pool.Query(context.Background(), query, userUUID, n, offset)
+	if err != nil {
+		return []fquerying.SubscriptionEntry{}, err
 	}
 	defer rows.Close()
 
-	dbEntries := []DBEntry{}
+	dbQueryingEntries := []DBQueryingEntry{}
 
-	if err := pgxscan.ScanAll(&dbEntries, rows); err != nil {
-		return []feed.Entry{}, err
+	if err := pgxscan.ScanAll(&dbQueryingEntries, rows); err != nil {
+		return []fquerying.SubscriptionEntry{}, err
 	}
 
-	entries := make([]feed.Entry, len(dbEntries))
+	queryingEntries := make([]fquerying.SubscriptionEntry, len(dbQueryingEntries))
 
-	for i, dbEntry := range dbEntries {
-		entries[i] = dbEntry.asEntry()
+	for i, dbQueryingEntry := range dbQueryingEntries {
+		queryingEntries[i] = dbQueryingEntry.asQueryingEntry()
 	}
 
-	return entries, nil
+	return queryingEntries, nil
 }
 
 func (r *Repository) FeedSubscriptionIsRegistered(userUUID string, feedUUID string) (bool, error) {

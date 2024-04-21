@@ -180,7 +180,11 @@ tbody tr:nth-child(odd) {
   background-color: var(--bg-accent);
 }
 
-/* Bookmarks */
+/* Content navigation */
+#nav-actions {
+  margin-bottom: 16px;
+}
+
 #nav-actions nav>a {
   color: var(--text);
   font-weight: bold;
@@ -197,9 +201,30 @@ tbody tr:nth-child(odd) {
 }
 
 ol {
+  margin-top: 0;
   padding: 1em;
 }
 
+.page-number {
+  font-weight: bold;
+}
+
+.pagination a {
+  color: var(--text);
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.pagination a:hover {
+  text-decoration: underline;
+}
+
+.pagination p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Bookmarks */
 .bookmark {
   margin-bottom: 1em;
 }
@@ -265,20 +290,6 @@ ol {
   font-style: italic;
 }
 
-.page-number {
-  font-weight: bold;
-}
-
-.pagination a {
-  color: var(--text);
-  font-weight: bold;
-  text-decoration: none;
-}
-
-.pagination a:hover {
-  text-decoration: underline;
-}
-
 /* Tags list */
 .tag-list {
   display: grid;
@@ -331,7 +342,6 @@ ol {
 .feeds {
   display: grid;
   grid-template-columns: minmax(20ch, 30ch) 1fr;
-  margin-top: 1em;
 }
 
 .feed-category-list {

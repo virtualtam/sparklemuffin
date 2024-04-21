@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -19,6 +18,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
+	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -345,11 +345,10 @@ func (hc *bookmarkHandlerContext) handleBookmarkListView() func(w http.ResponseW
 		var viewData view.Data
 		user := httpcontext.UserValue(r.Context())
 
-		pageNumberParam := r.URL.Query().Get("page")
-		pageNumber, err := getPageNumber(pageNumberParam)
+		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
-			log.Error().Err(err).Str("page_number", pageNumberParam).Msg("invalid page number")
-			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
+			log.Error().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
+			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
 			http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
 			return
 		}
@@ -423,11 +422,10 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 			return
 		}
 
-		pageNumberParam := r.URL.Query().Get("page")
-		pageNumber, err := getPageNumber(pageNumberParam)
+		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
-			log.Error().Err(err).Str("page_number", pageNumberParam).Msg("invalid page number")
-			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
+			log.Error().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
+			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
@@ -561,19 +559,6 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkFeedAtom() func(w http.Res
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 	}
-}
-
-func getPageNumber(pageNumberParam string) (uint, error) {
-	if pageNumberParam == "" {
-		return 1, nil
-	}
-
-	pageNumber64, err := strconv.ParseUint(pageNumberParam, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	return uint(pageNumber64), nil
 }
 
 // handleTagDeleteView renders the tag deletion form.
@@ -727,12 +712,11 @@ func (hc *bookmarkHandlerContext) handleTagListView() func(w http.ResponseWriter
 		var viewData view.Data
 		user := httpcontext.UserValue(r.Context())
 
-		pageNumberParam := r.URL.Query().Get("page")
-		pageNumber, err := getPageNumber(pageNumberParam)
+		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
-			log.Error().Err(err).Str("page_number", pageNumberParam).Msg("invalid page number")
-			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
-			http.Redirect(w, r, "/bookmarks/tags", http.StatusSeeOther)
+			log.Error().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
+			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 

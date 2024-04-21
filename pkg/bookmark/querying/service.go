@@ -3,7 +3,10 @@
 
 package querying
 
-import "github.com/virtualtam/sparklemuffin/pkg/bookmark"
+import (
+	"github.com/virtualtam/sparklemuffin/internal/paginate"
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+)
 
 const (
 	bookmarksPerPage uint = 20
@@ -38,7 +41,7 @@ func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, numbe
 		return BookmarkPage{}, err
 	}
 
-	totalPages := pageCount(bookmarkCount, bookmarksPerPage)
+	totalPages := paginate.PageCount(bookmarkCount, bookmarksPerPage)
 
 	if number > totalPages {
 		return BookmarkPage{}, ErrPageNumberOutOfBounds
@@ -76,7 +79,7 @@ func (s *Service) BookmarksBySearchQueryAndPage(ownerUUID string, visibility Vis
 		return BookmarkPage{}, err
 	}
 
-	totalPages := pageCount(bookmarkCount, bookmarksPerPage)
+	totalPages := paginate.PageCount(bookmarkCount, bookmarksPerPage)
 
 	if number > totalPages {
 		return BookmarkPage{}, ErrPageNumberOutOfBounds
@@ -163,7 +166,7 @@ func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uin
 		return TagPage{}, err
 	}
 
-	totalPages := pageCount(tagCount, tagsPerPage)
+	totalPages := paginate.PageCount(tagCount, tagsPerPage)
 
 	if number > totalPages {
 		return TagPage{}, ErrPageNumberOutOfBounds
@@ -201,7 +204,7 @@ func (s *Service) TagsByFilterQueryAndPage(ownerUUID string, visibility Visibili
 		return TagPage{}, err
 	}
 
-	totalPages := pageCount(tagCount, tagsPerPage)
+	totalPages := paginate.PageCount(tagCount, tagsPerPage)
 
 	if number > totalPages {
 		return TagPage{}, ErrPageNumberOutOfBounds

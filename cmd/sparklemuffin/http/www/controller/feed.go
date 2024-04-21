@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -13,6 +14,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
+	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	fquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -145,7 +147,15 @@ func (fc *feedHandlerContext) handleFeedListView() func(w http.ResponseWriter, r
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 
-		feedPage, err := fc.feedQueryingService.FeedsByPage(user.UUID)
+		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
+		if err != nil {
+			log.Error().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
+			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		feedPage, err := fc.feedQueryingService.FeedsByPage(user.UUID, pageNumber)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feeds")
 			view.PutFlashError(w, "failed to retrieve feeds")

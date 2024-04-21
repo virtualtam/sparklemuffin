@@ -3,22 +3,71 @@
 
 package querying
 
-import "github.com/virtualtam/sparklemuffin/pkg/feed"
+import (
+	"github.com/virtualtam/sparklemuffin/pkg/feed"
+)
 
-type SubscribedFeed struct {
-	feed.Feed
-	Unread uint
+// A FeedPage holds a set of paginated Feeds.
+type FeedPage struct {
+	PageNumber         uint
+	PreviousPageNumber uint
+	NextPageNumber     uint
+	TotalPages         uint
+	Offset             uint
+
+	Unread     uint
+	Categories []SubscriptionCategory
+	Entries    []SubscriptionEntry
 }
 
-type Category struct {
+func NewFeedPage(number uint, totalPages uint, categories []SubscriptionCategory, entries []SubscriptionEntry) FeedPage {
+	var unread uint
+
+	for _, category := range categories {
+		unread += category.Unread
+	}
+
+	page := FeedPage{
+		PageNumber: number,
+		TotalPages: totalPages,
+		Unread:     unread,
+		Categories: categories,
+		Entries:    entries,
+	}
+
+	if page.PageNumber == 1 {
+		page.PreviousPageNumber = 1
+	} else {
+		page.PreviousPageNumber = page.PageNumber - 1
+	}
+
+	if page.PageNumber == page.TotalPages {
+		page.NextPageNumber = page.PageNumber
+	} else {
+		page.NextPageNumber = page.PageNumber + 1
+	}
+
+	page.Offset = (page.PageNumber-1)*entriesPerPage + 1
+
+	return page
+}
+
+type SubscriptionCategory struct {
 	feed.Category
+
 	Unread uint
 
 	SubscribedFeeds []SubscribedFeed
 }
 
-// A FeedPage holds a set of paginated Feeds.
-type FeedPage struct {
-	Categories []Category
-	Entries    []feed.Entry
+type SubscribedFeed struct {
+	feed.Feed
+
+	Unread uint
+}
+
+type SubscriptionEntry struct {
+	feed.Entry
+
+	Read bool
 }

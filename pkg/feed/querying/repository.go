@@ -3,13 +3,15 @@
 
 package querying
 
-import "github.com/virtualtam/sparklemuffin/pkg/feed"
-
 // Repository provides access to user feed subscriptions for querying.
 type Repository interface {
-	// FeedCategorySubscribedFeedGetMany returns SubscribedFeeds, sorted by Category.
-	FeedCategorySubscribedFeedGetMany(userUUID string) ([]Category, error)
+	// FeedSubscriptionCategoryGetAll returns SubscribedFeeds, sorted by SubscriptionCategory.
+	FeedSubscriptionCategoryGetAll(userUUID string) ([]SubscriptionCategory, error)
 
-	// FeedEntryGetManyByPage returns a paginated list of Entries.
-	FeedEntryGetManyByPage(userUUID string) ([]feed.Entry, error)
+	// FeedSubscriptionEntryGetCount returns the count of entries corresponding to a feed subscription
+	// for a giver user.
+	FeedSubscriptionEntryGetCount(userUUID string) (uint, error)
+
+	// FeedSubscriptionEntryGetN returns at most n SubscriptionEntries, starting at a given offset.
+	FeedSubscriptionEntryGetN(userUUID string, entriesPerPage uint, offset uint) ([]SubscriptionEntry, error)
 }

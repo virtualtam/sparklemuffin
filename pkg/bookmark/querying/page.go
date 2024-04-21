@@ -5,7 +5,6 @@ package querying
 
 import (
 	"encoding/base64"
-	"math"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
@@ -130,12 +129,4 @@ func NewTagFilterResultPage(owner Owner, filterTerm string, tagCount uint, numbe
 	page.FilterTerm = filterTerm
 
 	return page
-}
-
-func pageCount(itemCount, itemsPerPage uint) uint {
-	if itemCount == 0 {
-		return 1
-	}
-
-	return uint(math.Ceil(float64(itemCount) / float64(itemsPerPage)))
 }

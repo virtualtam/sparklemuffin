@@ -34,7 +34,7 @@ func assertEntriesEqual(t *testing.T, gotEntries []Entry, wantEntries []Entry) {
 			t.Errorf("want URL %q, got %q", wantEntry.URL, gotEntry.URL)
 		}
 
-		assert.DatesAlmostEqual(t, "PublishedAt", gotEntry.PublishedAt, wantEntry.PublishedAt, entryDateComparisonDelta)
-		assert.DatesAlmostEqual(t, "UpdatedAt", gotEntry.UpdatedAt, wantEntry.UpdatedAt, entryDateComparisonDelta)
+		assert.TimeAlmostEquals(t, "PublishedAt", gotEntry.PublishedAt, wantEntry.PublishedAt, entryDateComparisonDelta)
+		assert.TimeAlmostEquals(t, "UpdatedAt", gotEntry.UpdatedAt, wantEntry.UpdatedAt, entryDateComparisonDelta)
 	}
 }

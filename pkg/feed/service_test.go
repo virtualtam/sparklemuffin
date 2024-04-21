@@ -160,7 +160,7 @@ func TestServiceAddCategory(t *testing.T) {
 				t.Fatalf("want no error, got %q", err)
 			}
 
-			assertCategoriesEqual(t, got, tc.want)
+			assertCategoryEquals(t, got, tc.want)
 		})
 	}
 }

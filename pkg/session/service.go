@@ -4,7 +4,7 @@
 package session
 
 import (
-	"github.com/virtualtam/sparklemuffin/pkg/hash"
+	"github.com/virtualtam/sparklemuffin/internal/hash"
 )
 
 // Service handles operations for the user session domain.

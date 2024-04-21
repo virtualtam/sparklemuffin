@@ -40,21 +40,7 @@ func (r *Repository) SessionAdd(sess session.Session) error {
 		"remember_token_expires_at": sess.RememberTokenExpiresAt,
 	}
 
-	ctx := context.Background()
-
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer r.rollback(ctx, tx, "sessions", "add")
-
-	_, err = tx.Exec(ctx, query, args)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return r.add("sessions", "SessionAdd", query, args)
 }
 
 func (r *Repository) SessionGetByRememberTokenHash(hash string) (session.Session, error) {

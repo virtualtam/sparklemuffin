@@ -19,7 +19,8 @@ import (
 )
 
 const (
-	actionFeedAdd string = "feed-add"
+	actionFeedAdd         string = "feed-add"
+	actionFeedCategoryAdd string = "feed-category-add"
 )
 
 // RegisterFeedHandlers registers HTTP handlers for syndication feed operations.
@@ -37,7 +38,9 @@ func RegisterFeedHandlers(
 		userService:         userService,
 
 		feedListView: view.New("feed/list.gohtml"),
-		feedAddView:  view.New("feed/add.gohtml"),
+		feedAddView:  view.New("feed/feed_add.gohtml"),
+
+		feedCategoryAddView: view.New("feed/category_add.gohtml"),
 	}
 
 	// feeds
@@ -49,6 +52,11 @@ func RegisterFeedHandlers(
 		r.Get("/", fc.handleFeedListView())
 		r.Get("/add", fc.handleFeedAddView())
 		r.Post("/add", fc.handleFeedAdd())
+
+		r.Route("/categories", func(sr chi.Router) {
+			sr.Get("/add", fc.handleFeedCategoryAddView())
+			sr.Post("/add", fc.handleFeedCategoryAdd())
+		})
 	})
 }
 
@@ -60,6 +68,8 @@ type feedHandlerContext struct {
 
 	feedAddView  *view.View
 	feedListView *view.View
+
+	feedCategoryAddView *view.View
 }
 
 type feedFormContent struct {
@@ -148,5 +158,58 @@ func (fc *feedHandlerContext) handleFeedListView() func(w http.ResponseWriter, r
 		viewData.Content = feedPage
 
 		fc.feedListView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedCategoryAddView renders the feed category addition form.
+func (fc *feedHandlerContext) handleFeedCategoryAddView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedCategoryAdd)
+
+		viewData := view.Data{
+			Content: feedFormContent{
+				CSRFToken: csrfToken,
+			},
+			Title: "Add feed category",
+		}
+
+		fc.feedCategoryAddView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedCategoryAdd processes the feed category addition form.
+func (fc *feedHandlerContext) handleFeedCategoryAdd() func(w http.ResponseWriter, r *http.Request) {
+	type feedAddForm struct {
+		CSRFToken string `schema:"csrf_token"`
+		Name      string `schema:"name"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+
+		var form feedAddForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed category addition form")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedCategoryAdd) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if _, err := fc.feedService.AddCategory(ctxUser.UUID, form.Name); err != nil {
+			log.Error().Err(err).Msg("failed to add feed category")
+			view.PutFlashError(w, "failed to add feed category")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		http.Redirect(w, r, "/feeds", http.StatusSeeOther)
 	}
 }

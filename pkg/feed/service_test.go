@@ -63,6 +63,108 @@ func (testRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
+func TestServiceAddCategory(t *testing.T) {
+	userUUID := "179206c8-2965-47a7-ba04-bf0a6a0b8d11"
+	now := time.Now().UTC()
+
+	cases := []struct {
+		tname                string
+		repositoryCategories []Category
+		name                 string
+		want                 Category
+		wantErr              error
+	}{
+		// nominal cases
+		{
+			tname: "new category",
+			name:  "Linux Distributions",
+			want: Category{
+				Name:      "Linux Distributions",
+				Slug:      "linux-distributions",
+				CreatedAt: now,
+				UpdatedAt: now,
+			},
+		},
+		{
+			tname: "new category with accented characters and punctuation",
+			name:  "Choses à faire, peut-être aujourd'hui?",
+			want: Category{
+				Name:      "Choses à faire, peut-être aujourd'hui?",
+				Slug:      "choses-a-faire-peut-etre-aujourdhui",
+				CreatedAt: now,
+				UpdatedAt: now,
+			},
+		},
+
+		// error cases
+		{
+			tname:   "empty name",
+			wantErr: ErrCategoryNameRequired,
+		},
+		{
+			tname:   "empty name (whitespace)",
+			name:    "     ",
+			wantErr: ErrCategoryNameRequired,
+		},
+		{
+			tname:   "empty slug (punctuation)",
+			name:    "'?",
+			wantErr: ErrCategorySlugRequired,
+		},
+		{
+			tname: "existing category",
+			repositoryCategories: []Category{
+				{
+					UserUUID: userUUID,
+					Name:     "Duplicate",
+					Slug:     "duplicate",
+				},
+			},
+			name:    "Duplicate",
+			wantErr: ErrCategoryAlreadyRegistered,
+		},
+		{
+			tname: "existing category (case-insensitive)",
+			repositoryCategories: []Category{
+				{
+					UserUUID: userUUID,
+					Name:     "Duplicate",
+					Slug:     "duplicate",
+				},
+			},
+			name:    "DupliCate",
+			wantErr: ErrCategoryAlreadyRegistered,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{
+				Categories: tc.repositoryCategories,
+			}
+			s := NewService(r, nil)
+
+			got, err := s.AddCategory(userUUID, tc.name)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertCategoriesEqual(t, got, tc.want)
+		})
+	}
+}
+
 func TestServiceCreateEntries(t *testing.T) {
 	feedUUID := "26b0aafc-4de6-46be-91ea-0f6e111c660c"
 	now := time.Now().UTC()

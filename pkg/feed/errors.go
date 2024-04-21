@@ -19,7 +19,10 @@ var (
 	ErrFeedURLUnsupportedScheme error = errors.New("feed: unsupported URL scheme")
 
 	// Feed Category
-	ErrCategoryUUIDRequired error = errors.New("category: UUID required")
+	ErrCategoryAlreadyRegistered error = errors.New("category: already registered")
+	ErrCategoryNameRequired      error = errors.New("category: name required")
+	ErrCategorySlugRequired      error = errors.New("category: slug required")
+	ErrCategoryUUIDRequired      error = errors.New("category: UUID required")
 
 	// Feed Entry
 	ErrEntryTitleRequired        error = errors.New("entry: title required")

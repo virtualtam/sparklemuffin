@@ -1,0 +1,18 @@
+{{define "content"}}
+<h2>Add feed category</h2>
+<form action="/feeds/categories/add" class="item-form" method="POST">
+  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+
+  <label for="name">Name</label>
+  <input type="text"
+         id="name"
+         name="name"
+         placeholder="Name"
+         required="">
+
+  <br>
+  <span class="submit">
+    <button type="submit">Save</button>
+  </span>
+</form>
+{{end}}

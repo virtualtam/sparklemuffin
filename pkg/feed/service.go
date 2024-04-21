@@ -31,6 +31,24 @@ func NewService(r Repository, httpClient *http.Client) *Service {
 	}
 }
 
+// AddCategory adds a new Category for a given User.
+func (s *Service) AddCategory(userUUID string, name string) (Category, error) {
+	category, err := NewCategory(userUUID, name)
+	if err != nil {
+		return Category{}, err
+	}
+
+	if err := category.ValidateForAddition(s.r); err != nil {
+		return Category{}, err
+	}
+
+	if err := s.r.FeedCategoryAdd(category); err != nil {
+		return Category{}, err
+	}
+
+	return category, nil
+}
+
 // Categories returns all categories for a given user.
 func (s *Service) Categories(userUUID string) ([]Category, error) {
 	return s.r.FeedCategoryGetMany(userUUID)

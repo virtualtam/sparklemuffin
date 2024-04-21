@@ -44,21 +44,7 @@ func (r *Repository) FeedAdd(f feed.Feed) error {
 		"updated_at": f.UpdatedAt,
 	}
 
-	ctx := context.Background()
-
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer r.rollback(ctx, tx, "feeds", "FeedAdd")
-
-	_, err = tx.Exec(ctx, query, args)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return r.add("feeds", "FeedAdd", query, args)
 }
 
 func (r *Repository) FeedGetByURL(feedURL string) (feed.Feed, error) {
@@ -68,6 +54,37 @@ FROM feed_feeds
 WHERE feed_url=$1`
 
 	return r.feedGetQuery(query, feedURL)
+}
+
+func (r *Repository) FeedCategoryAdd(c feed.Category) error {
+	query := `
+	INSERT INTO feed_categories(
+		uuid,
+		user_uuid,
+		name,
+		slug,
+		created_at,
+		updated_at
+	)
+	VALUES(
+		@uuid,
+		@user_uuid,
+		@name,
+		@slug,
+		@created_at,
+		@updated_at
+	)`
+
+	args := pgx.NamedArgs{
+		"uuid":       c.UUID,
+		"user_uuid":  c.UserUUID,
+		"name":       c.Name,
+		"slug":       c.Slug,
+		"created_at": c.CreatedAt,
+		"updated_at": c.UpdatedAt,
+	}
+
+	return r.add("feeds", "FeedCategoryAdd", query, args)
 }
 
 func (r *Repository) FeedCategoryGetMany(userUUID string) ([]feed.Category, error) {
@@ -99,6 +116,15 @@ ORDER BY name`
 	}
 
 	return categories, nil
+}
+
+func (r *Repository) FeedCategoryIsRegistered(userUUID string, name string, slug string) (bool, error) {
+	return r.rowExistsByQuery(
+		"SELECT 1 FROM feed_categories WHERE user_uuid=$1 AND (name=$2 OR slug=$3)",
+		userUUID,
+		name,
+		slug,
+	)
 }
 
 func (r *Repository) FeedEntryAddMany(entries []feed.Entry) (int64, error) {
@@ -294,19 +320,5 @@ func (r *Repository) FeedSubscriptionAdd(s feed.Subscription) error {
 		"updated_at":    s.UpdatedAt,
 	}
 
-	ctx := context.Background()
-
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer r.rollback(ctx, tx, "feeds", "create subscription")
-
-	_, err = tx.Exec(ctx, query, args)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return r.add("feeds", "FeedSubscriptionAdd", query, args)
 }

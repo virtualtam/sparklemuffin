@@ -12,6 +12,13 @@ type Repository interface {
 	// for a giver user.
 	FeedSubscriptionEntryGetCount(userUUID string) (uint, error)
 
+	// FeedSubscriptionEntryGetCountByCategory returns the count of entries corresponding to a feed subscription
+	// for a giver user and category.
+	FeedSubscriptionEntryGetCountByCategory(userUUID string, categoryUUID string) (uint, error)
+
 	// FeedSubscriptionEntryGetN returns at most n SubscriptionEntries, starting at a given offset.
 	FeedSubscriptionEntryGetN(userUUID string, entriesPerPage uint, offset uint) ([]SubscriptionEntry, error)
+
+	// FeedSubscriptionEntryGetNByCategory returns at most n SubscriptionEntries, starting at a given offset.
+	FeedSubscriptionEntryGetNByCategory(userUUID string, categoryUUID string, entriesPerPage uint, offset uint) ([]SubscriptionEntry, error)
 }

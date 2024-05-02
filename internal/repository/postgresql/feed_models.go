@@ -21,6 +21,17 @@ type DBCategory struct {
 	UpdatedAt time.Time `db:"updated_at"`
 }
 
+func (c *DBCategory) asCategory() feed.Category {
+	return feed.Category{
+		UUID:      c.UUID,
+		UserUUID:  c.UserUUID,
+		Name:      c.Name,
+		Slug:      c.Slug,
+		CreatedAt: c.CreatedAt,
+		UpdatedAt: c.UpdatedAt,
+	}
+}
+
 type DBFeed struct {
 	UUID string `db:"uuid"`
 

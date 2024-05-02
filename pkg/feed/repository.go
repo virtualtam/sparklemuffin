@@ -27,6 +27,9 @@ type Repository interface {
 	// FeedCategoryAdd creates a new Category.
 	FeedCategoryAdd(category Category) error
 
+	// FeedCategoryGetBySlug returns the Category for a given user and slug.
+	FeedCategoryGetBySlug(userUUID string, slug string) (Category, error)
+
 	// FeedCategoryGetMany returns all categories for a giver user.
 	FeedCategoryGetMany(userUUID string) ([]Category, error)
 

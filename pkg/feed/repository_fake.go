@@ -27,6 +27,16 @@ func (r *fakeRepository) FeedGetByURL(feedURL string) (Feed, error) {
 	return Feed{}, ErrFeedNotFound
 }
 
+func (r *fakeRepository) FeedCategoryGetBySlug(userUUID string, slug string) (Category, error) {
+	for _, category := range r.Categories {
+		if category.UserUUID == userUUID && category.Slug == slug {
+			return category, nil
+		}
+	}
+
+	return Category{}, ErrCategoryNotFound
+}
+
 func (r *fakeRepository) FeedCategoryGetMany(userUUID string) ([]Category, error) {
 	panic("unimplemented")
 }

@@ -21,6 +21,8 @@ var (
 	// Feed Category
 	ErrCategoryAlreadyRegistered error = errors.New("category: already registered")
 	ErrCategoryNameRequired      error = errors.New("category: name required")
+	ErrCategoryNotFound          error = errors.New("category: Not Found")
+	ErrCategorySlugInvalid       error = errors.New("category: invalid slug")
 	ErrCategorySlugRequired      error = errors.New("category: slug required")
 	ErrCategoryUUIDRequired      error = errors.New("category: UUID required")
 

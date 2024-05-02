@@ -52,6 +52,8 @@ func RegisterFeedHandlers(
 		})
 
 		r.Get("/", fc.handleFeedListView())
+		r.Get("/by-category/{slug}", fc.handleFeedListByCategoryView())
+
 		r.Get("/add", fc.handleFeedAddView())
 		r.Post("/add", fc.handleFeedAdd())
 
@@ -163,9 +165,49 @@ func (fc *feedHandlerContext) handleFeedListView() func(w http.ResponseWriter, r
 			return
 		}
 
-		var viewData view.Data
-		viewData.Title = "Feeds"
-		viewData.Content = feedPage
+		viewData := view.Data{
+			Title:   "Feeds",
+			Content: feedPage,
+		}
+
+		fc.feedListView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedListByCategoryView renders the syndication feed for the current authenticated user.
+func (fc *feedHandlerContext) handleFeedListByCategoryView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+		categorySlug := chi.URLParam(r, "slug")
+
+		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
+		if err != nil {
+			log.Error().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
+			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		category, err := fc.feedService.CategoryBySlug(user.UUID, categorySlug)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed category")
+			view.PutFlashError(w, "failed to retrieve feed category")
+			http.Redirect(w, r, "/feeds", http.StatusSeeOther)
+			return
+		}
+
+		feedPage, err := fc.feedQueryingService.FeedsByCategoryAndPage(user.UUID, category.UUID, pageNumber)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feeds")
+			view.PutFlashError(w, "failed to retrieve feeds")
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		viewData := view.Data{
+			Title:   "Feeds",
+			Content: feedPage,
+		}
 
 		fc.feedListView.Render(w, r, viewData)
 	}

@@ -17,6 +17,16 @@ const (
 func assertCategoryEquals(t *testing.T, got, want Category) {
 	t.Helper()
 
+	if want.UUID != "-" {
+		// Skip UUID checks for newly created entries
+		if got.UUID != want.UUID {
+			t.Errorf("want UUID %q, got %q", want.UUID, got.UUID)
+		}
+	}
+
+	if got.UserUUID != want.UserUUID {
+		t.Errorf("want UserUUID %q, got %q", want.UserUUID, got.UserUUID)
+	}
 	if got.Name != want.Name {
 		t.Errorf("want Name %q, got %q", want.Name, got.Name)
 	}

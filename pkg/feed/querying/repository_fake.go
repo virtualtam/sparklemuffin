@@ -71,6 +71,10 @@ func (r *fakeRepository) FeedSubscriptionCategoryGetAll(userUUID string) ([]Subs
 		subscriptionCategories = append(subscriptionCategories, subscriptionCategory)
 	}
 
+	sort.Slice(subscriptionCategories, func(i, j int) bool {
+		return subscriptionCategories[i].Name < subscriptionCategories[j].Name
+	})
+
 	return subscriptionCategories, nil
 }
 
@@ -94,11 +98,77 @@ func (r *fakeRepository) FeedSubscriptionEntryGetCount(userUUID string) (uint, e
 	return count, nil
 }
 
+func (r *fakeRepository) FeedSubscriptionEntryGetCountByCategory(userUUID string, categoryUUID string) (uint, error) {
+	var count uint
+
+	for _, subscription := range r.Subscriptions {
+		if subscription.UserUUID != userUUID {
+			continue
+		}
+
+		if subscription.CategoryUUID != categoryUUID {
+			continue
+		}
+
+		for _, entry := range r.Entries {
+			if entry.FeedUUID != subscription.FeedUUID {
+				continue
+			}
+
+			count++
+		}
+	}
+
+	return count, nil
+}
+
 func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]SubscriptionEntry, error) {
 	var subscriptionEntries []SubscriptionEntry
 
 	for _, subscription := range r.Subscriptions {
 		if subscription.UserUUID != userUUID {
+			continue
+		}
+
+		for _, entry := range r.Entries {
+			if entry.FeedUUID != subscription.FeedUUID {
+				continue
+			}
+
+			subscriptionEntry := SubscriptionEntry{
+				Entry: entry,
+				Read:  false,
+			}
+
+			subscriptionEntries = append(subscriptionEntries, subscriptionEntry)
+			break
+		}
+	}
+
+	sort.Slice(subscriptionEntries, func(i, j int) bool {
+		return subscriptionEntries[i].PublishedAt.After(subscriptionEntries[j].PublishedAt)
+	})
+
+	var nEntries uint
+
+	if n > uint(len(subscriptionEntries[offset:])) {
+		nEntries = uint(len(subscriptionEntries[offset:]))
+	} else {
+		nEntries = n
+	}
+
+	return subscriptionEntries[offset : offset+nEntries], nil
+}
+
+func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, categoryUUID string, n uint, offset uint) ([]SubscriptionEntry, error) {
+	var subscriptionEntries []SubscriptionEntry
+
+	for _, subscription := range r.Subscriptions {
+		if subscription.UserUUID != userUUID {
+			continue
+		}
+
+		if subscription.CategoryUUID != categoryUUID {
 			continue
 		}
 

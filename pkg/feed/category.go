@@ -69,6 +69,15 @@ func (c *Category) ValidateForAddition(v ValidationRepository) error {
 	return nil
 }
 
+// ValidateSlug ensures the slug is normalized and valid.
+func (c *Category) ValidateSlug() error {
+	if !slug.IsSlug(c.Slug) {
+		return ErrCategorySlugInvalid
+	}
+
+	return nil
+}
+
 func (c *Category) normalizeName() {
 	c.Name = strings.TrimSpace(c.Name)
 }

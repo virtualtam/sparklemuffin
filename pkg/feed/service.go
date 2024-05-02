@@ -49,6 +49,17 @@ func (s *Service) AddCategory(userUUID string, name string) (Category, error) {
 	return category, nil
 }
 
+// CategoryBySlug returns the category for a given user and slug.
+func (s *Service) CategoryBySlug(userUUID string, slug string) (Category, error) {
+	category := Category{Slug: slug}
+
+	if err := category.ValidateSlug(); err != nil {
+		return Category{}, err
+	}
+
+	return s.r.FeedCategoryGetBySlug(userUUID, slug)
+}
+
 // Categories returns all categories for a given user.
 func (s *Service) Categories(userUUID string) ([]Category, error) {
 	return s.r.FeedCategoryGetMany(userUUID)

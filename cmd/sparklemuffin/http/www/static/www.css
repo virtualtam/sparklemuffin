@@ -383,6 +383,16 @@ ol {
   border-bottom: 1px dotted var(--text);
 }
 
+.feed-category a {
+  color: var(--text);
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.feed-category a:hover {
+  text-decoration: underline;
+}
+
 .feed-entry {
   margin-bottom: 1em;
 }

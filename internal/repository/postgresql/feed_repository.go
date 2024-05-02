@@ -87,6 +87,16 @@ func (r *Repository) FeedCategoryAdd(c feed.Category) error {
 	return r.add("feeds", "FeedCategoryAdd", query, args)
 }
 
+func (r *Repository) FeedCategoryGetBySlug(userUUID string, slug string) (feed.Category, error) {
+	query := `
+	SELECT uuid, user_uuid, name, slug, created_at, updated_at
+	FROM feed_categories
+	WHERE user_uuid=$1
+	AND slug=$2`
+
+	return r.feedCategoryGetQuery(query, userUUID, slug)
+}
+
 func (r *Repository) FeedCategoryGetMany(userUUID string) ([]feed.Category, error) {
 	query := `
 SELECT uuid, user_uuid, name, slug
@@ -276,6 +286,29 @@ func (r *Repository) FeedSubscriptionEntryGetCount(userUUID string) (uint, error
 	return count, nil
 }
 
+func (r *Repository) FeedSubscriptionEntryGetCountByCategory(userUUID string, categoryUUID string) (uint, error) {
+	query := `
+	SELECT COUNT(*)
+	FROM feed_entries fe
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	WHERE fs.user_uuid=$1
+	AND   fs.category_uuid=$2`
+
+	var count uint
+
+	err := r.pool.QueryRow(
+		context.Background(),
+		query,
+		userUUID,
+		categoryUUID,
+	).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]fquerying.SubscriptionEntry, error) {
 	query := `
 	SELECT fe.url, fe.title, fe.published_at, FALSE AS "read"
@@ -286,6 +319,37 @@ func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset u
 	LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(context.Background(), query, userUUID, n, offset)
+	if err != nil {
+		return []fquerying.SubscriptionEntry{}, err
+	}
+	defer rows.Close()
+
+	dbQueryingEntries := []DBQueryingEntry{}
+
+	if err := pgxscan.ScanAll(&dbQueryingEntries, rows); err != nil {
+		return []fquerying.SubscriptionEntry{}, err
+	}
+
+	queryingEntries := make([]fquerying.SubscriptionEntry, len(dbQueryingEntries))
+
+	for i, dbQueryingEntry := range dbQueryingEntries {
+		queryingEntries[i] = dbQueryingEntry.asQueryingEntry()
+	}
+
+	return queryingEntries, nil
+}
+
+func (r *Repository) FeedSubscriptionEntryGetNByCategory(userUUID string, categoryUUID string, n uint, offset uint) ([]fquerying.SubscriptionEntry, error) {
+	query := `
+	SELECT fe.url, fe.title, fe.published_at, FALSE AS "read"
+	FROM feed_entries fe
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	WHERE fs.user_uuid=$1
+	AND   fs.category_uuid=$2
+	ORDER BY fe.published_at DESC
+	LIMIT $3 OFFSET $4`
+
+	rows, err := r.pool.Query(context.Background(), query, userUUID, categoryUUID, n, offset)
 	if err != nil {
 		return []fquerying.SubscriptionEntry{}, err
 	}

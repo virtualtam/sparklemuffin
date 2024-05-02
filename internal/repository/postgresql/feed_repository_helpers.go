@@ -32,8 +32,32 @@ func (r *Repository) feedGetQuery(query string, queryParams ...any) (feed.Feed, 
 	return dbFeed.asFeed(), nil
 }
 
+func (r *Repository) feedCategoryGetQuery(query string, queryParams ...any) (feed.Category, error) {
+	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	if err != nil {
+		return feed.Category{}, err
+	}
+	defer rows.Close()
+
+	dbCategory := &DBCategory{}
+	err = pgxscan.ScanOne(dbCategory, rows)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return feed.Category{}, feed.ErrCategoryNotFound
+	}
+	if err != nil {
+		return feed.Category{}, err
+	}
+
+	return dbCategory.asCategory(), nil
+}
+
 func (r *Repository) feedGetCategories(userUUID string) ([]DBCategory, error) {
-	query := `SELECT uuid, name, slug FROM feed_categories WHERE user_uuid=$1`
+	query := `
+	SELECT uuid, name, slug
+	FROM feed_categories
+	WHERE user_uuid=$1
+	ORDER BY name`
 
 	rows, err := r.pool.Query(context.Background(), query, userUUID)
 	if err != nil {

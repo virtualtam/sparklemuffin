@@ -11,11 +11,13 @@
     </div>
     <ul>
       <li>
-        <span class="feed-category">All <span class="unread">{{.Unread}}</span></span>
+        <span class="feed-category"><a href="/feeds">All</a> <span class="unread">{{.Unread}}</span></span>
       </li>
       {{- range .Categories}}
       <li>
-        <span class="feed-category">{{.Name}} <span class="unread">{{.Unread}}</span></span>
+        <span class="feed-category">
+          <a href="/feeds/by-category/{{.Slug}}">{{.Name}}</a> <span class="unread">{{.Unread}}</span>
+        </span>
         <ul>
           {{- range .SubscribedFeeds}}
           <li><span class="feed">{{.Title}} <span class="unread">{{.Unread}}</span></span></li>
@@ -53,13 +55,13 @@
     <br>
     Go to:
     {{if lt .PreviousPageNumber .PageNumber }}
-    <a href="/feeds?page=1">first</a>,
-    <a href="/feeds?page={{.PreviousPageNumber}}">previous</a>
+    <a href="?page=1">first</a>,
+    <a href="?page={{.PreviousPageNumber}}">previous</a>
     {{- if ne .PageNumber .TotalPages}},{{end}}
     {{end}}
     {{if lt .PageNumber .TotalPages }}
-    <a href="/feeds?page={{.NextPageNumber}}">next</a>,
-    <a href="/feeds?page={{.TotalPages}}">last</a>
+    <a href="?page={{.NextPageNumber}}">next</a>,
+    <a href="?page={{.TotalPages}}">last</a>
     {{end}}
     {{end}}
   </p>

@@ -79,6 +79,8 @@ func TestServiceAddCategory(t *testing.T) {
 			tname: "new category",
 			name:  "Linux Distributions",
 			want: Category{
+				UUID:      "-",
+				UserUUID:  userUUID,
 				Name:      "Linux Distributions",
 				Slug:      "linux-distributions",
 				CreatedAt: now,
@@ -89,6 +91,8 @@ func TestServiceAddCategory(t *testing.T) {
 			tname: "new category with accented characters and punctuation",
 			name:  "Choses à faire, peut-être aujourd'hui?",
 			want: Category{
+				UUID:      "-",
+				UserUUID:  userUUID,
 				Name:      "Choses à faire, peut-être aujourd'hui?",
 				Slug:      "choses-a-faire-peut-etre-aujourdhui",
 				CreatedAt: now,
@@ -145,6 +149,96 @@ func TestServiceAddCategory(t *testing.T) {
 			s := NewService(r, nil)
 
 			got, err := s.AddCategory(userUUID, tc.name)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertCategoryEquals(t, got, tc.want)
+		})
+	}
+}
+
+func TestServiceCategoryBySlug(t *testing.T) {
+	userUUID := "8c9a910a-fcda-4eef-8394-8d580a969643"
+	now := time.Now().UTC()
+
+	cases := []struct {
+		tname                string
+		repositoryCategories []Category
+		slug                 string
+		want                 Category
+		wantErr              error
+	}{
+		// nominal cases
+		{
+			tname:   "not found",
+			slug:    "nonexistent",
+			wantErr: ErrCategoryNotFound,
+		},
+		{
+			tname: "found",
+			repositoryCategories: []Category{
+				{
+					UUID:      "d3033032-23c0-4f78-9b7d-f4135477b5c3",
+					UserUUID:  userUUID,
+					Name:      "Existing Category",
+					Slug:      "existingcat",
+					CreatedAt: now,
+					UpdatedAt: now,
+				},
+			},
+			slug: "existingcat",
+			want: Category{
+				UUID:      "d3033032-23c0-4f78-9b7d-f4135477b5c3",
+				UserUUID:  userUUID,
+				Name:      "Existing Category",
+				Slug:      "existingcat",
+				CreatedAt: now,
+				UpdatedAt: now,
+			},
+		},
+
+		// error cases
+		{
+			tname:   "empty slug",
+			wantErr: ErrCategorySlugInvalid,
+		},
+		{
+			tname:   "empty slug (whitespace)",
+			slug:    "    ",
+			wantErr: ErrCategorySlugInvalid,
+		},
+		{
+			tname:   "invalid slug (characters)",
+			slug:    "ABC",
+			wantErr: ErrCategorySlugInvalid,
+		},
+		{
+			tname:   "invalid slug (punctuation)",
+			slug:    "?.+",
+			wantErr: ErrCategorySlugInvalid,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{
+				Categories: tc.repositoryCategories,
+			}
+			s := NewService(r, nil)
+
+			got, err := s.CategoryBySlug(userUUID, tc.slug)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

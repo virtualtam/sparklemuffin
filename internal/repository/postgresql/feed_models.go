@@ -118,3 +118,24 @@ func (f *DBSubscribedFeed) asSubscribedFeed() fquerying.SubscribedFeed {
 		Unread: f.Unread,
 	}
 }
+
+type DBSubscription struct {
+	UUID         string `db:"uuid"`
+	CategoryUUID string `db:"category_uuid"`
+	FeedUUID     string `db:"feed_uuid"`
+	UserUUID     string `db:"user_uuid"`
+
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+}
+
+func (s *DBSubscription) asSubscription() feed.Subscription {
+	return feed.Subscription{
+		UUID:         s.UUID,
+		CategoryUUID: s.CategoryUUID,
+		FeedUUID:     s.FeedUUID,
+		UserUUID:     s.UserUUID,
+		CreatedAt:    s.CreatedAt,
+		UpdatedAt:    s.UpdatedAt,
+	}
+}

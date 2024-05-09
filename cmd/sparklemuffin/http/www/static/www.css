@@ -393,6 +393,15 @@ ol {
   text-decoration: underline;
 }
 
+.feed a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.feed a:hover {
+  text-decoration: underline;
+}
+
 .feed-entry {
   margin-bottom: 1em;
 }

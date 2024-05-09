@@ -65,6 +65,17 @@ func (s *Service) Categories(userUUID string) ([]Category, error) {
 	return s.r.FeedCategoryGetMany(userUUID)
 }
 
+// FeedBySlug returns the Feed for a given slug.
+func (s *Service) FeedBySlug(userUUID string, slug string) (Feed, error) {
+	feed := Feed{Slug: slug}
+
+	if err := feed.ValidateSlug(); err != nil {
+		return Feed{}, err
+	}
+
+	return s.r.FeedGetBySlug(slug)
+}
+
 // Subscribe creates a new Feed if needed, and adds the corresponding Subscription
 // for a given user.
 func (s *Service) Subscribe(userUUID string, categoryUUID string, feedURL string) error {
@@ -83,6 +94,10 @@ func (s *Service) Subscribe(userUUID string, categoryUUID string, feedURL string
 	}
 
 	return nil
+}
+
+func (s *Service) SubscriptionByFeed(userUUID string, feedUUID string) (Subscription, error) {
+	return s.r.FeedSubscriptionGetByFeed(userUUID, feedUUID)
 }
 
 func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) ([]Entry, error) {

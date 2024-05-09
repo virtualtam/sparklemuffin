@@ -53,6 +53,7 @@ func RegisterFeedHandlers(
 
 		r.Get("/", fc.handleFeedListView())
 		r.Get("/by-category/{slug}", fc.handleFeedListByCategoryView())
+		r.Get("/by-name/{slug}", fc.handleFeedListBySubscriptionView())
 
 		r.Get("/add", fc.handleFeedAddView())
 		r.Post("/add", fc.handleFeedAdd())
@@ -197,6 +198,53 @@ func (fc *feedHandlerContext) handleFeedListByCategoryView() func(w http.Respons
 		}
 
 		feedPage, err := fc.feedQueryingService.FeedsByCategoryAndPage(user.UUID, category.UUID, pageNumber)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feeds")
+			view.PutFlashError(w, "failed to retrieve feeds")
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		viewData := view.Data{
+			Title:   "Feeds",
+			Content: feedPage,
+		}
+
+		fc.feedListView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedListBySubscriptionView renders the syndication feed for the current authenticated user.
+func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+		feedSlug := chi.URLParam(r, "slug")
+
+		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
+		if err != nil {
+			log.Error().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
+			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		feed, err := fc.feedService.FeedBySlug(user.UUID, feedSlug)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed")
+			view.PutFlashError(w, "failed to retrieve feed")
+			http.Redirect(w, r, "/feeds", http.StatusSeeOther)
+			return
+		}
+
+		subscription, err := fc.feedService.SubscriptionByFeed(user.UUID, feed.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed subscription")
+			view.PutFlashError(w, "failed to retrieve feed subscription")
+			http.Redirect(w, r, "/feeds", http.StatusSeeOther)
+			return
+		}
+
+		feedPage, err := fc.feedQueryingService.FeedsBySubscriptionAndPage(user.UUID, subscription.UUID, pageNumber)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feeds")
 			view.PutFlashError(w, "failed to retrieve feeds")

@@ -21,6 +21,9 @@ type Repository interface {
 	// FeedAdd creates a new Feed.
 	FeedAdd(feed Feed) error
 
+	// FeedGetBySlug returns the Feed for a given slug.
+	FeedGetBySlug(feedSlug string) (Feed, error)
+
 	// FeedGetByURL returns the Feed for a given URL.
 	FeedGetByURL(feedURL string) (Feed, error)
 
@@ -41,4 +44,7 @@ type Repository interface {
 
 	// FeedSubscriptionAdd creates a new Feed subscription for a given user.
 	FeedSubscriptionAdd(subscription Subscription) error
+
+	// FeedSubscriptionGetByFeed returns the Subscription for a giver user and feed.
+	FeedSubscriptionGetByFeed(userUUID string, feedUUID string) (Subscription, error)
 }

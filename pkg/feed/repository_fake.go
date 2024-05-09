@@ -27,6 +27,16 @@ func (r *fakeRepository) FeedGetByURL(feedURL string) (Feed, error) {
 	return Feed{}, ErrFeedNotFound
 }
 
+func (r *fakeRepository) FeedGetBySlug(feedSlug string) (Feed, error) {
+	for _, feed := range r.Feeds {
+		if feed.Slug == feedSlug {
+			return feed, nil
+		}
+	}
+
+	return Feed{}, ErrFeedNotFound
+}
+
 func (r *fakeRepository) FeedCategoryGetBySlug(userUUID string, slug string) (Category, error) {
 	for _, category := range r.Categories {
 		if category.UserUUID == userUUID && category.Slug == slug {
@@ -98,4 +108,14 @@ func (r *fakeRepository) FeedSubscriptionIsRegistered(userUUID string, feedUUID 
 func (r *fakeRepository) FeedSubscriptionAdd(subscription Subscription) error {
 	r.Subscriptions = append(r.Subscriptions, subscription)
 	return nil
+}
+
+func (r *fakeRepository) FeedSubscriptionGetByFeed(userUUID string, feedUUID string) (Subscription, error) {
+	for _, subscription := range r.Subscriptions {
+		if subscription.UserUUID == userUUID && subscription.FeedUUID == feedUUID {
+			return subscription, nil
+		}
+	}
+
+	return Subscription{}, ErrSubscriptionNotFound
 }

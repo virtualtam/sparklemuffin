@@ -47,6 +47,15 @@ func (r *Repository) FeedAdd(f feed.Feed) error {
 	return r.add("feeds", "FeedAdd", query, args)
 }
 
+func (r *Repository) FeedGetBySlug(feedSlug string) (feed.Feed, error) {
+	query := `
+SELECT uuid, url, title, slug
+FROM feed_feeds
+WHERE slug=$1`
+
+	return r.feedGetQuery(query, feedSlug)
+}
+
 func (r *Repository) FeedGetByURL(feedURL string) (feed.Feed, error) {
 	query := `
 SELECT uuid, feed_url, title, slug
@@ -265,7 +274,7 @@ func (r *Repository) FeedSubscriptionCategoryGetAll(userUUID string) ([]fqueryin
 	return categories, nil
 }
 
-func (r *Repository) FeedSubscriptionEntryGetCount(userUUID string) (uint, error) {
+func (r *Repository) FeedEntryGetCount(userUUID string) (uint, error) {
 	query := `
 	SELECT COUNT(*)
 	FROM feed_entries fe
@@ -286,7 +295,7 @@ func (r *Repository) FeedSubscriptionEntryGetCount(userUUID string) (uint, error
 	return count, nil
 }
 
-func (r *Repository) FeedSubscriptionEntryGetCountByCategory(userUUID string, categoryUUID string) (uint, error) {
+func (r *Repository) FeedEntryGetCountByCategory(userUUID string, categoryUUID string) (uint, error) {
 	query := `
 	SELECT COUNT(*)
 	FROM feed_entries fe
@@ -301,6 +310,29 @@ func (r *Repository) FeedSubscriptionEntryGetCountByCategory(userUUID string, ca
 		query,
 		userUUID,
 		categoryUUID,
+	).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *Repository) FeedEntryGetCountBySubscription(userUUID string, subscriptionUUID string) (uint, error) {
+	query := `
+	SELECT COUNT(*)
+	FROM feed_entries fe
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	WHERE user_uuid=$1
+	AND   fs.uuid=$2`
+
+	var count uint
+
+	err := r.pool.QueryRow(
+		context.Background(),
+		query,
+		userUUID,
+		subscriptionUUID,
 	).Scan(&count)
 	if err != nil {
 		return 0, err
@@ -370,6 +402,37 @@ func (r *Repository) FeedSubscriptionEntryGetNByCategory(userUUID string, catego
 	return queryingEntries, nil
 }
 
+func (r *Repository) FeedSubscriptionEntryGetNBySubscription(userUUID string, subscriptionUUID string, n uint, offset uint) ([]fquerying.SubscriptionEntry, error) {
+	query := `
+	SELECT fe.url, fe.title, fe.published_at, FALSE as "read"
+	FROM feed_entries fe
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	WHERE fs.user_uuid=$1
+	AND   fs.uuid=$2
+	ORDER BY fe.published_at DESC
+	LIMIT $3 OFFSET $4`
+
+	rows, err := r.pool.Query(context.Background(), query, userUUID, subscriptionUUID, n, offset)
+	if err != nil {
+		return []fquerying.SubscriptionEntry{}, err
+	}
+	defer rows.Close()
+
+	dbQueryingEntries := []DBQueryingEntry{}
+
+	if err := pgxscan.ScanAll(&dbQueryingEntries, rows); err != nil {
+		return []fquerying.SubscriptionEntry{}, err
+	}
+
+	queryingEntries := make([]fquerying.SubscriptionEntry, len(dbQueryingEntries))
+
+	for i, dbQueryingEntry := range dbQueryingEntries {
+		queryingEntries[i] = dbQueryingEntry.asQueryingEntry()
+	}
+
+	return queryingEntries, nil
+}
+
 func (r *Repository) FeedSubscriptionIsRegistered(userUUID string, feedUUID string) (bool, error) {
 	return r.rowExistsByQuery(
 		"SELECT 1 FROM feed_subscriptions WHERE user_uuid=$1 AND feed_uuid=$2",
@@ -407,4 +470,13 @@ func (r *Repository) FeedSubscriptionAdd(s feed.Subscription) error {
 	}
 
 	return r.add("feeds", "FeedSubscriptionAdd", query, args)
+}
+
+func (r *Repository) FeedSubscriptionGetByFeed(userUUID string, feedUUID string) (feed.Subscription, error) {
+	query := `
+	SELECT uuid, category_uuid, feed_uuid, user_uuid, created_at, updated_at
+	FROM feed_subscriptions
+	WHERE feed_uuid=$1`
+
+	return r.feedSubscriptionGetQuery(query, feedUUID)
 }

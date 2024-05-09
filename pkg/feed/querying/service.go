@@ -27,7 +27,7 @@ func (s *Service) FeedsByPage(userUUID string, number uint) (FeedPage, error) {
 		return FeedPage{}, ErrPageNumberOutOfBounds
 	}
 
-	subscriptionEntryCount, err := s.r.FeedSubscriptionEntryGetCount(userUUID)
+	subscriptionEntryCount, err := s.r.FeedEntryGetCount(userUUID)
 	if err != nil {
 		return FeedPage{}, err
 	}
@@ -64,7 +64,7 @@ func (s *Service) FeedsByCategoryAndPage(userUUID string, categoryUUID string, n
 		return FeedPage{}, ErrPageNumberOutOfBounds
 	}
 
-	subscriptionEntryCount, err := s.r.FeedSubscriptionEntryGetCountByCategory(userUUID, categoryUUID)
+	subscriptionEntryCount, err := s.r.FeedEntryGetCountByCategory(userUUID, categoryUUID)
 	if err != nil {
 		return FeedPage{}, err
 	}
@@ -88,6 +88,43 @@ func (s *Service) FeedsByCategoryAndPage(userUUID string, categoryUUID string, n
 	offset := (number - 1) * entriesPerPage
 
 	entries, err := s.r.FeedSubscriptionEntryGetNByCategory(userUUID, categoryUUID, entriesPerPage, offset)
+	if err != nil {
+		return FeedPage{}, err
+	}
+
+	return NewFeedPage(number, totalPages, categories, entries), nil
+}
+
+// FeedsBySubscriptionAndPage returns a Page containing a limited and offset number of feeds.
+func (s *Service) FeedsBySubscriptionAndPage(userUUID string, subscriptionUUID string, number uint) (FeedPage, error) {
+	if number < 1 {
+		return FeedPage{}, ErrPageNumberOutOfBounds
+	}
+
+	subscriptionEntryCount, err := s.r.FeedEntryGetCountBySubscription(userUUID, subscriptionUUID)
+	if err != nil {
+		return FeedPage{}, err
+	}
+
+	totalPages := paginate.PageCount(subscriptionEntryCount, entriesPerPage)
+
+	if number > totalPages {
+		return FeedPage{}, ErrPageNumberOutOfBounds
+	}
+
+	categories, err := s.r.FeedSubscriptionCategoryGetAll(userUUID)
+	if err != nil {
+		return FeedPage{}, err
+	}
+
+	if len(categories) == 0 {
+		// early return: nothing to display
+		return NewFeedPage(1, 1, []SubscriptionCategory{}, []SubscriptionEntry{}), nil
+	}
+
+	offset := (number - 1) * entriesPerPage
+
+	entries, err := s.r.FeedSubscriptionEntryGetNBySubscription(userUUID, subscriptionUUID, entriesPerPage, offset)
 	if err != nil {
 		return FeedPage{}, err
 	}

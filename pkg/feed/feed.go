@@ -88,6 +88,15 @@ func (f *Feed) ValidateForCreation() error {
 	return nil
 }
 
+// ValidateSlug ensures the slug is normalized and valid.
+func (f *Feed) ValidateSlug() error {
+	if !slug.IsSlug(f.Slug) {
+		return ErrFeedSlugInvalid
+	}
+
+	return nil
+}
+
 // ValidateURL validates the URL is properly formed and uses a supported scheme.
 func (f *Feed) ValidateURL() error {
 	if err := f.requireURL(); err != nil {

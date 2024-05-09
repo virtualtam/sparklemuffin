@@ -97,3 +97,23 @@ GROUP BY f.feed_url, f.title, f.slug`
 
 	return dbFeeds, nil
 }
+
+func (r *Repository) feedSubscriptionGetQuery(query string, queryParams ...any) (feed.Subscription, error) {
+	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	if err != nil {
+		return feed.Subscription{}, err
+	}
+	defer rows.Close()
+
+	dbFeed := &DBSubscription{}
+	err = pgxscan.ScanOne(dbFeed, rows)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return feed.Subscription{}, feed.ErrFeedNotFound
+	}
+	if err != nil {
+		return feed.Subscription{}, err
+	}
+
+	return dbFeed.asSubscription(), nil
+}

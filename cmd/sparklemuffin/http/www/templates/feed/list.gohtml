@@ -20,7 +20,12 @@
         </span>
         <ul>
           {{- range .SubscribedFeeds}}
-          <li><span class="feed">{{.Title}} <span class="unread">{{.Unread}}</span></span></li>
+          <li>
+            <span class="feed">
+              <a href="/feeds/by-name/{{.Slug}}">{{.Title}}</a>
+              <span class="unread">{{.Unread}}</span>
+            </span>
+          </li>
           {{- end}}
         </ul>
       </li>

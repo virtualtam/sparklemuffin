@@ -8,6 +8,7 @@ import "errors"
 var (
 	// Feed
 	ErrFeedNotFound             error = errors.New("feed: not found")
+	ErrFeedSlugInvalid          error = errors.New("feed: invalid slug")
 	ErrFeedSlugRequired         error = errors.New("feed: slug required")
 	ErrFeedTitleRequired        error = errors.New("feed: title required")
 	ErrFeedUUIDInvalid          error = errors.New("feed: invalid UUID")
@@ -37,6 +38,7 @@ var (
 
 	// Feed Subscription
 	ErrSubscriptionAlreadyRegistered error = errors.New("subscription: already registered")
+	ErrSubscriptionNotFound          error = errors.New("subscription: not found")
 	ErrSubscriptionUUIDRequired      error = errors.New("subscription: UUID required")
 
 	// Feed user

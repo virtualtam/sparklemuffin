@@ -16,13 +16,13 @@
       {{- range .Categories}}
       <li>
         <span class="feed-category">
-          <a href="/feeds/by-category/{{.Slug}}">{{.Name}}</a> <span class="unread">{{.Unread}}</span>
+          <a href="/feeds/categories/{{.Slug}}/entries">{{.Name}}</a> <span class="unread">{{.Unread}}</span>
         </span>
         <ul>
           {{- range .SubscribedFeeds}}
           <li>
             <span class="feed">
-              <a href="/feeds/by-name/{{.Slug}}">{{.Title}}</a>
+              <a href="/feeds/{{.Slug}}/entries">{{.Title}}</a>
               <span class="unread">{{.Unread}}</span>
             </span>
           </li>

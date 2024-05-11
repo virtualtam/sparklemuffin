@@ -52,8 +52,8 @@ func RegisterFeedHandlers(
 		})
 
 		r.Get("/", fc.handleFeedListView())
-		r.Get("/by-category/{slug}", fc.handleFeedListByCategoryView())
-		r.Get("/by-name/{slug}", fc.handleFeedListBySubscriptionView())
+		r.Get("/categories/{slug}/entries", fc.handleFeedListByCategoryView())
+		r.Get("/{slug}/entries", fc.handleFeedListBySubscriptionView())
 
 		r.Get("/add", fc.handleFeedAddView())
 		r.Post("/add", fc.handleFeedAdd())

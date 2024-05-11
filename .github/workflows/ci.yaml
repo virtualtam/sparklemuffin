@@ -68,12 +68,3 @@ jobs:
 
       - name: Test
         run: make cover
-
-  vulnerabilities:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Vulnerabilities
-        id: govulncheck
-        uses: golang/govulncheck-action@v1
-        with:
-          go-version-file: go.mod

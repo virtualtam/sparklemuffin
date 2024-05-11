@@ -3,8 +3,13 @@
 
 package querying
 
+import "github.com/virtualtam/sparklemuffin/pkg/feed"
+
 // Repository provides access to user feed subscriptions for querying.
 type Repository interface {
+	// FeedGetByUUID returns a given feed.
+	FeedGetByUUID(feedUUID string) (feed.Feed, error)
+
 	// FeedEntryGetCount returns the count of entries corresponding to a feed subscription
 	// for a giver user.
 	FeedEntryGetCount(userUUID string) (uint, error)

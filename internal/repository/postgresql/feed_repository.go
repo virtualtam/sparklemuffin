@@ -65,6 +65,15 @@ WHERE feed_url=$1`
 	return r.feedGetQuery(query, feedURL)
 }
 
+func (r *Repository) FeedGetByUUID(feedUUID string) (feed.Feed, error) {
+	query := `
+SELECT uuid, url, title, slug
+FROM feed_feeds
+WHERE uuid=$1`
+
+	return r.feedGetQuery(query, feedUUID)
+}
+
 func (r *Repository) FeedCategoryAdd(c feed.Category) error {
 	query := `
 	INSERT INTO feed_categories(

@@ -69,7 +69,7 @@ func TestNewPage(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			got := NewFeedPage(tc.number, tc.totalPages, []SubscriptionCategory{}, []SubscriptionEntry{})
+			got := NewFeedPage(tc.number, tc.totalPages, "", []SubscriptionCategory{}, []SubscriptionEntry{})
 			assertPagesEqual(t, got, tc.want)
 		})
 	}
@@ -94,6 +94,9 @@ func assertPagesEqual(t *testing.T, got, want FeedPage) {
 		t.Errorf("want Offset %d, got %d", want.Offset, got.Offset)
 	}
 
+	if got.Header != want.Header {
+		t.Errorf("want Header %q, got %q", want.Header, got.Header)
+	}
 	if got.Unread != want.Unread {
 		t.Errorf("want Unread %d, got %d", want.Unread, got.Unread)
 	}

@@ -15,12 +15,13 @@ type FeedPage struct {
 	TotalPages         uint
 	Offset             uint
 
+	Header     string
 	Unread     uint
 	Categories []SubscriptionCategory
 	Entries    []SubscriptionEntry
 }
 
-func NewFeedPage(number uint, totalPages uint, categories []SubscriptionCategory, entries []SubscriptionEntry) FeedPage {
+func NewFeedPage(number uint, totalPages uint, header string, categories []SubscriptionCategory, entries []SubscriptionEntry) FeedPage {
 	var unread uint
 
 	for _, category := range categories {
@@ -30,6 +31,7 @@ func NewFeedPage(number uint, totalPages uint, categories []SubscriptionCategory
 	page := FeedPage{
 		PageNumber: number,
 		TotalPages: totalPages,
+		Header:     header,
 		Unread:     unread,
 		Categories: categories,
 		Entries:    entries,

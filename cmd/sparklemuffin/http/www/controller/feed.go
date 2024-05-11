@@ -197,7 +197,7 @@ func (fc *feedHandlerContext) handleFeedListByCategoryView() func(w http.Respons
 			return
 		}
 
-		feedPage, err := fc.feedQueryingService.FeedsByCategoryAndPage(user.UUID, category.UUID, pageNumber)
+		feedPage, err := fc.feedQueryingService.FeedsByCategoryAndPage(user.UUID, category, pageNumber)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feeds")
 			view.PutFlashError(w, "failed to retrieve feeds")
@@ -206,7 +206,7 @@ func (fc *feedHandlerContext) handleFeedListByCategoryView() func(w http.Respons
 		}
 
 		viewData := view.Data{
-			Title:   "Feeds",
+			Title:   fmt.Sprintf("Feeds: %s", category.Name),
 			Content: feedPage,
 		}
 
@@ -244,7 +244,7 @@ func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.Res
 			return
 		}
 
-		feedPage, err := fc.feedQueryingService.FeedsBySubscriptionAndPage(user.UUID, subscription.UUID, pageNumber)
+		feedPage, err := fc.feedQueryingService.FeedsBySubscriptionAndPage(user.UUID, subscription, pageNumber)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feeds")
 			view.PutFlashError(w, "failed to retrieve feeds")
@@ -253,7 +253,7 @@ func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.Res
 		}
 
 		viewData := view.Data{
-			Title:   "Feeds",
+			Title:   fmt.Sprintf("Feeds: %s", feed.Title),
 			Content: feedPage,
 		}
 

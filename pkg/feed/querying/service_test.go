@@ -148,6 +148,7 @@ func TestServiceFeedsByPage(t *testing.T) {
 				NextPageNumber:     1,
 				TotalPages:         1,
 				Offset:             1,
+				Header:             pageHeaderAll,
 			},
 		},
 		{
@@ -161,6 +162,7 @@ func TestServiceFeedsByPage(t *testing.T) {
 				TotalPages:         1,
 				Offset:             1,
 
+				Header: pageHeaderAll,
 				Unread: 1,
 
 				Categories: []SubscriptionCategory{
@@ -239,19 +241,19 @@ func TestServiceFeedsByPage(t *testing.T) {
 
 func TestServiceFeedsByCategoryAndPage(t *testing.T) {
 	cases := []struct {
-		tname        string
-		userUUID     string
-		categoryUUID string
-		pageNumber   uint
-		want         FeedPage
-		wantErr      error
+		tname      string
+		userUUID   string
+		category   feed.Category
+		pageNumber uint
+		want       FeedPage
+		wantErr    error
 	}{
 		// nominal cases
 		{
-			tname:        "one page, no subscription",
-			userUUID:     testUser1.UUID,
-			categoryUUID: "13326cd8-98a0-4cba-a8fc-4c28c1ffc462",
-			pageNumber:   1,
+			tname:      "one page, no subscription",
+			userUUID:   testUser1.UUID,
+			category:   testRepository.Categories[1],
+			pageNumber: 1,
 			want: FeedPage{
 				PageNumber:         1,
 				PreviousPageNumber: 1,
@@ -259,16 +261,17 @@ func TestServiceFeedsByCategoryAndPage(t *testing.T) {
 				TotalPages:         1,
 				Offset:             1,
 
+				Header: "Empty Category",
 				Unread: 1,
 
 				Categories: wantTestUser1Categories,
 			},
 		},
 		{
-			tname:        "one page, one category with one subscription, one empty category",
-			userUUID:     testUser1.UUID,
-			categoryUUID: "8f041d0f-8f49-4ffa-99a3-896ea372bfc",
-			pageNumber:   1,
+			tname:      "one page, one category with one subscription, one empty category",
+			userUUID:   testUser1.UUID,
+			category:   testRepository.Categories[0],
+			pageNumber: 1,
 			want: FeedPage{
 				PageNumber:         1,
 				PreviousPageNumber: 1,
@@ -276,6 +279,7 @@ func TestServiceFeedsByCategoryAndPage(t *testing.T) {
 				TotalPages:         1,
 				Offset:             1,
 
+				Header: "Test Category",
 				Unread: 1,
 
 				Categories: wantTestUser1Categories,
@@ -310,7 +314,7 @@ func TestServiceFeedsByCategoryAndPage(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			got, err := testService.FeedsByCategoryAndPage(tc.userUUID, tc.categoryUUID, tc.pageNumber)
+			got, err := testService.FeedsByCategoryAndPage(tc.userUUID, tc.category, tc.pageNumber)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -333,19 +337,22 @@ func TestServiceFeedsByCategoryAndPage(t *testing.T) {
 
 func TestServiceFeedsBySubscriptionAndPage(t *testing.T) {
 	cases := []struct {
-		tname            string
-		userUUID         string
-		subscriptionUUID string
-		pageNumber       uint
-		want             FeedPage
-		wantErr          error
+		tname        string
+		userUUID     string
+		subscription feed.Subscription
+		pageNumber   uint
+		want         FeedPage
+		wantErr      error
 	}{
 		// nominal cases
 		{
-			tname:            "one page",
-			userUUID:         testUser1.UUID,
-			subscriptionUUID: "72261134-e4df-4472-87ae-097e6433a438",
-			pageNumber:       1,
+			tname:    "one page",
+			userUUID: testUser1.UUID,
+			subscription: feed.Subscription{
+				UUID:     "72261134-e4df-4472-87ae-097e6433a438",
+				FeedUUID: "04f7dcbc-7080-4ca9-9000-aeac3f62dfb5",
+			},
+			pageNumber: 1,
 			want: FeedPage{
 				PageNumber:         1,
 				PreviousPageNumber: 1,
@@ -353,6 +360,7 @@ func TestServiceFeedsBySubscriptionAndPage(t *testing.T) {
 				TotalPages:         1,
 				Offset:             1,
 
+				Header: "Local Test",
 				Unread: 1,
 
 				Categories: wantTestUser1Categories,
@@ -379,17 +387,20 @@ func TestServiceFeedsBySubscriptionAndPage(t *testing.T) {
 			wantErr:    ErrPageNumberOutOfBounds,
 		},
 		{
-			tname:            "page number out of bounds",
-			subscriptionUUID: "72261134-e4df-4472-87ae-097e6433a438",
-			pageNumber:       18,
-			userUUID:         testUser1.UUID,
-			wantErr:          ErrPageNumberOutOfBounds,
+			tname: "page number out of bounds",
+			subscription: feed.Subscription{
+				UUID:     "72261134-e4df-4472-87ae-097e6433a438",
+				FeedUUID: "04f7dcbc-7080-4ca9-9000-aeac3f62dfb5",
+			},
+			pageNumber: 18,
+			userUUID:   testUser1.UUID,
+			wantErr:    ErrPageNumberOutOfBounds,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			got, err := testService.FeedsBySubscriptionAndPage(tc.userUUID, tc.subscriptionUUID, tc.pageNumber)
+			got, err := testService.FeedsBySubscriptionAndPage(tc.userUUID, tc.subscription, tc.pageNumber)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

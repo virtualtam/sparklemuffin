@@ -18,6 +18,16 @@ type fakeRepository struct {
 	Subscriptions []feed.Subscription
 }
 
+func (r *fakeRepository) FeedGetByUUID(feedUUID string) (feed.Feed, error) {
+	for _, f := range r.Feeds {
+		if f.UUID == feedUUID {
+			return f, nil
+		}
+	}
+
+	return feed.Feed{}, feed.ErrFeedNotFound
+}
+
 func (r *fakeRepository) FeedSubscriptionCategoryGetAll(userUUID string) ([]SubscriptionCategory, error) {
 	var subscriptionCategories []SubscriptionCategory
 

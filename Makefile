@@ -29,6 +29,10 @@ test:
 	go test ./...
 .PHONY: test
 
+vulncheck:
+	govulncheck -C . ./...
+.PHONY: vulncheck
+
 # Live development server
 live:
 	@echo "== Starting database"

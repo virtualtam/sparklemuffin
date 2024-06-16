@@ -259,6 +259,225 @@ func TestServiceCategoryBySlug(t *testing.T) {
 	}
 }
 
+func TestServiceCategoryByUUID(t *testing.T) {
+	userUUID := "8c9a910a-fcda-4eef-8394-8d580a969643"
+	now := time.Now().UTC()
+
+	cases := []struct {
+		tname                string
+		repositoryCategories []Category
+		categoryUUID         string
+		want                 Category
+		wantErr              error
+	}{
+		// nominal cases
+		{
+			tname:        "not found",
+			categoryUUID: "76a87b94-2e60-457e-a9e0-9deaebd761aa",
+			wantErr:      ErrCategoryNotFound,
+		},
+		{
+			tname: "found",
+			repositoryCategories: []Category{
+				{
+					UUID:      "d3033032-23c0-4f78-9b7d-f4135477b5c3",
+					UserUUID:  userUUID,
+					Name:      "Existing Category",
+					Slug:      "existingcat",
+					CreatedAt: now,
+					UpdatedAt: now,
+				},
+			},
+			categoryUUID: "d3033032-23c0-4f78-9b7d-f4135477b5c3",
+			want: Category{
+				UUID:      "d3033032-23c0-4f78-9b7d-f4135477b5c3",
+				UserUUID:  userUUID,
+				Name:      "Existing Category",
+				Slug:      "existingcat",
+				CreatedAt: now,
+				UpdatedAt: now,
+			},
+		},
+
+		// error cases
+		{
+			tname:   "empty UUID",
+			wantErr: ErrCategoryUUIDInvalid,
+		},
+		{
+			tname:        "empty UUID (whitespace)",
+			categoryUUID: "    ",
+			wantErr:      ErrCategoryUUIDInvalid,
+		},
+		{
+			tname:        "invalid UUID",
+			categoryUUID: "A-BC",
+			wantErr:      ErrCategoryUUIDInvalid,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{
+				Categories: tc.repositoryCategories,
+			}
+			s := NewService(r, nil)
+
+			got, err := s.CategoryByUUID(userUUID, tc.categoryUUID)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertCategoryEquals(t, got, tc.want)
+		})
+	}
+}
+
+func TestServiceUpdateCategory(t *testing.T) {
+	userUUID := "179206c8-2965-47a7-ba04-bf0a6a0b8d11"
+	now := time.Now().UTC()
+	yesterday := now.Add(-24 * time.Hour)
+
+	existingCategory := Category{
+		UUID:      "d3033032-23c0-4f78-9b7d-f4135477b5c3",
+		UserUUID:  userUUID,
+		Name:      "Existing Category",
+		Slug:      "existing-category",
+		CreatedAt: yesterday,
+		UpdatedAt: yesterday,
+	}
+
+	cases := []struct {
+		tname           string
+		updatedCategory Category
+		want            Category
+		wantErr         error
+	}{
+		// nominal cases
+		{
+			tname: "update category with new name and slug",
+			updatedCategory: Category{
+				UserUUID: existingCategory.UserUUID,
+				UUID:     existingCategory.UUID,
+				Name:     "New Cat",
+			},
+			want: Category{
+				UserUUID:  existingCategory.UserUUID,
+				UUID:      existingCategory.UUID,
+				Name:      "New Cat",
+				Slug:      "new-cat",
+				CreatedAt: yesterday,
+				UpdatedAt: now,
+			},
+		},
+		{
+			tname: "update category with no changes",
+			updatedCategory: Category{
+				UserUUID: existingCategory.UserUUID,
+				UUID:     existingCategory.UUID,
+				Name:     existingCategory.Name,
+			},
+			want: Category{
+				UserUUID:  existingCategory.UserUUID,
+				UUID:      existingCategory.UUID,
+				Name:      existingCategory.Name,
+				Slug:      existingCategory.Slug,
+				CreatedAt: yesterday,
+				UpdatedAt: now,
+			},
+		},
+
+		// error cases
+		{
+			tname: "not found",
+			updatedCategory: Category{
+				UserUUID: existingCategory.UserUUID,
+				UUID:     "f46b4c2c-b7b5-495e-8a92-d58e2d2ae1d0",
+			},
+			wantErr: ErrCategoryNotFound,
+		},
+		{
+			tname: "invalid UUID",
+			updatedCategory: Category{
+				UserUUID: existingCategory.UserUUID,
+				UUID:     "a-Bc123z",
+			},
+			wantErr: ErrCategoryUUIDInvalid,
+		},
+		{
+			tname: "empty name",
+			updatedCategory: Category{
+				UserUUID: existingCategory.UserUUID,
+				UUID:     existingCategory.UUID,
+			},
+			wantErr: ErrCategoryNameRequired,
+		},
+		{
+			tname: "empty name (whitespace)",
+			updatedCategory: Category{
+				UserUUID: existingCategory.UserUUID,
+				UUID:     existingCategory.UUID,
+				Name:     "    ",
+			},
+			wantErr: ErrCategoryNameRequired,
+		},
+		{
+			tname: "empty slug (punctuation)",
+			updatedCategory: Category{
+				UserUUID: existingCategory.UserUUID,
+				UUID:     existingCategory.UUID,
+				Name:     "?",
+			},
+			wantErr: ErrCategorySlugRequired,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{
+				Categories: []Category{
+					existingCategory,
+				},
+			}
+			s := NewService(r, nil)
+
+			err := s.UpdateCategory(tc.updatedCategory)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			got, err := s.CategoryByUUID(userUUID, tc.updatedCategory.UUID)
+			if err != nil {
+				t.Fatalf("failed to retrieve category: %q", err)
+			}
+
+			assertCategoryEquals(t, got, tc.want)
+		})
+	}
+}
+
 func TestServiceCreateEntries(t *testing.T) {
 	feedUUID := "26b0aafc-4de6-46be-91ea-0f6e111c660c"
 	now := time.Now().UTC()

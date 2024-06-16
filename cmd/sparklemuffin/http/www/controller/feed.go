@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	actionFeedAdd         string = "feed-add"
-	actionFeedCategoryAdd string = "feed-category-add"
+	actionFeedAdd          string = "feed-add"
+	actionFeedCategoryAdd  string = "feed-category-add"
+	actionFeedCategoryEdit string = "feed-category-edit"
 )
 
 // RegisterFeedHandlers registers HTTP handlers for syndication feed operations.
@@ -43,6 +44,7 @@ func RegisterFeedHandlers(
 		feedAddView:  view.New("feed/feed_add.gohtml"),
 
 		feedCategoryAddView:  view.New("feed/category_add.gohtml"),
+		feedCategoryEditView: view.New("feed/category_edit.gohtml"),
 		feedCategoryListView: view.New("feed/category_list.gohtml"),
 	}
 
@@ -60,9 +62,11 @@ func RegisterFeedHandlers(
 		r.Post("/add", fc.handleFeedAdd())
 
 		r.Route("/categories", func(sr chi.Router) {
-			sr.Get("/", fc.handleFeedCategoryList())
+			sr.Get("/", fc.handleFeedCategoryListView())
 			sr.Get("/add", fc.handleFeedCategoryAddView())
 			sr.Post("/add", fc.handleFeedCategoryAdd())
+			sr.Get("/{uuid}/edit", fc.handleFeedCategoryEditView())
+			sr.Post("/{uuid}/edit", fc.handleFeedCategoryEdit())
 		})
 	})
 }
@@ -77,12 +81,18 @@ type feedHandlerContext struct {
 	feedListView *view.View
 
 	feedCategoryAddView  *view.View
+	feedCategoryEditView *view.View
 	feedCategoryListView *view.View
 }
 
 type feedFormContent struct {
 	CSRFToken  string
 	Categories []feed.Category
+}
+
+type feedCategoryFormContent struct {
+	CSRFToken string
+	Category  feed.Category
 }
 
 // handleFeedAddView renders the feed subscription form.
@@ -264,28 +274,6 @@ func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.Res
 	}
 }
 
-// handleFeedCategoryList renders the feed category list.
-func (fc *feedHandlerContext) handleFeedCategoryList() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
-
-		categories, err := fc.feedService.Categories(user.UUID)
-		if err != nil {
-			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve feed categories")
-			view.PutFlashError(w, "failed to retrieve existing feed categories")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		viewData := view.Data{
-			Content: categories,
-			Title:   "Feed Categories",
-		}
-
-		fc.feedCategoryListView.Render(w, r, viewData)
-	}
-}
-
 // handleFeedCategoryAddView renders the feed category addition form.
 func (fc *feedHandlerContext) handleFeedCategoryAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -336,5 +324,98 @@ func (fc *feedHandlerContext) handleFeedCategoryAdd() func(w http.ResponseWriter
 		}
 
 		http.Redirect(w, r, "/feeds", http.StatusSeeOther)
+	}
+}
+
+// handleFeedCategoryEditView renders the feed category edition form.
+func (fc *feedHandlerContext) handleFeedCategoryEditView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedCategoryEdit)
+
+		categoryUUID := chi.URLParam(r, "uuid")
+
+		category, err := fc.feedService.CategoryByUUID(ctxUser.UUID, categoryUUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed category")
+			view.PutFlashError(w, "failed to retrieve feed category")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		viewData := view.Data{
+			Content: feedCategoryFormContent{
+				CSRFToken: csrfToken,
+				Category:  category,
+			},
+			Title: "Edit feed category",
+		}
+
+		fc.feedCategoryEditView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedCategoryEdit processes the feed category edition form.
+func (fc *feedHandlerContext) handleFeedCategoryEdit() func(w http.ResponseWriter, r *http.Request) {
+	type feedCategoryEditForm struct {
+		CSRFToken string `schema:"csrf_token"`
+		Name      string `schema:"name"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+		categoryUUID := chi.URLParam(r, "uuid")
+
+		var form feedCategoryEditForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed category edition form")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedCategoryEdit) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		updatedCategory := feed.Category{
+			UserUUID: ctxUser.UUID,
+			UUID:     categoryUUID,
+			Name:     form.Name,
+		}
+
+		if err := fc.feedService.UpdateCategory(updatedCategory); err != nil {
+			log.Error().Err(err).Msg("failed to edit feed category")
+			view.PutFlashError(w, "failed to edit feed category")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		http.Redirect(w, r, "/feeds/categories/", http.StatusSeeOther)
+	}
+}
+
+// handleFeedCategoryListView renders the feed category list view.
+func (fc *feedHandlerContext) handleFeedCategoryListView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+
+		categories, err := fc.feedService.Categories(user.UUID)
+		if err != nil {
+			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve feed categories")
+			view.PutFlashError(w, "failed to retrieve existing feed categories")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		viewData := view.Data{
+			Content: categories,
+			Title:   "Feed Categories",
+		}
+
+		fc.feedCategoryListView.Render(w, r, viewData)
 	}
 }

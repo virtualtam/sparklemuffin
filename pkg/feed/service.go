@@ -60,9 +60,41 @@ func (s *Service) CategoryBySlug(userUUID string, slug string) (Category, error)
 	return s.r.FeedCategoryGetBySlug(userUUID, slug)
 }
 
+// CategoryByUUID returns the category for a given user and UUID.
+func (s *Service) CategoryByUUID(userUUID string, categoryUUID string) (Category, error) {
+	category := Category{UUID: categoryUUID}
+
+	if err := category.ValidateUUID(); err != nil {
+		return Category{}, err
+	}
+
+	return s.r.FeedCategoryGetByUUID(userUUID, categoryUUID)
+}
+
 // Categories returns all categories for a given user.
 func (s *Service) Categories(userUUID string) ([]Category, error) {
 	return s.r.FeedCategoryGetMany(userUUID)
+}
+
+// UpdateCategory updates an existing Category.
+func (s *Service) UpdateCategory(category Category) error {
+	categoryToUpdate, err := s.CategoryByUUID(category.UserUUID, category.UUID)
+	if err != nil {
+		return err
+	}
+
+	categoryToUpdate.Name = category.Name
+
+	now := time.Now().UTC()
+	categoryToUpdate.UpdatedAt = now
+
+	categoryToUpdate.Normalize()
+
+	if err := categoryToUpdate.ValidateForUpdate(s.r); err != nil {
+		return err
+	}
+
+	return s.r.FeedCategoryUpdate(categoryToUpdate)
 }
 
 // FeedBySlug returns the Feed for a given slug.

@@ -37,9 +37,24 @@ func (r *fakeRepository) FeedGetBySlug(feedSlug string) (Feed, error) {
 	return Feed{}, ErrFeedNotFound
 }
 
+func (r *fakeRepository) FeedCategoryAdd(category Category) error {
+	r.Categories = append(r.Categories, category)
+	return nil
+}
+
 func (r *fakeRepository) FeedCategoryGetBySlug(userUUID string, slug string) (Category, error) {
 	for _, category := range r.Categories {
 		if category.UserUUID == userUUID && category.Slug == slug {
+			return category, nil
+		}
+	}
+
+	return Category{}, ErrCategoryNotFound
+}
+
+func (r *fakeRepository) FeedCategoryGetByUUID(userUUID string, categoryUUID string) (Category, error) {
+	for _, category := range r.Categories {
+		if category.UserUUID == userUUID && category.UUID == categoryUUID {
 			return category, nil
 		}
 	}
@@ -51,12 +66,7 @@ func (r *fakeRepository) FeedCategoryGetMany(userUUID string) ([]Category, error
 	panic("unimplemented")
 }
 
-func (r *fakeRepository) FeedCategoryAdd(category Category) error {
-	r.Categories = append(r.Categories, category)
-	return nil
-}
-
-func (r *fakeRepository) FeedCategoryIsRegistered(userUUID string, name string, slug string) (bool, error) {
+func (r *fakeRepository) FeedCategoryNameAndSlugAreRegistered(userUUID string, name string, slug string) (bool, error) {
 	for _, category := range r.Categories {
 		if category.UserUUID != userUUID {
 			continue
@@ -68,6 +78,33 @@ func (r *fakeRepository) FeedCategoryIsRegistered(userUUID string, name string, 
 	}
 
 	return false, nil
+}
+
+func (r *fakeRepository) FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(userUUID string, categoryUUID string, name string, slug string) (bool, error) {
+	for _, category := range r.Categories {
+		if category.UserUUID != userUUID {
+			continue
+		}
+
+		if category.UUID == categoryUUID {
+			continue
+		}
+
+		if category.Name == name || category.Slug == slug {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (r *fakeRepository) FeedCategoryUpdate(category Category) error {
+	for index, c := range r.Categories {
+		if c.UserUUID == category.UserUUID && c.UUID == category.UUID {
+			r.Categories[index] = category
+		}
+	}
+	return nil
 }
 
 func (r *fakeRepository) FeedEntryAddMany(entries []Entry) (int64, error) {

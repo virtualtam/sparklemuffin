@@ -2,15 +2,18 @@
 {{template "tagFilterForm" .}}
 {{template "pagination" .}}
 
-<div class="tag-list">
+<div class="item-list">
   {{range .Tags}}
   <div>
-    <span class="tag-count">{{.Count}}</span>
+    <span class="item-count">{{.Count}}</span>
     [
-    <span class="tag-edit"><a href="/bookmarks/tags/{{.EncodedName}}/edit" title="Edit tag: {{.Name}}">e</a></span>
+    <span class="item-edit">
+      <a href="/bookmarks/tags/{{.EncodedName}}/edit" title="Edit tag: {{.Name}}">e</a>
+    </span>
     ,
-    <span class="tag-delete"><a href="/bookmarks/tags/{{.EncodedName}}/delete"
-         title="Delete tag: {{.Name}}">x</a></span>
+    <span class="item-delete">
+      <a href="/bookmarks/tags/{{.EncodedName}}/delete" title="Delete tag: {{.Name}}">x</a>
+    </span>
     ]
     <span class="tag">
       <a href="/bookmarks?search={{.Name}}" title="Bookmarks tagged {{.Name}}">{{.Name}}</a>

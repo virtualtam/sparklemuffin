@@ -115,6 +115,16 @@ func (r *Repository) FeedCategoryGetBySlug(userUUID string, slug string) (feed.C
 	return r.feedCategoryGetQuery(query, userUUID, slug)
 }
 
+func (r *Repository) FeedCategoryGetByUUID(userUUID string, categoryUUID string) (feed.Category, error) {
+	query := `
+	SELECT uuid, user_uuid, name, slug, created_at, updated_at
+	FROM feed_categories
+	WHERE user_uuid=$1
+	AND uuid=$2`
+
+	return r.feedCategoryGetQuery(query, userUUID, categoryUUID)
+}
+
 func (r *Repository) FeedCategoryGetMany(userUUID string) ([]feed.Category, error) {
 	query := `
 SELECT uuid, user_uuid, name, slug
@@ -146,13 +156,58 @@ ORDER BY name`
 	return categories, nil
 }
 
-func (r *Repository) FeedCategoryIsRegistered(userUUID string, name string, slug string) (bool, error) {
+func (r *Repository) FeedCategoryNameAndSlugAreRegistered(userUUID string, name string, slug string) (bool, error) {
 	return r.rowExistsByQuery(
 		"SELECT 1 FROM feed_categories WHERE user_uuid=$1 AND (name=$2 OR slug=$3)",
 		userUUID,
 		name,
 		slug,
 	)
+}
+
+func (r *Repository) FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(userUUID string, categoryUUID string, name string, slug string) (bool, error) {
+	return r.rowExistsByQuery(
+		"SELECT 1 FROM feed_categories WHERE user_uuid = $1 AND uuid != $2 AND (name = $3 OR slug = $4)",
+		userUUID,
+		categoryUUID,
+		name,
+		slug,
+	)
+}
+
+func (r *Repository) FeedCategoryUpdate(c feed.Category) error {
+	query := `
+	UPDATE feed_categories
+	SET
+		name=@name,
+		slug=@slug,
+		updated_at=@updated_at
+	WHERE user_uuid=@user_uuid
+	AND uuid=@uuid`
+
+	args := pgx.NamedArgs{
+		"user_uuid":  c.UserUUID,
+		"uuid":       c.UUID,
+		"name":       c.Name,
+		"slug":       c.Slug,
+		"updated_at": c.UpdatedAt,
+	}
+
+	ctx := context.Background()
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "feeds", "FeedCategoryUpdate")
+
+	_, err = tx.Exec(ctx, query, args)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *Repository) FeedEntryAddMany(entries []feed.Entry) (int64, error) {

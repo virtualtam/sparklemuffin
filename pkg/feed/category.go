@@ -51,13 +51,29 @@ func (c *Category) Normalize() {
 	c.slugify()
 }
 
-// ValidateForAddition ensures mandatory fields are properly set when adding an
-// new Category.
+// ValidateForAddition ensures mandatory fields are properly set when adding a Category.
 func (c *Category) ValidateForAddition(v ValidationRepository) error {
 	fns := []func() error{
 		c.requireName,
 		c.requireSlug,
-		c.ensureCategoryIsNotRegistered(v),
+		c.ensureNameAndSlugAreNotRegistered(v),
+	}
+
+	for _, fn := range fns {
+		if err := fn(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ValidateForUpdate ensures mandatory fields are properly set when editing a Category.
+func (c *Category) ValidateForUpdate(v ValidationRepository) error {
+	fns := []func() error{
+		c.requireName,
+		c.requireSlug,
+		c.ensureNameAndSlugAreNotRegisteredToAnotherCategory(v),
 	}
 
 	for _, fn := range fns {
@@ -73,6 +89,15 @@ func (c *Category) ValidateForAddition(v ValidationRepository) error {
 func (c *Category) ValidateSlug() error {
 	if !slug.IsSlug(c.Slug) {
 		return ErrCategorySlugInvalid
+	}
+
+	return nil
+}
+
+// ValidateUUID ensures the UUID is valid.
+func (c *Category) ValidateUUID() error {
+	if err := uuid.Validate(c.UUID); err != nil {
+		return ErrCategoryUUIDInvalid
 	}
 
 	return nil
@@ -100,9 +125,24 @@ func (c *Category) requireSlug() error {
 	return nil
 }
 
-func (c *Category) ensureCategoryIsNotRegistered(v ValidationRepository) func() error {
+func (c *Category) ensureNameAndSlugAreNotRegistered(v ValidationRepository) func() error {
 	return func() error {
-		registered, err := v.FeedCategoryIsRegistered(c.UserUUID, c.Name, c.Slug)
+		registered, err := v.FeedCategoryNameAndSlugAreRegistered(c.UserUUID, c.Name, c.Slug)
+		if err != nil {
+			return err
+		}
+
+		if registered {
+			return ErrCategoryAlreadyRegistered
+		}
+
+		return nil
+	}
+}
+
+func (c *Category) ensureNameAndSlugAreNotRegisteredToAnotherCategory(v ValidationRepository) func() error {
+	return func() error {
+		registered, err := v.FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(c.UserUUID, c.UUID, c.Name, c.Slug)
 		if err != nil {
 			return err
 		}

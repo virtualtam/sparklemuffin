@@ -5,9 +5,13 @@ package feed
 
 // ValidationRepository provides methods for Feed and Subscription validation.
 type ValidationRepository interface {
-	// FeedCategoryIsRegistered returns whether a user has already registered
+	// FeedCategoryNameAndSlugAreRegistered returns whether a user has already registered
 	// a Category with the same name or slug.
-	FeedCategoryIsRegistered(userUUID string, name string, slug string) (bool, error)
+	FeedCategoryNameAndSlugAreRegistered(userUUID string, name string, slug string) (bool, error)
+
+	// FeedCategoryNameAndSlugAreRegistered returns whether a user has already registered
+	// another Category with the same name or slug.
+	FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(userUUID string, categoryUUID string, name string, slug string) (bool, error)
 
 	// FeedSubscriptionIsRegistered returns whether a user has already registered
 	// a Subscription to a given Feed.
@@ -33,8 +37,14 @@ type Repository interface {
 	// FeedCategoryGetBySlug returns the Category for a given user and slug.
 	FeedCategoryGetBySlug(userUUID string, slug string) (Category, error)
 
+	// FeedCategoryGetByUUID returns the Category for a given user and UUID.
+	FeedCategoryGetByUUID(userUUID string, categoryUUID string) (Category, error)
+
 	// FeedCategoryGetMany returns all categories for a giver user.
 	FeedCategoryGetMany(userUUID string) ([]Category, error)
+
+	// FeedCategoryUpdate updates an existing Category.
+	FeedCategoryUpdate(category Category) error
 
 	// FeedEntryAddMany creates a collection of new Entries.
 	FeedEntryAddMany(entries []Entry) (int64, error)

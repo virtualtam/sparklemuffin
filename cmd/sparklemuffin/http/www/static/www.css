@@ -290,49 +290,50 @@ ol {
   font-style: italic;
 }
 
-/* Tags list */
-.tag-list {
+/* Item lists */
+.item-list {
   display: grid;
   grid-auto-flow: column;
   grid-template-rows: repeat(90, auto);
 }
 
 @media (min-width: 600px) {
-  .tag-list {
+  .item-list {
     grid-template-rows: repeat(60, auto);
   }
 }
 
 @media (min-width: 1200px) {
-  .tag-list {
+  .item-list {
     grid-template-rows: repeat(30, auto);
   }
 }
 
-.tag-count {
+.item-count {
   display: inline-block;
   text-align: right;
   width: 4em;
 }
 
-.tag-delete a {
+.item-delete a {
   color: maroon;
 }
 
-.tag-delete a:hover {
+.item-delete a:hover {
   filter: brightness(1.5);
   text-decoration: none;
 }
 
-.tag-edit a {
+.item-edit a {
   color: navy;
 }
 
-.tag-edit a:hover {
+.item-edit a:hover {
   filter: brightness(1.5);
   text-decoration: none;
 }
 
+/* Tag list */
 .tag a:hover {
   color: var(--text);
   text-decoration: none;

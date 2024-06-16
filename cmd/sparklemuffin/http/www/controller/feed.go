@@ -42,7 +42,8 @@ func RegisterFeedHandlers(
 		feedListView: view.New("feed/list.gohtml"),
 		feedAddView:  view.New("feed/feed_add.gohtml"),
 
-		feedCategoryAddView: view.New("feed/category_add.gohtml"),
+		feedCategoryAddView:  view.New("feed/category_add.gohtml"),
+		feedCategoryListView: view.New("feed/category_list.gohtml"),
 	}
 
 	// feeds
@@ -59,6 +60,7 @@ func RegisterFeedHandlers(
 		r.Post("/add", fc.handleFeedAdd())
 
 		r.Route("/categories", func(sr chi.Router) {
+			sr.Get("/", fc.handleFeedCategoryList())
 			sr.Get("/add", fc.handleFeedCategoryAddView())
 			sr.Post("/add", fc.handleFeedCategoryAdd())
 		})
@@ -74,7 +76,8 @@ type feedHandlerContext struct {
 	feedAddView  *view.View
 	feedListView *view.View
 
-	feedCategoryAddView *view.View
+	feedCategoryAddView  *view.View
+	feedCategoryListView *view.View
 }
 
 type feedFormContent struct {
@@ -258,6 +261,28 @@ func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.Res
 		}
 
 		fc.feedListView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedCategoryList renders the feed category list.
+func (fc *feedHandlerContext) handleFeedCategoryList() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+
+		categories, err := fc.feedService.Categories(user.UUID)
+		if err != nil {
+			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve feed categories")
+			view.PutFlashError(w, "failed to retrieve existing feed categories")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		viewData := view.Data{
+			Content: categories,
+			Title:   "Feed Categories",
+		}
+
+		fc.feedCategoryListView.Render(w, r, viewData)
 	}
 }
 

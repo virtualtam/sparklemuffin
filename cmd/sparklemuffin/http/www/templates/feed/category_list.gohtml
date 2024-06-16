@@ -1,0 +1,22 @@
+{{define "content"}}
+<div id="nav-actions">
+  <nav>
+    <a href="/feeds/categories/add">+ Add category</a>
+  </nav>
+</div>
+
+<div class="tag-list">
+  {{range .}}
+  <div>
+    [
+    <span class="tag-edit"><a href="/feeds/categories/{{.Slug}}/edit"
+         title="Edit category: {{.Name}}">e</a></span>
+    ,
+    <span class="tag-delete"><a href="/feeds/categories/{{.Slug}}/delete"
+         title="Delete category: {{.Name}}">x</a></span>
+    ]
+    {{.Name}}
+  </div>
+  {{end}}
+</div>
+{{end}}

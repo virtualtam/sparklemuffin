@@ -127,13 +127,13 @@ func (s *Service) PublicBookmarksBySearchQueryAndPage(ownerUUID string, searchTe
 
 // Tags return all tags for a given user.
 func (s *Service) Tags(userUUID string, visibility Visibility) ([]Tag, error) {
-	return s.r.TagGetAll(userUUID, visibility)
+	return s.r.BookmarkTagGetAll(userUUID, visibility)
 }
 
 // TagNamesByCount returns all tag names for a given user,
 // sorted by count in descending order.
 func (s *Service) TagNamesByCount(userUUID string, visibility Visibility) ([]string, error) {
-	tags, err := s.r.TagGetAll(userUUID, visibility)
+	tags, err := s.r.BookmarkTagGetAll(userUUID, visibility)
 	if err != nil {
 		return []string{}, err
 	}
@@ -158,7 +158,7 @@ func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uin
 		return TagPage{}, ErrPageNumberOutOfBounds
 	}
 
-	tagCount, err := s.r.TagGetCount(ownerUUID, visibility)
+	tagCount, err := s.r.BookmarkTagGetCount(ownerUUID, visibility)
 	if err != nil {
 		return TagPage{}, err
 	}
@@ -176,7 +176,7 @@ func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uin
 
 	dbOffset := (number - 1) * tagsPerPage
 
-	tags, err := s.r.TagGetN(ownerUUID, visibility, tagsPerPage, dbOffset)
+	tags, err := s.r.BookmarkTagGetN(ownerUUID, visibility, tagsPerPage, dbOffset)
 	if err != nil {
 		return TagPage{}, err
 	}
@@ -196,7 +196,7 @@ func (s *Service) TagsByFilterQueryAndPage(ownerUUID string, visibility Visibili
 		return TagPage{}, ErrPageNumberOutOfBounds
 	}
 
-	tagCount, err := s.r.TagFilterCount(ownerUUID, visibility, filterTerm)
+	tagCount, err := s.r.BookmarkTagFilterCount(ownerUUID, visibility, filterTerm)
 	if err != nil {
 		return TagPage{}, err
 	}
@@ -214,7 +214,7 @@ func (s *Service) TagsByFilterQueryAndPage(ownerUUID string, visibility Visibili
 
 	dbOffset := (number - 1) * tagsPerPage
 
-	tags, err := s.r.TagFilterN(ownerUUID, visibility, filterTerm, tagsPerPage, dbOffset)
+	tags, err := s.r.BookmarkTagFilterN(ownerUUID, visibility, filterTerm, tagsPerPage, dbOffset)
 	if err != nil {
 		return TagPage{}, err
 	}

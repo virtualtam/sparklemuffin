@@ -104,22 +104,22 @@ func (r *fakeRepository) OwnerGetByUUID(userUUID string) (Owner, error) {
 	return Owner{}, ErrOwnerNotFound
 }
 
-func (r *fakeRepository) TagGetAll(userUUID string, visibility Visibility) ([]Tag, error) {
+func (r *fakeRepository) BookmarkTagGetAll(userUUID string, visibility Visibility) ([]Tag, error) {
 	return []Tag{}, errors.New("not implemented")
 }
 
-func (r *fakeRepository) TagGetCount(userUUID string, visibility Visibility) (uint, error) {
+func (r *fakeRepository) BookmarkTagGetCount(userUUID string, visibility Visibility) (uint, error) {
 	return 0, errors.New("not implemented")
 }
 
-func (r *fakeRepository) TagGetN(userUUID string, visibility Visibility, n uint, offset uint) ([]Tag, error) {
+func (r *fakeRepository) BookmarkTagGetN(userUUID string, visibility Visibility, n uint, offset uint) ([]Tag, error) {
 	return []Tag{}, errors.New("not implemented")
 }
 
-func (r *fakeRepository) TagFilterCount(userUUID string, visibility Visibility, searchTerms string) (uint, error) {
+func (r *fakeRepository) BookmarkTagFilterCount(userUUID string, visibility Visibility, searchTerms string) (uint, error) {
 	return 0, errors.New("not implemented")
 }
 
-func (r *fakeRepository) TagFilterN(userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]Tag, error) {
+func (r *fakeRepository) BookmarkTagFilterN(userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]Tag, error) {
 	return []Tag{}, errors.New("not implemented")
 }

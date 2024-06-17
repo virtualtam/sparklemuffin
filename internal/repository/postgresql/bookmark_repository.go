@@ -469,7 +469,7 @@ func (r *Repository) OwnerGetByUUID(userUUID string) (querying.Owner, error) {
 	}, nil
 }
 
-func (r *Repository) TagGetCount(userUUID string, visibility querying.Visibility) (uint, error) {
+func (r *Repository) BookmarkTagGetCount(userUUID string, visibility querying.Visibility) (uint, error) {
 	var query string
 
 	switch visibility {
@@ -517,7 +517,7 @@ func (r *Repository) TagGetCount(userUUID string, visibility querying.Visibility
 	return count, nil
 }
 
-func (r *Repository) TagGetAll(userUUID string, visibility querying.Visibility) ([]querying.Tag, error) {
+func (r *Repository) BookmarkTagGetAll(userUUID string, visibility querying.Visibility) ([]querying.Tag, error) {
 	var query string
 
 	switch visibility {
@@ -560,7 +560,7 @@ func (r *Repository) TagGetAll(userUUID string, visibility querying.Visibility) 
 	return r.tagGetQuery(query, userUUID)
 }
 
-func (r *Repository) TagGetN(userUUID string, visibility querying.Visibility, n uint, offset uint) ([]querying.Tag, error) {
+func (r *Repository) BookmarkTagGetN(userUUID string, visibility querying.Visibility, n uint, offset uint) ([]querying.Tag, error) {
 	var query string
 
 	switch visibility {
@@ -606,7 +606,7 @@ func (r *Repository) TagGetN(userUUID string, visibility querying.Visibility, n 
 	return r.tagGetQuery(query, userUUID, n, offset)
 }
 
-func (r *Repository) TagFilterCount(userUUID string, visibility querying.Visibility, filterTerm string) (uint, error) {
+func (r *Repository) BookmarkTagFilterCount(userUUID string, visibility querying.Visibility, filterTerm string) (uint, error) {
 	var query string
 
 	switch visibility {
@@ -658,7 +658,7 @@ func (r *Repository) TagFilterCount(userUUID string, visibility querying.Visibil
 	return count, nil
 }
 
-func (r *Repository) TagFilterN(userUUID string, visibility querying.Visibility, filterTerm string, n uint, offset uint) ([]querying.Tag, error) {
+func (r *Repository) BookmarkTagFilterN(userUUID string, visibility querying.Visibility, filterTerm string, n uint, offset uint) ([]querying.Tag, error) {
 	var query string
 
 	switch visibility {

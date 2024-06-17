@@ -7,9 +7,10 @@
   <div>
     <span class="tag-count">{{.Count}}</span>
     [
-    <span class="tag-edit"><a href="/tags/{{.EncodedName}}/edit" title="Edit tag: {{.Name}}">e</a></span>
+    <span class="tag-edit"><a href="/bookmarks/tags/{{.EncodedName}}/edit" title="Edit tag: {{.Name}}">e</a></span>
     ,
-    <span class="tag-delete"><a href="/tags/{{.EncodedName}}/delete" title="Delete tag: {{.Name}}">x</a></span>
+    <span class="tag-delete"><a href="/bookmarks/tags/{{.EncodedName}}/delete"
+         title="Delete tag: {{.Name}}">x</a></span>
     ]
     <span class="tag">
       <a href="/bookmarks?search={{.Name}}" title="Bookmarks tagged {{.Name}}">{{.Name}}</a>
@@ -21,7 +22,7 @@
 
 {{define "tagFilterForm"}}
 <div class="search">
-  <form action="/tags" method="GET">
+  <form action="/bookmarks/tags" method="GET">
     <p>
       <input type="text" id="filterTerm" name="filter" placeholder="Filter tags" value="{{.FilterTerm}}">
       <button type="submit">Filter</button>
@@ -37,19 +38,20 @@
 <div class="center pagination">
   <p>
     Page <span class="page-number">{{.PageNumber}}</span> of <span class="page-number">{{.TotalPages}}</span>
-  {{if gt .TotalPages 1}}
+    {{if gt .TotalPages 1}}
     <br>
     Go to:
     {{if lt .PreviousPageNumber .PageNumber }}
-    <a href="/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page=1">first</a>,
-    <a href="/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.PreviousPageNumber}}">previous</a>
+    <a href="/bookmarks/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page=1">first</a>,
+    <a
+       href="/bookmarks/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.PreviousPageNumber}}">previous</a>
     {{- if ne .PageNumber .TotalPages}},{{end}}
     {{end}}
     {{if lt .PageNumber .TotalPages }}
-    <a href="/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.NextPageNumber}}">next</a>,
-    <a href="/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.TotalPages}}">last</a>
+    <a href="/bookmarks/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.NextPageNumber}}">next</a>,
+    <a href="/bookmarks/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.TotalPages}}">last</a>
     {{end}}
-  {{end}}
+    {{end}}
   </p>
 </div>
 {{end}}

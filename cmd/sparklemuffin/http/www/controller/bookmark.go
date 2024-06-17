@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -43,6 +44,10 @@ type bookmarkHandlerContext struct {
 	bookmarkListView   *view.View
 
 	publicBookmarkListView *view.View
+
+	tagDeleteView *view.View
+	tagEditView   *view.View
+	tagListView   *view.View
 }
 
 type bookmarkFormContent struct {
@@ -73,6 +78,10 @@ func RegisterBookmarkHandlers(
 		bookmarkListView:   view.New("bookmark/bookmark_list.gohtml"),
 
 		publicBookmarkListView: view.New("public/bookmark_list.gohtml"),
+
+		tagDeleteView: view.New("bookmark/tag_delete.gohtml"),
+		tagEditView:   view.New("bookmark/tag_edit.gohtml"),
+		tagListView:   view.New("bookmark/tag_list.gohtml"),
 	}
 
 	// bookmarks
@@ -88,6 +97,14 @@ func RegisterBookmarkHandlers(
 		r.Post("/{uid}/delete", hc.handleBookmarkDelete())
 		r.Get("/{uid}/edit", hc.handleBookmarkEditView())
 		r.Post("/{uid}/edit", hc.handleBookmarkEdit())
+
+		r.Route("/tags", func(sr chi.Router) {
+			sr.Get("/", hc.handleTagListView())
+			sr.Get("/{name}/delete", hc.handleTagDeleteView())
+			sr.Post("/{name}/delete", hc.handleTagDelete())
+			sr.Get("/{name}/edit", hc.handleTagEditView())
+			sr.Post("/{name}/edit", hc.handleTagEdit())
+		})
 	})
 
 	// public bookmarks
@@ -557,4 +574,218 @@ func getPageNumber(pageNumberParam string) (uint, error) {
 	}
 
 	return uint(pageNumber64), nil
+}
+
+// handleTagDeleteView renders the tag deletion form.
+func (hc *bookmarkHandlerContext) handleTagDeleteView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		nameBase64 := chi.URLParam(r, "name")
+
+		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
+		if err != nil {
+			log.Error().Err(err).Msg("invalid tag")
+			view.PutFlashError(w, "invalid tag")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		name := string(nameBytes)
+		tag := querying.NewTag(name, 0)
+
+		viewData := view.Data{
+			Content: tag,
+			Title:   fmt.Sprintf("Delete tag: %s", name),
+		}
+
+		hc.tagDeleteView.Render(w, r, viewData)
+	}
+}
+
+// handleTagDelete processes the tag deletion form.
+func (hc *bookmarkHandlerContext) handleTagDelete() func(w http.ResponseWriter, r *http.Request) {
+	type tagDeleteForm struct {
+		Name string `schema:"name"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		var form tagDeleteForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse tag deletion form")
+			view.PutFlashError(w, "failed to process form")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		nameBase64 := chi.URLParam(r, "name")
+
+		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
+		if err != nil {
+			log.Error().Err(err).Msg("invalid tag")
+			view.PutFlashError(w, "invalid tag")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		name := string(nameBytes)
+
+		user := httpcontext.UserValue(r.Context())
+
+		tagDelete := bookmark.TagDeleteQuery{
+			UserUUID: user.UUID,
+			Name:     name,
+		}
+
+		updated, err := hc.bookmarkService.DeleteTag(tagDelete)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to delete tag")
+			view.PutFlashError(w, "failed to delete tag")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		view.PutFlashSuccess(w, fmt.Sprintf("Tag deleted from %d bookmarks", updated))
+		http.Redirect(w, r, "/bookmarks/tags", http.StatusSeeOther)
+	}
+}
+
+// handleTagEditView renders the tag edition form.
+func (hc *bookmarkHandlerContext) handleTagEditView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		nameBase64 := chi.URLParam(r, "name")
+
+		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
+		if err != nil {
+			log.Error().Err(err).Msg("invalid tag")
+			view.PutFlashError(w, "invalid tag")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		name := string(nameBytes)
+		tag := querying.NewTag(name, 0)
+
+		viewData := view.Data{
+			Content: tag,
+			Title:   fmt.Sprintf("Edit tag: %s", name),
+		}
+
+		hc.tagEditView.Render(w, r, viewData)
+	}
+}
+
+// handleTagEdit processes the tag edition form.
+func (hc *bookmarkHandlerContext) handleTagEdit() func(w http.ResponseWriter, r *http.Request) {
+	type tagEditForm struct {
+		Name string `schema:"name"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		var form tagEditForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse tag edition form")
+			view.PutFlashError(w, "failed to process form")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		nameBase64 := chi.URLParam(r, "name")
+
+		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
+		if err != nil {
+			log.Error().Err(err).Msg("invalid tag")
+			view.PutFlashError(w, "invalid tag")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		name := string(nameBytes)
+
+		user := httpcontext.UserValue(r.Context())
+
+		tagNameUpdate := bookmark.TagUpdateQuery{
+			UserUUID:    user.UUID,
+			CurrentName: name,
+			NewName:     form.Name,
+		}
+
+		updated, err := hc.bookmarkService.UpdateTag(tagNameUpdate)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to rename tag")
+			view.PutFlashError(w, "failed to rename tag")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		view.PutFlashSuccess(w, fmt.Sprintf("Tag updated for %d bookmarks", updated))
+		http.Redirect(w, r, "/bookmarks/tags", http.StatusSeeOther)
+	}
+}
+
+// handleTagListView renders the tag list view for the current authenticated user.
+func (hc *bookmarkHandlerContext) handleTagListView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var viewData view.Data
+		user := httpcontext.UserValue(r.Context())
+
+		pageNumberParam := r.URL.Query().Get("page")
+		pageNumber, err := getPageNumber(pageNumberParam)
+		if err != nil {
+			log.Error().Err(err).Str("page_number", pageNumberParam).Msg("invalid page number")
+			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberParam))
+			http.Redirect(w, r, "/bookmarks/tags", http.StatusSeeOther)
+			return
+		}
+
+		filterTermParam := r.URL.Query().Get("filter")
+
+		if filterTermParam != "" {
+			tagSearchPage, err := hc.queryingService.TagsByFilterQueryAndPage(
+				user.UUID,
+				querying.VisibilityAll,
+				filterTermParam,
+				pageNumber,
+			)
+
+			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
+				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
+				log.Error().Err(err).Msg(msg)
+				view.PutFlashError(w, msg)
+				http.Redirect(w, r, "/bookmarks/tags", http.StatusSeeOther)
+				return
+			} else if err != nil {
+				log.Error().Err(err).Msg("failed to retrieve tags")
+				view.PutFlashError(w, "failed to retrieve tags")
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+
+			viewData.Title = fmt.Sprintf("Tag search: %s", filterTermParam)
+			viewData.Content = tagSearchPage
+
+		} else {
+			tagPage, err := hc.queryingService.TagsByPage(
+				user.UUID,
+				querying.VisibilityAll,
+				pageNumber,
+			)
+
+			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
+				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
+				log.Error().Err(err).Msg(msg)
+				view.PutFlashError(w, msg)
+				http.Redirect(w, r, "/bookmarks/tags", http.StatusSeeOther)
+				return
+			} else if err != nil {
+				log.Error().Err(err).Msg("failed to retrieve tags")
+				view.PutFlashError(w, "failed to retrieve tags")
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+
+			viewData.Title = "Tags"
+			viewData.Content = tagPage
+		}
+
+		hc.tagListView.Render(w, r, viewData)
+	}
 }

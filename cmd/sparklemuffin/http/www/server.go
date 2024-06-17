@@ -120,7 +120,6 @@ func (s *Server) registerHandlers() {
 	controller.RegisterAdminHandlers(s.router, s.csrfService, s.userService)
 	controller.RegisterAccounthandlers(s.router, s.csrfService, s.userService)
 	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.queryingService, s.userService)
-	controller.RegisterBookmarkTagHandlers(s.router, s.bookmarkService, s.queryingService)
 	controller.RegisterToolsHandlers(s.router, s.exportingService, s.importingService)
 }
 

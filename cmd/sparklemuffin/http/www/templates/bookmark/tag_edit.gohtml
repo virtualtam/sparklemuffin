@@ -1,6 +1,6 @@
 {{define "content"}}
 <h2>Edit tag</h2>
-<form action="/tags/{{(.EncodedName)}}/edit" class="item-form" method="POST">
+<form action="/bookmarks/tags/{{(.EncodedName)}}/edit" class="item-form" method="POST">
   <label for="name">Name</label>
   <input type="text" id="name" name="name" placeholder="Name" size="80" value="{{.Name}}" required="">
 

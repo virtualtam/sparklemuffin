@@ -37,9 +37,9 @@ func RegisterBookmarkTagHandlers(
 		bookmarkService: bookmarkService,
 		queryingService: queryingService,
 
-		tagDeleteView: view.New("tag/delete.gohtml"),
-		tagEditView:   view.New("tag/edit.gohtml"),
-		tagListView:   view.New("tag/list.gohtml"),
+		tagDeleteView: view.New("bookmark/tag_delete.gohtml"),
+		tagEditView:   view.New("bookmark/tag_edit.gohtml"),
+		tagListView:   view.New("bookmark/tag_list.gohtml"),
 	}
 
 	// bookmark tags

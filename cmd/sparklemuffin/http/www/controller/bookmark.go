@@ -67,10 +67,10 @@ func RegisterBookmarkHandlers(
 		queryingService: queryingService,
 		userService:     userService,
 
-		bookmarkAddView:    view.New("bookmark/add.gohtml"),
-		bookmarkDeleteView: view.New("bookmark/delete.gohtml"),
-		bookmarkEditView:   view.New("bookmark/edit.gohtml"),
-		bookmarkListView:   view.New("bookmark/list.gohtml"),
+		bookmarkAddView:    view.New("bookmark/bookmark_add.gohtml"),
+		bookmarkDeleteView: view.New("bookmark/bookmark_delete.gohtml"),
+		bookmarkEditView:   view.New("bookmark/bookmark_edit.gohtml"),
+		bookmarkListView:   view.New("bookmark/bookmark_list.gohtml"),
 
 		publicBookmarkListView: view.New("public/bookmark_list.gohtml"),
 	}

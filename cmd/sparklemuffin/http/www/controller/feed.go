@@ -21,9 +21,10 @@ import (
 )
 
 const (
-	actionFeedAdd          string = "feed-add"
-	actionFeedCategoryAdd  string = "feed-category-add"
-	actionFeedCategoryEdit string = "feed-category-edit"
+	actionFeedAdd            string = "feed-add"
+	actionFeedCategoryAdd    string = "feed-category-add"
+	actionFeedCategoryDelete string = "feed-category-delete"
+	actionFeedCategoryEdit   string = "feed-category-edit"
 )
 
 // RegisterFeedHandlers registers HTTP handlers for syndication feed operations.
@@ -43,9 +44,10 @@ func RegisterFeedHandlers(
 		feedListView: view.New("feed/list.gohtml"),
 		feedAddView:  view.New("feed/feed_add.gohtml"),
 
-		feedCategoryAddView:  view.New("feed/category_add.gohtml"),
-		feedCategoryEditView: view.New("feed/category_edit.gohtml"),
-		feedCategoryListView: view.New("feed/category_list.gohtml"),
+		feedCategoryAddView:    view.New("feed/category_add.gohtml"),
+		feedCategoryDeleteView: view.New("feed/category_delete.gohtml"),
+		feedCategoryEditView:   view.New("feed/category_edit.gohtml"),
+		feedCategoryListView:   view.New("feed/category_list.gohtml"),
 	}
 
 	// feeds
@@ -65,6 +67,8 @@ func RegisterFeedHandlers(
 			sr.Get("/", fc.handleFeedCategoryListView())
 			sr.Get("/add", fc.handleFeedCategoryAddView())
 			sr.Post("/add", fc.handleFeedCategoryAdd())
+			sr.Get("/{uuid}/delete", fc.handleFeedCategoryDeleteView())
+			sr.Post("/{uuid}/delete", fc.handleFeedCategoryDelete())
 			sr.Get("/{uuid}/edit", fc.handleFeedCategoryEditView())
 			sr.Post("/{uuid}/edit", fc.handleFeedCategoryEdit())
 		})
@@ -80,9 +84,10 @@ type feedHandlerContext struct {
 	feedAddView  *view.View
 	feedListView *view.View
 
-	feedCategoryAddView  *view.View
-	feedCategoryEditView *view.View
-	feedCategoryListView *view.View
+	feedCategoryAddView    *view.View
+	feedCategoryDeleteView *view.View
+	feedCategoryEditView   *view.View
+	feedCategoryListView   *view.View
 }
 
 type feedFormContent struct {
@@ -327,6 +332,68 @@ func (fc *feedHandlerContext) handleFeedCategoryAdd() func(w http.ResponseWriter
 	}
 }
 
+// handleFeedCategoryDeleteView renders the feed category deletion form.
+func (fc *feedHandlerContext) handleFeedCategoryDeleteView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		categoryUUID := chi.URLParam(r, "uuid")
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedCategoryDelete)
+
+		category, err := fc.feedService.CategoryByUUID(ctxUser.UUID, categoryUUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed category")
+			view.PutFlashError(w, "failed to retrieve feed category")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		viewData := view.Data{
+			Content: feedCategoryFormContent{
+				CSRFToken: csrfToken,
+				Category:  category,
+			},
+			Title: fmt.Sprintf("Delete category: %s", category.Name),
+		}
+
+		fc.feedCategoryDeleteView.Render(w, r, viewData)
+	}
+}
+
+func (fc *feedHandlerContext) handleFeedCategoryDelete() func(w http.ResponseWriter, r *http.Request) {
+	type feedCategoryDeleteForm struct {
+		CSRFToken string `schema:"csrf_token"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		categoryUUID := chi.URLParam(r, "uuid")
+		ctxUser := httpcontext.UserValue(r.Context())
+
+		var form feedCategoryDeleteForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed category deletion form")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedCategoryDelete) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if err := fc.feedService.DeleteCategory(ctxUser.UUID, categoryUUID); err != nil {
+			log.Error().Err(err).Msg("failed to delete feed category")
+			view.PutFlashError(w, "failed to delete feed category")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		http.Redirect(w, r, "/feeds", http.StatusSeeOther)
+	}
+}
+
 // handleFeedCategoryEditView renders the feed category edition form.
 func (fc *feedHandlerContext) handleFeedCategoryEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -394,7 +461,7 @@ func (fc *feedHandlerContext) handleFeedCategoryEdit() func(w http.ResponseWrite
 			return
 		}
 
-		http.Redirect(w, r, "/feeds/categories/", http.StatusSeeOther)
+		http.Redirect(w, r, "/feeds/categories", http.StatusSeeOther)
 	}
 }
 

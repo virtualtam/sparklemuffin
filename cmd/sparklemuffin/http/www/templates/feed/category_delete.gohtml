@@ -1,0 +1,10 @@
+{{define "content"}}
+<h2>Delete category</h2>
+<form action="/feeds/categories/{{.Category.UUID}}/delete" method="POST">
+  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+  <p>Delete feed category and subscriptions: <strong>{{.Category.Name}}</strong>?
+  <p>
+    <button type="submit">Delete</button>
+  </p>
+</form>
+{{end}}

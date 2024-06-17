@@ -68,6 +68,23 @@ func (c *Category) ValidateForAddition(v ValidationRepository) error {
 	return nil
 }
 
+// ValidateForDeletion ensures mandatory fields are properly set when deleting a Category.
+func (c *Category) ValidateForDeletion(v ValidationRepository) error {
+	fns := []func() error{
+		c.requireUUID,
+		c.validateUUID,
+		c.requireUserUUID,
+	}
+
+	for _, fn := range fns {
+		if err := fn(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ValidateForUpdate ensures mandatory fields are properly set when editing a Category.
 func (c *Category) ValidateForUpdate(v ValidationRepository) error {
 	fns := []func() error{
@@ -80,24 +97,6 @@ func (c *Category) ValidateForUpdate(v ValidationRepository) error {
 		if err := fn(); err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-// ValidateSlug ensures the slug is normalized and valid.
-func (c *Category) ValidateSlug() error {
-	if !slug.IsSlug(c.Slug) {
-		return ErrCategorySlugInvalid
-	}
-
-	return nil
-}
-
-// ValidateUUID ensures the UUID is valid.
-func (c *Category) ValidateUUID() error {
-	if err := uuid.Validate(c.UUID); err != nil {
-		return ErrCategoryUUIDInvalid
 	}
 
 	return nil
@@ -121,6 +120,20 @@ func (c *Category) requireName() error {
 func (c *Category) requireSlug() error {
 	if c.Slug == "" {
 		return ErrCategorySlugRequired
+	}
+	return nil
+}
+
+func (c *Category) requireUserUUID() error {
+	if c.UserUUID == "" {
+		return ErrCategoryUserUUIDRequired
+	}
+	return nil
+}
+
+func (c *Category) requireUUID() error {
+	if c.UUID == "" {
+		return ErrCategoryUUIDRequired
 	}
 	return nil
 }
@@ -153,4 +166,20 @@ func (c *Category) ensureNameAndSlugAreNotRegisteredToAnotherCategory(v Validati
 
 		return nil
 	}
+}
+
+func (c *Category) validateSlug() error {
+	if !slug.IsSlug(c.Slug) {
+		return ErrCategorySlugInvalid
+	}
+
+	return nil
+}
+
+func (c *Category) validateUUID() error {
+	if err := uuid.Validate(c.UUID); err != nil {
+		return ErrCategoryUUIDInvalid
+	}
+
+	return nil
 }

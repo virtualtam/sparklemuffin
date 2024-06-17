@@ -3,6 +3,10 @@
 
 package feed
 
+import (
+	"slices"
+)
+
 var _ Repository = &fakeRepository{}
 
 type fakeRepository struct {
@@ -39,6 +43,26 @@ func (r *fakeRepository) FeedGetBySlug(feedSlug string) (Feed, error) {
 
 func (r *fakeRepository) FeedCategoryAdd(category Category) error {
 	r.Categories = append(r.Categories, category)
+	return nil
+}
+
+func (r *fakeRepository) FeedCategoryDelete(userUUID string, categoryUUID string) error {
+	r.Categories = slices.DeleteFunc(r.Categories, func(c Category) bool {
+		return c.UserUUID == userUUID && c.UUID == categoryUUID
+	})
+
+	deletedSubscriptionsUUIDs := []string{}
+
+	r.Subscriptions = slices.DeleteFunc(r.Subscriptions, func(s Subscription) bool {
+		deletedSubscriptionsUUIDs = append(deletedSubscriptionsUUIDs, s.UUID)
+
+		return s.UserUUID == userUUID && s.CategoryUUID == categoryUUID
+	})
+
+	r.EntryStatuses = slices.DeleteFunc(r.EntryStatuses, func(es EntryStatus) bool {
+		return es.UserUUID == userUUID && slices.Contains(deletedSubscriptionsUUIDs, es.SubscriptionUUID)
+	})
+
 	return nil
 }
 

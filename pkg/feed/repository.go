@@ -34,6 +34,9 @@ type Repository interface {
 	// FeedCategoryAdd creates a new Category.
 	FeedCategoryAdd(category Category) error
 
+	// FeedCategoryDelete deletes an existing Category and related Subscriptions.
+	FeedCategoryDelete(userUUID string, categoryUUID string) error
+
 	// FeedCategoryGetBySlug returns the Category for a given user and slug.
 	FeedCategoryGetBySlug(userUUID string, slug string) (Category, error)
 

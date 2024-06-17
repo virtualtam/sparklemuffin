@@ -25,6 +25,7 @@ var (
 	ErrCategoryNotFound          error = errors.New("category: Not Found")
 	ErrCategorySlugInvalid       error = errors.New("category: invalid slug")
 	ErrCategorySlugRequired      error = errors.New("category: slug required")
+	ErrCategoryUserUUIDRequired  error = errors.New("category: UserUUID required")
 	ErrCategoryUUIDInvalid       error = errors.New("category: invalid UUID")
 	ErrCategoryUUIDRequired      error = errors.New("category: UUID required")
 

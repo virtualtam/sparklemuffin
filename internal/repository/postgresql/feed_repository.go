@@ -105,6 +105,35 @@ func (r *Repository) FeedCategoryAdd(c feed.Category) error {
 	return r.add("feeds", "FeedCategoryAdd", query, args)
 }
 
+func (r *Repository) FeedCategoryDelete(userUUID string, categoryUUID string) error {
+	ctx := context.Background()
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "feeds", "FeedCategoryDelete")
+
+	commandTag, err := tx.Exec(
+		context.Background(),
+		"DELETE FROM feed_categories WHERE user_uuid=$1 AND uuid=$2",
+		userUUID,
+		categoryUUID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected := commandTag.RowsAffected()
+
+	if rowsAffected != 1 {
+		return feed.ErrCategoryNotFound
+	}
+
+	return tx.Commit(ctx)
+}
+
 func (r *Repository) FeedCategoryGetBySlug(userUUID string, slug string) (feed.Category, error) {
 	query := `
 	SELECT uuid, user_uuid, name, slug, created_at, updated_at

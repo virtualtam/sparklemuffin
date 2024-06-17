@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"github.com/gorilla/feeds"
+	"github.com/jaswdr/faker"
 	"github.com/mmcdole/gofeed"
+	"github.com/segmentio/ksuid"
 )
 
 type testRoundTripper struct{}
@@ -342,6 +344,108 @@ func TestServiceCategoryByUUID(t *testing.T) {
 			assertCategoryEquals(t, got, tc.want)
 		})
 	}
+}
+
+func TestServiceDeleteCategory(t *testing.T) {
+	fake := faker.New()
+
+	userUUID := fake.UUID().V4()
+
+	t.Run("empty category (no subscriptions)", func(t *testing.T) {
+		emptyCategory := Category{
+			UserUUID: userUUID,
+			UUID:     fake.UUID().V4(),
+			Name:     fake.Lorem().Text(10),
+			Slug:     fake.Internet().Slug(),
+		}
+
+		r := &fakeRepository{
+			Categories: []Category{emptyCategory},
+		}
+		s := NewService(r, nil)
+
+		if err := s.DeleteCategory(userUUID, emptyCategory.UUID); err != nil {
+			t.Fatalf("want no error, got %q", err)
+		}
+
+		if len(r.Categories) != 0 {
+			t.Fatalf("want 0 Categories, got %d", len(r.Categories))
+		}
+	})
+
+	t.Run("category with subscriptions", func(t *testing.T) {
+		category := Category{
+			UserUUID: userUUID,
+			UUID:     fake.UUID().V4(),
+			Name:     fake.Lorem().Text(10),
+			Slug:     fake.Internet().Slug(),
+		}
+		categories := []Category{category}
+
+		feeds := []Feed{}
+		entries := []Entry{}
+		entryStatuses := []EntryStatus{}
+		subscriptions := []Subscription{}
+
+		for i := 0; i < 5; i++ {
+			feed := Feed{
+				UUID:  fake.UUID().V4(),
+				URL:   fake.Internet().URL(),
+				Title: fake.Lorem().Text(10),
+				Slug:  fake.Internet().Slug(),
+			}
+			feeds = append(feeds, feed)
+
+			subscription := Subscription{
+				UUID:         fake.UUID().V4(),
+				CategoryUUID: category.UUID,
+				FeedUUID:     feed.UUID,
+				UserUUID:     userUUID,
+			}
+			subscriptions = append(subscriptions, subscription)
+
+			for j := 0; j < 10; j++ {
+				entry := Entry{
+					UID:      ksuid.New().String(),
+					FeedUUID: feed.UUID,
+					URL:      fake.Internet().URL(),
+					Title:    fake.Lorem().Text(10),
+				}
+				entries = append(entries, entry)
+
+				entryStatus := EntryStatus{
+					UUID:             fake.UUID().V4(),
+					EntryUID:         entry.UID,
+					SubscriptionUUID: subscription.UUID,
+					UserUUID:         userUUID,
+				}
+				entryStatuses = append(entryStatuses, entryStatus)
+			}
+		}
+
+		r := &fakeRepository{
+			Categories:    categories,
+			Feeds:         feeds,
+			Entries:       entries,
+			EntryStatuses: entryStatuses,
+			Subscriptions: subscriptions,
+		}
+		s := NewService(r, nil)
+
+		if err := s.DeleteCategory(userUUID, category.UUID); err != nil {
+			t.Fatalf("want no error, got %q", err)
+		}
+
+		if len(r.Categories) != 0 {
+			t.Fatalf("want 0 Categories, got %d", len(r.Categories))
+		}
+		if len(r.Subscriptions) != 0 {
+			t.Fatalf("want 0 Subscriptions, got %d", len(r.Subscriptions))
+		}
+		if len(r.EntryStatuses) != 0 {
+			t.Fatalf("want 0 EntryStatuses, got %d", len(r.EntryStatuses))
+		}
+	})
 }
 
 func TestServiceUpdateCategory(t *testing.T) {

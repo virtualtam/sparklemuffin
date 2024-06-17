@@ -53,7 +53,7 @@ func (s *Service) AddCategory(userUUID string, name string) (Category, error) {
 func (s *Service) CategoryBySlug(userUUID string, slug string) (Category, error) {
 	category := Category{Slug: slug}
 
-	if err := category.ValidateSlug(); err != nil {
+	if err := category.validateSlug(); err != nil {
 		return Category{}, err
 	}
 
@@ -64,7 +64,7 @@ func (s *Service) CategoryBySlug(userUUID string, slug string) (Category, error)
 func (s *Service) CategoryByUUID(userUUID string, categoryUUID string) (Category, error) {
 	category := Category{UUID: categoryUUID}
 
-	if err := category.ValidateUUID(); err != nil {
+	if err := category.validateUUID(); err != nil {
 		return Category{}, err
 	}
 
@@ -74,6 +74,20 @@ func (s *Service) CategoryByUUID(userUUID string, categoryUUID string) (Category
 // Categories returns all categories for a given user.
 func (s *Service) Categories(userUUID string) ([]Category, error) {
 	return s.r.FeedCategoryGetMany(userUUID)
+}
+
+// DeleteCategory deletes a Category, related Subscriptions and EntryStatuses.
+func (s *Service) DeleteCategory(userUUID string, categoryUUID string) error {
+	categoryToDelete := Category{
+		UserUUID: userUUID,
+		UUID:     categoryUUID,
+	}
+
+	if err := categoryToDelete.ValidateForDeletion(s.r); err != nil {
+		return err
+	}
+
+	return s.r.FeedCategoryDelete(userUUID, categoryUUID)
 }
 
 // UpdateCategory updates an existing Category.

@@ -10,7 +10,7 @@ const (
 	tagsPerPage      uint = 90
 )
 
-// Service handles oprtaions related to displaying and paginating bookmarks.
+// Service handles operations related to displaying and paginating bookmarks.
 type Service struct {
 	r Repository
 }

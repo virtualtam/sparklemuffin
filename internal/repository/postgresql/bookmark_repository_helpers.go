@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 )
 
 func (r *Repository) bookmarkGetQuery(query string, queryParams ...any) (bookmark.Bookmark, error) {
@@ -155,23 +155,23 @@ func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookm
 	return rowsAffected, nil
 }
 
-func (r *Repository) tagGetQuery(query string, queryParams ...any) ([]querying.Tag, error) {
+func (r *Repository) tagGetQuery(query string, queryParams ...any) ([]bookmarkquerying.Tag, error) {
 	rows, err := r.pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
-		return []querying.Tag{}, err
+		return []bookmarkquerying.Tag{}, err
 	}
 	defer rows.Close()
 
 	var dbTags []DBTag
 
 	if err := pgxscan.ScanAll(&dbTags, rows); err != nil {
-		return []querying.Tag{}, err
+		return []bookmarkquerying.Tag{}, err
 	}
 
-	var tags []querying.Tag
+	var tags []bookmarkquerying.Tag
 
 	for _, dbTag := range dbTags {
-		tag := querying.NewTag(dbTag.Name, dbTag.Count)
+		tag := bookmarkquerying.NewTag(dbTag.Name, dbTag.Count)
 		tags = append(tags, tag)
 	}
 

@@ -20,7 +20,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -35,7 +35,7 @@ type bookmarkHandlerContext struct {
 
 	bookmarkService *bookmark.Service
 	csrfService     *csrf.Service
-	queryingService *querying.Service
+	queryingService *bookmarkquerying.Service
 	userService     *user.Service
 
 	bookmarkAddView    *view.View
@@ -61,7 +61,7 @@ func RegisterBookmarkHandlers(
 	publicURL *url.URL,
 	bookmarkService *bookmark.Service,
 	csrfService *csrf.Service,
-	queryingService *querying.Service,
+	queryingService *bookmarkquerying.Service,
 	userService *user.Service,
 ) {
 	hc := bookmarkHandlerContext{
@@ -121,7 +121,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkAddView() func(w http.ResponseWr
 		user := httpcontext.UserValue(r.Context())
 		csrfToken := hc.csrfService.Generate(user.UUID, actionBookmarkAdd)
 
-		tags, err := hc.queryingService.TagNamesByCount(user.UUID, querying.VisibilityAll)
+		tags, err := hc.queryingService.TagNamesByCount(user.UUID, bookmarkquerying.VisibilityAll)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve tags")
 			view.PutFlashError(w, "failed to retrieve existing tags")
@@ -259,7 +259,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkEditView() func(w http.ResponseW
 		user := httpcontext.UserValue(r.Context())
 		csrfToken := hc.csrfService.Generate(user.UUID, actionBookmarkEdit)
 
-		tags, err := hc.queryingService.TagNamesByCount(user.UUID, querying.VisibilityAll)
+		tags, err := hc.queryingService.TagNamesByCount(user.UUID, bookmarkquerying.VisibilityAll)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve tags")
 			view.PutFlashError(w, "failed to retrieve existing tags")
@@ -358,11 +358,11 @@ func (hc *bookmarkHandlerContext) handleBookmarkListView() func(w http.ResponseW
 		if searchTermsParam != "" {
 			bookmarksSearchPage, err := hc.queryingService.BookmarksBySearchQueryAndPage(
 				user.UUID,
-				querying.VisibilityAll,
+				bookmarkquerying.VisibilityAll,
 				searchTermsParam,
 				pageNumber,
 			)
-			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, bookmarkquerying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)
@@ -381,10 +381,10 @@ func (hc *bookmarkHandlerContext) handleBookmarkListView() func(w http.ResponseW
 		} else {
 			bookmarksPage, err := hc.queryingService.BookmarksByPage(
 				user.UUID,
-				querying.VisibilityAll,
+				bookmarkquerying.VisibilityAll,
 				pageNumber,
 			)
-			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, bookmarkquerying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)
@@ -413,7 +413,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 		nickName := chi.URLParam(r, "nickname")
 
 		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
-		// in querying.Service.
+		// in bookmarkquerying.Service.
 		// In practice, this requires performing an extra database query.
 		owner, err := hc.userService.ByNickName(nickName)
 		if err != nil {
@@ -432,7 +432,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 			return
 		}
 
-		var bookmarkPage querying.BookmarkPage
+		var bookmarkPage bookmarkquerying.BookmarkPage
 
 		searchTermsParam := r.URL.Query().Get("search")
 		if searchTermsParam != "" {
@@ -441,7 +441,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 				searchTermsParam,
 				pageNumber,
 			)
-			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, bookmarkquerying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)
@@ -462,7 +462,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 				owner.UUID,
 				pageNumber,
 			)
-			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, bookmarkquerying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)
@@ -495,7 +495,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkPermalinkView() func(w htt
 		bookmarkUID := chi.URLParam(r, "uid")
 
 		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
-		// in querying.Service.
+		// in bookmarkquerying.Service.
 		// In practice, this requires performing an extra database query.
 		owner, err := hc.userService.ByNickName(nickName)
 		if err != nil {
@@ -527,7 +527,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkFeedAtom() func(w http.Res
 		nickName := chi.URLParam(r, "nickname")
 
 		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
-		// in querying.Service.
+		// in bookmarkquerying.Service.
 		// In practice, this requires performing an extra database query.
 		owner, err := hc.userService.ByNickName(nickName)
 		if err != nil {
@@ -590,7 +590,7 @@ func (hc *bookmarkHandlerContext) handleTagDeleteView() func(w http.ResponseWrit
 		}
 
 		name := string(nameBytes)
-		tag := querying.NewTag(name, 0)
+		tag := bookmarkquerying.NewTag(name, 0)
 
 		viewData := view.Data{
 			Content: tag,
@@ -662,7 +662,7 @@ func (hc *bookmarkHandlerContext) handleTagEditView() func(w http.ResponseWriter
 		}
 
 		name := string(nameBytes)
-		tag := querying.NewTag(name, 0)
+		tag := bookmarkquerying.NewTag(name, 0)
 
 		viewData := view.Data{
 			Content: tag,
@@ -741,12 +741,12 @@ func (hc *bookmarkHandlerContext) handleTagListView() func(w http.ResponseWriter
 		if filterTermParam != "" {
 			tagSearchPage, err := hc.queryingService.TagsByFilterQueryAndPage(
 				user.UUID,
-				querying.VisibilityAll,
+				bookmarkquerying.VisibilityAll,
 				filterTermParam,
 				pageNumber,
 			)
 
-			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, bookmarkquerying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)
@@ -765,11 +765,11 @@ func (hc *bookmarkHandlerContext) handleTagListView() func(w http.ResponseWriter
 		} else {
 			tagPage, err := hc.queryingService.TagsByPage(
 				user.UUID,
-				querying.VisibilityAll,
+				bookmarkquerying.VisibilityAll,
 				pageNumber,
 			)
 
-			if errors.Is(err, querying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, bookmarkquerying.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)

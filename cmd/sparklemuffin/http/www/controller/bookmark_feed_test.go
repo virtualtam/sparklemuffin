@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/feeds"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 )
 
 func TestBookmarksToFeed(t *testing.T) {
@@ -21,7 +21,7 @@ func TestBookmarksToFeed(t *testing.T) {
 		Host:   "test.domain.tld:8080",
 	}
 
-	owner := querying.Owner{
+	owner := bookmarkquerying.Owner{
 		NickName:    "test-user-1",
 		DisplayName: "Test User",
 	}

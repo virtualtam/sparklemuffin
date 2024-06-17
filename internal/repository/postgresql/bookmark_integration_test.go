@@ -15,7 +15,7 @@ import (
 
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -346,7 +346,7 @@ func TestQueryingService(t *testing.T) {
 	pool := createTestDatabase(t, ctx)
 	r := postgresql.NewRepository(pool)
 	bs := bookmark.NewService(r)
-	qs := querying.NewService(r)
+	qs := bookmarkquerying.NewService(r)
 	us := user.NewService(r)
 
 	fake := faker.New()
@@ -385,7 +385,7 @@ func TestQueryingService(t *testing.T) {
 	wantBookmarksPerPage := 20
 
 	t.Run("page 1 of all bookmarks", func(t *testing.T) {
-		gotPage, err := qs.BookmarksByPage(testUser.UUID, querying.VisibilityAll, 1)
+		gotPage, err := qs.BookmarksByPage(testUser.UUID, bookmarkquerying.VisibilityAll, 1)
 		if err != nil {
 			t.Fatalf("failed to query bookmarks: %q", err)
 		}
@@ -400,7 +400,7 @@ func TestQueryingService(t *testing.T) {
 	})
 
 	t.Run("page 2 of all bookmarks", func(t *testing.T) {
-		gotPage, err := qs.BookmarksByPage(testUser.UUID, querying.VisibilityAll, 2)
+		gotPage, err := qs.BookmarksByPage(testUser.UUID, bookmarkquerying.VisibilityAll, 2)
 		if err != nil {
 			t.Fatalf("failed to query bookmarks: %q", err)
 		}
@@ -429,9 +429,9 @@ func TestQueryingService(t *testing.T) {
 			}
 		}
 
-		tags := []querying.Tag{}
+		tags := []bookmarkquerying.Tag{}
 		for name, count := range tagMap {
-			tag := querying.NewTag(name, count)
+			tag := bookmarkquerying.NewTag(name, count)
 			tags = append(tags, tag)
 		}
 
@@ -442,12 +442,12 @@ func TestQueryingService(t *testing.T) {
 			return tags[i].Name < tags[j].Name
 		})
 
-		gotTags, err := qs.Tags(testUser.UUID, querying.VisibilityAll)
+		gotTags, err := qs.Tags(testUser.UUID, bookmarkquerying.VisibilityAll)
 		if err != nil {
 			t.Fatalf("failed to get tags: %q", err)
 		}
 
-		gotTagNames, err := qs.TagNamesByCount(testUser.UUID, querying.VisibilityAll)
+		gotTagNames, err := qs.TagNamesByCount(testUser.UUID, bookmarkquerying.VisibilityAll)
 		if err != nil {
 			t.Fatalf("failed to get tag names: %q", err)
 		}

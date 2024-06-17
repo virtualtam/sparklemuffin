@@ -10,9 +10,9 @@ import (
 
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
+	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
+	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -36,27 +36,17 @@ func WithPublicURL(publicURL *url.URL) optionFunc {
 	}
 }
 
-func WithBookmarkService(bookmarkService *bookmark.Service) optionFunc {
+func WithBookmarkServices(
+	bookmarkService *bookmark.Service,
+	exportingService *bookmarkexporting.Service,
+	importingService *bookmarkimporting.Service,
+	queryingService *bookmarkquerying.Service,
+) optionFunc {
 	return func(s *Server) {
 		s.bookmarkService = bookmarkService
-	}
-}
-
-func WithExportingService(exportingService *exporting.Service) optionFunc {
-	return func(s *Server) {
-		s.exportingService = exportingService
-	}
-}
-
-func WithImportingService(importingService *importing.Service) optionFunc {
-	return func(s *Server) {
-		s.importingService = importingService
-	}
-}
-
-func WithQueryingService(queryingService *querying.Service) optionFunc {
-	return func(s *Server) {
-		s.queryingService = queryingService
+		s.bookmarkExportingService = exportingService
+		s.bookmarkImportingService = importingService
+		s.bookmarkQueryingService = queryingService
 	}
 }
 

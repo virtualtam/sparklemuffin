@@ -23,9 +23,9 @@ import (
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/version"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
+	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
+	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -64,12 +64,12 @@ var (
 
 	pgxPool *pgxpool.Pool
 
-	bookmarkService  *bookmark.Service
-	exportingService *exporting.Service
-	importingService *importing.Service
-	queryingService  *querying.Service
-	sessionService   *session.Service
-	userService      *user.Service
+	bookmarkService          *bookmark.Service
+	bookmarkExportingService *bookmarkexporting.Service
+	bookmarkImportingService *bookmarkimporting.Service
+	bookmarkQueryingService  *bookmarkquerying.Service
+	sessionService           *session.Service
+	userService              *user.Service
 )
 
 // NewRootCommand initializes the main CLI entrypoint and common command flags.
@@ -157,11 +157,11 @@ func NewRootCommand() *cobra.Command {
 			// Main database repository
 			repository := postgresql.NewRepository(pgxPool)
 
-			// sparklemuffin services
+			// SparkleMuffin services
 			bookmarkService = bookmark.NewService(repository)
-			exportingService = exporting.NewService(repository)
-			importingService = importing.NewService(repository)
-			queryingService = querying.NewService(repository)
+			bookmarkExportingService = bookmarkexporting.NewService(repository)
+			bookmarkImportingService = bookmarkimporting.NewService(repository)
+			bookmarkQueryingService = bookmarkquerying.NewService(repository)
 			sessionService = session.NewService(repository, hmacKey)
 			userService = user.NewService(repository)
 

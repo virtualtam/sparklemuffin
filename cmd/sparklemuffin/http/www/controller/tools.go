@@ -18,13 +18,13 @@ import (
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
+	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
+	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
 )
 
 type toolsHandlerContext struct {
-	exportingService *exporting.Service
-	importingService *importing.Service
+	exportingService *bookmarkexporting.Service
+	importingService *bookmarkimporting.Service
 
 	toolsView       *view.View
 	toolsExportView *view.View
@@ -33,8 +33,8 @@ type toolsHandlerContext struct {
 
 func RegisterToolsHandlers(
 	r *chi.Mux,
-	exportingService *exporting.Service,
-	importingService *importing.Service,
+	exportingService *bookmarkexporting.Service,
+	importingService *bookmarkimporting.Service,
 ) {
 	hc := toolsHandlerContext{
 		exportingService: exportingService,
@@ -89,7 +89,7 @@ func (hc *toolsHandlerContext) handleToolsExportView() func(w http.ResponseWrite
 // corresponding file to the client.
 func (hc *toolsHandlerContext) handleToolsExport() func(w http.ResponseWriter, r *http.Request) {
 	type exportForm struct {
-		Visibility exporting.Visibility `schema:"visibility"`
+		Visibility bookmarkexporting.Visibility `schema:"visibility"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -207,8 +207,8 @@ func (hc *toolsHandlerContext) handleToolsImport() func(w http.ResponseWriter, r
 		}
 
 		user := httpcontext.UserValue(r.Context())
-		overwrite := importing.OnConflictStrategy(onConflictStrategyBuffer.String())
-		visibility := importing.Visibility(visibilityBuffer.String())
+		overwrite := bookmarkimporting.OnConflictStrategy(onConflictStrategyBuffer.String())
+		visibility := bookmarkimporting.Visibility(visibilityBuffer.String())
 
 		importStatus, err := hc.importingService.ImportFromNetscapeDocument(user.UUID, document, visibility, overwrite)
 		if err != nil {

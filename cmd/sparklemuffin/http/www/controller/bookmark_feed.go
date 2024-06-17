@@ -12,11 +12,11 @@ import (
 
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 )
 
 // bookmarksToFeed initializes and returns a new feed for a list of bookmarks.
-func bookmarksToFeed(publicURL *url.URL, owner querying.Owner, bookmarks []bookmark.Bookmark) (*feeds.Feed, error) {
+func bookmarksToFeed(publicURL *url.URL, owner bookmarkquerying.Owner, bookmarks []bookmark.Bookmark) (*feeds.Feed, error) {
 	feedItems := []*feeds.Item{}
 
 	for _, b := range bookmarks {

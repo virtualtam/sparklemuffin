@@ -66,10 +66,12 @@ func NewRunCommand() *cobra.Command {
 				www.WithCSRFKey(csrfKey),
 				www.WithMetricsRegistry(rootCmdName, metricsRegistry),
 				www.WithPublicURL(publicURL),
-				www.WithBookmarkService(bookmarkService),
-				www.WithExportingService(exportingService),
-				www.WithQueryingService(queryingService),
-				www.WithImportingService(importingService),
+				www.WithBookmarkServices(
+					bookmarkService,
+					bookmarkExportingService,
+					bookmarkImportingService,
+					bookmarkQueryingService,
+				),
 				www.WithSessionService(sessionService),
 				www.WithUserService(userService),
 			)

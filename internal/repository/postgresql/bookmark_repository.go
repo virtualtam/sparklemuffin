@@ -12,9 +12,9 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
+	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
+	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 )
 
 var (
@@ -22,9 +22,9 @@ var (
 )
 
 var _ bookmark.Repository = &Repository{}
-var _ exporting.Repository = &Repository{}
-var _ importing.Repository = &Repository{}
-var _ querying.Repository = &Repository{}
+var _ bookmarkexporting.Repository = &Repository{}
+var _ bookmarkimporting.Repository = &Repository{}
+var _ bookmarkquerying.Repository = &Repository{}
 
 func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
 	query := `
@@ -190,18 +190,18 @@ func (r *Repository) BookmarkGetByURL(userUUID, u string) (bookmark.Bookmark, er
 	return r.bookmarkGetQuery(query, userUUID, u)
 }
 
-func (r *Repository) BookmarkGetCount(userUUID string, visibility querying.Visibility) (uint, error) {
+func (r *Repository) BookmarkGetCount(userUUID string, visibility bookmarkquerying.Visibility) (uint, error) {
 	var query string
 
 	switch visibility {
-	case querying.VisibilityPrivate:
+	case bookmarkquerying.VisibilityPrivate:
 		query = `
 		SELECT COUNT(*)
 		FROM  bookmarks
 		WHERE user_uuid=$1
 		AND   private=TRUE`
 
-	case querying.VisibilityPublic:
+	case bookmarkquerying.VisibilityPublic:
 		query = `
 		SELECT COUNT(*)
 		FROM  bookmarks
@@ -229,11 +229,11 @@ func (r *Repository) BookmarkGetCount(userUUID string, visibility querying.Visib
 	return count, nil
 }
 
-func (r *Repository) BookmarkGetN(userUUID string, visibility querying.Visibility, n uint, offset uint) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkGetN(userUUID string, visibility bookmarkquerying.Visibility, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	var query string
 
 	switch visibility {
-	case querying.VisibilityPrivate:
+	case bookmarkquerying.VisibilityPrivate:
 		query = `
 		SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 		FROM  bookmarks
@@ -242,7 +242,7 @@ func (r *Repository) BookmarkGetN(userUUID string, visibility querying.Visibilit
 		ORDER BY created_at DESC
 		LIMIT $2 OFFSET $3`
 
-	case querying.VisibilityPublic:
+	case bookmarkquerying.VisibilityPublic:
 		query = `
 		SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 		FROM  bookmarks
@@ -279,11 +279,11 @@ func (r *Repository) BookmarkGetPublicByUID(userUUID, uid string) (bookmark.Book
 	return r.bookmarkGetQuery(query, userUUID, uid)
 }
 
-func (r *Repository) BookmarkSearchCount(userUUID string, visibility querying.Visibility, searchTerms string) (uint, error) {
+func (r *Repository) BookmarkSearchCount(userUUID string, visibility bookmarkquerying.Visibility, searchTerms string) (uint, error) {
 	var query string
 
 	switch visibility {
-	case querying.VisibilityPrivate:
+	case bookmarkquerying.VisibilityPrivate:
 		query = `
 		SELECT COUNT(*)
 		FROM bookmarks
@@ -291,7 +291,7 @@ func (r *Repository) BookmarkSearchCount(userUUID string, visibility querying.Vi
 		AND PRIVATE=TRUE
 		AND fulltextsearch_tsv @@ websearch_to_tsquery($2)`
 
-	case querying.VisibilityPublic:
+	case bookmarkquerying.VisibilityPublic:
 		query = `
 		SELECT COUNT(*)
 		FROM bookmarks
@@ -323,11 +323,11 @@ func (r *Repository) BookmarkSearchCount(userUUID string, visibility querying.Vi
 	return count, nil
 }
 
-func (r *Repository) BookmarkSearchN(userUUID string, visibility querying.Visibility, searchTerms string, n uint, offset uint) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkSearchN(userUUID string, visibility bookmarkquerying.Visibility, searchTerms string, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	var query string
 
 	switch visibility {
-	case querying.VisibilityPrivate:
+	case bookmarkquerying.VisibilityPrivate:
 		query = `
 		SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 		FROM bookmarks
@@ -337,7 +337,7 @@ func (r *Repository) BookmarkSearchN(userUUID string, visibility querying.Visibi
 		ORDER BY created_at DESC
 		LIMIT $3 OFFSET $4`
 
-	case querying.VisibilityPublic:
+	case bookmarkquerying.VisibilityPublic:
 		query = `
 		SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 		FROM bookmarks
@@ -435,7 +435,7 @@ func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
 	return tx.Commit(ctx)
 }
 
-func (r *Repository) OwnerGetByUUID(userUUID string) (querying.Owner, error) {
+func (r *Repository) OwnerGetByUUID(userUUID string) (bookmarkquerying.Owner, error) {
 	query := `
 	SELECT uuid, nick_name, display_name
 	FROM users
@@ -449,31 +449,31 @@ func (r *Repository) OwnerGetByUUID(userUUID string) (querying.Owner, error) {
 		userUUID,
 	)
 	if err != nil {
-		return querying.Owner{}, err
+		return bookmarkquerying.Owner{}, err
 	}
 	defer rows.Close()
 
 	err = pgxscan.ScanOne(dbUser, rows)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return querying.Owner{}, querying.ErrOwnerNotFound
+		return bookmarkquerying.Owner{}, bookmarkquerying.ErrOwnerNotFound
 	}
 	if err != nil {
-		return querying.Owner{}, err
+		return bookmarkquerying.Owner{}, err
 	}
 
-	return querying.Owner{
+	return bookmarkquerying.Owner{
 		UUID:        dbUser.UUID,
 		NickName:    dbUser.NickName,
 		DisplayName: dbUser.DisplayName,
 	}, nil
 }
 
-func (r *Repository) BookmarkTagGetCount(userUUID string, visibility querying.Visibility) (uint, error) {
+func (r *Repository) BookmarkTagGetCount(userUUID string, visibility bookmarkquerying.Visibility) (uint, error) {
 	var query string
 
 	switch visibility {
-	case querying.VisibilityPrivate:
+	case bookmarkquerying.VisibilityPrivate:
 		query = `
 		SELECT COUNT(DISTINCT name)
 		FROM (
@@ -483,7 +483,7 @@ func (r *Repository) BookmarkTagGetCount(userUUID string, visibility querying.Vi
 			AND   private=TRUE
 		) s`
 
-	case querying.VisibilityPublic:
+	case bookmarkquerying.VisibilityPublic:
 		query = `
 		SELECT COUNT(DISTINCT name)
 		FROM (
@@ -517,11 +517,11 @@ func (r *Repository) BookmarkTagGetCount(userUUID string, visibility querying.Vi
 	return count, nil
 }
 
-func (r *Repository) BookmarkTagGetAll(userUUID string, visibility querying.Visibility) ([]querying.Tag, error) {
+func (r *Repository) BookmarkTagGetAll(userUUID string, visibility bookmarkquerying.Visibility) ([]bookmarkquerying.Tag, error) {
 	var query string
 
 	switch visibility {
-	case querying.VisibilityPrivate:
+	case bookmarkquerying.VisibilityPrivate:
 		query = `
 		SELECT name, COUNT(name) as count
 		FROM (
@@ -533,7 +533,7 @@ func (r *Repository) BookmarkTagGetAll(userUUID string, visibility querying.Visi
 		GROUP BY name
 		ORDER BY count DESC, name ASC`
 
-	case querying.VisibilityPublic:
+	case bookmarkquerying.VisibilityPublic:
 		query = `
 		SELECT name, COUNT(name) as count
 		FROM (
@@ -560,11 +560,11 @@ func (r *Repository) BookmarkTagGetAll(userUUID string, visibility querying.Visi
 	return r.tagGetQuery(query, userUUID)
 }
 
-func (r *Repository) BookmarkTagGetN(userUUID string, visibility querying.Visibility, n uint, offset uint) ([]querying.Tag, error) {
+func (r *Repository) BookmarkTagGetN(userUUID string, visibility bookmarkquerying.Visibility, n uint, offset uint) ([]bookmarkquerying.Tag, error) {
 	var query string
 
 	switch visibility {
-	case querying.VisibilityPrivate:
+	case bookmarkquerying.VisibilityPrivate:
 		query = `
 		SELECT name, COUNT(name) as count
 		FROM (
@@ -577,7 +577,7 @@ func (r *Repository) BookmarkTagGetN(userUUID string, visibility querying.Visibi
 		ORDER BY count DESC, name ASC
 		LIMIT $2 OFFSET $3`
 
-	case querying.VisibilityPublic:
+	case bookmarkquerying.VisibilityPublic:
 		query = `
 		SELECT name, COUNT(name) as count
 		FROM (
@@ -606,11 +606,11 @@ func (r *Repository) BookmarkTagGetN(userUUID string, visibility querying.Visibi
 	return r.tagGetQuery(query, userUUID, n, offset)
 }
 
-func (r *Repository) BookmarkTagFilterCount(userUUID string, visibility querying.Visibility, filterTerm string) (uint, error) {
+func (r *Repository) BookmarkTagFilterCount(userUUID string, visibility bookmarkquerying.Visibility, filterTerm string) (uint, error) {
 	var query string
 
 	switch visibility {
-	case querying.VisibilityPrivate:
+	case bookmarkquerying.VisibilityPrivate:
 		query = `
 		SELECT COUNT(DISTINCT name)
 		FROM (
@@ -621,7 +621,7 @@ func (r *Repository) BookmarkTagFilterCount(userUUID string, visibility querying
 		) s
 		WHERE name ILIKE $2`
 
-	case querying.VisibilityPublic:
+	case bookmarkquerying.VisibilityPublic:
 		query = `
 		SELECT COUNT(DISTINCT name)
 		FROM (
@@ -658,11 +658,11 @@ func (r *Repository) BookmarkTagFilterCount(userUUID string, visibility querying
 	return count, nil
 }
 
-func (r *Repository) BookmarkTagFilterN(userUUID string, visibility querying.Visibility, filterTerm string, n uint, offset uint) ([]querying.Tag, error) {
+func (r *Repository) BookmarkTagFilterN(userUUID string, visibility bookmarkquerying.Visibility, filterTerm string, n uint, offset uint) ([]bookmarkquerying.Tag, error) {
 	var query string
 
 	switch visibility {
-	case querying.VisibilityPrivate:
+	case bookmarkquerying.VisibilityPrivate:
 		query = `
 		SELECT name, COUNT(name) as count
 		FROM (
@@ -676,7 +676,7 @@ func (r *Repository) BookmarkTagFilterN(userUUID string, visibility querying.Vis
 		ORDER BY count DESC, name ASC
 		LIMIT $3 OFFSET $4`
 
-	case querying.VisibilityPublic:
+	case bookmarkquerying.VisibilityPublic:
 		query = `
 		SELECT name, COUNT(name) as count
 		FROM (

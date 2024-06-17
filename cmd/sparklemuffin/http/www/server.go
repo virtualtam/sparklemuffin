@@ -23,9 +23,9 @@ import (
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/static"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
-	"github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
+	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
+	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -40,13 +40,13 @@ type Server struct {
 	metricsPrefix   string
 	metricsRegistry *prometheus.Registry
 
-	bookmarkService  *bookmark.Service
-	csrfService      *csrf.Service
-	exportingService *exporting.Service
-	importingService *importing.Service
-	queryingService  *querying.Service
-	sessionService   *session.Service
-	userService      *user.Service
+	bookmarkService          *bookmark.Service
+	csrfService              *csrf.Service
+	bookmarkExportingService *bookmarkexporting.Service
+	bookmarkImportingService *bookmarkimporting.Service
+	bookmarkQueryingService  *bookmarkquerying.Service
+	sessionService           *session.Service
+	userService              *user.Service
 
 	homeView *view.View
 }
@@ -119,8 +119,8 @@ func (s *Server) registerHandlers() {
 	controller.RegisterSessionHandlers(s.router, s.sessionService, s.userService)
 	controller.RegisterAdminHandlers(s.router, s.csrfService, s.userService)
 	controller.RegisterAccounthandlers(s.router, s.csrfService, s.userService)
-	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.queryingService, s.userService)
-	controller.RegisterToolsHandlers(s.router, s.exportingService, s.importingService)
+	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.bookmarkQueryingService, s.userService)
+	controller.RegisterToolsHandlers(s.router, s.bookmarkExportingService, s.bookmarkImportingService)
 }
 
 // ServeHTTP satisfies the http.Handler interface,

@@ -100,7 +100,7 @@ func (r *Repository) BookmarkDelete(userUUID, uid string) error {
 		return err
 	}
 
-	defer r.rollback(ctx, tx, "bookmarks", "delete")
+	defer r.rollback(ctx, tx, "bookmarks", "BookmarkDelete")
 
 	commandTag, err := tx.Exec(
 		context.Background(),
@@ -425,7 +425,7 @@ func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
 		return err
 	}
 
-	defer r.rollback(ctx, tx, "bookmarks", "update")
+	defer r.rollback(ctx, tx, "bookmarks", "BookmarkUpdate")
 
 	_, err = tx.Exec(ctx, query, args)
 	if err != nil {

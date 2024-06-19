@@ -69,7 +69,7 @@ func TestNewPage(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			got := NewFeedPage(tc.number, tc.totalPages, "", []SubscriptionCategory{}, []SubscriptionEntry{})
+			got := NewFeedPage(tc.number, tc.totalPages, "", []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{})
 			assertPagesEqual(t, got, tc.want)
 		})
 	}
@@ -105,7 +105,7 @@ func assertPagesEqual(t *testing.T, got, want FeedPage) {
 	assertSubscriptionEntriesEqual(t, got.Entries, want.Entries)
 }
 
-func assertCategoriesEqual(t *testing.T, got, want []SubscriptionCategory) {
+func assertCategoriesEqual(t *testing.T, got, want []SubscribedFeedsByCategory) {
 	t.Helper()
 
 	if len(got) != len(want) {
@@ -135,7 +135,7 @@ func assertCategoriesEqual(t *testing.T, got, want []SubscriptionCategory) {
 	}
 }
 
-func assertSubscriptionEntriesEqual(t *testing.T, got []SubscriptionEntry, want []SubscriptionEntry) {
+func assertSubscriptionEntriesEqual(t *testing.T, got []SubscribedFeedEntry, want []SubscribedFeedEntry) {
 	t.Helper()
 
 	if len(got) != len(want) {

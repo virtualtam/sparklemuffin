@@ -16,7 +16,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
 	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
-	fquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
+	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -32,7 +32,7 @@ func RegisterFeedHandlers(
 	r *chi.Mux,
 	csrfService *csrf.Service,
 	feedService *feed.Service,
-	feedQueryingService *fquerying.Service,
+	feedQueryingService *feedquerying.Service,
 	userService *user.Service,
 ) {
 	fc := feedHandlerContext{
@@ -44,10 +44,10 @@ func RegisterFeedHandlers(
 		feedListView: view.New("feed/list.gohtml"),
 		feedAddView:  view.New("feed/feed_add.gohtml"),
 
-		feedCategoryAddView:    view.New("feed/category_add.gohtml"),
-		feedCategoryDeleteView: view.New("feed/category_delete.gohtml"),
-		feedCategoryEditView:   view.New("feed/category_edit.gohtml"),
-		feedCategoryListView:   view.New("feed/category_list.gohtml"),
+		feedCategoryAddView:      view.New("feed/category_add.gohtml"),
+		feedCategoryDeleteView:   view.New("feed/category_delete.gohtml"),
+		feedCategoryEditView:     view.New("feed/category_edit.gohtml"),
+		feedSubscriptionListView: view.New("feed/subscription_list.gohtml"),
 	}
 
 	// feeds
@@ -64,7 +64,6 @@ func RegisterFeedHandlers(
 		r.Post("/add", fc.handleFeedAdd())
 
 		r.Route("/categories", func(sr chi.Router) {
-			sr.Get("/", fc.handleFeedCategoryListView())
 			sr.Get("/add", fc.handleFeedCategoryAddView())
 			sr.Post("/add", fc.handleFeedCategoryAdd())
 			sr.Get("/{uuid}/delete", fc.handleFeedCategoryDeleteView())
@@ -72,22 +71,24 @@ func RegisterFeedHandlers(
 			sr.Get("/{uuid}/edit", fc.handleFeedCategoryEditView())
 			sr.Post("/{uuid}/edit", fc.handleFeedCategoryEdit())
 		})
+
+		r.Get("/subscriptions", fc.handleFeedSubscriptionListView())
 	})
 }
 
 type feedHandlerContext struct {
 	csrfService         *csrf.Service
 	feedService         *feed.Service
-	feedQueryingService *fquerying.Service
+	feedQueryingService *feedquerying.Service
 	userService         *user.Service
 
 	feedAddView  *view.View
 	feedListView *view.View
 
-	feedCategoryAddView    *view.View
-	feedCategoryDeleteView *view.View
-	feedCategoryEditView   *view.View
-	feedCategoryListView   *view.View
+	feedCategoryAddView      *view.View
+	feedCategoryDeleteView   *view.View
+	feedCategoryEditView     *view.View
+	feedSubscriptionListView *view.View
 }
 
 type feedFormContent struct {
@@ -465,24 +466,24 @@ func (fc *feedHandlerContext) handleFeedCategoryEdit() func(w http.ResponseWrite
 	}
 }
 
-// handleFeedCategoryListView renders the feed category list view.
-func (fc *feedHandlerContext) handleFeedCategoryListView() func(w http.ResponseWriter, r *http.Request) {
+// handleFeedSubscriptionListView renders the feed category list view.
+func (fc *feedHandlerContext) handleFeedSubscriptionListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 
-		categories, err := fc.feedService.Categories(user.UUID)
+		subscriptionsByCategory, err := fc.feedQueryingService.SubscriptionTitlesByCategory(user.UUID)
 		if err != nil {
-			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve feed categories")
-			view.PutFlashError(w, "failed to retrieve existing feed categories")
+			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve feed subscriptions")
+			view.PutFlashError(w, "failed to retrieve feed subscriptions")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
 		}
 
 		viewData := view.Data{
-			Content: categories,
-			Title:   "Feed Categories",
+			Content: subscriptionsByCategory,
+			Title:   "Feed Subscriptions",
 		}
 
-		fc.feedCategoryListView.Render(w, r, viewData)
+		fc.feedSubscriptionListView.Render(w, r, viewData)
 	}
 }

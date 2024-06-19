@@ -384,7 +384,6 @@ func TestServiceDeleteCategory(t *testing.T) {
 
 		feeds := []Feed{}
 		entries := []Entry{}
-		entryStatuses := []EntryStatus{}
 		subscriptions := []Subscription{}
 
 		for i := 0; i < 5; i++ {
@@ -412,14 +411,6 @@ func TestServiceDeleteCategory(t *testing.T) {
 					Title:    fake.Lorem().Text(10),
 				}
 				entries = append(entries, entry)
-
-				entryStatus := EntryStatus{
-					UUID:             fake.UUID().V4(),
-					EntryUID:         entry.UID,
-					SubscriptionUUID: subscription.UUID,
-					UserUUID:         userUUID,
-				}
-				entryStatuses = append(entryStatuses, entryStatus)
 			}
 		}
 
@@ -427,7 +418,6 @@ func TestServiceDeleteCategory(t *testing.T) {
 			Categories:    categories,
 			Feeds:         feeds,
 			Entries:       entries,
-			EntryStatuses: entryStatuses,
 			Subscriptions: subscriptions,
 		}
 		s := NewService(r, nil)
@@ -441,9 +431,6 @@ func TestServiceDeleteCategory(t *testing.T) {
 		}
 		if len(r.Subscriptions) != 0 {
 			t.Fatalf("want 0 Subscriptions, got %d", len(r.Subscriptions))
-		}
-		if len(r.EntryStatuses) != 0 {
-			t.Fatalf("want 0 EntryStatuses, got %d", len(r.EntryStatuses))
 		}
 	})
 }

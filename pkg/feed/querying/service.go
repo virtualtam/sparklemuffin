@@ -49,7 +49,7 @@ func (s *Service) FeedsByPage(userUUID string, number uint) (FeedPage, error) {
 
 	if len(categories) == 0 {
 		// early return: nothing to display
-		return NewFeedPage(1, 1, pageHeaderAll, []SubscriptionCategory{}, []SubscriptionEntry{}), nil
+		return NewFeedPage(1, 1, pageHeaderAll, []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{}), nil
 	}
 
 	offset := (number - 1) * entriesPerPage
@@ -86,7 +86,7 @@ func (s *Service) FeedsByCategoryAndPage(userUUID string, category feed.Category
 
 	if len(categories) == 0 {
 		// early return: nothing to display
-		return NewFeedPage(1, 1, category.Name, []SubscriptionCategory{}, []SubscriptionEntry{}), nil
+		return NewFeedPage(1, 1, category.Name, []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{}), nil
 	}
 
 	offset := (number - 1) * entriesPerPage
@@ -128,7 +128,7 @@ func (s *Service) FeedsBySubscriptionAndPage(userUUID string, subscription feed.
 
 	if len(categories) == 0 {
 		// early return: nothing to display
-		return NewFeedPage(1, 1, feed.Title, []SubscriptionCategory{}, []SubscriptionEntry{}), nil
+		return NewFeedPage(1, 1, feed.Title, []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{}), nil
 	}
 
 	offset := (number - 1) * entriesPerPage
@@ -139,4 +139,8 @@ func (s *Service) FeedsBySubscriptionAndPage(userUUID string, subscription feed.
 	}
 
 	return NewFeedPage(number, totalPages, feed.Title, categories, entries), nil
+}
+
+func (s *Service) SubscriptionTitlesByCategory(userUUID string) ([]SubscriptionsTitlesByCategory, error) {
+	return s.r.FeedSubscriptionTitlesByCategory(userUUID)
 }

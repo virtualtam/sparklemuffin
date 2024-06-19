@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
-	fquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
+	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 )
 
 type DBCategory struct {
@@ -84,8 +84,8 @@ type DBQueryingEntry struct {
 	Read bool `db:"read"`
 }
 
-func (qe *DBQueryingEntry) asQueryingEntry() fquerying.SubscriptionEntry {
-	return fquerying.SubscriptionEntry{
+func (qe *DBQueryingEntry) asQueryingEntry() feedquerying.SubscribedFeedEntry {
+	return feedquerying.SubscribedFeedEntry{
 		Entry: qe.asEntry(),
 		Read:  qe.Read,
 	}
@@ -104,8 +104,8 @@ type DBSubscribedFeed struct {
 	FetchedAt time.Time `db:"fetched_at"`
 }
 
-func (f *DBSubscribedFeed) asSubscribedFeed() fquerying.SubscribedFeed {
-	return fquerying.SubscribedFeed{
+func (f *DBSubscribedFeed) asSubscribedFeed() feedquerying.SubscribedFeed {
+	return feedquerying.SubscribedFeed{
 		Feed: feed.Feed{
 			UUID:      f.UUID,
 			FeedURL:   f.FeedURL,
@@ -137,5 +137,17 @@ func (s *DBSubscription) asSubscription() feed.Subscription {
 		UserUUID:     s.UserUUID,
 		CreatedAt:    s.CreatedAt,
 		UpdatedAt:    s.UpdatedAt,
+	}
+}
+
+type DBSubscriptionTitle struct {
+	SubscriptionUUID string `db:"uuid"`
+	FeedTitle        string `db:"title"`
+}
+
+func (st *DBSubscriptionTitle) asSubscriptionTitle() feedquerying.SubscriptionTitle {
+	return feedquerying.SubscriptionTitle{
+		SubscriptionUUID: st.SubscriptionUUID,
+		FeedTitle:        st.FeedTitle,
 	}
 }

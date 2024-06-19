@@ -117,3 +117,27 @@ func (r *Repository) feedSubscriptionGetQuery(query string, queryParams ...any) 
 
 	return dbFeed.asSubscription(), nil
 }
+
+func (r *Repository) feedGetSubscriptionTitlesByCategory(userUUID string, categoryUUID string) ([]DBSubscriptionTitle, error) {
+	query := `
+SELECT fs.uuid, f.title
+FROM feed_subscriptions fs
+JOIN feed_feeds f ON f.uuid=fs.feed_uuid
+WHERE fs.user_uuid=$1
+AND   fs.category_uuid=$2
+ORDER BY f.title`
+
+	rows, err := r.pool.Query(context.Background(), query, userUUID, categoryUUID)
+	if err != nil {
+		return []DBSubscriptionTitle{}, err
+	}
+	defer rows.Close()
+
+	dbSubscriptionTitles := []DBSubscriptionTitle{}
+
+	if err := pgxscan.ScanAll(&dbSubscriptionTitles, rows); err != nil {
+		return []DBSubscriptionTitle{}, err
+	}
+
+	return dbSubscriptionTitles, nil
+}

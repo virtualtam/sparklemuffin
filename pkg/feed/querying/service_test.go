@@ -57,7 +57,7 @@ var (
 		},
 	}
 
-	wantTestUser1Categories = []SubscriptionCategory{
+	wantTestUser1Categories = []SubscribedFeedsByCategory{
 		{
 			Category: feed.Category{
 				UUID:     "13326cd8-98a0-4cba-a8fc-4c28c1ffc462",
@@ -165,7 +165,7 @@ func TestServiceFeedsByPage(t *testing.T) {
 				Header: pageHeaderAll,
 				Unread: 1,
 
-				Categories: []SubscriptionCategory{
+				Categories: []SubscribedFeedsByCategory{
 					{
 						Category: feed.Category{
 							UUID:     "8f041d0f-8f49-4ffa-99a3-896ea372bfc2",
@@ -187,7 +187,7 @@ func TestServiceFeedsByPage(t *testing.T) {
 						},
 					},
 				},
-				Entries: []SubscriptionEntry{
+				Entries: []SubscribedFeedEntry{
 					{
 						Entry: feed.Entry{
 							UID:      "1",
@@ -283,7 +283,7 @@ func TestServiceFeedsByCategoryAndPage(t *testing.T) {
 				Unread: 1,
 
 				Categories: wantTestUser1Categories,
-				Entries: []SubscriptionEntry{
+				Entries: []SubscribedFeedEntry{
 					{
 						Entry: feed.Entry{
 							UID:      "1",
@@ -365,7 +365,7 @@ func TestServiceFeedsBySubscriptionAndPage(t *testing.T) {
 
 				Categories: wantTestUser1Categories,
 
-				Entries: []SubscriptionEntry{
+				Entries: []SubscribedFeedEntry{
 					{
 						Entry: feed.Entry{
 							UID:      "1",

@@ -59,10 +59,6 @@ func (r *fakeRepository) FeedCategoryDelete(userUUID string, categoryUUID string
 		return s.UserUUID == userUUID && s.CategoryUUID == categoryUUID
 	})
 
-	r.EntryStatuses = slices.DeleteFunc(r.EntryStatuses, func(es EntryStatus) bool {
-		return es.UserUUID == userUUID && slices.Contains(deletedSubscriptionsUUIDs, es.SubscriptionUUID)
-	})
-
 	return nil
 }
 

@@ -1,0 +1,48 @@
+{{define "content"}}
+<div id="nav-actions">
+  <nav>
+    <a href="/feeds/categories/add">+ Add category</a>
+  </nav>
+</div>
+
+<div>
+  <ul>
+    {{- range .}}
+    <li>
+      <div>
+        [
+        <span class="item-edit">
+          <a href="/feeds/categories/{{.UUID}}/edit" title="Edit category: {{.Name}}">e</a>
+        </span>
+        ,
+        <span class="item-delete">
+          <a href="/feeds/categories/{{.UUID}}/delete" title="Delete category: {{.Name}}">x</a>
+        </span>
+        ]
+        <strong>{{.Name}}</strong>
+      </div>
+      <ul>
+        {{- range .SubscriptionTitles}}
+        <li>
+          <div>
+            [
+            <span class="item-edit">
+              <a href="/feeds/subscriptions/{{.SubscriptionUUID}}/edit"
+                 title="Edit subscription: {{.FeedTitle}}">e</a>
+            </span>
+            ,
+            <span class="item-delete">
+              <a href="/feeds/subscriptions/{{.SubscriptionUUID}}/delete"
+                 title="Delete subscription: {{.FeedTitle}}">x</a>
+            </span>
+            ]
+            {{.FeedTitle}}
+          </div>
+        </li>
+        {{- end}}
+      </ul>
+    </li>
+    {{- end}}
+  </ul>
+</div>
+{{end}}

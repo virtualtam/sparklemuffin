@@ -4,6 +4,7 @@
 package querying
 
 import (
+	"errors"
 	"sort"
 
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
@@ -28,8 +29,8 @@ func (r *fakeRepository) FeedGetByUUID(feedUUID string) (feed.Feed, error) {
 	return feed.Feed{}, feed.ErrFeedNotFound
 }
 
-func (r *fakeRepository) FeedSubscriptionCategoryGetAll(userUUID string) ([]SubscriptionCategory, error) {
-	var subscriptionCategories []SubscriptionCategory
+func (r *fakeRepository) FeedSubscriptionCategoryGetAll(userUUID string) ([]SubscribedFeedsByCategory, error) {
+	var subscriptionCategories []SubscribedFeedsByCategory
 
 	for _, category := range r.Categories {
 		if category.UserUUID != userUUID {
@@ -72,7 +73,7 @@ func (r *fakeRepository) FeedSubscriptionCategoryGetAll(userUUID string) ([]Subs
 			}
 		}
 
-		subscriptionCategory := SubscriptionCategory{
+		subscriptionCategory := SubscribedFeedsByCategory{
 			Category:        category,
 			Unread:          categoryUnread,
 			SubscribedFeeds: subscribedFeeds,
@@ -160,8 +161,8 @@ func (r *fakeRepository) FeedEntryGetCountBySubscription(userUUID string, subscr
 	return count, nil
 }
 
-func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]SubscriptionEntry, error) {
-	var subscriptionEntries []SubscriptionEntry
+func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]SubscribedFeedEntry, error) {
+	var subscriptionEntries []SubscribedFeedEntry
 
 	for _, subscription := range r.Subscriptions {
 		if subscription.UserUUID != userUUID {
@@ -173,11 +174,10 @@ func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, n uint, offs
 				continue
 			}
 
-			subscriptionEntry := SubscriptionEntry{
+			subscriptionEntry := SubscribedFeedEntry{
 				Entry: entry,
 				Read:  false,
 			}
-
 			subscriptionEntries = append(subscriptionEntries, subscriptionEntry)
 			break
 		}
@@ -199,8 +199,8 @@ func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, n uint, offs
 	return subscriptionEntries[offset : offset+nEntries], nil
 }
 
-func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, categoryUUID string, n uint, offset uint) ([]SubscriptionEntry, error) {
-	var subscriptionEntries []SubscriptionEntry
+func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, categoryUUID string, n uint, offset uint) ([]SubscribedFeedEntry, error) {
+	var subscriptionEntries []SubscribedFeedEntry
 
 	for _, subscription := range r.Subscriptions {
 		if subscription.UserUUID != userUUID {
@@ -216,7 +216,7 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, ca
 				continue
 			}
 
-			subscriptionEntry := SubscriptionEntry{
+			subscriptionEntry := SubscribedFeedEntry{
 				Entry: entry,
 				Read:  false,
 			}
@@ -242,12 +242,12 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, ca
 	return subscriptionEntries[offset : offset+nEntries], nil
 }
 
-func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscription(userUUID string, subscriptionUUID string, n uint, offset uint) ([]SubscriptionEntry, error) {
-	var subscriptionEntries []SubscriptionEntry
+func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscription(userUUID string, subscriptionUUID string, n uint, offset uint) ([]SubscribedFeedEntry, error) {
+	var subscriptionEntries []SubscribedFeedEntry
 
 	subscription, err := r.FeedSubscriptionGetByUUID(userUUID, subscriptionUUID)
 	if err != nil {
-		return []SubscriptionEntry{}, err
+		return []SubscribedFeedEntry{}, err
 	}
 
 	for _, entry := range r.Entries {
@@ -255,7 +255,7 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscription(userUUID string
 			continue
 		}
 
-		subscriptionEntry := SubscriptionEntry{
+		subscriptionEntry := SubscribedFeedEntry{
 			Entry: entry,
 			Read:  false,
 		}
@@ -278,4 +278,8 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscription(userUUID string
 	}
 
 	return subscriptionEntries[offset : offset+nEntries], nil
+}
+
+func (r *fakeRepository) FeedSubscriptionTitlesByCategory(userUUID string) ([]SubscriptionsTitlesByCategory, error) {
+	return []SubscriptionsTitlesByCategory{}, errors.New("not implemented")
 }

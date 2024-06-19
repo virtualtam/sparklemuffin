@@ -23,14 +23,17 @@ type Repository interface {
 	FeedEntryGetCountBySubscription(userUUID string, feedUUID string) (uint, error)
 
 	// FeedSubscriptionCategoryGetAll returns SubscribedFeeds, sorted by SubscriptionCategory.
-	FeedSubscriptionCategoryGetAll(userUUID string) ([]SubscriptionCategory, error)
+	FeedSubscriptionCategoryGetAll(userUUID string) ([]SubscribedFeedsByCategory, error)
 
 	// FeedSubscriptionEntryGetN returns at most n SubscriptionEntries, starting at a given offset.
-	FeedSubscriptionEntryGetN(userUUID string, entriesPerPage uint, offset uint) ([]SubscriptionEntry, error)
+	FeedSubscriptionEntryGetN(userUUID string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error)
 
 	// FeedSubscriptionEntryGetNByCategory returns at most n SubscriptionEntries, starting at a given offset.
-	FeedSubscriptionEntryGetNByCategory(userUUID string, categoryUUID string, entriesPerPage uint, offset uint) ([]SubscriptionEntry, error)
+	FeedSubscriptionEntryGetNByCategory(userUUID string, categoryUUID string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error)
 
 	// FeedSubscriptionEntryGetNBySubscription returns at most n SubscriptionEntries, starting at a given offset.
-	FeedSubscriptionEntryGetNBySubscription(userUUID string, subscriptionUUID string, entriesPerPage uint, offset uint) ([]SubscriptionEntry, error)
+	FeedSubscriptionEntryGetNBySubscription(userUUID string, subscriptionUUID string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error)
+
+	// FeedSubscriptionTitlesByCategory returns a list of feed Subscription titles, sorted by Category.
+	FeedSubscriptionTitlesByCategory(userUUID string) ([]SubscriptionsTitlesByCategory, error)
 }

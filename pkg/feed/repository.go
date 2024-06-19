@@ -61,6 +61,12 @@ type Repository interface {
 	// FeedSubscriptionDelete deletes a given Feed subscription.
 	FeedSubscriptionDelete(userUUID string, subscriptionUUID string) error
 
-	// FeedSubscriptionGetByFeed returns the Subscription for a giver user and feed.
+	// FeedSubscriptionGetByFeed returns the Subscription for a given user and feed.
 	FeedSubscriptionGetByFeed(userUUID string, feedUUID string) (Subscription, error)
+
+	// FeedSubscriptionGetByUUID returns the Subscription for a given user and UUID.
+	FeedSubscriptionGetByUUID(userUUID string, subscriptionUUID string) (Subscription, error)
+
+	// FeedSubscriptionUpdate updates an existing Subscription.
+	FeedSubscriptionUpdate(subscription Subscription) error
 }

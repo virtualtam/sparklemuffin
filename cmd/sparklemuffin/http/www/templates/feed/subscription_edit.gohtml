@@ -1,0 +1,18 @@
+{{define "content"}}
+<h2>Edit feed subscription: {{.SubscriptionTitle.FeedTitle}}</h2>
+<form action="/feeds/subscriptions/{{.SubscriptionTitle.SubscriptionUUID}}/edit" class="item-form" method="POST">
+  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+
+  <label for="category">Category</label>
+  <select name="category" id="category">
+    {{- range .Categories}}
+    <option value="{{.UUID}}">{{.Name}}</option>
+    {{- end}}
+  </select>
+
+  <br>
+  <span class="submit">
+    <button type="submit">Save</button>
+  </span>
+</form>
+{{end}}

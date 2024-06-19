@@ -26,6 +26,7 @@ const (
 	actionFeedCategoryEdit       string = "feed-category-edit"
 	actionFeedSubscriptionAdd    string = "feed-subscription-add"
 	actionFeedSubscriptionDelete string = "feed-subscription-delete"
+	actionFeedSubscriptionEdit   string = "feed-subscription-edit"
 )
 
 // RegisterFeedHandlers registers HTTP handlers for syndication feed operations.
@@ -50,10 +51,10 @@ func RegisterFeedHandlers(
 		feedCategoryEditView:   view.New("feed/category_edit.gohtml"),
 
 		feedSubscriptionDeleteView: view.New("feed/subscription_delete.gohtml"),
+		feedSubscriptionEditView:   view.New("feed/subscription_edit.gohtml"),
 		feedSubscriptionListView:   view.New("feed/subscription_list.gohtml"),
 	}
 
-	// feeds
 	r.Route("/feeds", func(r chi.Router) {
 		r.Use(func(h http.Handler) http.Handler {
 			return middleware.AuthenticatedUser(h.ServeHTTP)
@@ -79,6 +80,8 @@ func RegisterFeedHandlers(
 			sr.Get("/", fc.handleFeedSubscriptionListView())
 			sr.Get("/{uuid}/delete", fc.handleFeedSubscriptionDeleteView())
 			sr.Post("/{uuid}/delete", fc.handleFeedSubscriptionDelete())
+			sr.Get("/{uuid}/edit", fc.handleFeedSubscriptionEditView())
+			sr.Post("/{uuid}/edit", fc.handleFeedSubscriptionEdit())
 		})
 	})
 }
@@ -97,6 +100,7 @@ type feedHandlerContext struct {
 	feedCategoryEditView   *view.View
 
 	feedSubscriptionDeleteView *view.View
+	feedSubscriptionEditView   *view.View
 	feedSubscriptionListView   *view.View
 }
 
@@ -471,7 +475,7 @@ func (fc *feedHandlerContext) handleFeedCategoryEdit() func(w http.ResponseWrite
 			return
 		}
 
-		http.Redirect(w, r, "/feeds/categories", http.StatusSeeOther)
+		http.Redirect(w, r, "/feeds/subscriptions", http.StatusSeeOther)
 	}
 }
 
@@ -561,5 +565,91 @@ func (fc *feedHandlerContext) handleFeedSubscriptionDelete() func(w http.Respons
 		}
 
 		http.Redirect(w, r, "/feeds", http.StatusSeeOther)
+	}
+}
+
+// handleFeedSubscriptionEditView renders the feed subscription edition form.
+func (fc *feedHandlerContext) handleFeedSubscriptionEditView() func(w http.ResponseWriter, r *http.Request) {
+	type feedSubscriptionEditFormContent struct {
+		CSRFToken         string
+		SubscriptionTitle feedquerying.SubscriptionTitle
+		Categories        []feed.Category
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+		subscriptionUUID := chi.URLParam(r, "uuid")
+
+		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedSubscriptionEdit)
+
+		subscriptionTitle, err := fc.feedQueryingService.SubscriptionTitleByUUID(user.UUID, subscriptionUUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed subscription")
+			view.PutFlashError(w, "failed to retrieve feed subscription")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		categories, err := fc.feedService.Categories(user.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed categories")
+			view.PutFlashError(w, "failed to retrieve feed categories")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		viewData := view.Data{
+			Content: feedSubscriptionEditFormContent{
+				CSRFToken:         csrfToken,
+				SubscriptionTitle: subscriptionTitle,
+				Categories:        categories,
+			},
+			Title: "Edit feed subscription",
+		}
+
+		fc.feedSubscriptionEditView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedSubscriptionEdit processes the feed subscription edition form.
+func (fc *feedHandlerContext) handleFeedSubscriptionEdit() func(w http.ResponseWriter, r *http.Request) {
+	type feedSubscriptionEditForm struct {
+		CSRFToken    string `schema:"csrf_token"`
+		CategoryUUID string `schema:"category"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+		subscriptionUUID := chi.URLParam(r, "uuid")
+
+		var form feedSubscriptionEditForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed subscription edition form")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		if !fc.csrfService.Validate(form.CSRFToken, user.UUID, actionFeedSubscriptionEdit) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		updatedSubscription := feed.Subscription{
+			UserUUID:     user.UUID,
+			UUID:         subscriptionUUID,
+			CategoryUUID: form.CategoryUUID,
+		}
+
+		if err := fc.feedService.UpdateSubscription(updatedSubscription); err != nil {
+			log.Error().Err(err).Msg("failed to edit feed subscription")
+			view.PutFlashError(w, "failed to edit feed subscription")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		http.Redirect(w, r, "/feeds/subscriptions", http.StatusSeeOther)
 	}
 }

@@ -150,6 +150,20 @@ func (s *Service) SubscriptionByFeed(userUUID string, feedUUID string) (Subscrip
 	return s.r.FeedSubscriptionGetByFeed(userUUID, feedUUID)
 }
 
+func (s *Service) UpdateSubscription(subscription Subscription) error {
+	subscriptionToUpdate, err := s.r.FeedSubscriptionGetByUUID(subscription.UserUUID, subscription.UUID)
+	if err != nil {
+		return err
+	}
+
+	subscriptionToUpdate.CategoryUUID = subscription.CategoryUUID
+
+	now := time.Now().UTC()
+	subscriptionToUpdate.UpdatedAt = now
+
+	return s.r.FeedSubscriptionUpdate(subscriptionToUpdate)
+}
+
 func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) ([]Entry, error) {
 	var entries []Entry
 	now := time.Now().UTC()

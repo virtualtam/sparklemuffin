@@ -603,6 +603,48 @@ func (r *Repository) FeedSubscriptionGetByFeed(userUUID string, feedUUID string)
 	return r.feedSubscriptionGetQuery(query, feedUUID)
 }
 
+func (r *Repository) FeedSubscriptionGetByUUID(userUUID string, subscriptionUUID string) (feed.Subscription, error) {
+	query := `
+	SELECT uuid, category_uuid, feed_uuid, user_uuid, created_at, updated_at
+	FROM feed_subscriptions
+	WHERE uuid=$1`
+
+	return r.feedSubscriptionGetQuery(query, subscriptionUUID)
+}
+
+func (r *Repository) FeedSubscriptionUpdate(s feed.Subscription) error {
+	query := `
+	UPDATE feed_subscriptions
+	SET
+		category_uuid=@category_uuid,
+		updated_at=@updated_at
+	WHERE user_uuid=@user_uuid
+	AND uuid=@uuid`
+
+	args := pgx.NamedArgs{
+		"user_uuid":     s.UserUUID,
+		"uuid":          s.UUID,
+		"category_uuid": s.CategoryUUID,
+		"updated_at":    s.UpdatedAt,
+	}
+
+	ctx := context.Background()
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "feeds", "FeedSubscriptionUpdate")
+
+	_, err = tx.Exec(ctx, query, args)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
 func (r *Repository) FeedSubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (feedquerying.SubscriptionTitle, error) {
 	query := `
 SELECT fs.uuid, f.title

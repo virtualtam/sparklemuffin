@@ -898,3 +898,58 @@ func TestServiceCreateSubscription(t *testing.T) {
 		})
 	}
 }
+
+func TestServiceDeleteSubscription(t *testing.T) {
+	fake := faker.New()
+	userUUID := fake.UUID().V4()
+
+	t.Run("subscription with entries", func(t *testing.T) {
+		category := Category{
+			UserUUID: userUUID,
+			UUID:     fake.UUID().V4(),
+			Name:     fake.Lorem().Text(10),
+			Slug:     fake.Internet().Slug(),
+		}
+
+		entries := []Entry{}
+
+		feed := Feed{
+			UUID:  fake.UUID().V4(),
+			URL:   fake.Internet().URL(),
+			Title: fake.Lorem().Text(10),
+			Slug:  fake.Internet().Slug(),
+		}
+
+		subscription := Subscription{
+			UUID:         fake.UUID().V4(),
+			CategoryUUID: category.UUID,
+			FeedUUID:     feed.UUID,
+			UserUUID:     userUUID,
+		}
+
+		for j := 0; j < 10; j++ {
+			entry := Entry{
+				UID:      ksuid.New().String(),
+				FeedUUID: feed.UUID,
+				URL:      fake.Internet().URL(),
+				Title:    fake.Lorem().Text(10),
+			}
+			entries = append(entries, entry)
+		}
+
+		r := &fakeRepository{
+			Feeds:         []Feed{feed},
+			Entries:       entries,
+			Subscriptions: []Subscription{subscription},
+		}
+		s := NewService(r, nil)
+
+		if err := s.DeleteSubscription(userUUID, subscription.UUID); err != nil {
+			t.Fatalf("want no error, got %q", err)
+		}
+
+		if len(r.Subscriptions) != 0 {
+			t.Fatalf("want 0 Subscriptions, got %d", len(r.Subscriptions))
+		}
+	})
+}

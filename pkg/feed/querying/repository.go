@@ -34,6 +34,9 @@ type Repository interface {
 	// FeedSubscriptionEntryGetNBySubscription returns at most n SubscriptionEntries, starting at a given offset.
 	FeedSubscriptionEntryGetNBySubscription(userUUID string, subscriptionUUID string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error)
 
+	// FeedSubscriptionTitleByUUID returns feed subsciption metadata for a given user and subscription.
+	FeedSubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (SubscriptionTitle, error)
+
 	// FeedSubscriptionTitlesByCategory returns a list of feed Subscription titles, sorted by Category.
 	FeedSubscriptionTitlesByCategory(userUUID string) ([]SubscriptionsTitlesByCategory, error)
 }

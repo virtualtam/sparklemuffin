@@ -141,6 +141,10 @@ func (s *Service) FeedsBySubscriptionAndPage(userUUID string, subscription feed.
 	return NewFeedPage(number, totalPages, feed.Title, categories, entries), nil
 }
 
+func (s *Service) SubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (SubscriptionTitle, error) {
+	return s.r.FeedSubscriptionTitleByUUID(userUUID, subscriptionUUID)
+}
+
 func (s *Service) SubscriptionTitlesByCategory(userUUID string) ([]SubscriptionsTitlesByCategory, error) {
 	return s.r.FeedSubscriptionTitlesByCategory(userUUID)
 }

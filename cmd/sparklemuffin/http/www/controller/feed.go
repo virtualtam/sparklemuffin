@@ -21,10 +21,11 @@ import (
 )
 
 const (
-	actionFeedAdd            string = "feed-add"
-	actionFeedCategoryAdd    string = "feed-category-add"
-	actionFeedCategoryDelete string = "feed-category-delete"
-	actionFeedCategoryEdit   string = "feed-category-edit"
+	actionFeedCategoryAdd        string = "feed-category-add"
+	actionFeedCategoryDelete     string = "feed-category-delete"
+	actionFeedCategoryEdit       string = "feed-category-edit"
+	actionFeedSubscriptionAdd    string = "feed-subscription-add"
+	actionFeedSubscriptionDelete string = "feed-subscription-delete"
 )
 
 // RegisterFeedHandlers registers HTTP handlers for syndication feed operations.
@@ -44,10 +45,12 @@ func RegisterFeedHandlers(
 		feedListView: view.New("feed/list.gohtml"),
 		feedAddView:  view.New("feed/feed_add.gohtml"),
 
-		feedCategoryAddView:      view.New("feed/category_add.gohtml"),
-		feedCategoryDeleteView:   view.New("feed/category_delete.gohtml"),
-		feedCategoryEditView:     view.New("feed/category_edit.gohtml"),
-		feedSubscriptionListView: view.New("feed/subscription_list.gohtml"),
+		feedCategoryAddView:    view.New("feed/category_add.gohtml"),
+		feedCategoryDeleteView: view.New("feed/category_delete.gohtml"),
+		feedCategoryEditView:   view.New("feed/category_edit.gohtml"),
+
+		feedSubscriptionDeleteView: view.New("feed/subscription_delete.gohtml"),
+		feedSubscriptionListView:   view.New("feed/subscription_list.gohtml"),
 	}
 
 	// feeds
@@ -72,7 +75,11 @@ func RegisterFeedHandlers(
 			sr.Post("/{uuid}/edit", fc.handleFeedCategoryEdit())
 		})
 
-		r.Get("/subscriptions", fc.handleFeedSubscriptionListView())
+		r.Route("/subscriptions", func(sr chi.Router) {
+			sr.Get("/", fc.handleFeedSubscriptionListView())
+			sr.Get("/{uuid}/delete", fc.handleFeedSubscriptionDeleteView())
+			sr.Post("/{uuid}/delete", fc.handleFeedSubscriptionDelete())
+		})
 	})
 }
 
@@ -85,10 +92,12 @@ type feedHandlerContext struct {
 	feedAddView  *view.View
 	feedListView *view.View
 
-	feedCategoryAddView      *view.View
-	feedCategoryDeleteView   *view.View
-	feedCategoryEditView     *view.View
-	feedSubscriptionListView *view.View
+	feedCategoryAddView    *view.View
+	feedCategoryDeleteView *view.View
+	feedCategoryEditView   *view.View
+
+	feedSubscriptionDeleteView *view.View
+	feedSubscriptionListView   *view.View
 }
 
 type feedFormContent struct {
@@ -105,7 +114,7 @@ type feedCategoryFormContent struct {
 func (fc *feedHandlerContext) handleFeedAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
-		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedAdd)
+		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedSubscriptionAdd)
 
 		categories, err := fc.feedService.Categories(user.UUID)
 		if err != nil {
@@ -146,7 +155,7 @@ func (fc *feedHandlerContext) handleFeedAdd() func(w http.ResponseWriter, r *htt
 			return
 		}
 
-		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedAdd) {
+		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedSubscriptionAdd) {
 			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -485,5 +494,72 @@ func (fc *feedHandlerContext) handleFeedSubscriptionListView() func(w http.Respo
 		}
 
 		fc.feedSubscriptionListView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedSubscriptionDeleteView renders the feed subscription deletion form.
+func (fc *feedHandlerContext) handleFeedSubscriptionDeleteView() func(w http.ResponseWriter, r *http.Request) {
+	type feedSubscriptionTitleFormContent struct {
+		CSRFToken         string
+		SubscriptionTitle feedquerying.SubscriptionTitle
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		subscriptionUUID := chi.URLParam(r, "uuid")
+		user := httpcontext.UserValue(r.Context())
+		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedSubscriptionDelete)
+
+		subscriptionTitle, err := fc.feedQueryingService.SubscriptionTitleByUUID(user.UUID, subscriptionUUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed subscription")
+			view.PutFlashError(w, "failed to retrieve feed subscription")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		viewData := view.Data{
+			Content: feedSubscriptionTitleFormContent{
+				CSRFToken:         csrfToken,
+				SubscriptionTitle: subscriptionTitle,
+			},
+			Title: fmt.Sprintf("Delete subscription: %s", subscriptionTitle.FeedTitle),
+		}
+
+		fc.feedSubscriptionDeleteView.Render(w, r, viewData)
+	}
+}
+
+func (fc *feedHandlerContext) handleFeedSubscriptionDelete() func(w http.ResponseWriter, r *http.Request) {
+	type feedSubscriptionDeleteForm struct {
+		CSRFToken string `schema:"csrf_token"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		subscriptionUUID := chi.URLParam(r, "uuid")
+		user := httpcontext.UserValue(r.Context())
+
+		var form feedSubscriptionDeleteForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed subscription deletion form")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if !fc.csrfService.Validate(form.CSRFToken, user.UUID, actionFeedSubscriptionDelete) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if err := fc.feedService.DeleteSubscription(user.UUID, subscriptionUUID); err != nil {
+			log.Error().Err(err).Msg("failed to delete feed subscription")
+			view.PutFlashError(w, "failed to delete feed subscription")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		http.Redirect(w, r, "/feeds", http.StatusSeeOther)
 	}
 }

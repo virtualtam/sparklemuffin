@@ -565,6 +565,35 @@ func (r *Repository) FeedSubscriptionAdd(s feed.Subscription) error {
 	return r.add("feeds", "FeedSubscriptionAdd", query, args)
 }
 
+func (r *Repository) FeedSubscriptionDelete(userUUID string, subscriptionUUID string) error {
+	ctx := context.Background()
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "feeds", "FeedSubscriptionDelete")
+
+	commandTag, err := tx.Exec(
+		context.Background(),
+		"DELETE FROM feed_subscriptions WHERE user_uuid=$1 AND uuid=$2",
+		userUUID,
+		subscriptionUUID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected := commandTag.RowsAffected()
+
+	if rowsAffected != 1 {
+		return feed.ErrSubscriptionNotFound
+	}
+
+	return tx.Commit(ctx)
+}
+
 func (r *Repository) FeedSubscriptionGetByFeed(userUUID string, feedUUID string) (feed.Subscription, error) {
 	query := `
 	SELECT uuid, category_uuid, feed_uuid, user_uuid, created_at, updated_at
@@ -572,6 +601,17 @@ func (r *Repository) FeedSubscriptionGetByFeed(userUUID string, feedUUID string)
 	WHERE feed_uuid=$1`
 
 	return r.feedSubscriptionGetQuery(query, feedUUID)
+}
+
+func (r *Repository) FeedSubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (feedquerying.SubscriptionTitle, error) {
+	query := `
+SELECT fs.uuid, f.title
+FROM feed_subscriptions fs
+JOIN feed_feeds f ON f.uuid = fs.feed_uuid
+WHERE fs.user_uuid=$1
+AND fs.uuid=$2`
+
+	return r.feedSubscriptionTitleGetQuery(query, userUUID, subscriptionUUID)
 }
 
 func (r *Repository) FeedSubscriptionTitlesByCategory(userUUID string) ([]feedquerying.SubscriptionsTitlesByCategory, error) {

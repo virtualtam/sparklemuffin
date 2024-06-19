@@ -142,6 +142,10 @@ func (s *Service) Subscribe(userUUID string, categoryUUID string, feedURL string
 	return nil
 }
 
+func (s *Service) DeleteSubscription(userUUID string, subscriptionUUID string) error {
+	return s.r.FeedSubscriptionDelete(userUUID, subscriptionUUID)
+}
+
 func (s *Service) SubscriptionByFeed(userUUID string, feedUUID string) (Subscription, error) {
 	return s.r.FeedSubscriptionGetByFeed(userUUID, feedUUID)
 }

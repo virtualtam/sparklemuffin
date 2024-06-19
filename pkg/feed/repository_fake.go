@@ -167,6 +167,18 @@ func (r *fakeRepository) FeedSubscriptionAdd(subscription Subscription) error {
 	return nil
 }
 
+func (r *fakeRepository) FeedSubscriptionDelete(userUUID string, subscriptionUUID string) error {
+	for index, s := range r.Subscriptions {
+		if s.UserUUID == userUUID && s.UUID == subscriptionUUID {
+			r.Subscriptions = append(r.Subscriptions[:index], r.Subscriptions[index+1:]...)
+
+			return nil
+		}
+	}
+
+	return ErrSubscriptionNotFound
+}
+
 func (r *fakeRepository) FeedSubscriptionGetByFeed(userUUID string, feedUUID string) (Subscription, error) {
 	for _, subscription := range r.Subscriptions {
 		if subscription.UserUUID == userUUID && subscription.FeedUUID == feedUUID {

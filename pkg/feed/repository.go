@@ -58,6 +58,9 @@ type Repository interface {
 	// FeedSubscriptionAdd creates a new Feed subscription for a given user.
 	FeedSubscriptionAdd(subscription Subscription) error
 
+	// FeedSubscriptionDelete deletes a given Feed subscription.
+	FeedSubscriptionDelete(userUUID string, subscriptionUUID string) error
+
 	// FeedSubscriptionGetByFeed returns the Subscription for a giver user and feed.
 	FeedSubscriptionGetByFeed(userUUID string, feedUUID string) (Subscription, error)
 }

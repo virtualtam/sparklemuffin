@@ -10,6 +10,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
+	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 )
 
 func (r *Repository) feedGetQuery(query string, queryParams ...any) (feed.Feed, error) {
@@ -105,17 +106,37 @@ func (r *Repository) feedSubscriptionGetQuery(query string, queryParams ...any) 
 	}
 	defer rows.Close()
 
-	dbFeed := &DBSubscription{}
-	err = pgxscan.ScanOne(dbFeed, rows)
+	dbSubscription := &DBSubscription{}
+	err = pgxscan.ScanOne(dbSubscription, rows)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return feed.Subscription{}, feed.ErrFeedNotFound
+		return feed.Subscription{}, feed.ErrSubscriptionNotFound
 	}
 	if err != nil {
 		return feed.Subscription{}, err
 	}
 
-	return dbFeed.asSubscription(), nil
+	return dbSubscription.asSubscription(), nil
+}
+
+func (r *Repository) feedSubscriptionTitleGetQuery(query string, queryParams ...any) (feedquerying.SubscriptionTitle, error) {
+	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	if err != nil {
+		return feedquerying.SubscriptionTitle{}, err
+	}
+	defer rows.Close()
+
+	dbSubscriptionTitle := &DBSubscriptionTitle{}
+	err = pgxscan.ScanOne(dbSubscriptionTitle, rows)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return feedquerying.SubscriptionTitle{}, feed.ErrSubscriptionNotFound
+	}
+	if err != nil {
+		return feedquerying.SubscriptionTitle{}, err
+	}
+
+	return dbSubscriptionTitle.asSubscriptionTitle(), nil
 }
 
 func (r *Repository) feedGetSubscriptionTitlesByCategory(userUUID string, categoryUUID string) ([]DBSubscriptionTitle, error) {

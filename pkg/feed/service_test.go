@@ -388,10 +388,10 @@ func TestServiceDeleteCategory(t *testing.T) {
 
 		for i := 0; i < 5; i++ {
 			feed := Feed{
-				UUID:  fake.UUID().V4(),
-				URL:   fake.Internet().URL(),
-				Title: fake.Lorem().Text(10),
-				Slug:  fake.Internet().Slug(),
+				UUID:    fake.UUID().V4(),
+				FeedURL: fake.Internet().URL(),
+				Title:   fake.Lorem().Text(10),
+				Slug:    fake.Internet().Slug(),
 			}
 			feeds = append(feeds, feed)
 
@@ -637,7 +637,7 @@ func TestServiceCreateEntries(t *testing.T) {
 			r := &fakeRepository{}
 			s := NewService(r, nil)
 
-			got, err := s.createEntries(feedUUID, tc.feedItems)
+			err := s.createEntries(feedUUID, tc.feedItems)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -653,13 +653,13 @@ func TestServiceCreateEntries(t *testing.T) {
 				t.Fatalf("want no error, got %q", err)
 			}
 
-			assertEntriesEqual(t, got, tc.want)
+			assertEntriesEqual(t, r.Entries, tc.want)
 		})
 	}
 }
 
 func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
-	testClient := &http.Client{
+	testHTTPClient := &http.Client{
 		Transport: testRoundTripper{},
 	}
 
@@ -791,9 +791,9 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 				Entries: tc.repositoryEntries,
 				Feeds:   tc.repositoryFeeds,
 			}
-			s := NewService(r, testClient)
+			s := NewService(r, testHTTPClient)
 
-			gotFeed, gotEntries, err := s.getOrCreateFeedAndEntries(tc.feedURL)
+			gotFeed, err := s.getOrCreateFeedAndEntries(tc.feedURL)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -815,7 +815,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			}
 
 			assertFeedEquals(t, gotFeed, tc.wantFeed)
-			assertEntriesEqual(t, gotEntries, tc.wantEntries)
+			assertEntriesEqual(t, r.Entries, tc.wantEntries)
 		})
 	}
 }
@@ -914,10 +914,10 @@ func TestServiceDeleteSubscription(t *testing.T) {
 		entries := []Entry{}
 
 		feed := Feed{
-			UUID:  fake.UUID().V4(),
-			URL:   fake.Internet().URL(),
-			Title: fake.Lorem().Text(10),
-			Slug:  fake.Internet().Slug(),
+			UUID:    fake.UUID().V4(),
+			FeedURL: fake.Internet().URL(),
+			Title:   fake.Lorem().Text(10),
+			Slug:    fake.Internet().Slug(),
 		}
 
 		subscription := Subscription{

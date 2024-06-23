@@ -183,8 +183,8 @@ func assertSubscribedFeedsEqual(t *testing.T, categoryIndex int, got []Subscribe
 		if gotSubscribedFeed.Title != wantSubscribedFeed.Title {
 			t.Errorf("want Title %q, got %q", wantSubscribedFeed.Title, gotSubscribedFeed.Title)
 		}
-		if gotSubscribedFeed.URL != wantSubscribedFeed.URL {
-			t.Errorf("want URL %q, got %q", wantSubscribedFeed.URL, gotSubscribedFeed.URL)
+		if gotSubscribedFeed.FeedURL != wantSubscribedFeed.FeedURL {
+			t.Errorf("want FeedURL %q, got %q", wantSubscribedFeed.FeedURL, gotSubscribedFeed.FeedURL)
 		}
 
 		assert.TimeEquals(t, "CreatedAt", gotSubscribedFeed.CreatedAt, wantSubscribedFeed.CreatedAt)

@@ -125,7 +125,7 @@ func (s *Service) FeedBySlug(userUUID string, slug string) (Feed, error) {
 // Subscribe creates a new Feed if needed, and adds the corresponding Subscription
 // for a given user.
 func (s *Service) Subscribe(userUUID string, categoryUUID string, feedURL string) error {
-	feed, _, err := s.getOrCreateFeedAndEntries(feedURL)
+	feed, err := s.getOrCreateFeedAndEntries(feedURL)
 	if err != nil {
 		return fmt.Errorf("failed to create or retrieve feed: %w", err)
 	}
@@ -164,28 +164,13 @@ func (s *Service) UpdateSubscription(subscription Subscription) error {
 	return s.r.FeedSubscriptionUpdate(subscriptionToUpdate)
 }
 
-func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) ([]Entry, error) {
+func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) error {
 	var entries []Entry
 	now := time.Now().UTC()
 
 	for _, item := range items {
-		publishedAt := now
-		if item.PublishedParsed != nil {
-			publishedAt = *item.PublishedParsed
-		}
+		entry := NewEntryFromItem(feedUUID, now, item)
 
-		updatedAt := publishedAt
-		if item.UpdatedParsed != nil {
-			updatedAt = *item.UpdatedParsed
-		}
-
-		entry := NewEntry(
-			feedUUID,
-			item.Link,
-			item.Title,
-			publishedAt,
-			updatedAt,
-		)
 		if err := entry.ValidateForAddition(); err != nil {
 			log.Warn().Err(err).Msg("skipping invalid entry")
 			continue
@@ -196,19 +181,19 @@ func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) ([]Entry,
 
 	n, err := s.r.FeedEntryAddMany(entries)
 	if err != nil {
-		return []Entry{}, err
+		return err
 	}
 	if n != int64(len(entries)) {
-		return []Entry{}, fmt.Errorf("feed: %d entries created, %d expected", n, len(entries))
+		return fmt.Errorf("feed: %d entries created, %d expected", n, len(entries))
 	}
 
-	return entries, nil
+	return nil
 }
 
-func (s *Service) createFeedAndEntries(feed Feed) (Feed, []Entry, error) {
+func (s *Service) createFeedAndEntries(feed Feed) (Feed, error) {
 	syndicationFeed, err := s.feedParser.ParseURL(feed.FeedURL)
 	if err != nil {
-		return Feed{}, []Entry{}, err
+		return Feed{}, err
 	}
 
 	feed.Title = syndicationFeed.Title
@@ -216,56 +201,46 @@ func (s *Service) createFeedAndEntries(feed Feed) (Feed, []Entry, error) {
 	feed.Normalize()
 
 	if err := feed.ValidateForCreation(); err != nil {
-		return Feed{}, []Entry{}, err
+		return Feed{}, err
 	}
 
 	if err := s.r.FeedAdd(feed); err != nil {
-		return Feed{}, []Entry{}, err
+		return Feed{}, err
 	}
 
-	entries, err := s.createEntries(feed.UUID, syndicationFeed.Items)
-	if err != nil {
-		return Feed{}, []Entry{}, err
+	if err := s.createEntries(feed.UUID, syndicationFeed.Items); err != nil {
+		return Feed{}, err
 	}
 
-	return feed, entries, nil
+	return feed, nil
 }
 
-func (s *Service) getOrCreateFeedAndEntries(feedURL string) (Feed, []Entry, error) {
+func (s *Service) getOrCreateFeedAndEntries(feedURL string) (Feed, error) {
 	newFeed, err := NewFeed(feedURL)
 	if err != nil {
-		return Feed{}, []Entry{}, err
+		return Feed{}, err
 	}
 
 	if err := newFeed.ValidateURL(); err != nil {
-		return Feed{}, []Entry{}, err
+		return Feed{}, err
 	}
 
 	var feed Feed
-	var entries []Entry
 
 	// Attempt to retrieve an existing feed
 	feed, err = s.r.FeedGetByURL(newFeed.FeedURL)
-	if err == nil {
-		// Retrieve at most 10 existing entries for this feed
-		var err2 error
-		entries, err2 = s.r.FeedEntryGetN(feed.UUID, 10)
-		if err2 != nil {
-			return Feed{}, []Entry{}, err2
-		}
-
-	} else if errors.Is(err, ErrFeedNotFound) {
+	if errors.Is(err, ErrFeedNotFound) {
 		// Else, create it
-		feed, entries, err = s.createFeedAndEntries(newFeed)
+		feed, err = s.createFeedAndEntries(newFeed)
 		if err != nil {
-			return Feed{}, []Entry{}, err
+			return Feed{}, err
 		}
 
-	} else {
-		return Feed{}, []Entry{}, err
+	} else if err != nil {
+		return Feed{}, err
 	}
 
-	return feed, entries, nil
+	return feed, nil
 }
 
 func (s *Service) createSubscription(subscription Subscription) error {

@@ -41,10 +41,10 @@ var (
 		},
 		Feeds: []feed.Feed{
 			{
-				UUID:  "04f7dcbc-7080-4ca9-9000-aeac3f62dfb5",
-				URL:   "http://test.local/feed.atom",
-				Title: "Local Test",
-				Slug:  "local-test",
+				UUID:    "04f7dcbc-7080-4ca9-9000-aeac3f62dfb5",
+				FeedURL: "http://test.local/feed.atom",
+				Title:   "Local Test",
+				Slug:    "local-test",
 			},
 		},
 		Subscriptions: []feed.Subscription{
@@ -77,10 +77,10 @@ var (
 			SubscribedFeeds: []SubscribedFeed{
 				{
 					Feed: feed.Feed{
-						UUID:  "04f7dcbc-7080-4ca9-9000-aeac3f62dfb5",
-						URL:   "http://test.local/feed.atom",
-						Title: "Local Test",
-						Slug:  "local-test",
+						UUID:    "04f7dcbc-7080-4ca9-9000-aeac3f62dfb5",
+						FeedURL: "http://test.local/feed.atom",
+						Title:   "Local Test",
+						Slug:    "local-test",
 					},
 					Unread: 1,
 				},
@@ -113,10 +113,10 @@ func TestServiceFeedsByPage(t *testing.T) {
 		},
 		Feeds: []feed.Feed{
 			{
-				UUID:  "04f7dcbc-7080-4ca9-9000-aeac3f62dfb5",
-				URL:   "http://test.local/feed.atom",
-				Title: "Local Test",
-				Slug:  "local-test",
+				UUID:    "04f7dcbc-7080-4ca9-9000-aeac3f62dfb5",
+				FeedURL: "http://test.local/feed.atom",
+				Title:   "Local Test",
+				Slug:    "local-test",
 			},
 		},
 		Subscriptions: []feed.Subscription{
@@ -177,10 +177,10 @@ func TestServiceFeedsByPage(t *testing.T) {
 						SubscribedFeeds: []SubscribedFeed{
 							{
 								Feed: feed.Feed{
-									UUID:  "04f7dcbc-7080-4ca9-9000-aeac3f62dfb5",
-									URL:   "http://test.local/feed.atom",
-									Title: "Local Test",
-									Slug:  "local-test",
+									UUID:    "04f7dcbc-7080-4ca9-9000-aeac3f62dfb5",
+									FeedURL: "http://test.local/feed.atom",
+									Title:   "Local Test",
+									Slug:    "local-test",
 								},
 								Unread: 1,
 							},

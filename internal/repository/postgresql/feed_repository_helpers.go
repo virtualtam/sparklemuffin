@@ -9,6 +9,7 @@ import (
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
+	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 )
@@ -31,6 +32,28 @@ func (r *Repository) feedGetQuery(query string, queryParams ...any) (feed.Feed, 
 	}
 
 	return dbFeed.asFeed(), nil
+}
+
+func (r *Repository) feedGetManyQuery(query string, queryParams ...any) ([]feed.Feed, error) {
+	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	if err != nil {
+		return []feed.Feed{}, err
+	}
+	defer rows.Close()
+
+	dbFeeds := []DBFeed{}
+
+	if err := pgxscan.ScanAll(&dbFeeds, rows); err != nil {
+		return []feed.Feed{}, err
+	}
+
+	feeds := make([]feed.Feed, len(dbFeeds))
+
+	for i, dbFeed := range dbFeeds {
+		feeds[i] = dbFeed.asFeed()
+	}
+
+	return feeds, nil
 }
 
 func (r *Repository) feedCategoryGetQuery(query string, queryParams ...any) (feed.Category, error) {
@@ -72,6 +95,69 @@ func (r *Repository) feedGetCategories(userUUID string) ([]DBCategory, error) {
 	}
 
 	return dbCategories, nil
+}
+
+func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string, entries []feed.Entry) (int64, error) {
+	insertQuery := `
+	INSERT INTO feed_entries(
+		uid,
+		feed_uuid,
+		url,
+		title,
+		published_at,
+		updated_at
+	)
+	VALUES(
+		@uid,
+		@feed_uuid,
+		@url,
+		@title,
+		@published_at,
+		@updated_at
+	)`
+
+	query := insertQuery + onConflictStmt
+
+	batch := &pgx.Batch{}
+
+	for _, entry := range entries {
+		args := pgx.NamedArgs{
+			"uid":          entry.UID,
+			"feed_uuid":    entry.FeedUUID,
+			"url":          entry.URL,
+			"title":        entry.Title,
+			"published_at": entry.PublishedAt,
+			"updated_at":   entry.UpdatedAt,
+		}
+
+		batch.Queue(query, args)
+	}
+
+	ctx := context.Background()
+
+	batchResults := r.pool.SendBatch(ctx, batch)
+	defer func() {
+		if err := batchResults.Close(); err != nil {
+			log.Error().
+				Err(err).
+				Str("domain", "feeds").
+				Str("operation", operation).
+				Msg("failed to close batch results")
+		}
+	}()
+
+	var rowsAffected int64
+
+	for i := 0; i < len(entries); i++ {
+		commandTag, qerr := batchResults.Exec()
+		if qerr != nil {
+			return 0, qerr
+		}
+
+		rowsAffected += commandTag.RowsAffected()
+	}
+
+	return rowsAffected, nil
 }
 
 func (r *Repository) feedGetSubscriptionsByCategory(userUUID string, categoryUUID string) ([]DBSubscribedFeed, error) {

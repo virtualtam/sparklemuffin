@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS feed_entries(
     url         TEXT NOT NULL,
     title       TEXT NOT NULL,
 
-    CONSTRAINT fk_feed FOREIGN KEY(feed_uuid) REFERENCES feed_feeds(uuid) ON DELETE CASCADE
+    CONSTRAINT fk_feed FOREIGN KEY(feed_uuid) REFERENCES feed_feeds(uuid) ON DELETE CASCADE,
+    CONSTRAINT unique_feed_url UNIQUE(feed_uuid, url)
 );
 
 CREATE TABLE IF NOT EXISTS feed_categories(

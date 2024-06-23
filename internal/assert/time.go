@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+const (
+	// TimeComparisonDelta provides a sensible default when comparing datetimes in tests.
+	TimeComparisonDelta time.Duration = 1 * time.Second
+)
+
 // TimeAlmostEquals checks whether two dates are almost equal.
 //
 // This helper should be used in tests covering data insertion and retrieval.

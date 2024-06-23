@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -29,6 +30,7 @@ import (
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
+	feedsynchronizing "github.com/virtualtam/sparklemuffin/pkg/feed/synchronizing"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -73,6 +75,7 @@ var (
 	bookmarkQueryingService  *bookmarkquerying.Service
 	feedService              *feed.Service
 	feedQueryingService      *feedquerying.Service
+	feedSynchronizingService *feedsynchronizing.Service
 	sessionService           *session.Service
 	userService              *user.Service
 )
@@ -162,13 +165,21 @@ func NewRootCommand() *cobra.Command {
 			// Main database repository
 			repository := postgresql.NewRepository(pgxPool)
 
+			// HTTP client used to perform requests
+			httpClient := &http.Client{
+				Timeout: 30 * time.Second,
+			}
+
 			// SparkleMuffin services
 			bookmarkService = bookmark.NewService(repository)
 			bookmarkExportingService = bookmarkexporting.NewService(repository)
 			bookmarkImportingService = bookmarkimporting.NewService(repository)
 			bookmarkQueryingService = bookmarkquerying.NewService(repository)
-			feedService = feed.NewService(repository, &http.Client{})
+
+			feedService = feed.NewService(repository, httpClient)
 			feedQueryingService = feedquerying.NewService(repository)
+			feedSynchronizingService = feedsynchronizing.NewService(repository, httpClient)
+
 			sessionService = session.NewService(repository, hmacKey)
 			userService = user.NewService(repository)
 

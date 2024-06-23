@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mmcdole/gofeed"
 	"github.com/segmentio/ksuid"
 )
 
@@ -39,6 +40,27 @@ func NewEntry(feedUUID string, URL string, Title string, PublishedAt time.Time, 
 	entry.Normalize()
 
 	return entry
+}
+
+// NewEntryFromItem creates and initializes a new Entry from a gofeed.Item.
+func NewEntryFromItem(feedUUID string, now time.Time, item *gofeed.Item) Entry {
+	publishedAt := now
+	if item.PublishedParsed != nil {
+		publishedAt = *item.PublishedParsed
+	}
+
+	updatedAt := publishedAt
+	if item.UpdatedParsed != nil {
+		updatedAt = *item.UpdatedParsed
+	}
+
+	return NewEntry(
+		feedUUID,
+		item.Link,
+		item.Title,
+		publishedAt,
+		updatedAt,
+	)
 }
 
 // Normalize sanitizes and normalizes all fields.

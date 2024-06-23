@@ -5,16 +5,18 @@ package postgresql
 
 import (
 	"context"
+	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
-	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
+	feedsynchronizing "github.com/virtualtam/sparklemuffin/pkg/feed/synchronizing"
 )
 
 var _ feed.Repository = &Repository{}
 var _ feedquerying.Repository = &Repository{}
+var _ feedsynchronizing.Repository = &Repository{}
 
 func (r *Repository) FeedAdd(f feed.Feed) error {
 	query := `
@@ -72,6 +74,48 @@ FROM feed_feeds
 WHERE uuid=$1`
 
 	return r.feedGetQuery(query, feedUUID)
+}
+
+func (r *Repository) FeedGetNByLastSynchronizationTime(n uint, before time.Time) ([]feed.Feed, error) {
+	return r.feedGetManyQuery(
+		`
+		SELECT f.uuid, f.feed_url, f.title, f.slug
+		FROM feed_feeds f
+		INNER JOIN feed_subscriptions fs ON f.uuid = fs.feed_uuid
+		WHERE fetched_at < $1
+		OR fetched_at IS NULL
+		LIMIT $2`,
+		before,
+		n,
+	)
+}
+
+func (r *Repository) FeedUpdateFetchedAt(feed feed.Feed) error {
+	query := `
+	UPDATE feed_feeds
+	SET fetched_at=@fetched_at
+	WHERE uuid=@uuid`
+
+	args := pgx.NamedArgs{
+		"uuid":       feed.UUID,
+		"fetched_at": feed.FetchedAt,
+	}
+
+	ctx := context.Background()
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.rollback(ctx, tx, "feeds", "FeedUpdateFetchedAt")
+
+	_, err = tx.Exec(ctx, query, args)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *Repository) FeedCategoryAdd(c feed.Category) error {
@@ -240,64 +284,20 @@ func (r *Repository) FeedCategoryUpdate(c feed.Category) error {
 }
 
 func (r *Repository) FeedEntryAddMany(entries []feed.Entry) (int64, error) {
-	query := `
-	INSERT INTO feed_entries(
-		uid,
-		feed_uuid,
-		url,
-		title,
-		published_at,
-		updated_at
+	return r.feedEntryUpsertMany("FeedEntryAddMany", "ON CONFLICT DO NOTHING", entries)
+}
+
+func (r *Repository) FeedEntryUpsertMany(entries []feed.Entry) (int64, error) {
+	return r.feedEntryUpsertMany(
+		"FeedEntryUpsertMany",
+		`
+		ON CONFLICT (feed_uuid, url) DO UPDATE
+		SET
+			title              = EXCLUDED.title,
+			updated_at         = EXCLUDED.updated_at
+		`,
+		entries,
 	)
-	VALUES(
-		@uid,
-		@feed_uuid,
-		@url,
-		@title,
-		@published_at,
-		@updated_at
-	)`
-
-	batch := &pgx.Batch{}
-
-	for _, entry := range entries {
-		args := pgx.NamedArgs{
-			"uid":          entry.UID,
-			"feed_uuid":    entry.FeedUUID,
-			"url":          entry.URL,
-			"title":        entry.Title,
-			"published_at": entry.PublishedAt,
-			"updated_at":   entry.UpdatedAt,
-		}
-
-		batch.Queue(query, args)
-	}
-
-	ctx := context.Background()
-
-	batchResults := r.pool.SendBatch(ctx, batch)
-	defer func() {
-		if err := batchResults.Close(); err != nil {
-			log.Error().
-				Err(err).
-				Str("domain", "feeds").
-				Str("operation", "FeedEntryAddMany").
-				Msg("failed to close batch results")
-		}
-	}()
-
-	var rowsAffected int64
-
-	for i := 0; i < len(entries); i++ {
-		commandTag, qerr := batchResults.Exec()
-		if qerr != nil {
-			return 0, qerr
-		}
-
-		rowsAffected += commandTag.RowsAffected()
-	}
-
-	return rowsAffected, nil
 }
 
 func (r *Repository) FeedEntryGetN(feedUUID string, n uint) ([]feed.Entry, error) {

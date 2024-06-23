@@ -5,13 +5,8 @@ package feed
 
 import (
 	"testing"
-	"time"
 
 	"github.com/virtualtam/sparklemuffin/internal/assert"
-)
-
-const (
-	feedDateComparisonDelta time.Duration = 1 * time.Second
 )
 
 func assertFeedEquals(t *testing.T, got, want Feed) {
@@ -27,7 +22,7 @@ func assertFeedEquals(t *testing.T, got, want Feed) {
 		t.Errorf("want FeedURL %q, got %q", want.FeedURL, got.FeedURL)
 	}
 
-	assert.TimeAlmostEquals(t, "CreatedAt", got.CreatedAt, want.CreatedAt, feedDateComparisonDelta)
-	assert.TimeAlmostEquals(t, "UpdatedAt", got.UpdatedAt, want.UpdatedAt, feedDateComparisonDelta)
-	assert.TimeAlmostEquals(t, "FetchedAt", got.FetchedAt, want.FetchedAt, feedDateComparisonDelta)
+	assert.TimeAlmostEquals(t, "CreatedAt", got.CreatedAt, want.CreatedAt, assert.TimeComparisonDelta)
+	assert.TimeAlmostEquals(t, "UpdatedAt", got.UpdatedAt, want.UpdatedAt, assert.TimeComparisonDelta)
+	assert.TimeAlmostEquals(t, "FetchedAt", got.FetchedAt, want.FetchedAt, assert.TimeComparisonDelta)
 }

@@ -15,6 +15,7 @@ func main() {
 		command.NewCreateAdminUserCommand(),
 		command.NewMigrateCommand(),
 		command.NewRunCommand(),
+		command.NewSyncFeedsCommand(),
 		command.NewVersionCommand(),
 	}
 

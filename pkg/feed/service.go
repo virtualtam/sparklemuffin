@@ -172,7 +172,12 @@ func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) error {
 		entry := NewEntryFromItem(feedUUID, now, item)
 
 		if err := entry.ValidateForAddition(); err != nil {
-			log.Warn().Err(err).Msg("skipping invalid entry")
+			log.
+				Warn().
+				Err(err).
+				Str("feed_uuid", entry.FeedUUID).
+				Str("entry_url", entry.URL).
+				Msg("feeds: skipping invalid entry")
 			continue
 		}
 

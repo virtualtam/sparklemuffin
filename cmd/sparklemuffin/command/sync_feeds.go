@@ -20,7 +20,7 @@ func NewSyncFeedsCommand() *cobra.Command {
 				Str("version", versioninfo.Short()).
 				Msg("feeds: synchronizing")
 
-			return feedSynchronizingService.Run()
+			return feedSynchronizingService.Synchronize("cli")
 		},
 	}
 

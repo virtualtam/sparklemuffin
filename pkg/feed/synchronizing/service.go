@@ -36,8 +36,8 @@ func NewService(r Repository, httpClient *http.Client) *Service {
 	}
 }
 
-// Run synchronizes syndication feeds for all users.
-func (s *Service) Run() error {
+// Synchronize synchronizes syndication feeds for all users.
+func (s *Service) Synchronize(jobID string) error {
 	lastSyncBefore := time.Now().UTC().Add(-minFeedAge)
 
 	// 1. List all feeds that have last been synchronized before a given time.Time
@@ -63,20 +63,28 @@ func (s *Service) Run() error {
 			// 3.1 Fetch entries
 			// 3.2 Upsert entries
 			// 3.3 Update FetchedAt date
-			return s.synchronizeFeed(workerFeed)
+			return s.synchronizeFeed(workerFeed, jobID)
 		})
 	}
 
 	if err := workerPool.Wait(); err != nil {
-		log.Error().Err(err).Msg("feeds: failed to synchronize some feeds")
+		log.
+			Error().
+			Err(err).
+			Str("job_id", jobID).
+			Msg("feeds: failed to synchronize some feeds")
 		return err
 	}
 
 	return nil
 }
 
-func (s *Service) synchronizeFeed(feed feed.Feed) error {
-	log.Info().Str("feed_url", feed.FeedURL).Msg("feeds: synchronizing")
+func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
+	log.
+		Info().
+		Str("feed_url", feed.FeedURL).
+		Str("job_id", jobID).
+		Msg("feeds: synchronizing")
 
 	now := time.Now().UTC()
 
@@ -92,6 +100,7 @@ func (s *Service) synchronizeFeed(feed feed.Feed) error {
 
 	log.Info().
 		Str("feed_url", feed.FeedURL).
+		Str("job_id", jobID).
 		Int64("n_entries", rowsAffected).
 		Msg("feeds: entries created or updated")
 

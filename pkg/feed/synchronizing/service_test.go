@@ -17,7 +17,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 )
 
-func TestServiceRun(t *testing.T) {
+func TestServiceSynchronize(t *testing.T) {
 	fake := faker.New()
 
 	now := time.Now().UTC()
@@ -278,7 +278,7 @@ func TestServiceRun(t *testing.T) {
 
 			s := NewService(r, feedHTTPClient)
 
-			err := s.Run()
+			err := s.Synchronize(tc.tname)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

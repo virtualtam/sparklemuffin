@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/carlmjohnson/versioninfo"
@@ -14,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/metrics"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www"
+	feedsynchronizing "github.com/virtualtam/sparklemuffin/pkg/feed/synchronizing"
 )
 
 const (
@@ -45,7 +47,15 @@ func NewRunCommand() *cobra.Command {
 				Str("version", versioninfo.Short()).
 				Msg("global: setting up services")
 
-			// Metrics server
+			// Periodic tasks
+			var feedSynchronizingLocker sync.Mutex
+			feedSynchronizingScheduler := feedsynchronizing.NewScheduler(
+				feedSynchronizingService,
+				&feedSynchronizingLocker,
+			)
+			go feedSynchronizingScheduler.Run()
+
+			// HTTP - Metrics server
 			metricsServer, metricsRegistry := metrics.NewServer(rootCmdName, metricsListenAddr, versionDetails)
 
 			go func() {
@@ -56,7 +66,7 @@ func NewRunCommand() *cobra.Command {
 				}
 			}()
 
-			// SparkleMuffin server
+			// HTTP - SparkleMuffin server
 			publicURL, err := url.Parse(publicHTTPAddr)
 			if err != nil {
 				return fmt.Errorf("%s: failed to parse public HTTP address: %w", rootCmdName, err)

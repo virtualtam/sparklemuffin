@@ -43,7 +43,7 @@ func RegisterFeedHandlers(
 		feedQueryingService: feedQueryingService,
 		userService:         userService,
 
-		feedListView: view.New("feed/list.gohtml"),
+		feedListView: view.New("feed/feed_list.gohtml"),
 		feedAddView:  view.New("feed/feed_add.gohtml"),
 
 		feedCategoryAddView:    view.New("feed/category_add.gohtml"),

@@ -64,7 +64,7 @@ func (r *Repository) rowExistsByQuery(query string, queryParams ...any) (bool, e
 	return true, nil
 }
 
-func (r *Repository) add(domain string, operation string, query string, args pgx.NamedArgs) error {
+func (r *Repository) queryTx(domain string, operation string, query string, args pgx.NamedArgs) error {
 	ctx := context.Background()
 
 	tx, err := r.pool.Begin(ctx)

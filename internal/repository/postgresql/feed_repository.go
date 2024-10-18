@@ -46,7 +46,7 @@ func (r *Repository) FeedAdd(f feed.Feed) error {
 		"updated_at": f.UpdatedAt,
 	}
 
-	return r.add("feeds", "FeedAdd", query, args)
+	return r.queryTx("feeds", "FeedAdd", query, args)
 }
 
 func (r *Repository) FeedGetBySlug(feedSlug string) (feed.Feed, error) {
@@ -101,21 +101,7 @@ func (r *Repository) FeedUpdateFetchedAt(feed feed.Feed) error {
 		"fetched_at": feed.FetchedAt,
 	}
 
-	ctx := context.Background()
-
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer r.rollback(ctx, tx, "feeds", "FeedUpdateFetchedAt")
-
-	_, err = tx.Exec(ctx, query, args)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return r.queryTx("feeds", "FeedUpdateFetchedAt", query, args)
 }
 
 func (r *Repository) FeedCategoryAdd(c feed.Category) error {
@@ -146,7 +132,7 @@ func (r *Repository) FeedCategoryAdd(c feed.Category) error {
 		"updated_at": c.UpdatedAt,
 	}
 
-	return r.add("feeds", "FeedCategoryAdd", query, args)
+	return r.queryTx("feeds", "FeedCategoryAdd", query, args)
 }
 
 func (r *Repository) FeedCategoryDelete(userUUID string, categoryUUID string) error {
@@ -266,21 +252,7 @@ func (r *Repository) FeedCategoryUpdate(c feed.Category) error {
 		"updated_at": c.UpdatedAt,
 	}
 
-	ctx := context.Background()
-
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer r.rollback(ctx, tx, "feeds", "FeedCategoryUpdate")
-
-	_, err = tx.Exec(ctx, query, args)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return r.queryTx("feeds", "FeedCategoryUpdate", query, args)
 }
 
 func (r *Repository) FeedEntryAddMany(entries []feed.Entry) (int64, error) {
@@ -562,7 +534,7 @@ func (r *Repository) FeedSubscriptionAdd(s feed.Subscription) error {
 		"updated_at":    s.UpdatedAt,
 	}
 
-	return r.add("feeds", "FeedSubscriptionAdd", query, args)
+	return r.queryTx("feeds", "FeedSubscriptionAdd", query, args)
 }
 
 func (r *Repository) FeedSubscriptionDelete(userUUID string, subscriptionUUID string) error {
@@ -628,21 +600,7 @@ func (r *Repository) FeedSubscriptionUpdate(s feed.Subscription) error {
 		"updated_at":    s.UpdatedAt,
 	}
 
-	ctx := context.Background()
-
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer r.rollback(ctx, tx, "feeds", "FeedSubscriptionUpdate")
-
-	_, err = tx.Exec(ctx, query, args)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return r.queryTx("feeds", "FeedSubscriptionUpdate", query, args)
 }
 
 func (r *Repository) FeedSubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (feedquerying.SubscriptionTitle, error) {

@@ -40,7 +40,7 @@ func (r *Repository) SessionAdd(sess session.Session) error {
 		"remember_token_expires_at": sess.RememberTokenExpiresAt,
 	}
 
-	return r.add("sessions", "SessionAdd", query, args)
+	return r.queryTx("sessions", "SessionAdd", query, args)
 }
 
 func (r *Repository) SessionGetByRememberTokenHash(hash string) (session.Session, error) {

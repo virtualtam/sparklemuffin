@@ -61,21 +61,7 @@ func (r *Repository) UserAdd(u user.User) error {
 		"updated_at":    u.UpdatedAt,
 	}
 
-	ctx := context.Background()
-
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer r.rollback(ctx, tx, "users", "add")
-
-	_, err = tx.Exec(ctx, query, args)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return r.queryTx("users", "UserAdd", query, args)
 }
 
 func (r *Repository) UserDeleteByUUID(userUUID string) error {
@@ -239,21 +225,7 @@ func (r *Repository) UserUpdate(u user.User) error {
 		"updated_at":    u.UpdatedAt,
 	}
 
-	ctx := context.Background()
-
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer r.rollback(ctx, tx, "users", "update")
-
-	_, err = tx.Exec(ctx, query, args)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return r.queryTx("users", "UserUpdate", query, args)
 }
 
 func (r *Repository) UserUpdateInfo(info user.InfoUpdate) error {
@@ -274,21 +246,7 @@ func (r *Repository) UserUpdateInfo(info user.InfoUpdate) error {
 		"updated_at":   info.UpdatedAt,
 	}
 
-	ctx := context.Background()
-
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer r.rollback(ctx, tx, "users", "update_info")
-
-	_, err = tx.Exec(ctx, query, args)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return r.queryTx("users", "UserUpdateInfo", query, args)
 }
 
 func (r *Repository) UserUpdatePasswordHash(passwordHash user.PasswordHashUpdate) error {
@@ -305,19 +263,5 @@ func (r *Repository) UserUpdatePasswordHash(passwordHash user.PasswordHashUpdate
 		"updated_at":    passwordHash.UpdatedAt,
 	}
 
-	ctx := context.Background()
-
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer r.rollback(ctx, tx, "users", "update_password_hash")
-
-	_, err = tx.Exec(ctx, query, args)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return r.queryTx("users", "UserUpdatePasswordHash", query, args)
 }

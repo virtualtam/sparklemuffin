@@ -68,7 +68,7 @@ func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
 		"updated_at":            b.UpdatedAt,
 	}
 
-	return r.add("bookmarks", "BookmarkAdd", query, args)
+	return r.queryTx("bookmarks", "BookmarkAdd", query, args)
 }
 
 func (r *Repository) BookmarkAddMany(bookmarks []bookmark.Bookmark) (int64, error) {
@@ -418,21 +418,7 @@ func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
 		"updated_at":            b.UpdatedAt,
 	}
 
-	ctx := context.Background()
-
-	tx, err := r.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer r.rollback(ctx, tx, "bookmarks", "BookmarkUpdate")
-
-	_, err = tx.Exec(ctx, query, args)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return r.queryTx("bookmarks", "BookmarkUpdate", query, args)
 }
 
 func (r *Repository) OwnerGetByUUID(userUUID string) (bookmarkquerying.Owner, error) {

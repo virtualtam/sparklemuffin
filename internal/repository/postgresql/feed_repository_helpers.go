@@ -160,6 +160,28 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 	return rowsAffected, nil
 }
 
+func (r *Repository) feedSubscriptionEntryGetN(query string, queryParams ...any) ([]feedquerying.SubscribedFeedEntry, error) {
+	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	if err != nil {
+		return []feedquerying.SubscribedFeedEntry{}, err
+	}
+	defer rows.Close()
+
+	dbQueryingEntries := []DBQueryingEntry{}
+
+	if err := pgxscan.ScanAll(&dbQueryingEntries, rows); err != nil {
+		return []feedquerying.SubscribedFeedEntry{}, err
+	}
+
+	queryingEntries := make([]feedquerying.SubscribedFeedEntry, len(dbQueryingEntries))
+
+	for i, dbQueryingEntry := range dbQueryingEntries {
+		queryingEntries[i] = dbQueryingEntry.asQueryingEntry()
+	}
+
+	return queryingEntries, nil
+}
+
 func (r *Repository) feedGetSubscriptionsByCategory(userUUID string, categoryUUID string) ([]DBSubscribedFeed, error) {
 	query := `
 SELECT f.feed_url, f.title, f.slug, COUNT(*) AS unread

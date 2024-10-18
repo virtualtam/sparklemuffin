@@ -25,6 +25,17 @@ CREATE TABLE IF NOT EXISTS feed_entries(
     CONSTRAINT unique_feed_url UNIQUE(feed_uuid, url)
 );
 
+CREATE TABLE IF NOT EXISTS feed_entries_metadata(
+    user_uuid  UUID NOT NULL,
+    entry_uid  TEXT NOT NULL,
+
+    read       BOOLEAN NOT NULL DEFAULT FALSE,
+
+    CONSTRAINT fk_user FOREIGN KEY(user_uuid) REFERENCES users(uuid) ON DELETE CASCADE,
+    CONSTRAINT fk_entry FOREIGN KEY(entry_uid) REFERENCES feed_entries(uid) ON DELETE CASCADE,
+    CONSTRAINT pk_user_entry PRIMARY KEY(user_uuid, entry_uid)
+);
+
 CREATE TABLE IF NOT EXISTS feed_categories(
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),

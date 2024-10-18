@@ -36,10 +36,18 @@
     <ol start="{{.Offset}}">
       {{- range .Entries}}
       <li>
-        <div class="feed-entry">
+        <div class="feed-entry{{if .Read}} feed-entry-read{{end}}">
           <div class="title">
             <span><a href="{{.URL}}">{{.Title}}</a></span>
             <date>{{.PublishedAt.Format "2006-01-02"}}</date>
+          </div>
+          <div class="feed-entry-actions">
+            [
+            <form action="/feeds/entries/{{.UID}}/toggle-read" method="POST">
+              <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+              <button type=submit>mark as {{if .Read}}un{{end}}read</button>
+            </form>
+            ]
           </div>
         </div>
       </li>

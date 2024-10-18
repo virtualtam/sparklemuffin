@@ -78,6 +78,20 @@ func (e *DBEntry) asEntry() feed.Entry {
 	}
 }
 
+type DBEntryMetadata struct {
+	UserUUID string `db:"user_uuid"`
+	EntryUID string `db:"entry_uid"`
+	Read     bool   `db:"read"`
+}
+
+func (em *DBEntryMetadata) asEntryMetadata() feed.EntryMetadata {
+	return feed.EntryMetadata{
+		UserUUID: em.UserUUID,
+		EntryUID: em.EntryUID,
+		Read:     em.Read,
+	}
+}
+
 type DBQueryingEntry struct {
 	DBEntry
 

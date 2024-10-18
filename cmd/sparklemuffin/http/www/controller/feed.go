@@ -24,6 +24,7 @@ const (
 	actionFeedCategoryAdd        string = "feed-category-add"
 	actionFeedCategoryDelete     string = "feed-category-delete"
 	actionFeedCategoryEdit       string = "feed-category-edit"
+	actionFeedEntryMetadataEdit  string = "feed-entry-metadata-edit"
 	actionFeedSubscriptionAdd    string = "feed-subscription-add"
 	actionFeedSubscriptionDelete string = "feed-subscription-delete"
 	actionFeedSubscriptionEdit   string = "feed-subscription-edit"
@@ -74,6 +75,10 @@ func RegisterFeedHandlers(
 			sr.Post("/{uuid}/delete", fc.handleFeedCategoryDelete())
 			sr.Get("/{uuid}/edit", fc.handleFeedCategoryEditView())
 			sr.Post("/{uuid}/edit", fc.handleFeedCategoryEdit())
+		})
+
+		r.Route("/entries", func(sr chi.Router) {
+			sr.Post("/{uid}/toggle-read", fc.handleFeedEntryToggleRead())
 		})
 
 		r.Route("/subscriptions", func(sr chi.Router) {
@@ -181,6 +186,7 @@ func (fc *feedHandlerContext) handleFeedAdd() func(w http.ResponseWriter, r *htt
 func (fc *feedHandlerContext) handleFeedListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
+		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedEntryMetadataEdit)
 
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
@@ -199,8 +205,11 @@ func (fc *feedHandlerContext) handleFeedListView() func(w http.ResponseWriter, r
 		}
 
 		viewData := view.Data{
-			Title:   "Feeds",
-			Content: feedPage,
+			Title: "Feeds",
+			Content: feedQueryingPage{
+				FeedPage:  feedPage,
+				CSRFToken: csrfToken,
+			},
 		}
 
 		fc.feedListView.Render(w, r, viewData)
@@ -212,6 +221,7 @@ func (fc *feedHandlerContext) handleFeedListByCategoryView() func(w http.Respons
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 		categorySlug := chi.URLParam(r, "slug")
+		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedEntryMetadataEdit)
 
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
@@ -238,8 +248,11 @@ func (fc *feedHandlerContext) handleFeedListByCategoryView() func(w http.Respons
 		}
 
 		viewData := view.Data{
-			Title:   fmt.Sprintf("Feeds: %s", category.Name),
-			Content: feedPage,
+			Title: fmt.Sprintf("Feeds: %s", category.Name),
+			Content: feedQueryingPage{
+				FeedPage:  feedPage,
+				CSRFToken: csrfToken,
+			},
 		}
 
 		fc.feedListView.Render(w, r, viewData)
@@ -251,6 +264,7 @@ func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.Res
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 		feedSlug := chi.URLParam(r, "slug")
+		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedEntryMetadataEdit)
 
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
@@ -285,8 +299,11 @@ func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.Res
 		}
 
 		viewData := view.Data{
-			Title:   fmt.Sprintf("Feeds: %s", feed.Title),
-			Content: feedPage,
+			Title: fmt.Sprintf("Feeds: %s", feed.Title),
+			Content: feedQueryingPage{
+				FeedPage:  feedPage,
+				CSRFToken: csrfToken,
+			},
 		}
 
 		fc.feedListView.Render(w, r, viewData)
@@ -476,6 +493,41 @@ func (fc *feedHandlerContext) handleFeedCategoryEdit() func(w http.ResponseWrite
 		}
 
 		http.Redirect(w, r, "/feeds/subscriptions", http.StatusSeeOther)
+	}
+}
+
+func (fc *feedHandlerContext) handleFeedEntryToggleRead() func(w http.ResponseWriter, r *http.Request) {
+	type feedEntryReadForm struct {
+		CSRFToken string `schema:"csrf_token"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+		entryUID := chi.URLParam(r, "uid")
+
+		var form feedEntryReadForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed entry read toggle form")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if err := fc.feedService.ToggleEntryRead(ctxUser.UUID, entryUID); err != nil {
+			log.Error().Err(err).Msg("failed to set entry metadata")
+			view.PutFlashError(w, "failed to set entry metadata")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 	}
 }
 

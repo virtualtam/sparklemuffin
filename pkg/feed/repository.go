@@ -55,6 +55,15 @@ type Repository interface {
 	// FeedEntryGetN returns at most N entries for a given Feed.
 	FeedEntryGetN(feedUUID string, n uint) ([]Entry, error)
 
+	// FeedEntryMetadataAdd creates a new EntryStatus.
+	FeedEntryMetadataAdd(entryMetadata EntryMetadata) error
+
+	// FeedEntryMetadataGetByUID returns the EntryStatus for a given user and Entry.
+	FeedEntryMetadataGetByUID(userUUID string, entryUID string) (EntryMetadata, error)
+
+	// FeedEntryMetadataUpdate updates an existing EntryStatus.
+	FeedEntryMetadataUpdate(entryMetadata EntryMetadata) error
+
 	// FeedSubscriptionAdd creates a new Feed subscription for a given user.
 	FeedSubscriptionAdd(subscription Subscription) error
 

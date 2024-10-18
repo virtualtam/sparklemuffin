@@ -5,6 +5,7 @@ package postgresql
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
@@ -406,10 +407,78 @@ func (r *Repository) FeedEntryGetCountBySubscription(userUUID string, subscripti
 	return count, nil
 }
 
+func (r *Repository) FeedEntryMetadataAdd(entryMetadata feed.EntryMetadata) error {
+	query := `
+	INSERT INTO feed_entries_metadata(
+		user_uuid,
+		entry_uid,
+		read
+	)
+	VALUES(
+		@user_uuid,
+		@entry_uid,
+		@read
+	)
+	`
+
+	args := pgx.NamedArgs{
+		"user_uuid": entryMetadata.UserUUID,
+		"entry_uid": entryMetadata.EntryUID,
+		"read":      entryMetadata.Read,
+	}
+
+	return r.queryTx("feeds", "FeedEntryMetadataAdd", query, args)
+}
+
+func (r *Repository) FeedEntryMetadataGetByUID(userUUID string, entryUID string) (feed.EntryMetadata, error) {
+	query := `
+	SELECT user_uuid, entry_uid, read
+	FROM feed_entries_metadata
+	WHERE user_uuid=$1
+	AND   entry_uid=$2
+	`
+
+	rows, err := r.pool.Query(context.Background(), query, userUUID, entryUID)
+	if err != nil {
+		return feed.EntryMetadata{}, err
+	}
+	defer rows.Close()
+
+	dbEntryMetadata := &DBEntryMetadata{}
+	err = pgxscan.ScanOne(dbEntryMetadata, rows)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return feed.EntryMetadata{}, feed.ErrEntryMetadataNotFound
+	}
+	if err != nil {
+		return feed.EntryMetadata{}, err
+	}
+
+	return dbEntryMetadata.asEntryMetadata(), nil
+}
+
+func (r *Repository) FeedEntryMetadataUpdate(entryMetadata feed.EntryMetadata) error {
+	query := `
+	UPDATE feed_entries_metadata
+	SET read=@read
+	WHERE user_uuid=@user_uuid
+	AND   entry_uid=@entry_uid
+	`
+
+	args := pgx.NamedArgs{
+		"user_uuid": entryMetadata.UserUUID,
+		"entry_uid": entryMetadata.EntryUID,
+		"read":      entryMetadata.Read,
+	}
+
+	return r.queryTx("feeds", "FeedEntryMetadataUpdate", query, args)
+}
+
 func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	query := `
-	SELECT fe.url, fe.title, fe.published_at, FALSE AS "read"
+	SELECT fe.uid, fe.url, fe.title, fe.published_at, COALESCE(fem.read, FALSE) AS read
 	FROM feed_entries fe
+	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
 	WHERE fs.user_uuid=$1
 	ORDER BY fe.published_at DESC

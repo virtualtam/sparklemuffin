@@ -10,10 +10,11 @@ import (
 var _ Repository = &fakeRepository{}
 
 type fakeRepository struct {
-	Categories    []Category
-	Entries       []Entry
-	Feeds         []Feed
-	Subscriptions []Subscription
+	Categories      []Category
+	Entries         []Entry
+	EntriesMetadata []EntryMetadata
+	Feeds           []Feed
+	Subscriptions   []Subscription
 }
 
 func (r *fakeRepository) FeedAdd(feed Feed) error {
@@ -150,6 +151,50 @@ func (r *fakeRepository) FeedEntryGetN(feedUUID string, n uint) ([]Entry, error)
 	}
 
 	return entries, nil
+}
+
+func (r *fakeRepository) feedEntryExists(entryUID string) bool {
+	for _, entry := range r.Entries {
+		if entry.UID == entryUID {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (r *fakeRepository) FeedEntryMetadataAdd(newEntryMetadata EntryMetadata) error {
+	if !r.feedEntryExists(newEntryMetadata.EntryUID) {
+		return ErrEntryNotFound
+	}
+
+	r.EntriesMetadata = append(r.EntriesMetadata, newEntryMetadata)
+	return nil
+}
+
+func (r *fakeRepository) FeedEntryMetadataGetByUID(userUUID string, entryUID string) (EntryMetadata, error) {
+	for _, entryMetadata := range r.EntriesMetadata {
+		if entryMetadata.UserUUID == userUUID && entryMetadata.EntryUID == entryUID {
+			return entryMetadata, nil
+		}
+	}
+
+	return EntryMetadata{}, ErrEntryMetadataNotFound
+}
+
+func (r *fakeRepository) FeedEntryMetadataUpdate(updatedEntryMetadata EntryMetadata) error {
+	if !r.feedEntryExists(updatedEntryMetadata.EntryUID) {
+		return ErrEntryNotFound
+	}
+
+	for index, entryMetadata := range r.EntriesMetadata {
+		if entryMetadata.UserUUID == updatedEntryMetadata.UserUUID && entryMetadata.EntryUID == updatedEntryMetadata.EntryUID {
+			r.EntriesMetadata[index] = updatedEntryMetadata
+			return nil
+		}
+	}
+
+	return ErrEntryMetadataNotFound
 }
 
 func (r *fakeRepository) FeedSubscriptionIsRegistered(userUUID string, feedUUID string) (bool, error) {

@@ -820,6 +820,112 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 	}
 }
 
+func TestServiceToggleEntryRead(t *testing.T) {
+	fake := faker.New()
+
+	userUUID := fake.UUID().V4()
+
+	entry1 := Entry{
+		UID: ksuid.New().String(),
+	}
+	entry2 := Entry{
+		UID: ksuid.New().String(),
+	}
+
+	cases := []struct {
+		tname                     string
+		repositoryEntries         []Entry
+		repositoryEntriesMetadata []EntryMetadata
+		entryUID                  string
+		want                      []EntryMetadata
+		wantErr                   error
+	}{
+		// nominal cases
+		{
+			tname: "add entry metadata",
+			repositoryEntries: []Entry{
+				entry1,
+				entry2,
+			},
+			entryUID: entry2.UID,
+			want: []EntryMetadata{
+				{
+					UserUUID: userUUID,
+					EntryUID: entry2.UID,
+					Read:     true,
+				},
+			},
+		},
+		{
+			tname: "update entry metadata",
+			repositoryEntries: []Entry{
+				entry1,
+				entry2,
+			},
+			repositoryEntriesMetadata: []EntryMetadata{
+				{
+					UserUUID: userUUID,
+					EntryUID: entry1.UID,
+					Read:     true,
+				},
+				{
+					UserUUID: userUUID,
+					EntryUID: entry2.UID,
+					Read:     true,
+				},
+			},
+			entryUID: entry2.UID,
+			want: []EntryMetadata{
+				{
+					UserUUID: userUUID,
+					EntryUID: entry1.UID,
+					Read:     true,
+				},
+				{
+					UserUUID: userUUID,
+					EntryUID: entry2.UID,
+					Read:     false,
+				},
+			},
+		},
+
+		// error cases
+		{
+			tname:    "entry not found",
+			entryUID: ksuid.New().String(),
+			wantErr:  ErrEntryNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{
+				Entries:         tc.repositoryEntries,
+				EntriesMetadata: tc.repositoryEntriesMetadata,
+			}
+			s := NewService(r, nil)
+
+			err := s.ToggleEntryRead(userUUID, tc.entryUID)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertEntriesMetadataEqual(t, r.EntriesMetadata, tc.want)
+		})
+	}
+}
+
 func TestServiceCreateSubscription(t *testing.T) {
 	repositoryFeeds := []Feed{
 		{

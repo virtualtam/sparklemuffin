@@ -142,6 +142,35 @@ func (s *Service) Subscribe(userUUID string, categoryUUID string, feedURL string
 	return nil
 }
 
+// ToggleEntryRead toggles the "read" status for a given User and Entry.
+func (s *Service) ToggleEntryRead(userUUID string, entryUID string) error {
+	entryMetadata, err := s.r.FeedEntryMetadataGetByUID(userUUID, entryUID)
+	if errors.Is(err, ErrEntryMetadataNotFound) {
+		newEntryMetadata := EntryMetadata{
+			UserUUID: userUUID,
+			EntryUID: entryUID,
+			Read:     true,
+		}
+
+		if err := s.r.FeedEntryMetadataAdd(newEntryMetadata); err != nil {
+			return fmt.Errorf("failed to create entry metadata: %w", err)
+		}
+
+		return nil
+
+	} else if err != nil {
+		return fmt.Errorf("failed to retrieve entry metadata: %w", err)
+
+	}
+
+	entryMetadata.Read = !entryMetadata.Read
+	if err := s.r.FeedEntryMetadataUpdate(entryMetadata); err != nil {
+		return fmt.Errorf("failed to update entry metadata: %w", err)
+	}
+
+	return nil
+}
+
 func (s *Service) DeleteSubscription(userUUID string, subscriptionUUID string) error {
 	return s.r.FeedSubscriptionDelete(userUUID, subscriptionUUID)
 }

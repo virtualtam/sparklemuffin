@@ -13,10 +13,11 @@ import (
 var _ Repository = &fakeRepository{}
 
 type fakeRepository struct {
-	Categories    []feed.Category
-	Entries       []feed.Entry
-	Feeds         []feed.Feed
-	Subscriptions []feed.Subscription
+	Categories      []feed.Category
+	Entries         []feed.Entry
+	EntriesMetadata []feed.EntryMetadata
+	Feeds           []feed.Feed
+	Subscriptions   []feed.Subscription
 }
 
 func (r *fakeRepository) FeedGetByUUID(feedUUID string) (feed.Feed, error) {
@@ -52,7 +53,18 @@ func (r *fakeRepository) FeedSubscriptionCategoryGetAll(userUUID string) ([]Subs
 					continue
 				}
 
-				subscriptionUnread++
+				var read bool
+
+				for _, entryMetadata := range r.EntriesMetadata {
+					if entryMetadata.EntryUID == entry.UID && entryMetadata.Read {
+						read = true
+						break
+					}
+				}
+
+				if !read {
+					subscriptionUnread++
+				}
 			}
 
 			categoryUnread += subscriptionUnread
@@ -161,46 +173,64 @@ func (r *fakeRepository) FeedEntryGetCountBySubscription(userUUID string, subscr
 	return count, nil
 }
 
-func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]SubscribedFeedEntry, error) {
+func (r *fakeRepository) subscribedFeedEntryGetByFeed(feedUUID string) []SubscribedFeedEntry {
 	var subscriptionEntries []SubscribedFeedEntry
+
+	for _, entry := range r.Entries {
+		if entry.FeedUUID != feedUUID {
+			continue
+		}
+
+		var read bool
+
+		for _, entryMetadata := range r.EntriesMetadata {
+			if entryMetadata.EntryUID == entry.UID && entryMetadata.Read {
+				read = true
+				break
+			}
+		}
+
+		subscriptionEntry := SubscribedFeedEntry{
+			Entry: entry,
+			Read:  read,
+		}
+
+		subscriptionEntries = append(subscriptionEntries, subscriptionEntry)
+	}
+
+	return subscriptionEntries
+}
+
+func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]SubscribedFeedEntry, error) {
+	var userEntries []SubscribedFeedEntry
 
 	for _, subscription := range r.Subscriptions {
 		if subscription.UserUUID != userUUID {
 			continue
 		}
 
-		for _, entry := range r.Entries {
-			if entry.FeedUUID != subscription.FeedUUID {
-				continue
-			}
-
-			subscriptionEntry := SubscribedFeedEntry{
-				Entry: entry,
-				Read:  false,
-			}
-			subscriptionEntries = append(subscriptionEntries, subscriptionEntry)
-			break
-		}
+		subscriptionEntries := r.subscribedFeedEntryGetByFeed(subscription.FeedUUID)
+		userEntries = append(userEntries, subscriptionEntries...)
 	}
 
 	// FIXME subscriptions should be sorted **before** querying
-	sort.Slice(subscriptionEntries, func(i, j int) bool {
-		return subscriptionEntries[i].PublishedAt.After(subscriptionEntries[j].PublishedAt)
+	sort.Slice(userEntries, func(i, j int) bool {
+		return userEntries[i].PublishedAt.After(userEntries[j].PublishedAt)
 	})
 
 	var nEntries uint
 
-	if n > uint(len(subscriptionEntries[offset:])) {
-		nEntries = uint(len(subscriptionEntries[offset:]))
+	if n > uint(len(userEntries[offset:])) {
+		nEntries = uint(len(userEntries[offset:]))
 	} else {
 		nEntries = n
 	}
 
-	return subscriptionEntries[offset : offset+nEntries], nil
+	return userEntries[offset : offset+nEntries], nil
 }
 
 func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, categoryUUID string, n uint, offset uint) ([]SubscribedFeedEntry, error) {
-	var subscriptionEntries []SubscribedFeedEntry
+	var categoryEntries []SubscribedFeedEntry
 
 	for _, subscription := range r.Subscriptions {
 		if subscription.UserUUID != userUUID {
@@ -211,58 +241,33 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, ca
 			continue
 		}
 
-		for _, entry := range r.Entries {
-			if entry.FeedUUID != subscription.FeedUUID {
-				continue
-			}
-
-			subscriptionEntry := SubscribedFeedEntry{
-				Entry: entry,
-				Read:  false,
-			}
-
-			subscriptionEntries = append(subscriptionEntries, subscriptionEntry)
-			break
-		}
+		subscriptionEntries := r.subscribedFeedEntryGetByFeed(subscription.FeedUUID)
+		categoryEntries = append(categoryEntries, subscriptionEntries...)
 	}
 
 	// FIXME subscriptions should be sorted **before** querying
-	sort.Slice(subscriptionEntries, func(i, j int) bool {
-		return subscriptionEntries[i].PublishedAt.After(subscriptionEntries[j].PublishedAt)
+	sort.Slice(categoryEntries, func(i, j int) bool {
+		return categoryEntries[i].PublishedAt.After(categoryEntries[j].PublishedAt)
 	})
 
 	var nEntries uint
 
-	if n > uint(len(subscriptionEntries[offset:])) {
-		nEntries = uint(len(subscriptionEntries[offset:]))
+	if n > uint(len(categoryEntries[offset:])) {
+		nEntries = uint(len(categoryEntries[offset:]))
 	} else {
 		nEntries = n
 	}
 
-	return subscriptionEntries[offset : offset+nEntries], nil
+	return categoryEntries[offset : offset+nEntries], nil
 }
 
 func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscription(userUUID string, subscriptionUUID string, n uint, offset uint) ([]SubscribedFeedEntry, error) {
-	var subscriptionEntries []SubscribedFeedEntry
-
 	subscription, err := r.FeedSubscriptionGetByUUID(userUUID, subscriptionUUID)
 	if err != nil {
 		return []SubscribedFeedEntry{}, err
 	}
 
-	for _, entry := range r.Entries {
-		if entry.FeedUUID != subscription.FeedUUID {
-			continue
-		}
-
-		subscriptionEntry := SubscribedFeedEntry{
-			Entry: entry,
-			Read:  false,
-		}
-
-		subscriptionEntries = append(subscriptionEntries, subscriptionEntry)
-		break
-	}
+	subscriptionEntries := r.subscribedFeedEntryGetByFeed(subscription.FeedUUID)
 
 	// FIXME subscriptions should be sorted **before** querying
 	sort.Slice(subscriptionEntries, func(i, j int) bool {

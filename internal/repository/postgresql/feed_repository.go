@@ -302,44 +302,6 @@ func (r *Repository) FeedEntryGetN(feedUUID string, n uint) ([]feed.Entry, error
 	return entries, nil
 }
 
-func (r *Repository) FeedSubscriptionCategoryGetAll(userUUID string) ([]feedquerying.SubscribedFeedsByCategory, error) {
-	dbCategories, err := r.feedGetCategories(userUUID)
-	if err != nil {
-		return []feedquerying.SubscribedFeedsByCategory{}, err
-	}
-
-	categories := make([]feedquerying.SubscribedFeedsByCategory, len(dbCategories))
-
-	for i, dbCategory := range dbCategories {
-		dbFeeds, err := r.feedGetSubscriptionsByCategory(userUUID, dbCategory.UUID)
-		if err != nil {
-			return []feedquerying.SubscribedFeedsByCategory{}, err
-		}
-
-		var unread uint
-		subscribedFeeds := make([]feedquerying.SubscribedFeed, len(dbFeeds))
-
-		for j, dbFeed := range dbFeeds {
-			subscribedFeeds[j] = dbFeed.asSubscribedFeed()
-			unread += dbFeed.Unread
-		}
-
-		category := feedquerying.SubscribedFeedsByCategory{
-			Category: feed.Category{
-				UUID: dbCategory.UUID,
-				Name: dbCategory.Name,
-				Slug: dbCategory.Slug,
-			},
-			Unread:          unread,
-			SubscribedFeeds: subscribedFeeds,
-		}
-
-		categories[i] = category
-	}
-
-	return categories, nil
-}
-
 func (r *Repository) FeedEntryGetCount(userUUID string) (uint, error) {
 	query := `
 	SELECT COUNT(*)
@@ -472,6 +434,44 @@ func (r *Repository) FeedEntryMetadataUpdate(entryMetadata feed.EntryMetadata) e
 	}
 
 	return r.queryTx("feeds", "FeedEntryMetadataUpdate", query, args)
+}
+
+func (r *Repository) FeedSubscriptionCategoryGetAll(userUUID string) ([]feedquerying.SubscribedFeedsByCategory, error) {
+	dbCategories, err := r.feedGetCategories(userUUID)
+	if err != nil {
+		return []feedquerying.SubscribedFeedsByCategory{}, err
+	}
+
+	categories := make([]feedquerying.SubscribedFeedsByCategory, len(dbCategories))
+
+	for i, dbCategory := range dbCategories {
+		dbFeeds, err := r.feedGetSubscriptionsByCategory(userUUID, dbCategory.UUID)
+		if err != nil {
+			return []feedquerying.SubscribedFeedsByCategory{}, err
+		}
+
+		var unread uint
+		subscribedFeeds := make([]feedquerying.SubscribedFeed, len(dbFeeds))
+
+		for j, dbFeed := range dbFeeds {
+			subscribedFeeds[j] = dbFeed.asSubscribedFeed()
+			unread += dbFeed.Unread
+		}
+
+		category := feedquerying.SubscribedFeedsByCategory{
+			Category: feed.Category{
+				UUID: dbCategory.UUID,
+				Name: dbCategory.Name,
+				Slug: dbCategory.Slug,
+			},
+			Unread:          unread,
+			SubscribedFeeds: subscribedFeeds,
+		}
+
+		categories[i] = category
+	}
+
+	return categories, nil
 }
 
 func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {

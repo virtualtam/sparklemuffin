@@ -31,12 +31,12 @@ func (s *Service) FeedsByPage(userUUID string, number uint) (FeedPage, error) {
 		return FeedPage{}, ErrPageNumberOutOfBounds
 	}
 
-	subscriptionEntryCount, err := s.r.FeedEntryGetCount(userUUID)
+	entryCount, err := s.r.FeedEntryGetCount(userUUID)
 	if err != nil {
 		return FeedPage{}, err
 	}
 
-	totalPages := paginate.PageCount(subscriptionEntryCount, entriesPerPage)
+	totalPages := paginate.PageCount(entryCount, entriesPerPage)
 
 	if number > totalPages {
 		return FeedPage{}, ErrPageNumberOutOfBounds
@@ -68,12 +68,12 @@ func (s *Service) FeedsByCategoryAndPage(userUUID string, category feed.Category
 		return FeedPage{}, ErrPageNumberOutOfBounds
 	}
 
-	subscriptionEntryCount, err := s.r.FeedEntryGetCountByCategory(userUUID, category.UUID)
+	entryCount, err := s.r.FeedEntryGetCountByCategory(userUUID, category.UUID)
 	if err != nil {
 		return FeedPage{}, err
 	}
 
-	totalPages := paginate.PageCount(subscriptionEntryCount, entriesPerPage)
+	totalPages := paginate.PageCount(entryCount, entriesPerPage)
 
 	if number > totalPages {
 		return FeedPage{}, ErrPageNumberOutOfBounds
@@ -105,12 +105,12 @@ func (s *Service) FeedsBySubscriptionAndPage(userUUID string, subscription feed.
 		return FeedPage{}, ErrPageNumberOutOfBounds
 	}
 
-	subscriptionEntryCount, err := s.r.FeedEntryGetCountBySubscription(userUUID, subscription.UUID)
+	entryCount, err := s.r.FeedEntryGetCountBySubscription(userUUID, subscription.UUID)
 	if err != nil {
 		return FeedPage{}, err
 	}
 
-	totalPages := paginate.PageCount(subscriptionEntryCount, entriesPerPage)
+	totalPages := paginate.PageCount(entryCount, entriesPerPage)
 
 	if number > totalPages {
 		return FeedPage{}, ErrPageNumberOutOfBounds

@@ -4,6 +4,7 @@
 package feed
 
 import (
+	"errors"
 	"slices"
 )
 
@@ -161,6 +162,18 @@ func (r *fakeRepository) feedEntryExists(entryUID string) bool {
 	}
 
 	return false
+}
+
+func (r *fakeRepository) FeedEntryMarkAllAsRead(userUUID string) error {
+	return errors.New("not implemented")
+}
+
+func (r *fakeRepository) FeedEntryMarkAllAsReadByCategory(userUUID string, categoryUUID string) error {
+	return errors.New("not implemented")
+}
+
+func (r *fakeRepository) FeedEntryMarkAllAsReadBySubscription(userUUID string, subscriptionUUID string) error {
+	return errors.New("not implemented")
 }
 
 func (r *fakeRepository) FeedEntryMetadataAdd(newEntryMetadata EntryMetadata) error {

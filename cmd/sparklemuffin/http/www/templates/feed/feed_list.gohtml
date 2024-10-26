@@ -31,7 +31,18 @@
   </div>
 
   <div class="feed-entry-list">
-    <h3>{{.Header}}</h3>
+    <div class="feed-title">
+      <h3>{{.Header}}</h3>
+      <div class="feed-entry-actions">
+        [
+        <form action="{{$.URLPath}}/mark-all-read" method="POST">
+          <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+          <button type=submit>mark all as read</button>
+        </form>
+        ]
+      </div>
+    </div>
+
     {{template "pagination" .}}
     <ol start="{{.Offset}}">
       {{- range .Entries}}

@@ -62,8 +62,13 @@ func RegisterFeedHandlers(
 		})
 
 		r.Get("/", fc.handleFeedListView())
+		r.Post("/mark-all-read", fc.handleEntryMetadataMarkAllAsRead())
+
 		r.Get("/categories/{slug}/entries", fc.handleFeedListByCategoryView())
+		r.Post("/categories/{slug}/entries/mark-all-read", fc.handleEntryMetadataMarkAllAsReadByCategory())
+
 		r.Get("/{slug}/entries", fc.handleFeedListBySubscriptionView())
+		r.Post("/{slug}/entries/mark-all-read", fc.handleEntryMetadataMarkAllAsReadByFeed())
 
 		r.Get("/add", fc.handleFeedAddView())
 		r.Post("/add", fc.handleFeedAdd())
@@ -209,6 +214,7 @@ func (fc *feedHandlerContext) handleFeedListView() func(w http.ResponseWriter, r
 			Content: feedQueryingPage{
 				FeedPage:  feedPage,
 				CSRFToken: csrfToken,
+				URLPath:   r.URL.Path,
 			},
 		}
 
@@ -252,6 +258,7 @@ func (fc *feedHandlerContext) handleFeedListByCategoryView() func(w http.Respons
 			Content: feedQueryingPage{
 				FeedPage:  feedPage,
 				CSRFToken: csrfToken,
+				URLPath:   r.URL.Path,
 			},
 		}
 
@@ -303,6 +310,7 @@ func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.Res
 			Content: feedQueryingPage{
 				FeedPage:  feedPage,
 				CSRFToken: csrfToken,
+				URLPath:   r.URL.Path,
 			},
 		}
 
@@ -703,5 +711,121 @@ func (fc *feedHandlerContext) handleFeedSubscriptionEdit() func(w http.ResponseW
 		}
 
 		http.Redirect(w, r, "/feeds/subscriptions", http.StatusSeeOther)
+	}
+}
+
+func (fc *feedHandlerContext) handleEntryMetadataMarkAllAsRead() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+
+		var form feedEntryMetadataMarkReadForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed entry metadata edition form")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if !fc.csrfService.Validate(form.CSRFToken, user.UUID, actionFeedEntryMetadataEdit) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if err := fc.feedService.MarkAllEntriesAsRead(user.UUID); err != nil {
+			log.Error().Err(err).Msg("failed to mark feed entries as read")
+			view.PutFlashError(w, "failed to mark feed entries as read")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+	}
+}
+
+func (fc *feedHandlerContext) handleEntryMetadataMarkAllAsReadByCategory() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+		categorySlug := chi.URLParam(r, "slug")
+
+		var form feedEntryMetadataMarkReadForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed entry metadata edition form")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if !fc.csrfService.Validate(form.CSRFToken, user.UUID, actionFeedEntryMetadataEdit) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		category, err := fc.feedService.CategoryBySlug(user.UUID, categorySlug)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed category")
+			view.PutFlashError(w, "failed to retrieve feed category")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if err := fc.feedService.MarkAllEntriesAsReadByCategory(user.UUID, category.UUID); err != nil {
+			log.Error().Err(err).Msg("failed to mark feed entries as read")
+			view.PutFlashError(w, "failed to mark feed entries as read")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+	}
+}
+
+func (fc *feedHandlerContext) handleEntryMetadataMarkAllAsReadByFeed() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+		feedSlug := chi.URLParam(r, "slug")
+
+		var form feedEntryMetadataMarkReadForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed entry metadata edition form")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if !fc.csrfService.Validate(form.CSRFToken, user.UUID, actionFeedEntryMetadataEdit) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		feed, err := fc.feedService.FeedBySlug(user.UUID, feedSlug)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed")
+			view.PutFlashError(w, "failed to retrieve feed")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		subscription, err := fc.feedService.SubscriptionByFeed(user.UUID, feed.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed subscription")
+			view.PutFlashError(w, "failed to retrieve feed subscription")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if err := fc.feedService.MarkAllEntriesAsReadBySubscription(user.UUID, subscription.UUID); err != nil {
+			log.Error().Err(err).Msg("failed to mark feed entries as read")
+			view.PutFlashError(w, "failed to mark feed entries as read")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 	}
 }

@@ -55,6 +55,15 @@ type Repository interface {
 	// FeedEntryGetN returns at most N entries for a given Feed.
 	FeedEntryGetN(feedUUID string, n uint) ([]Entry, error)
 
+	// FeedEntryMarkAllAsRead marks all entries as "read" for a given User.
+	FeedEntryMarkAllAsRead(userUUID string) error
+
+	// FeedEntryMarkAllAsReadByCategory marks all entries as "read" for a given User and Category.
+	FeedEntryMarkAllAsReadByCategory(userUUID string, categoryUUID string) error
+
+	// FeedEntryMarkAllAsReadBySubscription marks all entries as "read" for a given User and Subscription.
+	FeedEntryMarkAllAsReadBySubscription(userUUID string, subscriptionUUID string) error
+
 	// FeedEntryMetadataAdd creates a new EntryStatus.
 	FeedEntryMetadataAdd(entryMetadata EntryMetadata) error
 

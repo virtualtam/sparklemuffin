@@ -11,4 +11,9 @@ type feedQueryingPage struct {
 	feedquerying.FeedPage
 
 	CSRFToken string
+	URLPath   string
+}
+
+type feedEntryMetadataMarkReadForm struct {
+	CSRFToken string `schema:"csrf_token"`
 }

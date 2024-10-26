@@ -142,6 +142,21 @@ func (s *Service) Subscribe(userUUID string, categoryUUID string, feedURL string
 	return nil
 }
 
+// MarkAllEntriesAsRead marks all entries as "read" for a given User.
+func (s *Service) MarkAllEntriesAsRead(userUUID string) error {
+	return s.r.FeedEntryMarkAllAsRead(userUUID)
+}
+
+// MarkAllEntriesAsReadByCategory marks all entries as "read" for a given User and Category.
+func (s *Service) MarkAllEntriesAsReadByCategory(userUUID string, categoryUUID string) error {
+	return s.r.FeedEntryMarkAllAsReadByCategory(userUUID, categoryUUID)
+}
+
+// MarkAllEntriesAsReadBySubscription marks all entries as "read" for a given User and Subscription.
+func (s *Service) MarkAllEntriesAsReadBySubscription(userUUID string, subscriptionUUID string) error {
+	return s.r.FeedEntryMarkAllAsReadBySubscription(userUUID, subscriptionUUID)
+}
+
 // ToggleEntryRead toggles the "read" status for a given User and Entry.
 func (s *Service) ToggleEntryRead(userUUID string, entryUID string) error {
 	entryMetadata, err := s.r.FeedEntryMetadataGetByUID(userUUID, entryUID)

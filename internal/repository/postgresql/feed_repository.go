@@ -369,6 +369,79 @@ func (r *Repository) FeedEntryGetCountBySubscription(userUUID string, subscripti
 	return count, nil
 }
 
+func (r *Repository) FeedEntryMarkAllAsRead(userUUID string) error {
+	query := `
+	INSERT INTO feed_entries_metadata(
+		user_uuid,
+		entry_uid,
+		read
+	)
+
+	SELECT @user_uuid, fe.uid, TRUE
+	FROM feed_entries fe
+	JOIN feed_subscriptions fs ON fs.feed_uuid=fe.feed_uuid
+	WHERE fs.user_uuid=@user_uuid
+
+	ON CONFLICT(user_uuid, entry_uid) DO UPDATE SET read=TRUE
+	`
+
+	args := pgx.NamedArgs{
+		"user_uuid": userUUID,
+	}
+
+	return r.queryTx("feeds", "FeedEntryMarkAllAsRead", query, args)
+}
+
+func (r *Repository) FeedEntryMarkAllAsReadByCategory(userUUID string, categoryUUID string) error {
+	query := `
+	INSERT INTO feed_entries_metadata(
+		user_uuid,
+		entry_uid,
+		read
+	)
+
+	SELECT @user_uuid, fe.uid, TRUE
+	FROM feed_entries fe
+	JOIN feed_subscriptions fs ON fs.feed_uuid=fe.feed_uuid
+	WHERE fs.user_uuid=@user_uuid
+	AND   fs.category_uuid=@category_uuid
+
+	ON CONFLICT(user_uuid, entry_uid) DO UPDATE SET read=TRUE
+	`
+
+	args := pgx.NamedArgs{
+		"user_uuid":     userUUID,
+		"category_uuid": categoryUUID,
+	}
+
+	return r.queryTx("feeds", "FeedEntryMarkAllAsReadByCategory", query, args)
+}
+
+func (r *Repository) FeedEntryMarkAllAsReadBySubscription(userUUID string, subscriptionUUID string) error {
+	query := `
+	INSERT INTO feed_entries_metadata(
+		user_uuid,
+		entry_uid,
+		read
+	)
+
+	SELECT @user_uuid, fe.uid, TRUE
+	FROM feed_entries fe
+	JOIN feed_subscriptions fs ON fs.feed_uuid=fe.feed_uuid
+	WHERE fs.user_uuid=@user_uuid
+	AND   fs.uuid=@subscription_uuid
+
+	ON CONFLICT(user_uuid, entry_uid) DO UPDATE SET read=TRUE
+	`
+
+	args := pgx.NamedArgs{
+		"user_uuid":         userUUID,
+		"subscription_uuid": subscriptionUUID,
+	}
+
+	return r.queryTx("feeds", "FeedEntryMarkAllAsReadBySubscription", query, args)
+}
+
 func (r *Repository) FeedEntryMetadataAdd(entryMetadata feed.EntryMetadata) error {
 	query := `
 	INSERT INTO feed_entries_metadata(

@@ -407,6 +407,28 @@ ol {
   margin-bottom: 1em;
 }
 
+.feed-title {
+  display: grid;
+  grid-template-columns: fit-content(80ch) 1fr;
+  margin-bottom: 1em;
+  padding-bottom: 1em;
+  padding-right: 1em;
+}
+
+.feed-title:hover {
+  background-color: var(--bg-accent);
+}
+
+.feed-title h3 {
+  display: inline-block;
+  margin-bottom: 0;
+}
+
+.feed-title .feed-entry-actions,
+.feed-title .feed-entry-actions button {
+  font-weight: bold;
+}
+
 .feed-entry:hover {
   background-color: var(--bg-accent);
 }

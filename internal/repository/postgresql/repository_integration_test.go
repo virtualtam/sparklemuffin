@@ -35,8 +35,8 @@ const (
 func createTestDatabase(t *testing.T, ctx context.Context) *pgxpool.Pool {
 	t.Helper()
 
-	pgContainer, err := testpostgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:15"),
+	pgContainer, err := testpostgres.Run(ctx,
+		"postgres:15",
 		testpostgres.WithDatabase(databaseName),
 		testpostgres.WithUsername(databaseUser),
 		testpostgres.WithPassword(databasePassword),

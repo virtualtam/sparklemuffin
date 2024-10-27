@@ -15,6 +15,7 @@ import (
 	"github.com/jaswdr/faker"
 	"github.com/mmcdole/gofeed"
 	"github.com/segmentio/ksuid"
+	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
 
 type testRoundTripper struct{}
@@ -791,7 +792,9 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 				Entries: tc.repositoryEntries,
 				Feeds:   tc.repositoryFeeds,
 			}
-			s := NewService(r, testHTTPClient)
+			feedClient := fetching.NewClient(testHTTPClient, "sparklemuffin/test")
+
+			s := NewService(r, feedClient)
 
 			gotFeed, err := s.getOrCreateFeedAndEntries(tc.feedURL)
 

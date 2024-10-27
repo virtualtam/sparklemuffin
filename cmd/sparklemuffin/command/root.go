@@ -29,6 +29,7 @@ import (
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
+	feedfetching "github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	feedsynchronizing "github.com/virtualtam/sparklemuffin/pkg/feed/synchronizing"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
@@ -169,6 +170,8 @@ func NewRootCommand() *cobra.Command {
 			httpClient := &http.Client{
 				Timeout: 30 * time.Second,
 			}
+			userAgent := fmt.Sprintf("%s/%s", rootCmdName, versionDetails.Short)
+			feedClient := feedfetching.NewClient(httpClient, userAgent)
 
 			// SparkleMuffin services
 			bookmarkService = bookmark.NewService(repository)
@@ -176,9 +179,9 @@ func NewRootCommand() *cobra.Command {
 			bookmarkImportingService = bookmarkimporting.NewService(repository)
 			bookmarkQueryingService = bookmarkquerying.NewService(repository)
 
-			feedService = feed.NewService(repository, httpClient)
+			feedService = feed.NewService(repository, feedClient)
 			feedQueryingService = feedquerying.NewService(repository)
-			feedSynchronizingService = feedsynchronizing.NewService(repository, httpClient)
+			feedSynchronizingService = feedsynchronizing.NewService(repository, feedClient)
 
 			sessionService = session.NewService(repository, hmacKey)
 			userService = user.NewService(repository)

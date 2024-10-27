@@ -4,13 +4,13 @@
 package synchronizing
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/mmcdole/gofeed"
 	"github.com/rs/zerolog/log"
 	"github.com/sourcegraph/conc/pool"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
+	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
 
 const (
@@ -22,17 +22,14 @@ const (
 
 // Service handles feed synchronization operations.
 type Service struct {
-	r          Repository
-	feedParser *gofeed.Parser
+	r      Repository
+	client *fetching.Client
 }
 
-func NewService(r Repository, httpClient *http.Client) *Service {
-	feedParser := gofeed.NewParser()
-	feedParser.Client = httpClient
-
+func NewService(r Repository, client *fetching.Client) *Service {
 	return &Service{
-		r:          r,
-		feedParser: feedParser,
+		r:      r,
+		client: client,
 	}
 }
 
@@ -88,7 +85,7 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 
 	now := time.Now().UTC()
 
-	syndicationFeed, err := s.feedParser.ParseURL(feed.FeedURL)
+	syndicationFeed, err := s.client.Fetch(feed.FeedURL)
 	if err != nil {
 		return err
 	}

@@ -6,28 +6,25 @@ package feed
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/mmcdole/gofeed"
 	"github.com/rs/zerolog/log"
+	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
 
 // Service handles operations for the feed domain.
 type Service struct {
 	r Repository
 
-	feedParser *gofeed.Parser
+	client *fetching.Client
 }
 
 // NewService initializes and returns a Feed Service.
-func NewService(r Repository, httpClient *http.Client) *Service {
-	feedParser := gofeed.NewParser()
-	feedParser.Client = httpClient
-
+func NewService(r Repository, client *fetching.Client) *Service {
 	return &Service{
-		r:          r,
-		feedParser: feedParser,
+		r:      r,
+		client: client,
 	}
 }
 
@@ -240,7 +237,7 @@ func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) error {
 }
 
 func (s *Service) createFeedAndEntries(feed Feed) (Feed, error) {
-	syndicationFeed, err := s.feedParser.ParseURL(feed.FeedURL)
+	syndicationFeed, err := s.client.Fetch(feed.FeedURL)
 	if err != nil {
 		return Feed{}, err
 	}

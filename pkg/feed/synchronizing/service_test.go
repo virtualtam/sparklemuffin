@@ -15,6 +15,7 @@ import (
 	"github.com/jaswdr/faker"
 	"github.com/virtualtam/sparklemuffin/internal/assert"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
+	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
 
 func TestServiceSynchronize(t *testing.T) {
@@ -276,7 +277,9 @@ func TestServiceSynchronize(t *testing.T) {
 				},
 			}
 
-			s := NewService(r, feedHTTPClient)
+			feedClient := fetching.NewClient(feedHTTPClient, "sparklemuffin/test")
+
+			s := NewService(r, feedClient)
 
 			err := s.Synchronize(tc.tname)
 

@@ -237,12 +237,13 @@ func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) error {
 }
 
 func (s *Service) createFeedAndEntries(feed Feed) (Feed, error) {
-	syndicationFeed, err := s.client.Fetch(feed.FeedURL)
+	feedStatus, err := s.client.Fetch(feed.FeedURL, "")
 	if err != nil {
 		return Feed{}, err
 	}
 
-	feed.Title = syndicationFeed.Title
+	feed.Title = feedStatus.Feed.Title
+	feed.ETag = feedStatus.ETag
 	feed.FetchedAt = time.Now().UTC()
 	feed.Normalize()
 
@@ -254,7 +255,7 @@ func (s *Service) createFeedAndEntries(feed Feed) (Feed, error) {
 		return Feed{}, err
 	}
 
-	if err := s.createEntries(feed.UUID, syndicationFeed.Items); err != nil {
+	if err := s.createEntries(feed.UUID, feedStatus.Feed.Items); err != nil {
 		return Feed{}, err
 	}
 

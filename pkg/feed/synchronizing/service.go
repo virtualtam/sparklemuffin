@@ -4,6 +4,7 @@
 package synchronizing
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/mmcdole/gofeed"
@@ -85,12 +86,35 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 
 	now := time.Now().UTC()
 
-	syndicationFeed, err := s.client.Fetch(feed.FeedURL)
+	feedStatus, err := s.client.Fetch(feed.FeedURL, feed.ETag)
 	if err != nil {
 		return err
 	}
 
-	rowsAffected, err := s.createOrUpdateEntries(feed, now, syndicationFeed.Items)
+	feedFetchMetadata := FeedFetchMetadata{
+		UUID:      feed.UUID,
+		ETag:      feedStatus.ETag,
+		UpdatedAt: now,
+		FetchedAt: now,
+	}
+
+	if err := s.r.FeedUpdateFetchMetadata(feedFetchMetadata); err != nil {
+		return err
+	}
+
+	if feedStatus.StatusCode == http.StatusNotModified {
+		// the remote server responds with a '304 Not Modified' status, indicating that
+		// we already have the latest version of the feed
+
+		log.Info().
+			Str("feed_url", feed.FeedURL).
+			Str("job_id", jobID).
+			Msg("feeds: already up-to-date, nothing to do")
+
+		return nil
+	}
+
+	rowsAffected, err := s.createOrUpdateEntries(feed, now, feedStatus.Feed.Items)
 	if err != nil {
 		return err
 	}
@@ -101,9 +125,7 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 		Int64("n_entries", rowsAffected).
 		Msg("feeds: entries created or updated")
 
-	feed.FetchedAt = now
-
-	return s.r.FeedUpdateFetchedAt(feed)
+	return nil
 }
 
 func (s *Service) createOrUpdateEntries(f feed.Feed, now time.Time, items []*gofeed.Item) (int64, error) {

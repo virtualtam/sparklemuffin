@@ -39,6 +39,8 @@ type DBFeed struct {
 	Title   string `db:"title"`
 	Slug    string `db:"slug"`
 
+	ETag string `db:"etag"`
+
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 	FetchedAt time.Time `db:"fetched_at"`
@@ -50,6 +52,7 @@ func (f *DBFeed) asFeed() feed.Feed {
 		FeedURL:   f.FeedURL,
 		Title:     f.Title,
 		Slug:      f.Slug,
+		ETag:      f.ETag,
 		CreatedAt: f.CreatedAt,
 		UpdatedAt: f.UpdatedAt,
 		FetchedAt: f.FetchedAt,

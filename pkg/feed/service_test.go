@@ -5,66 +5,16 @@ package feed
 
 import (
 	"errors"
-	"io"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/gorilla/feeds"
 	"github.com/jaswdr/faker"
 	"github.com/mmcdole/gofeed"
 	"github.com/segmentio/ksuid"
+	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
-
-type testRoundTripper struct{}
-
-func (testRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
-	now := time.Now().UTC()
-	yesterday := now.Add(-24 * time.Hour)
-
-	feed := &feeds.Feed{
-		Title:   "Local Test",
-		Updated: now,
-		Items: []*feeds.Item{
-			{
-				Id:    "http://test.local/first-post",
-				Title: "First post!",
-				Link: &feeds.Link{
-					Href: "http://test.local/first-post",
-				},
-				Created: now,
-				Updated: now,
-			},
-			{
-				Id:    "http://test.local/hello-world",
-				Title: "Hello World",
-				Link: &feeds.Link{
-					Href: "http://test.local/hello-world",
-				},
-				Created: yesterday,
-				Updated: yesterday,
-			},
-		},
-	}
-
-	feedStr, err := feed.ToAtom()
-	if err != nil {
-		panic(err)
-	}
-
-	resp := &http.Response{
-		StatusCode: 200,
-		Header: map[string][]string{
-			"Content-Disposition": {"attachment; filename=test.atom"},
-			"Content-Type":        {"application/atom+xml"},
-		},
-		Body: io.NopCloser(strings.NewReader(feedStr)),
-	}
-
-	return resp, nil
-}
 
 func TestServiceAddCategory(t *testing.T) {
 	userUUID := "179206c8-2965-47a7-ba04-bf0a6a0b8d11"
@@ -660,12 +610,20 @@ func TestServiceCreateEntries(t *testing.T) {
 }
 
 func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
-	testHTTPClient := &http.Client{
-		Transport: testRoundTripper{},
-	}
-
 	now := time.Now().UTC()
 	yesterday := now.Add(-24 * time.Hour)
+
+	feed := feedtest.GenerateDummyFeed(t, now)
+	feedStr, err := feed.ToAtom()
+	if err != nil {
+		t.Fatalf("failed to encode feed to Atom: %q", err)
+	}
+	feedETag := feedtest.HashETag(feedStr)
+	transport := feedtest.NewRoundTripper(t, feed)
+
+	testHTTPClient := &http.Client{
+		Transport: transport,
+	}
 
 	cases := []struct {
 		tname             string
@@ -684,6 +642,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 				FeedURL:   "http://test.local",
 				Title:     "Local Test",
 				Slug:      "local-test",
+				ETag:      feedETag,
 				CreatedAt: now,
 				UpdatedAt: now,
 				FetchedAt: now,
@@ -712,6 +671,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 					FeedURL:   "http://test.local",
 					Title:     "Existing Test",
 					Slug:      "existing-test",
+					ETag:      feedETag,
 					CreatedAt: yesterday,
 					UpdatedAt: yesterday,
 					FetchedAt: yesterday,
@@ -737,6 +697,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 				FeedURL:   "http://test.local",
 				Title:     "Existing Test",
 				Slug:      "existing-test",
+				ETag:      feedETag,
 				CreatedAt: yesterday,
 				UpdatedAt: yesterday,
 				FetchedAt: yesterday,

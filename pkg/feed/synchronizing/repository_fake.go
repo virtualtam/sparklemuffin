@@ -30,10 +30,13 @@ func (r *fakeRepository) FeedGetNByLastSynchronizationTime(n uint, lastSyncBefor
 	return feedsToSync, nil
 }
 
-func (r *fakeRepository) FeedUpdateFetchedAt(updatedFeed feed.Feed) error {
+func (r *fakeRepository) FeedUpdateFetchMetadata(feedFetchMetadata FeedFetchMetadata) error {
 	for index, f := range r.Feeds {
-		if f.UUID == updatedFeed.UUID {
-			r.Feeds[index] = updatedFeed
+		if f.UUID == feedFetchMetadata.UUID {
+			r.Feeds[index].ETag = feedFetchMetadata.ETag
+			r.Feeds[index].UpdatedAt = feedFetchMetadata.UpdatedAt
+			r.Feeds[index].FetchedAt = feedFetchMetadata.FetchedAt
+
 			return nil
 		}
 	}

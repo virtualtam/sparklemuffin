@@ -22,6 +22,10 @@ func assertFeedEquals(t *testing.T, got, want Feed) {
 		t.Errorf("want FeedURL %q, got %q", want.FeedURL, got.FeedURL)
 	}
 
+	if got.ETag != want.ETag {
+		t.Errorf("want ETag %q, got %q", want.ETag, got.ETag)
+	}
+
 	assert.TimeAlmostEquals(t, "CreatedAt", got.CreatedAt, want.CreatedAt, assert.TimeComparisonDelta)
 	assert.TimeAlmostEquals(t, "UpdatedAt", got.UpdatedAt, want.UpdatedAt, assert.TimeComparisonDelta)
 	assert.TimeAlmostEquals(t, "FetchedAt", got.FetchedAt, want.FetchedAt, assert.TimeComparisonDelta)

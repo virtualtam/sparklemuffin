@@ -62,7 +62,7 @@ dev-migrate:
 # Live development server - Synchronize feeds
 dev-sync-feeds:
 	go run ./cmd/sparklemuffin sync-feeds
-.PHONY: dev-feed-sync
+.PHONY: dev-sync-feeds
 
 # Live development server - Create administrator user
 dev-admin:

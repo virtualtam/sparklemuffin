@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS feed_feeds(
     uuid        UUID UNIQUE NOT NULL PRIMARY KEY,
     feed_url    TEXT UNIQUE NOT NULL,
     title       TEXT NOT NULL,
-    slug        TEXT NOT NULL
+    slug        TEXT NOT NULL,
+
+    etag        TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS feed_entries(

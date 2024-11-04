@@ -23,7 +23,10 @@ func TestServiceSynchronize(t *testing.T) {
 	now := time.Now().UTC()
 
 	// hardcode dates for feed data to ease reproducibility (e.g. for the ETag header)
-	today, _ := time.Parse(time.DateTime, "2024-10-30 20:54:16")
+	today, err := time.Parse(time.DateTime, "2024-10-30 20:54:16")
+	if err != nil {
+		t.Fatalf("failed to parse date: %q", err)
+	}
 	yesterday := today.Add(-24 * time.Hour)
 	tomorrow := today.Add(24 * time.Hour)
 
@@ -34,17 +37,19 @@ func TestServiceSynchronize(t *testing.T) {
 		t.Fatalf("failed to encode feed to Atom: %q", err)
 	}
 
-	eTag := feedtest.HashETag(feedStr)
+	feedETag := feedtest.HashETag(feedStr)
+	feedLastModified := today
 
 	repositoryFeed := feed.Feed{
-		UUID:      fake.UUID().V4(),
-		FeedURL:   "http://test.local",
-		Title:     "Sync Test",
-		Slug:      "sync-test",
-		ETag:      eTag,
-		CreatedAt: yesterday,
-		UpdatedAt: yesterday,
-		FetchedAt: yesterday,
+		UUID:         fake.UUID().V4(),
+		FeedURL:      "http://test.local",
+		Title:        "Sync Test",
+		Slug:         "sync-test",
+		ETag:         feedETag,
+		LastModified: feedLastModified,
+		CreatedAt:    yesterday,
+		UpdatedAt:    yesterday,
+		FetchedAt:    yesterday,
 	}
 
 	firstEntry := feed.Entry{
@@ -82,14 +87,15 @@ func TestServiceSynchronize(t *testing.T) {
 			tname: "synchronized recently, nothing to do",
 			repositoryFeeds: []feed.Feed{
 				{
-					UUID:      repositoryFeed.UUID,
-					FeedURL:   repositoryFeed.FeedURL,
-					Title:     repositoryFeed.Title,
-					Slug:      repositoryFeed.Slug,
-					ETag:      repositoryFeed.ETag,
-					CreatedAt: yesterday,
-					UpdatedAt: yesterday,
-					FetchedAt: now, // -> skip synchronization
+					UUID:         repositoryFeed.UUID,
+					FeedURL:      repositoryFeed.FeedURL,
+					Title:        repositoryFeed.Title,
+					Slug:         repositoryFeed.Slug,
+					ETag:         repositoryFeed.ETag,
+					LastModified: repositoryFeed.LastModified,
+					CreatedAt:    yesterday,
+					UpdatedAt:    yesterday,
+					FetchedAt:    now, // -> skip synchronization
 				},
 			},
 			repositoryEntries: []feed.Entry{
@@ -98,14 +104,15 @@ func TestServiceSynchronize(t *testing.T) {
 			},
 			wantFeeds: []feed.Feed{
 				{
-					UUID:      repositoryFeed.UUID,
-					FeedURL:   repositoryFeed.FeedURL,
-					Title:     repositoryFeed.Title,
-					Slug:      repositoryFeed.Slug,
-					ETag:      repositoryFeed.ETag,
-					CreatedAt: yesterday,
-					UpdatedAt: yesterday,
-					FetchedAt: now,
+					UUID:         repositoryFeed.UUID,
+					FeedURL:      repositoryFeed.FeedURL,
+					Title:        repositoryFeed.Title,
+					Slug:         repositoryFeed.Slug,
+					ETag:         repositoryFeed.ETag,
+					LastModified: repositoryFeed.LastModified,
+					CreatedAt:    yesterday,
+					UpdatedAt:    yesterday,
+					FetchedAt:    now,
 				},
 			},
 			wantEntries: []feed.Entry{
@@ -114,7 +121,7 @@ func TestServiceSynchronize(t *testing.T) {
 			},
 		},
 		{
-			tname:           "ETag matches: feed metadata updated, feed entry update skipped",
+			tname:           "ETag and Last-Modified match: feed metadata updated, feed entry update skipped",
 			repositoryFeeds: []feed.Feed{repositoryFeed},
 			repositoryEntries: []feed.Entry{
 				secondEntry,
@@ -123,14 +130,15 @@ func TestServiceSynchronize(t *testing.T) {
 			atomFeed: atomFeed,
 			wantFeeds: []feed.Feed{
 				{
-					UUID:      repositoryFeed.UUID,
-					FeedURL:   repositoryFeed.FeedURL,
-					Title:     repositoryFeed.Title,
-					Slug:      repositoryFeed.Slug,
-					ETag:      repositoryFeed.ETag,
-					CreatedAt: repositoryFeed.CreatedAt,
-					UpdatedAt: now,
-					FetchedAt: now,
+					UUID:         repositoryFeed.UUID,
+					FeedURL:      repositoryFeed.FeedURL,
+					Title:        repositoryFeed.Title,
+					Slug:         repositoryFeed.Slug,
+					ETag:         repositoryFeed.ETag,
+					LastModified: repositoryFeed.LastModified,
+					CreatedAt:    repositoryFeed.CreatedAt,
+					UpdatedAt:    now,
+					FetchedAt:    now,
 				},
 			},
 			wantEntries: []feed.Entry{
@@ -142,14 +150,15 @@ func TestServiceSynchronize(t *testing.T) {
 			tname: "ETag does not match: feed metadata updated, feed entries updated (no change)",
 			repositoryFeeds: []feed.Feed{
 				{
-					UUID:      repositoryFeed.UUID,
-					FeedURL:   repositoryFeed.FeedURL,
-					Title:     repositoryFeed.Title,
-					Slug:      repositoryFeed.Slug,
-					ETag:      feedtest.HashETag("does-not-match"),
-					CreatedAt: repositoryFeed.CreatedAt,
-					UpdatedAt: repositoryFeed.UpdatedAt,
-					FetchedAt: repositoryFeed.FetchedAt,
+					UUID:         repositoryFeed.UUID,
+					FeedURL:      repositoryFeed.FeedURL,
+					Title:        repositoryFeed.Title,
+					Slug:         repositoryFeed.Slug,
+					ETag:         feedtest.HashETag("does-not-match"),
+					LastModified: repositoryFeed.LastModified,
+					CreatedAt:    repositoryFeed.CreatedAt,
+					UpdatedAt:    repositoryFeed.UpdatedAt,
+					FetchedAt:    repositoryFeed.FetchedAt,
 				},
 			},
 			repositoryEntries: []feed.Entry{
@@ -159,14 +168,15 @@ func TestServiceSynchronize(t *testing.T) {
 			atomFeed: atomFeed,
 			wantFeeds: []feed.Feed{
 				{
-					UUID:      repositoryFeed.UUID,
-					FeedURL:   repositoryFeed.FeedURL,
-					Title:     repositoryFeed.Title,
-					Slug:      repositoryFeed.Slug,
-					ETag:      repositoryFeed.ETag,
-					CreatedAt: repositoryFeed.CreatedAt,
-					UpdatedAt: now,
-					FetchedAt: now,
+					UUID:         repositoryFeed.UUID,
+					FeedURL:      repositoryFeed.FeedURL,
+					Title:        repositoryFeed.Title,
+					Slug:         repositoryFeed.Slug,
+					ETag:         repositoryFeed.ETag,
+					LastModified: repositoryFeed.LastModified,
+					CreatedAt:    repositoryFeed.CreatedAt,
+					UpdatedAt:    now,
+					FetchedAt:    now,
 				},
 			},
 			wantEntries: []feed.Entry{
@@ -216,14 +226,15 @@ func TestServiceSynchronize(t *testing.T) {
 			},
 			wantFeeds: []feed.Feed{
 				{
-					UUID:      repositoryFeed.UUID,
-					FeedURL:   repositoryFeed.FeedURL,
-					Title:     repositoryFeed.Title,
-					Slug:      repositoryFeed.Slug,
-					ETag:      `W/"e13c781ba03006c00fc2de9a6aefd364c391bf8790b81bb90c4088d30c9ab0c0"`,
-					CreatedAt: yesterday,
-					UpdatedAt: now,
-					FetchedAt: now,
+					UUID:         repositoryFeed.UUID,
+					FeedURL:      repositoryFeed.FeedURL,
+					Title:        repositoryFeed.Title,
+					Slug:         repositoryFeed.Slug,
+					ETag:         `W/"e13c781ba03006c00fc2de9a6aefd364c391bf8790b81bb90c4088d30c9ab0c0"`,
+					LastModified: tomorrow,
+					CreatedAt:    yesterday,
+					UpdatedAt:    now,
+					FetchedAt:    now,
 				},
 			},
 			wantEntries: []feed.Entry{
@@ -247,7 +258,7 @@ func TestServiceSynchronize(t *testing.T) {
 			},
 			atomFeed: feeds.Feed{
 				Title:   repositoryFeed.Title,
-				Updated: repositoryFeed.FetchedAt,
+				Updated: atomFeed.Updated,
 				Items: []*feeds.Item{
 					{
 						Id:    "http://test.local/first-post",
@@ -271,14 +282,15 @@ func TestServiceSynchronize(t *testing.T) {
 			},
 			wantFeeds: []feed.Feed{
 				{
-					UUID:      repositoryFeed.UUID,
-					FeedURL:   repositoryFeed.FeedURL,
-					Title:     repositoryFeed.Title,
-					Slug:      repositoryFeed.Slug,
-					ETag:      `W/"8ef572a707fd3327490da926f677c33a064779fb4a65ef2cff6469a71da38e57"`,
-					CreatedAt: yesterday,
-					UpdatedAt: now,
-					FetchedAt: now,
+					UUID:         repositoryFeed.UUID,
+					FeedURL:      repositoryFeed.FeedURL,
+					Title:        repositoryFeed.Title,
+					Slug:         repositoryFeed.Slug,
+					ETag:         `W/"0d3624583a1afa409004483fd625d4b9c4a2151c420eb56673bff1d562e8d3d2"`,
+					LastModified: feedLastModified,
+					CreatedAt:    yesterday,
+					UpdatedAt:    now,
+					FetchedAt:    now,
 				},
 			},
 			wantEntries: []feed.Entry{
@@ -356,6 +368,7 @@ func assertFeedsEqual(t *testing.T, got, want []feed.Feed) {
 			t.Errorf("want ETag %q, got %q", wantFeed.ETag, gotFeed.ETag)
 		}
 
+		assert.TimeAlmostEquals(t, "LastModified", gotFeed.LastModified, wantFeed.LastModified, assert.TimeComparisonDelta)
 		assert.TimeAlmostEquals(t, "CreatedAt", gotFeed.CreatedAt, wantFeed.CreatedAt, assert.TimeComparisonDelta)
 		assert.TimeAlmostEquals(t, "UpdatedAt", gotFeed.UpdatedAt, wantFeed.UpdatedAt, assert.TimeComparisonDelta)
 		assert.TimeAlmostEquals(t, "FetchedAt", gotFeed.FetchedAt, wantFeed.FetchedAt, assert.TimeComparisonDelta)

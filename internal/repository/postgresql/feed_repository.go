@@ -27,6 +27,7 @@ func (r *Repository) FeedAdd(f feed.Feed) error {
 		title,
 		slug,
 		etag,
+		last_modified,
 		created_at,
 		updated_at,
 		fetched_at
@@ -37,20 +38,22 @@ func (r *Repository) FeedAdd(f feed.Feed) error {
 		@title,
 		@slug,
 		@etag,
+		@last_modified,
 		@created_at,
 		@updated_at,
 		@fetched_at
 	)`
 
 	args := pgx.NamedArgs{
-		"uuid":       f.UUID,
-		"feed_url":   f.FeedURL,
-		"title":      f.Title,
-		"slug":       f.Slug,
-		"etag":       f.ETag,
-		"created_at": f.CreatedAt,
-		"updated_at": f.UpdatedAt,
-		"fetched_at": f.FetchedAt,
+		"uuid":          f.UUID,
+		"feed_url":      f.FeedURL,
+		"title":         f.Title,
+		"slug":          f.Slug,
+		"etag":          f.ETag,
+		"last_modified": f.LastModified,
+		"created_at":    f.CreatedAt,
+		"updated_at":    f.UpdatedAt,
+		"fetched_at":    f.FetchedAt,
 	}
 
 	return r.queryTx("feeds", "FeedAdd", query, args)
@@ -58,7 +61,7 @@ func (r *Repository) FeedAdd(f feed.Feed) error {
 
 func (r *Repository) FeedGetBySlug(feedSlug string) (feed.Feed, error) {
 	query := `
-	SELECT uuid, feed_url, title, slug, etag
+	SELECT uuid, feed_url, title, slug, etag, last_modified
 	FROM feed_feeds
 	WHERE slug=$1`
 
@@ -67,7 +70,7 @@ func (r *Repository) FeedGetBySlug(feedSlug string) (feed.Feed, error) {
 
 func (r *Repository) FeedGetByURL(feedURL string) (feed.Feed, error) {
 	query := `
-	SELECT uuid, feed_url, title, slug, etag
+	SELECT uuid, feed_url, title, slug, etag, last_modified
 	FROM feed_feeds
 	WHERE feed_url=$1`
 
@@ -76,7 +79,7 @@ func (r *Repository) FeedGetByURL(feedURL string) (feed.Feed, error) {
 
 func (r *Repository) FeedGetByUUID(feedUUID string) (feed.Feed, error) {
 	query := `
-	SELECT uuid, feed_url, title, slug, etag
+	SELECT uuid, feed_url, title, slug, etag, last_modified
 	FROM feed_feeds
 	WHERE uuid=$1`
 
@@ -85,7 +88,7 @@ func (r *Repository) FeedGetByUUID(feedUUID string) (feed.Feed, error) {
 
 func (r *Repository) FeedGetNByLastSynchronizationTime(n uint, before time.Time) ([]feed.Feed, error) {
 	query := `
-	SELECT f.uuid, f.feed_url, f.title, f.slug, f.etag
+	SELECT f.uuid, f.feed_url, f.title, f.slug, f.etag, f.last_modified
 	FROM feed_feeds f
 	INNER JOIN feed_subscriptions fs ON f.uuid = fs.feed_uuid
 	WHERE fetched_at < $1
@@ -100,15 +103,17 @@ func (r *Repository) FeedUpdateFetchMetadata(feedFetchMetadata feedsynchronizing
 	UPDATE feed_feeds
 	SET
 		etag=@etag,
+		last_modified=@last_modified,
 		updated_at=@updated_at,
 		fetched_at=@fetched_at
 	WHERE uuid=@uuid`
 
 	args := pgx.NamedArgs{
-		"uuid":       feedFetchMetadata.UUID,
-		"etag":       feedFetchMetadata.ETag,
-		"updated_at": feedFetchMetadata.UpdatedAt,
-		"fetched_at": feedFetchMetadata.FetchedAt,
+		"uuid":          feedFetchMetadata.UUID,
+		"etag":          feedFetchMetadata.ETag,
+		"last_modified": feedFetchMetadata.LastModified,
+		"updated_at":    feedFetchMetadata.UpdatedAt,
+		"fetched_at":    feedFetchMetadata.FetchedAt,
 	}
 
 	return r.queryTx("feeds", "FeedUpdateFetchMetadata", query, args)

@@ -6,6 +6,7 @@ package fetching
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/mmcdole/gofeed"
 )
@@ -35,8 +36,8 @@ func NewClient(httpClient *http.Client, userAgent string) *Client {
 // Adapted from gofeed.Parser.ParseURL with the following modifications:
 // - User-Agent header
 // - Use the value of the ETag header to set the If-None-Match header
-// - TODO: If-Modified-Since header
-func (c *Client) Fetch(feedURL string, eTag string) (FeedStatus, error) {
+// - Use the value of the Last-Modified header to set the If-Modified-Since header
+func (c *Client) Fetch(feedURL string, eTag string, lastModified time.Time) (FeedStatus, error) {
 	ctx := context.Background()
 
 	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
@@ -45,8 +46,13 @@ func (c *Client) Fetch(feedURL string, eTag string) (FeedStatus, error) {
 	}
 
 	req.Header.Set("User-Agent", c.userAgent)
+
 	if eTag != "" {
 		req.Header.Set(HeaderIfNoneMatch, eTag)
+	}
+
+	if !lastModified.IsZero() {
+		req.Header.Set(HeaderIfModifiedSince, formatLastModified(lastModified))
 	}
 
 	resp, err := c.httpClient.Do(req)
@@ -61,9 +67,13 @@ func (c *Client) Fetch(feedURL string, eTag string) (FeedStatus, error) {
 		}
 	}()
 
+	respETag := resp.Header.Get(HeaderEntityTag)
+	respLastModified := parseLastModified(resp.Header.Get(HeaderLastModified))
+
 	feedStatus := FeedStatus{
-		StatusCode: resp.StatusCode,
-		ETag:       resp.Header.Get(HeaderEntityTag),
+		StatusCode:   resp.StatusCode,
+		ETag:         respETag,
+		LastModified: respLastModified,
 	}
 
 	if resp.StatusCode == http.StatusNotModified {

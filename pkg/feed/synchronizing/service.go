@@ -86,16 +86,17 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 
 	now := time.Now().UTC()
 
-	feedStatus, err := s.client.Fetch(feed.FeedURL, feed.ETag)
+	feedStatus, err := s.client.Fetch(feed.FeedURL, feed.ETag, feed.LastModified)
 	if err != nil {
 		return err
 	}
 
 	feedFetchMetadata := FeedFetchMetadata{
-		UUID:      feed.UUID,
-		ETag:      feedStatus.ETag,
-		UpdatedAt: now,
-		FetchedAt: now,
+		UUID:         feed.UUID,
+		ETag:         feedStatus.ETag,
+		LastModified: feedStatus.LastModified,
+		UpdatedAt:    now,
+		FetchedAt:    now,
 	}
 
 	if err := s.r.FeedUpdateFetchMetadata(feedFetchMetadata); err != nil {

@@ -619,6 +619,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 		t.Fatalf("failed to encode feed to Atom: %q", err)
 	}
 	feedETag := feedtest.HashETag(feedStr)
+	feedLastModified := now
 	transport := feedtest.NewRoundTripper(t, feed)
 
 	testHTTPClient := &http.Client{
@@ -639,13 +640,14 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			tname:   "new feed (resolve metadata)",
 			feedURL: "http://test.local",
 			wantFeed: Feed{
-				FeedURL:   "http://test.local",
-				Title:     "Local Test",
-				Slug:      "local-test",
-				ETag:      feedETag,
-				CreatedAt: now,
-				UpdatedAt: now,
-				FetchedAt: now,
+				FeedURL:      "http://test.local",
+				Title:        "Local Test",
+				Slug:         "local-test",
+				ETag:         feedETag,
+				LastModified: feedLastModified,
+				CreatedAt:    now,
+				UpdatedAt:    now,
+				FetchedAt:    now,
 			},
 			wantEntries: []Entry{
 				{
@@ -667,14 +669,15 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			feedURL: "http://test.local",
 			repositoryFeeds: []Feed{
 				{
-					UUID:      "a8920612-b469-4729-85f3-2c8c30cb897f",
-					FeedURL:   "http://test.local",
-					Title:     "Existing Test",
-					Slug:      "existing-test",
-					ETag:      feedETag,
-					CreatedAt: yesterday,
-					UpdatedAt: yesterday,
-					FetchedAt: yesterday,
+					UUID:         "a8920612-b469-4729-85f3-2c8c30cb897f",
+					FeedURL:      "http://test.local",
+					Title:        "Existing Test",
+					Slug:         "existing-test",
+					ETag:         feedETag,
+					LastModified: feedLastModified,
+					CreatedAt:    yesterday,
+					UpdatedAt:    yesterday,
+					FetchedAt:    yesterday,
 				},
 			},
 			repositoryEntries: []Entry{
@@ -694,13 +697,14 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 				},
 			},
 			wantFeed: Feed{
-				FeedURL:   "http://test.local",
-				Title:     "Existing Test",
-				Slug:      "existing-test",
-				ETag:      feedETag,
-				CreatedAt: yesterday,
-				UpdatedAt: yesterday,
-				FetchedAt: yesterday,
+				FeedURL:      "http://test.local",
+				Title:        "Existing Test",
+				Slug:         "existing-test",
+				ETag:         feedETag,
+				LastModified: feedLastModified,
+				CreatedAt:    yesterday,
+				UpdatedAt:    yesterday,
+				FetchedAt:    yesterday,
 			},
 			wantEntries: []Entry{
 				{

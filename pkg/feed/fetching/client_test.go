@@ -15,7 +15,12 @@ import (
 func TestClientFetch(t *testing.T) {
 	userAgent := "sparklemuffin/test"
 
-	now, _ := time.Parse(time.DateTime, "2024-10-30 20:54:16")
+	now, err := time.Parse(time.DateTime, "2024-10-30 20:54:16")
+	if err != nil {
+		t.Fatalf("failed to parse date: %q", err)
+	}
+	lastWeek := now.Add(-7 * 24 * time.Hour)
+	nextWeek := now.Add(7 * 24 * time.Hour)
 
 	feed := feedtest.GenerateDummyFeed(t, now)
 	feedStr, err := feed.ToAtom()
@@ -23,10 +28,12 @@ func TestClientFetch(t *testing.T) {
 		t.Fatalf("failed to encode feed to Atom: %q", err)
 	}
 	feedETag := feedtest.HashETag(feedStr)
+	feedLastModified := feed.Updated
 
 	cases := []struct {
 		tname          string
 		eTag           string
+		lastModified   time.Time
 		wantStatusCode int
 	}{
 		{
@@ -34,13 +41,27 @@ func TestClientFetch(t *testing.T) {
 			wantStatusCode: http.StatusOK,
 		},
 		{
-			tname:          "subsequent request, same ETag",
+			tname:          "If-None-Match = ETag, If-Modified-Since = Last-Modified",
 			eTag:           feedETag,
+			lastModified:   feedLastModified,
 			wantStatusCode: http.StatusNotModified,
 		},
 		{
-			tname:          "subsequent request, different ETag",
+			tname:          "If-None-Match = ETag, If-Modified-Since < Last-Modified",
+			eTag:           feedETag,
+			lastModified:   lastWeek,
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			tname:          "If-None-Match = ETag, If-Modified-Since > Last-Modified",
+			eTag:           feedETag,
+			lastModified:   nextWeek,
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			tname:          "If-None-Match != ETag, If-Modified-Since = Last-Modified",
 			eTag:           `W/"5d2e8871966e0dd7ff59684904b3d9fecf6ab62a09869e26163efe8b2e07539d"`,
+			lastModified:   lastWeek,
 			wantStatusCode: http.StatusOK,
 		},
 	}
@@ -53,7 +74,7 @@ func TestClientFetch(t *testing.T) {
 			}
 
 			client := fetching.NewClient(httpClient, userAgent)
-			feedStatus, err := client.Fetch("", tc.eTag)
+			feedStatus, err := client.Fetch("", tc.eTag, tc.lastModified)
 			if err != nil {
 				t.Fatalf("want no error, got %q", err)
 			}

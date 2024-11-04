@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS feed_feeds(
     title       TEXT NOT NULL,
     slug        TEXT NOT NULL,
 
-    etag        TEXT NOT NULL
+    etag          TEXT NOT NULL,
+    last_modified TIMESTAMPTZ NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS feed_entries(

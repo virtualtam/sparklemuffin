@@ -34,6 +34,7 @@ func (r *fakeRepository) FeedUpdateFetchMetadata(feedFetchMetadata FeedFetchMeta
 	for index, f := range r.Feeds {
 		if f.UUID == feedFetchMetadata.UUID {
 			r.Feeds[index].ETag = feedFetchMetadata.ETag
+			r.Feeds[index].LastModified = feedFetchMetadata.LastModified
 			r.Feeds[index].UpdatedAt = feedFetchMetadata.UpdatedAt
 			r.Feeds[index].FetchedAt = feedFetchMetadata.FetchedAt
 

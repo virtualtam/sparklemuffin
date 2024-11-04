@@ -237,13 +237,14 @@ func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) error {
 }
 
 func (s *Service) createFeedAndEntries(feed Feed) (Feed, error) {
-	feedStatus, err := s.client.Fetch(feed.FeedURL, "")
+	feedStatus, err := s.client.Fetch(feed.FeedURL, "", time.Time{})
 	if err != nil {
 		return Feed{}, err
 	}
 
 	feed.Title = feedStatus.Feed.Title
 	feed.ETag = feedStatus.ETag
+	feed.LastModified = feedStatus.LastModified
 	feed.FetchedAt = time.Now().UTC()
 	feed.Normalize()
 

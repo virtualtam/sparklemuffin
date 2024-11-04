@@ -25,7 +25,8 @@ type Feed struct {
 	Title   string
 	Slug    string
 
-	ETag string
+	ETag         string
+	LastModified time.Time
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

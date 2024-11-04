@@ -3,7 +3,38 @@
 
 package feedtest
 
+import "time"
+
 const (
-	HeaderEntityTag   string = "ETag"
-	HeaderIfNoneMatch string = "If-None-Match"
+	headerEntityTag   string = "ETag"
+	headerIfNoneMatch string = "If-None-Match"
+
+	headerLastModified    string = "Last-Modified"
+	headerIfModifiedSince string = "If-Modified-Since"
 )
+
+var (
+	locationGMT *time.Location = gmtLocation()
+)
+
+func gmtLocation() *time.Location {
+	location, err := time.LoadLocation("GMT")
+	if err != nil {
+		panic(err)
+	}
+
+	return location
+}
+
+func formatLastModified(lastModified time.Time) string {
+	return lastModified.In(locationGMT).Format(time.RFC1123)
+}
+
+func parseLastModified(lastModifiedStr string) time.Time {
+	lastModified, err := time.ParseInLocation(time.RFC1123, lastModifiedStr, locationGMT)
+	if err != nil {
+		return time.Time{}
+	}
+
+	return lastModified
+}

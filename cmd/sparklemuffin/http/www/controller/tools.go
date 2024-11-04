@@ -23,39 +23,43 @@ import (
 )
 
 type toolsHandlerContext struct {
-	exportingService *bookmarkexporting.Service
-	importingService *bookmarkimporting.Service
+	bookmarkExportingService *bookmarkexporting.Service
+	bookmarkImportingService *bookmarkimporting.Service
 
-	toolsView       *view.View
-	toolsExportView *view.View
-	toolsImportView *view.View
+	toolsView          *view.View
+	bookmarkExportView *view.View
+	bookmarkImportView *view.View
 }
 
 func RegisterToolsHandlers(
 	r *chi.Mux,
-	exportingService *bookmarkexporting.Service,
-	importingService *bookmarkimporting.Service,
+	bookmarkExportingService *bookmarkexporting.Service,
+	bookmarkImportingService *bookmarkimporting.Service,
 ) {
 	hc := toolsHandlerContext{
-		exportingService: exportingService,
-		importingService: importingService,
+		bookmarkExportingService: bookmarkExportingService,
+		bookmarkImportingService: bookmarkImportingService,
 
-		toolsView:       view.New("tools/tools.gohtml"),
-		toolsExportView: view.New("tools/export.gohtml"),
-		toolsImportView: view.New("tools/import.gohtml"),
+		toolsView: view.New("tools/tools.gohtml"),
+
+		bookmarkExportView: view.New("tools/bookmark_export.gohtml"),
+		bookmarkImportView: view.New("tools/bookmark_import.gohtml"),
 	}
 
-	// bookmark management tools
 	r.Route("/tools", func(r chi.Router) {
 		r.Use(func(h http.Handler) http.Handler {
 			return middleware.AuthenticatedUser(h.ServeHTTP)
 		})
 
 		r.Get("/", hc.handleToolsView())
-		r.Get("/export", hc.handleToolsExportView())
-		r.Post("/export", hc.handleToolsExport())
-		r.Get("/import", hc.handleToolsImportView())
-		r.Post("/import", hc.handleToolsImport())
+
+		// bookmark management tools
+		r.Route("/bookmarks", func(sr chi.Router) {
+			sr.Get("/export", hc.handleBookmarkExportView())
+			sr.Post("/export", hc.handleBookmarkExport())
+			sr.Get("/import", hc.handleBookmarkImportView())
+			sr.Post("/import", hc.handleBookmarkImport())
+		})
 	})
 }
 
@@ -72,8 +76,8 @@ func (hc *toolsHandlerContext) handleToolsView() func(w http.ResponseWriter, r *
 	}
 }
 
-// handleToolsExportView renders the bookmark export page.
-func (hc *toolsHandlerContext) handleToolsExportView() func(w http.ResponseWriter, r *http.Request) {
+// handleBookmarkExportView renders the bookmark export page.
+func (hc *toolsHandlerContext) handleBookmarkExportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 		viewData := view.Data{
@@ -81,13 +85,13 @@ func (hc *toolsHandlerContext) handleToolsExportView() func(w http.ResponseWrite
 			Title:   "Export bookmarks",
 		}
 
-		hc.toolsExportView.Render(w, r, viewData)
+		hc.bookmarkExportView.Render(w, r, viewData)
 	}
 }
 
-// handleToolsExport processes the bookmarks export form and sends the
+// handleBookmarkExport processes the bookmarks export form and sends the
 // corresponding file to the client.
-func (hc *toolsHandlerContext) handleToolsExport() func(w http.ResponseWriter, r *http.Request) {
+func (hc *toolsHandlerContext) handleBookmarkExport() func(w http.ResponseWriter, r *http.Request) {
 	type exportForm struct {
 		Visibility bookmarkexporting.Visibility `schema:"visibility"`
 	}
@@ -103,7 +107,7 @@ func (hc *toolsHandlerContext) handleToolsExport() func(w http.ResponseWriter, r
 
 		user := httpcontext.UserValue(r.Context())
 
-		document, err := hc.exportingService.ExportAsNetscapeDocument(user.UUID, form.Visibility)
+		document, err := hc.bookmarkExportingService.ExportAsNetscapeDocument(user.UUID, form.Visibility)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmarks")
 			view.PutFlashError(w, "failed to export bookmarks")
@@ -132,7 +136,7 @@ func (hc *toolsHandlerContext) handleToolsExport() func(w http.ResponseWriter, r
 }
 
 // handleToolsExportView renders the bookmark import page.
-func (hc *toolsHandlerContext) handleToolsImportView() func(w http.ResponseWriter, r *http.Request) {
+func (hc *toolsHandlerContext) handleBookmarkImportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 		viewData := view.Data{
@@ -140,12 +144,12 @@ func (hc *toolsHandlerContext) handleToolsImportView() func(w http.ResponseWrite
 			Title:   "Import bookmarks",
 		}
 
-		hc.toolsImportView.Render(w, r, viewData)
+		hc.bookmarkImportView.Render(w, r, viewData)
 	}
 }
 
-// handleToolsImport processes data submitted through the bookmark import form.
-func (hc *toolsHandlerContext) handleToolsImport() func(w http.ResponseWriter, r *http.Request) {
+// handleBookmarkImport processes data submitted through the bookmark import form.
+func (hc *toolsHandlerContext) handleBookmarkImport() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		multipartReader, err := r.MultipartReader()
 		if err != nil {
@@ -210,7 +214,7 @@ func (hc *toolsHandlerContext) handleToolsImport() func(w http.ResponseWriter, r
 		overwrite := bookmarkimporting.OnConflictStrategy(onConflictStrategyBuffer.String())
 		visibility := bookmarkimporting.Visibility(visibilityBuffer.String())
 
-		importStatus, err := hc.importingService.ImportFromNetscapeDocument(user.UUID, document, visibility, overwrite)
+		importStatus, err := hc.bookmarkImportingService.ImportFromNetscapeDocument(user.UUID, document, visibility, overwrite)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to save imported bookmarks")
 			view.PutFlashError(w, "failed to save imported bookmarks")

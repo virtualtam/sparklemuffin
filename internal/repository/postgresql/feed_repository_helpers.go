@@ -6,6 +6,7 @@ package postgresql
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
@@ -56,6 +57,18 @@ func (r *Repository) feedGetManyQuery(query string, queryParams ...any) ([]feed.
 	return feeds, nil
 }
 
+func (r *Repository) feedGetAllByCategory(userUUID string, categoryUUID string) ([]feed.Feed, error) {
+	query := `
+SELECT f.feed_url, f.title, f.slug
+FROM feed_subscriptions fs
+JOIN feed_feeds f ON f.uuid=fs.feed_uuid
+WHERE fs.user_uuid=$1
+AND   fs.category_uuid=$2
+ORDER BY f.title`
+
+	return r.feedGetManyQuery(query, userUUID, categoryUUID)
+}
+
 func (r *Repository) feedCategoryGetQuery(query string, queryParams ...any) (feed.Category, error) {
 	rows, err := r.pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
@@ -85,13 +98,13 @@ func (r *Repository) feedGetCategories(userUUID string) ([]DBCategory, error) {
 
 	rows, err := r.pool.Query(context.Background(), query, userUUID)
 	if err != nil {
-		return []DBCategory{}, err
+		return []DBCategory{}, fmt.Errorf("failed to retrieve categories: %w", err)
 	}
 	defer rows.Close()
 
 	var dbCategories []DBCategory
 	if err := pgxscan.ScanAll(&dbCategories, rows); err != nil {
-		return []DBCategory{}, err
+		return []DBCategory{}, fmt.Errorf("failed to scan category: %w", err)
 	}
 
 	return dbCategories, nil

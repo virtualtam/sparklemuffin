@@ -14,6 +14,7 @@ import (
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
+	feedexporting "github.com/virtualtam/sparklemuffin/pkg/feed/exporting"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -52,9 +53,14 @@ func WithBookmarkServices(
 	}
 }
 
-func WithFeedServices(feedService *feed.Service, feedQueryingService *feedquerying.Service) optionFunc {
+func WithFeedServices(
+	feedService *feed.Service,
+	feedExportingService *feedexporting.Service,
+	feedQueryingService *feedquerying.Service,
+) optionFunc {
 	return func(s *Server) {
 		s.feedService = feedService
+		s.feedExportingService = feedExportingService
 		s.feedQueryingService = feedQueryingService
 	}
 }

@@ -11,11 +11,13 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
+	feedexporting "github.com/virtualtam/sparklemuffin/pkg/feed/exporting"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	feedsynchronizing "github.com/virtualtam/sparklemuffin/pkg/feed/synchronizing"
 )
 
 var _ feed.Repository = &Repository{}
+var _ feedexporting.Repository = &Repository{}
 var _ feedquerying.Repository = &Repository{}
 var _ feedsynchronizing.Repository = &Repository{}
 
@@ -521,6 +523,32 @@ func (r *Repository) FeedEntryMetadataUpdate(entryMetadata feed.EntryMetadata) e
 	}
 
 	return r.queryTx("feeds", "FeedEntryMetadataUpdate", query, args)
+}
+
+func (r *Repository) FeedCategorySubscriptionsGetAll(userUUID string) ([]feedexporting.CategorySubscriptions, error) {
+	dbCategories, err := r.feedGetCategories(userUUID)
+	if err != nil {
+		return []feedexporting.CategorySubscriptions{}, err
+	}
+
+	categoriesSubscriptions := make([]feedexporting.CategorySubscriptions, len(dbCategories))
+
+	for i, dbCategory := range dbCategories {
+		subscribedFeeds, err := r.feedGetAllByCategory(userUUID, dbCategory.UUID)
+		if err != nil {
+			return []feedexporting.CategorySubscriptions{}, err
+		}
+
+		category := dbCategory.asCategory()
+		categorySubscriptions := feedexporting.CategorySubscriptions{
+			Category:        category,
+			SubscribedFeeds: subscribedFeeds,
+		}
+
+		categoriesSubscriptions[i] = categorySubscriptions
+	}
+
+	return categoriesSubscriptions, nil
 }
 
 func (r *Repository) FeedSubscriptionCategoryGetAll(userUUID string) ([]feedquerying.SubscribedFeedsByCategory, error) {

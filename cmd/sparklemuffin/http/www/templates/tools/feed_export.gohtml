@@ -1,0 +1,10 @@
+{{define "content"}}
+<h2>Tools</h2>
+<h3>Export feed subscriptions</h3>
+<form action="/tools/feeds/export" method="POST">
+  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+  <span class="submit">
+    <button type="submit">Export</button>
+  </span>
+</form>
+{{end}}

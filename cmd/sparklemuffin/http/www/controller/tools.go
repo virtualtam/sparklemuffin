@@ -14,36 +14,51 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/netscape-go/v2"
+	"github.com/virtualtam/opml-go"
 
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
 	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
+	feedexporting "github.com/virtualtam/sparklemuffin/pkg/feed/exporting"
+)
+
+const (
+	actionToolsFeedExport string = "tools-feed-export"
 )
 
 type toolsHandlerContext struct {
 	bookmarkExportingService *bookmarkexporting.Service
 	bookmarkImportingService *bookmarkimporting.Service
+	csrfService              *csrf.Service
+	feedExportingService     *feedexporting.Service
 
 	toolsView          *view.View
 	bookmarkExportView *view.View
 	bookmarkImportView *view.View
+	feedExportView     *view.View
 }
 
 func RegisterToolsHandlers(
 	r *chi.Mux,
 	bookmarkExportingService *bookmarkexporting.Service,
 	bookmarkImportingService *bookmarkimporting.Service,
+	csrfService *csrf.Service,
+	feedExportingService *feedexporting.Service,
 ) {
 	hc := toolsHandlerContext{
 		bookmarkExportingService: bookmarkExportingService,
 		bookmarkImportingService: bookmarkImportingService,
+		csrfService:              csrfService,
+		feedExportingService:     feedExportingService,
 
 		toolsView: view.New("tools/tools.gohtml"),
 
 		bookmarkExportView: view.New("tools/bookmark_export.gohtml"),
 		bookmarkImportView: view.New("tools/bookmark_import.gohtml"),
+		feedExportView:     view.New("tools/feed_export.gohtml"),
 	}
 
 	r.Route("/tools", func(r chi.Router) {
@@ -59,6 +74,12 @@ func RegisterToolsHandlers(
 			sr.Post("/export", hc.handleBookmarkExport())
 			sr.Get("/import", hc.handleBookmarkImportView())
 			sr.Post("/import", hc.handleBookmarkImport())
+		})
+
+		// feed management tools
+		r.Route("/feeds", func(sr chi.Router) {
+			sr.Get("/export", hc.handleFeedExportView())
+			sr.Post("/export", hc.handleFeedExport())
 		})
 	})
 }
@@ -224,5 +245,76 @@ func (hc *toolsHandlerContext) handleBookmarkImport() func(w http.ResponseWriter
 
 		view.PutFlashSuccess(w, fmt.Sprintf("Import status: %s", importStatus.Summary()))
 		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+	}
+}
+
+type toolsFeedExportData struct {
+	CSRFToken string
+}
+
+// handleFeedExportView renders the feed export page.
+func (hc *toolsHandlerContext) handleFeedExportView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+		csrfToken := hc.csrfService.Generate(user.UUID, actionToolsFeedExport)
+
+		viewData := view.Data{
+			Content: toolsFeedExportData{
+				CSRFToken: csrfToken,
+			},
+			Title: "Export feed subscriptions",
+		}
+
+		hc.feedExportView.Render(w, r, viewData)
+	}
+}
+
+type toolsFeedExportForm struct {
+	CSRFToken string `schema:"csrf_token"`
+}
+
+// handleFeedExport processes the feed subscription export form and sends the
+// corresponding file to the client.
+func (hc *toolsHandlerContext) handleFeedExport() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+
+		var form toolsFeedExportForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed export form")
+			view.PutFlashError(w, "failed to process form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if !hc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionToolsFeedExport) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		opmlDocument, err := hc.feedExportingService.ExportAsOPMLDocument(*ctxUser)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to encode feeds as OPML")
+			view.PutFlashError(w, "failed to process form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		marshaled, err := opml.Marshal(opmlDocument)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to marshal OPML feed subscriptions")
+			view.PutFlashError(w, "failed to export feed subscriptions")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		w.Header().Set("Content-Disposition", "attachment; filename=feeds.opml")
+		w.Header().Set("Content-Type", "application/xml")
+
+		if _, err := w.Write(marshaled); err != nil {
+			log.Error().Err(err).Msg("failed to send OPML export")
+		}
 	}
 }

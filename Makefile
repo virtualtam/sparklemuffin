@@ -64,7 +64,7 @@ live-race:
 
 # Live development server - PostgreSQL console
 psql:
-	@PGPASSWORD=sparklemuffin psql -h localhost -p 15432 -U sparklemuffin
+	docker compose exec postgres psql -U sparklemuffin
 .PHONY: psql
 
 # Live development server - Database migrations

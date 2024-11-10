@@ -2,6 +2,8 @@
 <h2>Tools</h2>
 <h3>Export bookmarks</h3>
 <form action="/tools/bookmarks/export" method="POST">
+  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+
   <p>
     Visibility:
     <br>

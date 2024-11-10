@@ -2,6 +2,8 @@
 <h2>Tools</h2>
 <h3>Import bookmarks</h3>
 <form action="/tools/bookmarks/import" enctype="multipart/form-data" method="POST">
+  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+
   <p>
     <label for="importfile">Choose a file to import:</label>
     <br>

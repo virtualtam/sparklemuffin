@@ -26,7 +26,9 @@ import (
 )
 
 const (
-	actionToolsFeedExport string = "tools-feed-export"
+	actionToolsBookmarkExport string = "tools-bookmark-export"
+	actionToolsBookmarkImport string = "tools-bookmark-import"
+	actionToolsFeedExport     string = "tools-feed-export"
 )
 
 type toolsHandlerContext struct {
@@ -100,10 +102,14 @@ func (hc *toolsHandlerContext) handleToolsView() func(w http.ResponseWriter, r *
 // handleBookmarkExportView renders the bookmark export page.
 func (hc *toolsHandlerContext) handleBookmarkExportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := hc.csrfService.Generate(ctxUser.UUID, actionToolsBookmarkExport)
+
 		viewData := view.Data{
-			Content: user,
-			Title:   "Export bookmarks",
+			Content: csrf.Data{
+				CSRFToken: csrfToken,
+			},
+			Title: "Export bookmarks",
 		}
 
 		hc.bookmarkExportView.Render(w, r, viewData)
@@ -114,6 +120,7 @@ func (hc *toolsHandlerContext) handleBookmarkExportView() func(w http.ResponseWr
 // corresponding file to the client.
 func (hc *toolsHandlerContext) handleBookmarkExport() func(w http.ResponseWriter, r *http.Request) {
 	type exportForm struct {
+		CSRFToken  string                       `schema:"csrf_token"`
 		Visibility bookmarkexporting.Visibility `schema:"visibility"`
 	}
 
@@ -122,17 +129,24 @@ func (hc *toolsHandlerContext) handleBookmarkExport() func(w http.ResponseWriter
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark export form")
 			view.PutFlashError(w, "failed to process form")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
-		user := httpcontext.UserValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 
-		document, err := hc.bookmarkExportingService.ExportAsNetscapeDocument(user.UUID, form.Visibility)
+		if !hc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionToolsBookmarkExport) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		document, err := hc.bookmarkExportingService.ExportAsNetscapeDocument(ctxUser.UUID, form.Visibility)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmarks")
 			view.PutFlashError(w, "failed to export bookmarks")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
@@ -140,7 +154,7 @@ func (hc *toolsHandlerContext) handleBookmarkExport() func(w http.ResponseWriter
 		if err != nil {
 			log.Error().Err(err).Msg("failed to marshal Netscape bookmarks")
 			view.PutFlashError(w, "failed to export bookmarks")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
@@ -148,8 +162,8 @@ func (hc *toolsHandlerContext) handleBookmarkExport() func(w http.ResponseWriter
 
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 		w.Header().Set("Content-Type", "application/octet-stream")
-		_, err = w.Write(marshaled)
 
+		_, err = w.Write(marshaled)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to send marshaled Netscape bookmark export")
 		}
@@ -159,10 +173,14 @@ func (hc *toolsHandlerContext) handleBookmarkExport() func(w http.ResponseWriter
 // handleToolsExportView renders the bookmark import page.
 func (hc *toolsHandlerContext) handleBookmarkImportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := hc.csrfService.Generate(ctxUser.UUID, actionToolsBookmarkImport)
+
 		viewData := view.Data{
-			Content: user,
-			Title:   "Import bookmarks",
+			Content: csrf.Data{
+				CSRFToken: csrfToken,
+			},
+			Title: "Import bookmarks",
 		}
 
 		hc.bookmarkImportView.Render(w, r, viewData)
@@ -181,10 +199,12 @@ func (hc *toolsHandlerContext) handleBookmarkImport() func(w http.ResponseWriter
 		}
 
 		var (
+			csrfTokenBuffer          bytes.Buffer
 			importFileBuffer         bytes.Buffer
 			onConflictStrategyBuffer bytes.Buffer
 			visibilityBuffer         bytes.Buffer
 		)
+		csrfTokenWriter := bufio.NewWriter(&csrfTokenBuffer)
 		importFileWriter := bufio.NewWriter(&importFileBuffer)
 		onConflictStrategyWriter := bufio.NewWriter(&onConflictStrategyBuffer)
 		visibilityWriter := bufio.NewWriter(&visibilityBuffer)
@@ -205,6 +225,8 @@ func (hc *toolsHandlerContext) handleBookmarkImport() func(w http.ResponseWriter
 			}
 
 			switch part.FormName() {
+			case "csrf_token":
+				_, err = io.Copy(csrfTokenWriter, part)
 			case "importfile":
 				_, err = io.Copy(importFileWriter, part)
 			case "on-conflict":
@@ -221,6 +243,15 @@ func (hc *toolsHandlerContext) handleBookmarkImport() func(w http.ResponseWriter
 				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 				return
 			}
+		}
+
+		ctxUser := httpcontext.UserValue(r.Context())
+
+		if !hc.csrfService.Validate(csrfTokenBuffer.String(), ctxUser.UUID, actionToolsBookmarkImport) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
 		}
 
 		document, err := netscape.Unmarshal(importFileBuffer.Bytes())
@@ -248,18 +279,14 @@ func (hc *toolsHandlerContext) handleBookmarkImport() func(w http.ResponseWriter
 	}
 }
 
-type toolsFeedExportData struct {
-	CSRFToken string
-}
-
 // handleFeedExportView renders the feed export page.
 func (hc *toolsHandlerContext) handleFeedExportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
-		csrfToken := hc.csrfService.Generate(user.UUID, actionToolsFeedExport)
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := hc.csrfService.Generate(ctxUser.UUID, actionToolsFeedExport)
 
 		viewData := view.Data{
-			Content: toolsFeedExportData{
+			Content: csrf.Data{
 				CSRFToken: csrfToken,
 			},
 			Title: "Export feed subscriptions",
@@ -269,17 +296,17 @@ func (hc *toolsHandlerContext) handleFeedExportView() func(w http.ResponseWriter
 	}
 }
 
-type toolsFeedExportForm struct {
-	CSRFToken string `schema:"csrf_token"`
-}
-
 // handleFeedExport processes the feed subscription export form and sends the
 // corresponding file to the client.
 func (hc *toolsHandlerContext) handleFeedExport() func(w http.ResponseWriter, r *http.Request) {
+	type exportForm struct {
+		CSRFToken string `schema:"csrf_token"`
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := httpcontext.UserValue(r.Context())
 
-		var form toolsFeedExportForm
+		var form exportForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse feed export form")
 			view.PutFlashError(w, "failed to process form")

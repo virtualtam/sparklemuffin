@@ -62,14 +62,6 @@ func RegisterFeedHandlers(
 		})
 
 		r.Get("/", fc.handleFeedListView())
-		r.Post("/mark-all-read", fc.handleEntryMetadataMarkAllAsRead())
-
-		r.Get("/categories/{slug}/entries", fc.handleFeedListByCategoryView())
-		r.Post("/categories/{slug}/entries/mark-all-read", fc.handleEntryMetadataMarkAllAsReadByCategory())
-
-		r.Get("/{slug}/entries", fc.handleFeedListBySubscriptionView())
-		r.Post("/{slug}/entries/mark-all-read", fc.handleEntryMetadataMarkAllAsReadByFeed())
-
 		r.Get("/add", fc.handleFeedAddView())
 		r.Post("/add", fc.handleFeedAdd())
 
@@ -80,9 +72,13 @@ func RegisterFeedHandlers(
 			sr.Post("/{uuid}/delete", fc.handleFeedCategoryDelete())
 			sr.Get("/{uuid}/edit", fc.handleFeedCategoryEditView())
 			sr.Post("/{uuid}/edit", fc.handleFeedCategoryEdit())
+
+			sr.Get("/{slug}", fc.handleFeedListByCategoryView())
+			sr.Post("/{slug}/entries/mark-all-read", fc.handleEntryMetadataMarkAllAsReadByCategory())
 		})
 
 		r.Route("/entries", func(sr chi.Router) {
+			sr.Post("/mark-all-read", fc.handleEntryMetadataMarkAllAsRead())
 			sr.Post("/{uid}/toggle-read", fc.handleFeedEntryToggleRead())
 		})
 
@@ -92,6 +88,9 @@ func RegisterFeedHandlers(
 			sr.Post("/{uuid}/delete", fc.handleFeedSubscriptionDelete())
 			sr.Get("/{uuid}/edit", fc.handleFeedSubscriptionEditView())
 			sr.Post("/{uuid}/edit", fc.handleFeedSubscriptionEdit())
+
+			sr.Get("/{slug}", fc.handleFeedListBySubscriptionView())
+			sr.Post("/{slug}/entries/mark-all-read", fc.handleEntryMetadataMarkAllAsReadByFeed())
 		})
 	})
 }

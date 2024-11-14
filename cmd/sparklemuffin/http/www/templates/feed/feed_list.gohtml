@@ -13,13 +13,13 @@
       {{- range .Categories}}
       <li>
         <span class="feed-category">
-          <a href="/feeds/categories/{{.Slug}}/entries">{{.Name}}</a> <span class="unread">{{.Unread}}</span>
+          <a href="/feeds/categories/{{.Slug}}">{{.Name}}</a> <span class="unread">{{.Unread}}</span>
         </span>
         <ul>
           {{- range .SubscribedFeeds}}
           <li>
             <span class="feed">
-              <a href="/feeds/{{.Slug}}/entries">{{.Title}}</a>
+              <a href="/feeds/subscriptions/{{.Slug}}">{{.Title}}</a>
               <span class="unread">{{.Unread}}</span>
             </span>
           </li>
@@ -35,7 +35,7 @@
       <h3>{{.Header}}</h3>
       <div class="feed-entry-actions">
         [
-        <form action="{{$.URLPath}}/mark-all-read" method="POST">
+        <form action="{{$.URLPath}}/entries/mark-all-read" method="POST">
           <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
           <button type=submit>mark all as read</button>
         </form>

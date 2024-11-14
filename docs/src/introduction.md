@@ -1,6 +1,6 @@
 # SparkleMuffin
 
-**SparkleMuffin** is a Web application to save, tag and share personal Web bookmarks.
+**SparkleMuffin** is a self-hosted bookmark manager and feed aggregator.
 
 It provides a minimalist interface thait aims at being simple to use, clutter-free and
 accessible.

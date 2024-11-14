@@ -8,6 +8,12 @@ SparkleMuffin allows you to:
 - share your public bookmarks so they can be accessed by a Web browser or as an
   Atom feed.
 
+## Feeds
+SparkleMuffin allows you to:
+
+- subscribe to Atom and RSS feeds;
+- import your existing feed subscriptions using the [OPML File Format](../developers/architecture/opml.md).
+
 ## Web interface
 SparkleMuffin aims at providing a Web interface that is:
 

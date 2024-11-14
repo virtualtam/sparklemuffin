@@ -5,11 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [v0.2.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.2.0) - UNRELEASED
+
+### Added
+#### Feeds
+- Subscribe to Atom and RSS feeds
+- Categorize subscriptions
+- Display subscriptions
+- Periodically synchronize subscriptions
+- Import existing subscriptions from OPML
+- Export subscriptions
+
+### Changed
+#### Bookmarks
+- Enforce CSRF validation for import and export forms
+
+#### PostgreSQL
+- Update repository helpers
+
+#### Packaging & automation
+- Build with Go 1.23
+- Update direct and transitive dependencies
+
+
 ## [v0.1.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.1.1) - 2024-01-26
 _Initial release_
 
 ### Added
-#### Main Features
+#### Bookmarks
 - Create and manage users of the application
 - Create and manage bookmarks to Web pages (links)
 - Display bookmarks and bookmark tags

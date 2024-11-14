@@ -5,7 +5,7 @@ Source code is broken down into several packages:
 ```shell
 .
 ├── cmd       # Command-line application, HTTP servers, Web application
-├── internal  # Private packages
+├── internal  # Private packages and test helpers
 └── pkg       # Domain packages
 ```
 
@@ -23,9 +23,12 @@ cmd
 ## `internal` - Application-specific and private packages
 ```shell
 internal
+├── hash            # Cryptographically secure hash helpers
+├── paginate        # Pagination utilities
 ├── rand            # Cryptographically secure pseudo-random helpers
 └── repository
-    └── postgresql  # PostgreSQL database persistence layer (repository)
+│   └── postgresql  # PostgreSQL database persistence layer (repository)
+└── test            # Helpers for unitary and integration tests
 ```
 
 
@@ -33,7 +36,7 @@ internal
 ```shell
 pkg
 ├── bookmark  # Web bookmark management
-├── hash      # Cryptographically secure hash helpers
+├── feed      # Feed subscription management
 ├── session   # User session persistence
 └── user      # User and permission management
 ```

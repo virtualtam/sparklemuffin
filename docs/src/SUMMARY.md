@@ -24,3 +24,4 @@
         - [Project Structure](./developers/architecture/project-structure.md)
         - [Database](./developers/architecture/database.md)
         - [Netscape Bookmark Parser](./developers/architecture/netscape.md)
+        - [OPML Feed Subscription Parser](./developers/architecture/opml.md)

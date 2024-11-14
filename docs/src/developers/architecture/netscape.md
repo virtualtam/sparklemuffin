@@ -57,7 +57,7 @@ is provided as a standalone library in the hope other users may find it useful.
 It leverages:
 
 - the streaming parser abilities of Go's [encoding/xml](https://pkg.go.dev/encoding/xml) package for most of the heavy lifing;
-- the HTML character escaping andunescaping of Go's [html](https://pkg.go.dev/html) package;
+- the HTML character escaping and unescaping of Go's [html](https://pkg.go.dev/html) package;
 - previous work on [Shaarli](https://github.com/shaarli/Shaarli)'s
   [netscape-bookmark-parser](https://github.com/shaarli/netscape-bookmark-parser),
   especially its [test fixtures](https://github.com/shaarli/netscape-bookmark-parser/tree/master/tests/Fixtures/Encoder/input).

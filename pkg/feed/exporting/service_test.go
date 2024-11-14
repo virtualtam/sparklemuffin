@@ -10,7 +10,7 @@ import (
 
 	"github.com/jaswdr/faker"
 	"github.com/virtualtam/opml-go"
-	"github.com/virtualtam/sparklemuffin/internal/assert"
+	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )

@@ -6,7 +6,7 @@ package feed
 import (
 	"testing"
 
-	"github.com/virtualtam/sparklemuffin/internal/assert"
+	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 )
 
 func assertFeedEquals(t *testing.T, got, want Feed) {

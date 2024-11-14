@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/virtualtam/sparklemuffin/internal/assert"
+	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 )
 
 const (

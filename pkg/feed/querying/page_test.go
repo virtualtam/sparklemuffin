@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/virtualtam/sparklemuffin/internal/assert"
+	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 )
 
 func TestNewPage(t *testing.T) {

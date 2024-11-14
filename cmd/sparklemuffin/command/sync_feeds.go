@@ -4,7 +4,7 @@
 package command
 
 import (
-	"github.com/carlmjohnson/versioninfo"
+	"github.com/earthboundkid/versioninfo/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )

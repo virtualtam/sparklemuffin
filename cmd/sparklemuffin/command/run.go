@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/carlmjohnson/versioninfo"
+	"github.com/earthboundkid/versioninfo/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/metrics"

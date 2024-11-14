@@ -6,7 +6,7 @@ package version
 import (
 	"time"
 
-	"github.com/carlmjohnson/versioninfo"
+	"github.com/earthboundkid/versioninfo/v2"
 )
 
 // Details provides detailed build information about the application.

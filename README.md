@@ -1,5 +1,7 @@
 # SparkleMuffin - Web Bookmark Manager & Feed Aggregator
 
+<img src="https://github.com/virtualtam/sparklemuffin/actions/workflows/ci.yaml/badge.svg?branch=main" alt="Continuous integration workflow status">
+
 **SparkleMuffin** is a self-hosted bookmark manager and feed aggregator.
 
 It provides a minimalist interface thait aims at being simple to use, clutter-free and
@@ -14,9 +16,15 @@ SparkleMuffin allows you to:
 - import your existing feed subscriptions using the [OPML File Format](./docs/src/developers/architecture/opml.md).
 
 
+## What status is the project currently in?
+
+SparkleMuffin is still alpha software, and should not be considered ready for production use.
+
+
 ## Change Log
 
 See [CHANGELOG](./docs/src/changelog.md)
+
 
 ## License
 

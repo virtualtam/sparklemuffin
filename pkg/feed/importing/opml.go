@@ -15,8 +15,6 @@ func opmlToCategoriesFeeds(outlines []opml.Outline) map[string][]string {
 	var currentCategoryName string
 
 	for _, outline := range outlines {
-		currentCategoryName = defaultCategoryName
-
 		if outline.IsDirectory() {
 			currentCategoryName = outline.Text
 

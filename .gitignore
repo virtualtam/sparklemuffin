@@ -6,4 +6,6 @@ sparklemuffin.test
 coverage.out
 coverage.html
 
+__debug_bin*
+
 .vscode/

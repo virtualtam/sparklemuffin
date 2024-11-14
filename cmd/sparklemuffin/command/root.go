@@ -31,6 +31,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedexporting "github.com/virtualtam/sparklemuffin/pkg/feed/exporting"
 	feedfetching "github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
+	feedimporting "github.com/virtualtam/sparklemuffin/pkg/feed/importing"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	feedsynchronizing "github.com/virtualtam/sparklemuffin/pkg/feed/synchronizing"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
@@ -78,10 +79,12 @@ var (
 
 	feedService              *feed.Service
 	feedExportingService     *feedexporting.Service
+	feedImportingService     *feedimporting.Service
 	feedQueryingService      *feedquerying.Service
 	feedSynchronizingService *feedsynchronizing.Service
-	sessionService           *session.Service
-	userService              *user.Service
+
+	sessionService *session.Service
+	userService    *user.Service
 )
 
 // NewRootCommand initializes the main CLI entrypoint and common command flags.
@@ -185,6 +188,7 @@ func NewRootCommand() *cobra.Command {
 			feedService = feed.NewService(repository, feedClient)
 			feedExportingService = feedexporting.NewService(repository)
 			feedQueryingService = feedquerying.NewService(repository)
+			feedImportingService = feedimporting.NewService(feedService)
 			feedSynchronizingService = feedsynchronizing.NewService(repository, feedClient)
 
 			sessionService = session.NewService(repository, hmacKey)

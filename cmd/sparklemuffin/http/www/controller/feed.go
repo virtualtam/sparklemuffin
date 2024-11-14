@@ -360,7 +360,7 @@ func (fc *feedHandlerContext) handleFeedCategoryAdd() func(w http.ResponseWriter
 			return
 		}
 
-		if _, err := fc.feedService.AddCategory(ctxUser.UUID, form.Name); err != nil {
+		if _, err := fc.feedService.CreateCategory(ctxUser.UUID, form.Name); err != nil {
 			log.Error().Err(err).Msg("failed to add feed category")
 			view.PutFlashError(w, "failed to add feed category")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)

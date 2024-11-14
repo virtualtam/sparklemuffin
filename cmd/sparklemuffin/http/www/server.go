@@ -28,6 +28,7 @@ import (
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedexporting "github.com/virtualtam/sparklemuffin/pkg/feed/exporting"
+	feedimporting "github.com/virtualtam/sparklemuffin/pkg/feed/importing"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -52,6 +53,7 @@ type Server struct {
 	// Feed services
 	feedService          *feed.Service
 	feedExportingService *feedexporting.Service
+	feedImportingService *feedimporting.Service
 	feedQueryingService  *feedquerying.Service
 
 	// User and session management services
@@ -132,7 +134,7 @@ func (s *Server) registerHandlers() {
 	controller.RegisterAccounthandlers(s.router, s.csrfService, s.userService)
 	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.bookmarkQueryingService, s.userService)
 	controller.RegisterFeedHandlers(s.router, s.csrfService, s.feedService, s.feedQueryingService, s.userService)
-	controller.RegisterToolsHandlers(s.router, s.bookmarkExportingService, s.bookmarkImportingService, s.csrfService, s.feedExportingService)
+	controller.RegisterToolsHandlers(s.router, s.bookmarkExportingService, s.bookmarkImportingService, s.csrfService, s.feedExportingService, s.feedImportingService)
 }
 
 // ServeHTTP satisfies the http.Handler interface,

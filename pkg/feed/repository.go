@@ -22,8 +22,8 @@ type ValidationRepository interface {
 type Repository interface {
 	ValidationRepository
 
-	// FeedAdd creates a new Feed.
-	FeedAdd(feed Feed) error
+	// FeedCreate creates a new Feed.
+	FeedCreate(feed Feed) error
 
 	// FeedGetBySlug returns the Feed for a given slug.
 	FeedGetBySlug(feedSlug string) (Feed, error)
@@ -31,11 +31,14 @@ type Repository interface {
 	// FeedGetByURL returns the Feed for a given URL.
 	FeedGetByURL(feedURL string) (Feed, error)
 
-	// FeedCategoryAdd creates a new Category.
-	FeedCategoryAdd(category Category) error
+	// FeedCategoryCreate creates a new Category.
+	FeedCategoryCreate(category Category) error
 
 	// FeedCategoryDelete deletes an existing Category and related Subscriptions.
 	FeedCategoryDelete(userUUID string, categoryUUID string) error
+
+	// FeedCategoryGetByName returns the Category for a given user and name.
+	FeedCategoryGetByName(userUUID string, name string) (Category, error)
 
 	// FeedCategoryGetBySlug returns the Category for a given user and slug.
 	FeedCategoryGetBySlug(userUUID string, slug string) (Category, error)
@@ -49,8 +52,8 @@ type Repository interface {
 	// FeedCategoryUpdate updates an existing Category.
 	FeedCategoryUpdate(category Category) error
 
-	// FeedEntryAddMany creates a collection of new Entries.
-	FeedEntryAddMany(entries []Entry) (int64, error)
+	// FeedEntryCreateMany creates a collection of new Entries.
+	FeedEntryCreateMany(entries []Entry) (int64, error)
 
 	// FeedEntryGetN returns at most N entries for a given Feed.
 	FeedEntryGetN(feedUUID string, n uint) ([]Entry, error)
@@ -64,8 +67,8 @@ type Repository interface {
 	// FeedEntryMarkAllAsReadBySubscription marks all entries as "read" for a given User and Subscription.
 	FeedEntryMarkAllAsReadBySubscription(userUUID string, subscriptionUUID string) error
 
-	// FeedEntryMetadataAdd creates a new EntryStatus.
-	FeedEntryMetadataAdd(entryMetadata EntryMetadata) error
+	// FeedEntryMetadataCreate creates a new EntryStatus.
+	FeedEntryMetadataCreate(entryMetadata EntryMetadata) error
 
 	// FeedEntryMetadataGetByUID returns the EntryStatus for a given user and Entry.
 	FeedEntryMetadataGetByUID(userUUID string, entryUID string) (EntryMetadata, error)
@@ -73,8 +76,8 @@ type Repository interface {
 	// FeedEntryMetadataUpdate updates an existing EntryStatus.
 	FeedEntryMetadataUpdate(entryMetadata EntryMetadata) error
 
-	// FeedSubscriptionAdd creates a new Feed subscription for a given user.
-	FeedSubscriptionAdd(subscription Subscription) error
+	// FeedSubscriptionCreate creates a new Feed subscription for a given user.
+	FeedSubscriptionCreate(subscription Subscription) (Subscription, error)
 
 	// FeedSubscriptionDelete deletes a given Feed subscription.
 	FeedSubscriptionDelete(userUUID string, subscriptionUUID string) error

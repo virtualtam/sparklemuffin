@@ -28,8 +28,8 @@ func NewService(r Repository, client *fetching.Client) *Service {
 	}
 }
 
-// AddCategory adds a new Category for a given User.
-func (s *Service) AddCategory(userUUID string, name string) (Category, error) {
+// CreateCategory creates a new Category for a given User.
+func (s *Service) CreateCategory(userUUID string, name string) (Category, error) {
 	category, err := NewCategory(userUUID, name)
 	if err != nil {
 		return Category{}, err
@@ -39,11 +39,30 @@ func (s *Service) AddCategory(userUUID string, name string) (Category, error) {
 		return Category{}, err
 	}
 
-	if err := s.r.FeedCategoryAdd(category); err != nil {
+	if err := s.r.FeedCategoryCreate(category); err != nil {
 		return Category{}, err
 	}
 
 	return category, nil
+}
+
+// GetOrCreateCategory returns an existing Category or creates it.
+func (s *Service) GetOrCreateCategory(userUUID string, name string) (Category, bool, error) {
+	var isCreated bool
+
+	category, err := s.r.FeedCategoryGetByName(userUUID, name)
+	if errors.Is(err, ErrCategoryNotFound) {
+		category, err = s.CreateCategory(userUUID, name)
+		if err != nil {
+			return Category{}, false, err
+		}
+
+		isCreated = true
+	} else if err != nil {
+		return Category{}, false, err
+	}
+
+	return category, isCreated, nil
 }
 
 // CategoryBySlug returns the category for a given user and slug.
@@ -119,20 +138,21 @@ func (s *Service) FeedBySlug(userUUID string, slug string) (Feed, error) {
 	return s.r.FeedGetBySlug(slug)
 }
 
-// Subscribe creates a new Feed if needed, and adds the corresponding Subscription
+// Subscribe creates a new Feed if needed, and creates the corresponding Subscription
 // for a given user.
 func (s *Service) Subscribe(userUUID string, categoryUUID string, feedURL string) error {
-	feed, err := s.getOrCreateFeedAndEntries(feedURL)
+	feed, _, err := s.GetOrCreateFeedAndEntries(feedURL)
 	if err != nil {
 		return fmt.Errorf("failed to create or retrieve feed: %w", err)
 	}
 
-	subscription, err := NewSubscription(categoryUUID, feed.UUID, userUUID)
-	if err != nil {
-		return fmt.Errorf("failed to create subscription: %w", err)
+	subscription := Subscription{
+		CategoryUUID: categoryUUID,
+		FeedUUID:     feed.UUID,
+		UserUUID:     userUUID,
 	}
 
-	if err := s.createSubscription(subscription); err != nil {
+	if _, err := s.createSubscription(subscription); err != nil {
 		return fmt.Errorf("failed to create subscription: %w", err)
 	}
 
@@ -164,7 +184,7 @@ func (s *Service) ToggleEntryRead(userUUID string, entryUID string) error {
 			Read:     true,
 		}
 
-		if err := s.r.FeedEntryMetadataAdd(newEntryMetadata); err != nil {
+		if err := s.r.FeedEntryMetadataCreate(newEntryMetadata); err != nil {
 			return fmt.Errorf("failed to create entry metadata: %w", err)
 		}
 
@@ -225,7 +245,7 @@ func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) error {
 		entries = append(entries, entry)
 	}
 
-	n, err := s.r.FeedEntryAddMany(entries)
+	n, err := s.r.FeedEntryCreateMany(entries)
 	if err != nil {
 		return err
 	}
@@ -252,7 +272,7 @@ func (s *Service) createFeedAndEntries(feed Feed) (Feed, error) {
 		return Feed{}, err
 	}
 
-	if err := s.r.FeedAdd(feed); err != nil {
+	if err := s.r.FeedCreate(feed); err != nil {
 		return Feed{}, err
 	}
 
@@ -263,17 +283,19 @@ func (s *Service) createFeedAndEntries(feed Feed) (Feed, error) {
 	return feed, nil
 }
 
-func (s *Service) getOrCreateFeedAndEntries(feedURL string) (Feed, error) {
+// GetOrCreateFeedAndEntries returns an existing feed, or creates it (along with its entries).
+func (s *Service) GetOrCreateFeedAndEntries(feedURL string) (Feed, bool, error) {
 	newFeed, err := NewFeed(feedURL)
 	if err != nil {
-		return Feed{}, err
+		return Feed{}, false, err
 	}
 
 	if err := newFeed.ValidateURL(); err != nil {
-		return Feed{}, err
+		return Feed{}, false, err
 	}
 
 	var feed Feed
+	var isCreated bool
 
 	// Attempt to retrieve an existing feed
 	feed, err = s.r.FeedGetByURL(newFeed.FeedURL)
@@ -281,20 +303,46 @@ func (s *Service) getOrCreateFeedAndEntries(feedURL string) (Feed, error) {
 		// Else, create it
 		feed, err = s.createFeedAndEntries(newFeed)
 		if err != nil {
-			return Feed{}, err
+			return Feed{}, false, err
 		}
 
+		isCreated = true
+
 	} else if err != nil {
-		return Feed{}, err
+		return Feed{}, false, err
 	}
 
-	return feed, nil
+	return feed, isCreated, nil
 }
 
-func (s *Service) createSubscription(subscription Subscription) error {
-	if err := subscription.ValidateForCreation(s.r); err != nil {
-		return err
+// GetOrCreateSubscription returns an existing subscription or creates it.
+func (s *Service) GetOrCreateSubscription(newSubscription Subscription) (Subscription, bool, error) {
+	var isCreated bool
+
+	subscription, err := s.r.FeedSubscriptionGetByFeed(newSubscription.UserUUID, newSubscription.FeedUUID)
+	if errors.Is(err, ErrSubscriptionNotFound) {
+		subscription, err = s.createSubscription(newSubscription)
+		if err != nil {
+			return Subscription{}, false, err
+		}
+
+		isCreated = true
+	} else if err != nil {
+		return Subscription{}, false, err
 	}
 
-	return s.r.FeedSubscriptionAdd(subscription)
+	return subscription, isCreated, nil
+}
+
+func (s *Service) createSubscription(newSubscription Subscription) (Subscription, error) {
+	subscription, err := NewSubscription(newSubscription.CategoryUUID, newSubscription.FeedUUID, newSubscription.UserUUID)
+	if err != nil {
+		return Subscription{}, fmt.Errorf("failed to create subscription: %w", err)
+	}
+
+	if err := subscription.ValidateForCreation(s.r); err != nil {
+		return Subscription{}, err
+	}
+
+	return s.r.FeedSubscriptionCreate(subscription)
 }

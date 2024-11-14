@@ -96,12 +96,12 @@ func TestServiceAddCategory(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
+			r := &FakeRepository{
 				Categories: tc.repositoryCategories,
 			}
 			s := NewService(r, nil)
 
-			got, err := s.AddCategory(userUUID, tc.name)
+			got, err := s.CreateCategory(userUUID, tc.name)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -186,7 +186,7 @@ func TestServiceCategoryBySlug(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
+			r := &FakeRepository{
 				Categories: tc.repositoryCategories,
 			}
 			s := NewService(r, nil)
@@ -271,7 +271,7 @@ func TestServiceCategoryByUUID(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
+			r := &FakeRepository{
 				Categories: tc.repositoryCategories,
 			}
 			s := NewService(r, nil)
@@ -310,7 +310,7 @@ func TestServiceDeleteCategory(t *testing.T) {
 			Slug:     fake.Internet().Slug(),
 		}
 
-		r := &fakeRepository{
+		r := &FakeRepository{
 			Categories: []Category{emptyCategory},
 		}
 		s := NewService(r, nil)
@@ -365,7 +365,7 @@ func TestServiceDeleteCategory(t *testing.T) {
 			}
 		}
 
-		r := &fakeRepository{
+		r := &FakeRepository{
 			Categories:    categories,
 			Feeds:         feeds,
 			Entries:       entries,
@@ -487,7 +487,7 @@ func TestServiceUpdateCategory(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
+			r := &FakeRepository{
 				Categories: []Category{
 					existingCategory,
 				},
@@ -585,7 +585,7 @@ func TestServiceCreateEntries(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{}
+			r := &FakeRepository{}
 			s := NewService(r, nil)
 
 			err := s.createEntries(feedUUID, tc.feedItems)
@@ -627,13 +627,16 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 	}
 
 	cases := []struct {
-		tname             string
-		feedURL           string
+		tname   string
+		feedURL string
+
 		repositoryFeeds   []Feed
 		repositoryEntries []Entry
-		wantFeed          Feed
-		wantEntries       []Entry
-		wantErr           error
+
+		wantFeed      Feed
+		wantIsCreated bool
+		wantEntries   []Entry
+		wantErr       error
 	}{
 		// nominal cases
 		{
@@ -649,6 +652,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 				UpdatedAt:    now,
 				FetchedAt:    now,
 			},
+			wantIsCreated: true,
 			wantEntries: []Entry{
 				{
 					URL:         "http://test.local/first-post",
@@ -753,7 +757,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
+			r := &FakeRepository{
 				Entries: tc.repositoryEntries,
 				Feeds:   tc.repositoryFeeds,
 			}
@@ -761,7 +765,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 
 			s := NewService(r, feedClient)
 
-			gotFeed, err := s.getOrCreateFeedAndEntries(tc.feedURL)
+			gotFeed, gotIsCreated, err := s.GetOrCreateFeedAndEntries(tc.feedURL)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -780,6 +784,10 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			// Update expected FeedUUID
 			for i := 0; i < len(tc.wantEntries); i++ {
 				tc.wantEntries[i].FeedUUID = gotFeed.UUID
+			}
+
+			if gotIsCreated != tc.wantIsCreated {
+				t.Errorf("want isCreated %t, got %t", tc.wantIsCreated, gotIsCreated)
 			}
 
 			assertFeedEquals(t, gotFeed, tc.wantFeed)
@@ -867,7 +875,7 @@ func TestServiceToggleEntryRead(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
+			r := &FakeRepository{
 				Entries:         tc.repositoryEntries,
 				EntriesMetadata: tc.repositoryEntriesMetadata,
 			}
@@ -948,13 +956,13 @@ func TestServiceCreateSubscription(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
+			r := &FakeRepository{
 				Feeds:         repositoryFeeds,
 				Subscriptions: repositorySubscriptions,
 			}
 			s := NewService(r, nil)
 
-			err := s.createSubscription(tc.subscription)
+			_, err := s.createSubscription(tc.subscription)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -1011,7 +1019,7 @@ func TestServiceDeleteSubscription(t *testing.T) {
 			entries = append(entries, entry)
 		}
 
-		r := &fakeRepository{
+		r := &FakeRepository{
 			Feeds:         []Feed{feed},
 			Entries:       entries,
 			Subscriptions: []Subscription{subscription},

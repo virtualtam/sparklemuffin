@@ -25,7 +25,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.34.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.34.0
 	github.com/virtualtam/netscape-go/v2 v2.2.0
-	github.com/virtualtam/opml-go v1.1.0
+	github.com/virtualtam/opml-go v1.2.0
 	github.com/virtualtam/venom v1.1.0
 	github.com/yuin/goldmark v1.7.8
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc

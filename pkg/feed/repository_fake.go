@@ -8,9 +8,9 @@ import (
 	"slices"
 )
 
-var _ Repository = &fakeRepository{}
+var _ Repository = &FakeRepository{}
 
-type fakeRepository struct {
+type FakeRepository struct {
 	Categories      []Category
 	Entries         []Entry
 	EntriesMetadata []EntryMetadata
@@ -18,12 +18,12 @@ type fakeRepository struct {
 	Subscriptions   []Subscription
 }
 
-func (r *fakeRepository) FeedAdd(feed Feed) error {
+func (r *FakeRepository) FeedCreate(feed Feed) error {
 	r.Feeds = append(r.Feeds, feed)
 	return nil
 }
 
-func (r *fakeRepository) FeedGetByURL(feedURL string) (Feed, error) {
+func (r *FakeRepository) FeedGetByURL(feedURL string) (Feed, error) {
 	for _, f := range r.Feeds {
 		if f.FeedURL == feedURL {
 			return f, nil
@@ -33,7 +33,7 @@ func (r *fakeRepository) FeedGetByURL(feedURL string) (Feed, error) {
 	return Feed{}, ErrFeedNotFound
 }
 
-func (r *fakeRepository) FeedGetBySlug(feedSlug string) (Feed, error) {
+func (r *FakeRepository) FeedGetBySlug(feedSlug string) (Feed, error) {
 	for _, feed := range r.Feeds {
 		if feed.Slug == feedSlug {
 			return feed, nil
@@ -43,12 +43,12 @@ func (r *fakeRepository) FeedGetBySlug(feedSlug string) (Feed, error) {
 	return Feed{}, ErrFeedNotFound
 }
 
-func (r *fakeRepository) FeedCategoryAdd(category Category) error {
+func (r *FakeRepository) FeedCategoryCreate(category Category) error {
 	r.Categories = append(r.Categories, category)
 	return nil
 }
 
-func (r *fakeRepository) FeedCategoryDelete(userUUID string, categoryUUID string) error {
+func (r *FakeRepository) FeedCategoryDelete(userUUID string, categoryUUID string) error {
 	r.Categories = slices.DeleteFunc(r.Categories, func(c Category) bool {
 		return c.UserUUID == userUUID && c.UUID == categoryUUID
 	})
@@ -64,7 +64,17 @@ func (r *fakeRepository) FeedCategoryDelete(userUUID string, categoryUUID string
 	return nil
 }
 
-func (r *fakeRepository) FeedCategoryGetBySlug(userUUID string, slug string) (Category, error) {
+func (r *FakeRepository) FeedCategoryGetByName(userUUID string, name string) (Category, error) {
+	for _, category := range r.Categories {
+		if category.UserUUID == userUUID && category.Name == name {
+			return category, nil
+		}
+	}
+
+	return Category{}, ErrCategoryNotFound
+}
+
+func (r *FakeRepository) FeedCategoryGetBySlug(userUUID string, slug string) (Category, error) {
 	for _, category := range r.Categories {
 		if category.UserUUID == userUUID && category.Slug == slug {
 			return category, nil
@@ -74,7 +84,7 @@ func (r *fakeRepository) FeedCategoryGetBySlug(userUUID string, slug string) (Ca
 	return Category{}, ErrCategoryNotFound
 }
 
-func (r *fakeRepository) FeedCategoryGetByUUID(userUUID string, categoryUUID string) (Category, error) {
+func (r *FakeRepository) FeedCategoryGetByUUID(userUUID string, categoryUUID string) (Category, error) {
 	for _, category := range r.Categories {
 		if category.UserUUID == userUUID && category.UUID == categoryUUID {
 			return category, nil
@@ -84,11 +94,11 @@ func (r *fakeRepository) FeedCategoryGetByUUID(userUUID string, categoryUUID str
 	return Category{}, ErrCategoryNotFound
 }
 
-func (r *fakeRepository) FeedCategoryGetMany(userUUID string) ([]Category, error) {
+func (r *FakeRepository) FeedCategoryGetMany(userUUID string) ([]Category, error) {
 	panic("unimplemented")
 }
 
-func (r *fakeRepository) FeedCategoryNameAndSlugAreRegistered(userUUID string, name string, slug string) (bool, error) {
+func (r *FakeRepository) FeedCategoryNameAndSlugAreRegistered(userUUID string, name string, slug string) (bool, error) {
 	for _, category := range r.Categories {
 		if category.UserUUID != userUUID {
 			continue
@@ -102,7 +112,7 @@ func (r *fakeRepository) FeedCategoryNameAndSlugAreRegistered(userUUID string, n
 	return false, nil
 }
 
-func (r *fakeRepository) FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(userUUID string, categoryUUID string, name string, slug string) (bool, error) {
+func (r *FakeRepository) FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(userUUID string, categoryUUID string, name string, slug string) (bool, error) {
 	for _, category := range r.Categories {
 		if category.UserUUID != userUUID {
 			continue
@@ -120,7 +130,7 @@ func (r *fakeRepository) FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(u
 	return false, nil
 }
 
-func (r *fakeRepository) FeedCategoryUpdate(category Category) error {
+func (r *FakeRepository) FeedCategoryUpdate(category Category) error {
 	for index, c := range r.Categories {
 		if c.UserUUID == category.UserUUID && c.UUID == category.UUID {
 			r.Categories[index] = category
@@ -129,12 +139,12 @@ func (r *fakeRepository) FeedCategoryUpdate(category Category) error {
 	return nil
 }
 
-func (r *fakeRepository) FeedEntryAddMany(entries []Entry) (int64, error) {
+func (r *FakeRepository) FeedEntryCreateMany(entries []Entry) (int64, error) {
 	r.Entries = append(r.Entries, entries...)
 	return int64(len(entries)), nil
 }
 
-func (r *fakeRepository) FeedEntryGetN(feedUUID string, n uint) ([]Entry, error) {
+func (r *FakeRepository) FeedEntryGetN(feedUUID string, n uint) ([]Entry, error) {
 	var entries []Entry
 	var count uint
 
@@ -154,7 +164,7 @@ func (r *fakeRepository) FeedEntryGetN(feedUUID string, n uint) ([]Entry, error)
 	return entries, nil
 }
 
-func (r *fakeRepository) feedEntryExists(entryUID string) bool {
+func (r *FakeRepository) feedEntryExists(entryUID string) bool {
 	for _, entry := range r.Entries {
 		if entry.UID == entryUID {
 			return true
@@ -164,19 +174,19 @@ func (r *fakeRepository) feedEntryExists(entryUID string) bool {
 	return false
 }
 
-func (r *fakeRepository) FeedEntryMarkAllAsRead(userUUID string) error {
+func (r *FakeRepository) FeedEntryMarkAllAsRead(userUUID string) error {
 	return errors.New("not implemented")
 }
 
-func (r *fakeRepository) FeedEntryMarkAllAsReadByCategory(userUUID string, categoryUUID string) error {
+func (r *FakeRepository) FeedEntryMarkAllAsReadByCategory(userUUID string, categoryUUID string) error {
 	return errors.New("not implemented")
 }
 
-func (r *fakeRepository) FeedEntryMarkAllAsReadBySubscription(userUUID string, subscriptionUUID string) error {
+func (r *FakeRepository) FeedEntryMarkAllAsReadBySubscription(userUUID string, subscriptionUUID string) error {
 	return errors.New("not implemented")
 }
 
-func (r *fakeRepository) FeedEntryMetadataAdd(newEntryMetadata EntryMetadata) error {
+func (r *FakeRepository) FeedEntryMetadataCreate(newEntryMetadata EntryMetadata) error {
 	if !r.feedEntryExists(newEntryMetadata.EntryUID) {
 		return ErrEntryNotFound
 	}
@@ -185,7 +195,7 @@ func (r *fakeRepository) FeedEntryMetadataAdd(newEntryMetadata EntryMetadata) er
 	return nil
 }
 
-func (r *fakeRepository) FeedEntryMetadataGetByUID(userUUID string, entryUID string) (EntryMetadata, error) {
+func (r *FakeRepository) FeedEntryMetadataGetByUID(userUUID string, entryUID string) (EntryMetadata, error) {
 	for _, entryMetadata := range r.EntriesMetadata {
 		if entryMetadata.UserUUID == userUUID && entryMetadata.EntryUID == entryUID {
 			return entryMetadata, nil
@@ -195,7 +205,7 @@ func (r *fakeRepository) FeedEntryMetadataGetByUID(userUUID string, entryUID str
 	return EntryMetadata{}, ErrEntryMetadataNotFound
 }
 
-func (r *fakeRepository) FeedEntryMetadataUpdate(updatedEntryMetadata EntryMetadata) error {
+func (r *FakeRepository) FeedEntryMetadataUpdate(updatedEntryMetadata EntryMetadata) error {
 	if !r.feedEntryExists(updatedEntryMetadata.EntryUID) {
 		return ErrEntryNotFound
 	}
@@ -210,7 +220,7 @@ func (r *fakeRepository) FeedEntryMetadataUpdate(updatedEntryMetadata EntryMetad
 	return ErrEntryMetadataNotFound
 }
 
-func (r *fakeRepository) FeedSubscriptionIsRegistered(userUUID string, feedUUID string) (bool, error) {
+func (r *FakeRepository) FeedSubscriptionIsRegistered(userUUID string, feedUUID string) (bool, error) {
 	for _, s := range r.Subscriptions {
 		if s.UserUUID == userUUID && s.FeedUUID == feedUUID {
 			return true, nil
@@ -220,12 +230,12 @@ func (r *fakeRepository) FeedSubscriptionIsRegistered(userUUID string, feedUUID 
 	return false, nil
 }
 
-func (r *fakeRepository) FeedSubscriptionAdd(subscription Subscription) error {
+func (r *FakeRepository) FeedSubscriptionCreate(subscription Subscription) (Subscription, error) {
 	r.Subscriptions = append(r.Subscriptions, subscription)
-	return nil
+	return subscription, nil
 }
 
-func (r *fakeRepository) FeedSubscriptionDelete(userUUID string, subscriptionUUID string) error {
+func (r *FakeRepository) FeedSubscriptionDelete(userUUID string, subscriptionUUID string) error {
 	for index, s := range r.Subscriptions {
 		if s.UserUUID == userUUID && s.UUID == subscriptionUUID {
 			r.Subscriptions = append(r.Subscriptions[:index], r.Subscriptions[index+1:]...)
@@ -237,7 +247,7 @@ func (r *fakeRepository) FeedSubscriptionDelete(userUUID string, subscriptionUUI
 	return ErrSubscriptionNotFound
 }
 
-func (r *fakeRepository) FeedSubscriptionGetByFeed(userUUID string, feedUUID string) (Subscription, error) {
+func (r *FakeRepository) FeedSubscriptionGetByFeed(userUUID string, feedUUID string) (Subscription, error) {
 	for _, subscription := range r.Subscriptions {
 		if subscription.UserUUID == userUUID && subscription.FeedUUID == feedUUID {
 			return subscription, nil
@@ -247,7 +257,7 @@ func (r *fakeRepository) FeedSubscriptionGetByFeed(userUUID string, feedUUID str
 	return Subscription{}, ErrSubscriptionNotFound
 }
 
-func (r *fakeRepository) FeedSubscriptionGetByUUID(userUUID string, subscriptionUUID string) (Subscription, error) {
+func (r *FakeRepository) FeedSubscriptionGetByUUID(userUUID string, subscriptionUUID string) (Subscription, error) {
 	for _, subscription := range r.Subscriptions {
 		if subscription.UserUUID == userUUID && subscription.UUID == subscriptionUUID {
 			return subscription, nil
@@ -257,7 +267,7 @@ func (r *fakeRepository) FeedSubscriptionGetByUUID(userUUID string, subscription
 	return Subscription{}, ErrSubscriptionNotFound
 }
 
-func (r *fakeRepository) FeedSubscriptionUpdate(subscription Subscription) error {
+func (r *FakeRepository) FeedSubscriptionUpdate(subscription Subscription) error {
 	for index, c := range r.Subscriptions {
 		if c.UserUUID == subscription.UserUUID && c.UUID == subscription.UUID {
 			r.Subscriptions[index] = subscription

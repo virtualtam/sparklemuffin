@@ -1,0 +1,15 @@
+{{define "content"}}
+<h2>Tools</h2>
+<h3>Import feed subscriptions</h3>
+<form action="/tools/feeds/import" enctype="multipart/form-data" method="POST">
+  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+  <p>
+    <label for="importfile">Choose a file to import:</label>
+    <br>
+    <input type="file" id="importfile" name="importfile">
+  </p>
+  <p>
+    <button type="submit">Import</button>
+  </p>
+</form>
+{{end}}

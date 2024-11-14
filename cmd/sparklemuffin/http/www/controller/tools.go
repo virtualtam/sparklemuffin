@@ -23,12 +23,14 @@ import (
 	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
 	feedexporting "github.com/virtualtam/sparklemuffin/pkg/feed/exporting"
+	feedimporting "github.com/virtualtam/sparklemuffin/pkg/feed/importing"
 )
 
 const (
 	actionToolsBookmarkExport string = "tools-bookmark-export"
 	actionToolsBookmarkImport string = "tools-bookmark-import"
 	actionToolsFeedExport     string = "tools-feed-export"
+	actionToolsFeedImport     string = "tools-feed-import"
 )
 
 type toolsHandlerContext struct {
@@ -36,11 +38,13 @@ type toolsHandlerContext struct {
 	bookmarkImportingService *bookmarkimporting.Service
 	csrfService              *csrf.Service
 	feedExportingService     *feedexporting.Service
+	feedImportingService     *feedimporting.Service
 
 	toolsView          *view.View
 	bookmarkExportView *view.View
 	bookmarkImportView *view.View
 	feedExportView     *view.View
+	feedImportView     *view.View
 }
 
 func RegisterToolsHandlers(
@@ -49,18 +53,21 @@ func RegisterToolsHandlers(
 	bookmarkImportingService *bookmarkimporting.Service,
 	csrfService *csrf.Service,
 	feedExportingService *feedexporting.Service,
+	feedImportingService *feedimporting.Service,
 ) {
 	hc := toolsHandlerContext{
 		bookmarkExportingService: bookmarkExportingService,
 		bookmarkImportingService: bookmarkImportingService,
 		csrfService:              csrfService,
 		feedExportingService:     feedExportingService,
+		feedImportingService:     feedImportingService,
 
 		toolsView: view.New("tools/tools.gohtml"),
 
 		bookmarkExportView: view.New("tools/bookmark_export.gohtml"),
 		bookmarkImportView: view.New("tools/bookmark_import.gohtml"),
 		feedExportView:     view.New("tools/feed_export.gohtml"),
+		feedImportView:     view.New("tools/feed_import.gohtml"),
 	}
 
 	r.Route("/tools", func(r chi.Router) {
@@ -82,6 +89,8 @@ func RegisterToolsHandlers(
 		r.Route("/feeds", func(sr chi.Router) {
 			sr.Get("/export", hc.handleFeedExportView())
 			sr.Post("/export", hc.handleFeedExport())
+			sr.Get("/import", hc.handleFeedImportView())
+			sr.Post("/import", hc.handleFeedImport())
 		})
 	})
 }
@@ -170,7 +179,7 @@ func (hc *toolsHandlerContext) handleBookmarkExport() func(w http.ResponseWriter
 	}
 }
 
-// handleToolsExportView renders the bookmark import page.
+// handleBookmarkImportView renders the bookmark import page.
 func (hc *toolsHandlerContext) handleBookmarkImportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := httpcontext.UserValue(r.Context())
@@ -343,5 +352,102 @@ func (hc *toolsHandlerContext) handleFeedExport() func(w http.ResponseWriter, r 
 		if _, err := w.Write(marshaled); err != nil {
 			log.Error().Err(err).Msg("failed to send OPML export")
 		}
+	}
+}
+
+// handleFeedExportView renders the feed subscription import page.
+func (hc *toolsHandlerContext) handleFeedImportView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := hc.csrfService.Generate(ctxUser.UUID, actionToolsFeedImport)
+
+		viewData := view.Data{
+			Content: csrf.Data{
+				CSRFToken: csrfToken,
+			},
+			Title: "Import feed subscriptions",
+		}
+
+		hc.feedImportView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedImport processes data submitted through the feed subscripton import form.
+func (hc *toolsHandlerContext) handleFeedImport() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		multipartReader, err := r.MultipartReader()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to access multipart reader")
+			view.PutFlashError(w, "failed to process import form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		var (
+			csrfTokenBuffer  bytes.Buffer
+			importFileBuffer bytes.Buffer
+		)
+		csrfTokenWriter := bufio.NewWriter(&csrfTokenBuffer)
+		importFileWriter := bufio.NewWriter(&importFileBuffer)
+
+		for {
+			part, err := multipartReader.NextPart()
+
+			if errors.Is(err, io.EOF) {
+				// no more parts to process
+				break
+			}
+
+			if err != nil {
+				log.Error().Err(err).Msg("failed to access multipart form data")
+				view.PutFlashError(w, "failed to process import form")
+				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+				return
+			}
+
+			switch part.FormName() {
+			case "csrf_token":
+				_, err = io.Copy(csrfTokenWriter, part)
+			case "importfile":
+				_, err = io.Copy(importFileWriter, part)
+			default:
+				err = fmt.Errorf("unexpected multipart form field: %q", part.FormName())
+			}
+
+			if err != nil {
+				log.Error().Err(err).Msg(fmt.Sprintf("failed to process multipart form part %q", part.FormName()))
+				view.PutFlashError(w, "failed to process import form")
+				http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+				return
+			}
+		}
+
+		ctxUser := httpcontext.UserValue(r.Context())
+
+		if !hc.csrfService.Validate(csrfTokenBuffer.String(), ctxUser.UUID, actionToolsFeedImport) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		document, err := opml.Unmarshal(importFileBuffer.Bytes())
+		if err != nil {
+			log.Error().Err(err).Msg("failed to process OPML feed subscription file")
+			view.PutFlashError(w, "failed to import feed subscriptions from the uploaded file")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		importStatus, err := hc.feedImportingService.ImportFromOPMLDocument(ctxUser.UUID, document)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to save imported feed subscriptions")
+			view.PutFlashError(w, "failed to save imported feed subscriptions")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		view.PutFlashSuccess(w, fmt.Sprintf("Import status: %s", importStatus.UserSummary()))
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 	}
 }

@@ -21,7 +21,7 @@ var _ feedexporting.Repository = &Repository{}
 var _ feedquerying.Repository = &Repository{}
 var _ feedsynchronizing.Repository = &Repository{}
 
-func (r *Repository) FeedAdd(f feed.Feed) error {
+func (r *Repository) FeedCreate(f feed.Feed) error {
 	query := `
 	INSERT INTO feed_feeds(
 		uuid,
@@ -58,7 +58,7 @@ func (r *Repository) FeedAdd(f feed.Feed) error {
 		"fetched_at":    f.FetchedAt,
 	}
 
-	return r.queryTx("feeds", "FeedAdd", query, args)
+	return r.queryTx("feeds", "FeedCreate", query, args)
 }
 
 func (r *Repository) FeedGetBySlug(feedSlug string) (feed.Feed, error) {
@@ -121,7 +121,7 @@ func (r *Repository) FeedUpdateFetchMetadata(feedFetchMetadata feedsynchronizing
 	return r.queryTx("feeds", "FeedUpdateFetchMetadata", query, args)
 }
 
-func (r *Repository) FeedCategoryAdd(c feed.Category) error {
+func (r *Repository) FeedCategoryCreate(c feed.Category) error {
 	query := `
 	INSERT INTO feed_categories(
 		uuid,
@@ -149,7 +149,7 @@ func (r *Repository) FeedCategoryAdd(c feed.Category) error {
 		"updated_at": c.UpdatedAt,
 	}
 
-	return r.queryTx("feeds", "FeedCategoryAdd", query, args)
+	return r.queryTx("feeds", "FeedCategoryCreate", query, args)
 }
 
 func (r *Repository) FeedCategoryDelete(userUUID string, categoryUUID string) error {
@@ -179,6 +179,16 @@ func (r *Repository) FeedCategoryDelete(userUUID string, categoryUUID string) er
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (r *Repository) FeedCategoryGetByName(userUUID string, name string) (feed.Category, error) {
+	query := `
+	SELECT uuid, user_uuid, name, slug, created_at, updated_at
+	FROM feed_categories
+	WHERE user_uuid=$1
+	AND name=$2`
+
+	return r.feedCategoryGetQuery(query, userUUID, name)
 }
 
 func (r *Repository) FeedCategoryGetBySlug(userUUID string, slug string) (feed.Category, error) {
@@ -272,8 +282,8 @@ func (r *Repository) FeedCategoryUpdate(c feed.Category) error {
 	return r.queryTx("feeds", "FeedCategoryUpdate", query, args)
 }
 
-func (r *Repository) FeedEntryAddMany(entries []feed.Entry) (int64, error) {
-	return r.feedEntryUpsertMany("FeedEntryAddMany", "ON CONFLICT DO NOTHING", entries)
+func (r *Repository) FeedEntryCreateMany(entries []feed.Entry) (int64, error) {
+	return r.feedEntryUpsertMany("FeedEntryCreateMany", "ON CONFLICT DO NOTHING", entries)
 }
 
 func (r *Repository) FeedEntryUpsertMany(entries []feed.Entry) (int64, error) {
@@ -458,7 +468,7 @@ func (r *Repository) FeedEntryMarkAllAsReadBySubscription(userUUID string, subsc
 	return r.queryTx("feeds", "FeedEntryMarkAllAsReadBySubscription", query, args)
 }
 
-func (r *Repository) FeedEntryMetadataAdd(entryMetadata feed.EntryMetadata) error {
+func (r *Repository) FeedEntryMetadataCreate(entryMetadata feed.EntryMetadata) error {
 	query := `
 	INSERT INTO feed_entries_metadata(
 		user_uuid,
@@ -478,7 +488,7 @@ func (r *Repository) FeedEntryMetadataAdd(entryMetadata feed.EntryMetadata) erro
 		"read":      entryMetadata.Read,
 	}
 
-	return r.queryTx("feeds", "FeedEntryMetadataAdd", query, args)
+	return r.queryTx("feeds", "FeedEntryMetadataCreate", query, args)
 }
 
 func (r *Repository) FeedEntryMetadataGetByUID(userUUID string, entryUID string) (feed.EntryMetadata, error) {
@@ -638,7 +648,7 @@ func (r *Repository) FeedSubscriptionIsRegistered(userUUID string, feedUUID stri
 	)
 }
 
-func (r *Repository) FeedSubscriptionAdd(s feed.Subscription) error {
+func (r *Repository) FeedSubscriptionCreate(s feed.Subscription) (feed.Subscription, error) {
 	query := `
 	INSERT INTO feed_subscriptions(
 		uuid,
@@ -666,7 +676,11 @@ func (r *Repository) FeedSubscriptionAdd(s feed.Subscription) error {
 		"updated_at":    s.UpdatedAt,
 	}
 
-	return r.queryTx("feeds", "FeedSubscriptionAdd", query, args)
+	if err := r.queryTx("feeds", "FeedSubscriptionCreate", query, args); err != nil {
+		return feed.Subscription{}, err
+	}
+
+	return s, nil
 }
 
 func (r *Repository) FeedSubscriptionDelete(userUUID string, subscriptionUUID string) error {

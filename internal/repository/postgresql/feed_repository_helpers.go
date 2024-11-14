@@ -204,7 +204,8 @@ JOIN feed_entries fe ON fe.feed_uuid=fs.feed_uuid
 LEFT JOIN feed_entries_metadata fem ON fem.entry_uid=fe.uid
 WHERE fs.user_uuid=$1
 AND   fs.category_uuid=$2
-GROUP BY f.feed_url, f.title, f.slug`
+GROUP BY f.feed_url, f.title, f.slug
+ORDER BY f.title`
 
 	rows, err := r.pool.Query(context.Background(), query, userUUID, categoryUUID)
 	if err != nil {

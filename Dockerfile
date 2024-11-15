@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 # Step 1: Build Go binaries
-FROM golang:1.23-bookworm as builder
+FROM golang:1.23-bookworm AS builder
 
 ARG CGO_ENABLED=1
 
@@ -15,6 +15,12 @@ RUN --mount=type=cache,target=/root/.cache/go-build make build
 
 # Step 2: Build the actual image
 FROM debian:bookworm-slim
+
+RUN --mount=type=cache,target=/var/lib/apt/lists \
+    --mount=type=cache,target=/var/cache/apt \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+    && apt update \
+    && apt install -y ca-certificates
 
 RUN groupadd \
         --gid 1000 \

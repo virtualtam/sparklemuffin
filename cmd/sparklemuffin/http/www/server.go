@@ -4,6 +4,7 @@
 package www
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -152,6 +153,14 @@ func (s *Server) handleHomeView() func(w http.ResponseWriter, r *http.Request) {
 	viewData := view.Data{Title: "Home"}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		user := httpcontext.UserValue(r.Context())
+
+		if user != nil {
+			viewData.Content = fmt.Sprintf("Welcome back, %s!", user.NickName)
+		} else {
+			viewData.Content = "You are currently logged out."
+		}
+
 		s.homeView.Render(w, r, viewData)
 	}
 }

@@ -61,7 +61,8 @@ type Server struct {
 	sessionService *session.Service
 	userService    *user.Service
 
-	homeView *view.View
+	homeView  *view.View
+	errorView *view.ErrorView
 }
 
 type optionFunc func(*Server)
@@ -71,7 +72,8 @@ func NewServer(optionFuncs ...optionFunc) *Server {
 	s := &Server{
 		router: chi.NewRouter(),
 
-		homeView: view.New("static/home.gohtml"),
+		homeView:  view.New("page/home.gohtml"),
+		errorView: view.NewError(),
 	}
 
 	for _, optionFunc := range optionFuncs {
@@ -110,7 +112,7 @@ func (s *Server) registerHandlers() {
 		return s.rememberUser(h.ServeHTTP)
 	})
 
-	// Static pages
+	// Pages
 	s.router.Get("/", s.handleHomeView())
 
 	// Static assets
@@ -135,6 +137,9 @@ func (s *Server) registerHandlers() {
 	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.bookmarkQueryingService, s.userService)
 	controller.RegisterFeedHandlers(s.router, s.csrfService, s.feedService, s.feedQueryingService, s.userService)
 	controller.RegisterToolsHandlers(s.router, s.bookmarkExportingService, s.bookmarkImportingService, s.csrfService, s.feedExportingService, s.feedImportingService)
+
+	// 404 handler
+	s.router.NotFound(s.handleNotFound())
 }
 
 // ServeHTTP satisfies the http.Handler interface,
@@ -144,9 +149,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // handleHomeView renders the application's home page.
 func (s *Server) handleHomeView() func(w http.ResponseWriter, r *http.Request) {
+	viewData := view.Data{Title: "Home"}
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		viewData := view.Data{Title: "Home"}
 		s.homeView.Render(w, r, viewData)
+	}
+}
+
+// handleNotFound renders a HTTP 404 Not Found error page.
+func (s *Server) handleNotFound() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.errorView.Render(w, r, http.StatusNotFound)
 	}
 }
 

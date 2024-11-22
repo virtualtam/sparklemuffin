@@ -10,6 +10,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/hlog"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
+)
+
+var (
+	errorView *view.ErrorView = view.NewError()
 )
 
 // AccessLogger logs information about incoming HTTP requests.
@@ -36,12 +41,12 @@ func AdminUser(h http.HandlerFunc) http.HandlerFunc {
 		user := httpcontext.UserValue(r.Context())
 
 		if user == nil {
-			http.Error(w, "Not Found", http.StatusNotFound)
+			errorView.Render(w, r, http.StatusNotFound)
 			return
 		}
 
 		if !user.IsAdmin {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			errorView.Render(w, r, http.StatusUnauthorized)
 			return
 		}
 
@@ -55,7 +60,7 @@ func AuthenticatedUser(h http.HandlerFunc) http.HandlerFunc {
 		user := httpcontext.UserValue(r.Context())
 
 		if user == nil {
-			http.Error(w, "Not Found", http.StatusNotFound)
+			errorView.Render(w, r, http.StatusNotFound)
 			return
 		}
 

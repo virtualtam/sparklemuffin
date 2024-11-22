@@ -5,8 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## [v0.2.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.2.0) - 2024-11-14
 
+## [v0.3.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.0) - UNRELEASED
+### Changed
+- Update the home page
+- Render HTTP 4xx errors as HTML views
+
+### Fixed
+- Install the `ca-certificates` page in the Docker image for TLS connections
+
+
+## [v0.2.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.2.0) - 2024-11-14
 ### Added
 #### Feeds
 - Subscribe to Atom and RSS feeds

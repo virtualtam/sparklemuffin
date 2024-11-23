@@ -142,12 +142,14 @@ func TestService(t *testing.T) {
 					},
 					Entries: []SubscribedFeedEntry{
 						{
-							Entry: feed1Entry1,
-							Read:  false,
+							Entry:     feed1Entry1,
+							FeedTitle: feed1.Title,
+							Read:      false,
 						},
 						{
-							Entry: feed1Entry2,
-							Read:  true,
+							Entry:     feed1Entry2,
+							FeedTitle: feed1.Title,
+							Read:      true,
 						},
 					},
 				},
@@ -265,12 +267,14 @@ func TestService(t *testing.T) {
 					},
 					Entries: []SubscribedFeedEntry{
 						{
-							Entry: feed1Entry1,
-							Read:  false,
+							Entry:     feed1Entry1,
+							FeedTitle: feed1.Title,
+							Read:      false,
 						},
 						{
-							Entry: feed1Entry2,
-							Read:  true,
+							Entry:     feed1Entry2,
+							FeedTitle: feed1.Title,
+							Read:      true,
 						},
 					},
 				},
@@ -360,12 +364,14 @@ func TestService(t *testing.T) {
 
 					Entries: []SubscribedFeedEntry{
 						{
-							Entry: feed1Entry1,
-							Read:  false,
+							Entry:     feed1Entry1,
+							FeedTitle: feed1.Title,
+							Read:      false,
 						},
 						{
-							Entry: feed1Entry2,
-							Read:  true,
+							Entry:     feed1Entry2,
+							FeedTitle: feed1.Title,
+							Read:      true,
 						},
 					},
 				},

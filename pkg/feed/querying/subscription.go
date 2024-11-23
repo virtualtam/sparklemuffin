@@ -3,7 +3,9 @@
 
 package querying
 
-import "github.com/virtualtam/sparklemuffin/pkg/feed"
+import (
+	"github.com/virtualtam/sparklemuffin/pkg/feed"
+)
 
 type SubscribedFeedsByCategory struct {
 	feed.Category
@@ -22,7 +24,8 @@ type SubscribedFeed struct {
 type SubscribedFeedEntry struct {
 	feed.Entry
 
-	Read bool
+	FeedTitle string
+	Read      bool
 }
 
 type SubscriptionTitle struct {

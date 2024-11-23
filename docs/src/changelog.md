@@ -7,6 +7,11 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 
 ## [v0.3.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.0) - UNRELEASED
+
+### Added
+#### Feeds
+- For each entry in the list, display the title of the corresponding feed
+
 ### Changed
 - Update the home page
 - Render HTTP 4xx errors as HTML views

@@ -460,6 +460,29 @@ ol {
   text-decoration: none;
 }
 
+.feed-entry-feed-title {
+  display: inline-block;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  white-space: nowrap;
+  width: 12ch;
+}
+
+@media (min-width: 1400px) {
+  .feed-entry-feed-title {
+    width: 16ch;
+  }
+}
+
+@media (min-width: 1600px) {
+  .feed-entry-feed-title {
+    width: 20ch;
+  }
+}
+
 /* Tools */
 .tools {
   display: grid;

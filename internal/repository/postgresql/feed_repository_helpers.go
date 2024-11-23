@@ -180,7 +180,7 @@ func (r *Repository) feedSubscriptionEntryGetN(query string, queryParams ...any)
 	}
 	defer rows.Close()
 
-	dbQueryingEntries := []DBQueryingEntry{}
+	dbQueryingEntries := []DBQueryingSubscribedFeedEntry{}
 
 	if err := pgxscan.ScanAll(&dbQueryingEntries, rows); err != nil {
 		return []feedquerying.SubscribedFeedEntry{}, err
@@ -189,7 +189,7 @@ func (r *Repository) feedSubscriptionEntryGetN(query string, queryParams ...any)
 	queryingEntries := make([]feedquerying.SubscribedFeedEntry, len(dbQueryingEntries))
 
 	for i, dbQueryingEntry := range dbQueryingEntries {
-		queryingEntries[i] = dbQueryingEntry.asQueryingEntry()
+		queryingEntries[i] = dbQueryingEntry.asQueryingSubscribedFeedEntry()
 	}
 
 	return queryingEntries, nil

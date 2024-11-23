@@ -173,8 +173,13 @@ func (r *fakeRepository) FeedEntryGetCountBySubscription(userUUID string, subscr
 	return count, nil
 }
 
-func (r *fakeRepository) subscribedFeedEntryGetByFeed(feedUUID string) []SubscribedFeedEntry {
+func (r *fakeRepository) subscribedFeedEntryGetByFeed(feedUUID string) ([]SubscribedFeedEntry, error) {
 	var subscriptionEntries []SubscribedFeedEntry
+
+	f, err := r.FeedGetByUUID(feedUUID)
+	if err != nil {
+		return []SubscribedFeedEntry{}, err
+	}
 
 	for _, entry := range r.Entries {
 		if entry.FeedUUID != feedUUID {
@@ -191,14 +196,15 @@ func (r *fakeRepository) subscribedFeedEntryGetByFeed(feedUUID string) []Subscri
 		}
 
 		subscriptionEntry := SubscribedFeedEntry{
-			Entry: entry,
-			Read:  read,
+			Entry:     entry,
+			FeedTitle: f.Title,
+			Read:      read,
 		}
 
 		subscriptionEntries = append(subscriptionEntries, subscriptionEntry)
 	}
 
-	return subscriptionEntries
+	return subscriptionEntries, nil
 }
 
 func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]SubscribedFeedEntry, error) {
@@ -209,7 +215,11 @@ func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, n uint, offs
 			continue
 		}
 
-		subscriptionEntries := r.subscribedFeedEntryGetByFeed(subscription.FeedUUID)
+		subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(subscription.FeedUUID)
+		if err != nil {
+			return []SubscribedFeedEntry{}, err
+		}
+
 		userEntries = append(userEntries, subscriptionEntries...)
 	}
 
@@ -241,7 +251,11 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, ca
 			continue
 		}
 
-		subscriptionEntries := r.subscribedFeedEntryGetByFeed(subscription.FeedUUID)
+		subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(subscription.FeedUUID)
+		if err != nil {
+			return []SubscribedFeedEntry{}, err
+		}
+
 		categoryEntries = append(categoryEntries, subscriptionEntries...)
 	}
 
@@ -267,7 +281,10 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscription(userUUID string
 		return []SubscribedFeedEntry{}, err
 	}
 
-	subscriptionEntries := r.subscribedFeedEntryGetByFeed(subscription.FeedUUID)
+	subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(subscription.FeedUUID)
+	if err != nil {
+		return []SubscribedFeedEntry{}, err
+	}
 
 	// FIXME subscriptions should be sorted **before** querying
 	sort.Slice(subscriptionEntries, func(i, j int) bool {

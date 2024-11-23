@@ -49,7 +49,10 @@
       <li>
         <div class="feed-entry{{if .Read}} feed-entry-read{{end}}">
           <div class="title">
-            <span><a href="{{.URL}}">{{.Title}}</a></span>
+            <div>
+              <span class="feed-entry-feed-title">{{ .FeedTitle }}</span>
+              <a href="{{.URL}}">{{.Title}}</a>
+            </div>
             <date>{{.PublishedAt.Format "2006-01-02"}}</date>
           </div>
           <div class="feed-entry-actions">

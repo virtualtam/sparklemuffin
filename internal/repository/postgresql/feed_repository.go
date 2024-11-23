@@ -601,10 +601,11 @@ func (r *Repository) FeedSubscriptionCategoryGetAll(userUUID string) ([]feedquer
 
 func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	query := `
-	SELECT fe.uid, fe.url, fe.title, fe.published_at, COALESCE(fem.read, FALSE) AS read
+	SELECT fe.uid, fe.url, fe.title, fe.published_at, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
 	FROM feed_entries fe
 	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
 	WHERE fs.user_uuid=$1
 	ORDER BY fe.published_at DESC
 	LIMIT $2 OFFSET $3`
@@ -614,10 +615,11 @@ func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset u
 
 func (r *Repository) FeedSubscriptionEntryGetNByCategory(userUUID string, categoryUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	query := `
-	SELECT  fe.uid, fe.url, fe.title, fe.published_at, COALESCE(fem.read, FALSE) AS read
+	SELECT  fe.uid, fe.url, fe.title, fe.published_at, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
 	FROM feed_entries fe
 	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
 	WHERE fs.user_uuid=$1
 	AND   fs.category_uuid=$2
 	ORDER BY fe.published_at DESC
@@ -628,10 +630,11 @@ func (r *Repository) FeedSubscriptionEntryGetNByCategory(userUUID string, catego
 
 func (r *Repository) FeedSubscriptionEntryGetNBySubscription(userUUID string, subscriptionUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	query := `
-	SELECT  fe.uid, fe.url, fe.title, fe.published_at, COALESCE(fem.read, FALSE) AS read
+	SELECT  fe.uid, fe.url, fe.title, fe.published_at, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
 	FROM feed_entries fe
 	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
 	WHERE fs.user_uuid=$1
 	AND   fs.uuid=$2
 	ORDER BY fe.published_at DESC

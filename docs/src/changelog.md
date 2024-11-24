@@ -15,6 +15,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 ### CI
 - Lint and format SQL files with SQLFluff
+- Publish HTML documentation to Github Pages
 
 #### www
 - Update the home page

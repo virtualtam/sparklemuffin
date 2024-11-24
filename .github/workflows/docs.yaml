@@ -9,42 +9,42 @@ on:
       - v*
   pull_request: {}
 
-  jobs:
-    generate:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-        - uses: jontze/action-mdbook@v3
-          with:
-            mdbook-version: "~0.4.36"
-            token: ${{secrets.GITHUB_TOKEN}}
+      - uses: jontze/action-mdbook@v3
+        with:
+          mdbook-version: "~0.4.36"
+          token: ${{secrets.GITHUB_TOKEN}}
 
-        - name: Generate documentation
-          run: make docs
+      - name: Generate documentation
+        run: make docs
 
-        - name: Upload documentation as an artifact
-          id: deployment
-          uses: actions/upload-pages-artifact@v3
-          with:
-            path: './docs/book'
+      - name: Upload documentation as an artifact
+        id: deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './docs/book'
 
-    publish:
-      if: github.ref == 'refs/heads/main'
-      needs: generate
+  publish:
+    if: github.ref == 'refs/heads/main'
+    needs: generate
 
-      permissions:
-        pages: write
-        id-token: write
+    permissions:
+      pages: write
+      id-token: write
 
-      environment:
-        name: github-pages
-        url: ${{ steps.deployment.outputs.page_url }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
-      runs-on: ubuntu-latest
-      steps:
-        - name: Deploy to GitHub Pages
-          id: deployment
-          uses: actions/deploy-pages@v4
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 

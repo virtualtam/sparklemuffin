@@ -1,3 +1,29 @@
 [sqlfluff]
 dialect = postgres
-exclude_rules = layout.spacing, layout.long_lines
+exclude_rules = layout.long_lines
+
+[sqlfluff:layout:type:start_bracket]
+spacing_before = touch
+
+[sqlfluff:layout:type:start_square_bracket]
+spacing_before = touch
+
+[sqlfluff:layout:type:column]
+spacing_before = align
+align_within = statement
+align_scope = file
+
+[sqlfluff:layout:type:column_definition]
+spacing_before = align
+align_within = statement
+align_scope = file
+
+[sqlfluff:layout:type:column_constraint_segment]
+spacing_before = align
+align_within = statement
+align_scope = file
+
+[sqlfluff:layout:type:data_type]
+spacing_before = align
+align_within = statement
+align_scope = file

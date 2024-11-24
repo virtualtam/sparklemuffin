@@ -1,5 +1,6 @@
 BUILD_DIR ?= build
 SRC_FILES := $(shell find . -name "*.go")
+POSTGRESQL_FILES = internal/repository/postgresql/migrations
 
 all: lint race cover build docs
 .PHONY: all
@@ -12,10 +13,6 @@ $(BUILD_DIR)/%: $(SRC_FILES)
 lint:
 	golangci-lint run ./...
 .PHONY: lint
-
-lint-sql:
-	sqlfluff lint --disable-progress-bar internal/repository/postgresql/
-.PHONY: lint-sql
 
 cover:
 	go test -coverprofile=coverage.out ./...
@@ -32,6 +29,14 @@ race:
 test:
 	go test ./...
 .PHONY: test
+
+format-sql:
+	sqlfluff format $(POSTGRESQL_FILES)
+.PHONY: format-sql
+
+lint-sql:
+	sqlfluff lint --disable-progress-bar $(POSTGRESQL_FILES)
+.PHONY: lint-sql
 
 # Install development tools
 dev-install-tools:

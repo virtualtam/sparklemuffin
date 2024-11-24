@@ -9,7 +9,7 @@ on:
       - v*
   pull_request: {}
 
-  docs:
+  generate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,9 +29,9 @@ on:
         with:
           path: './docs/book'
 
-  gh-pages:
+  publish:
     if: github.ref == 'refs/heads/main'
-    needs: docs
+    needs: generate
 
     permissions:
       pages: write

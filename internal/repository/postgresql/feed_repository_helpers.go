@@ -117,6 +117,7 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 		feed_uuid,
 		url,
 		title,
+		fulltextsearch_tsv,
 		published_at,
 		updated_at
 	)
@@ -125,6 +126,7 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 		@feed_uuid,
 		@url,
 		@title,
+		to_tsvector(@fulltextsearch_string),
 		@published_at,
 		@updated_at
 	)`
@@ -134,13 +136,16 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 	batch := &pgx.Batch{}
 
 	for _, entry := range entries {
+		fullTextSearchString := feedEntryToFullTextSearchString(entry)
+
 		args := pgx.NamedArgs{
-			"uid":          entry.UID,
-			"feed_uuid":    entry.FeedUUID,
-			"url":          entry.URL,
-			"title":        entry.Title,
-			"published_at": entry.PublishedAt,
-			"updated_at":   entry.UpdatedAt,
+			"uid":                   entry.UID,
+			"feed_uuid":             entry.FeedUUID,
+			"url":                   entry.URL,
+			"title":                 entry.Title,
+			"fulltextsearch_string": fullTextSearchString,
+			"published_at":          entry.PublishedAt,
+			"updated_at":            entry.UpdatedAt,
 		}
 
 		batch.Queue(query, args)

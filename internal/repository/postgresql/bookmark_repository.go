@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"strings"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
@@ -15,10 +14,6 @@ import (
 	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
-)
-
-var (
-	fullTextSearchReplacer = strings.NewReplacer("/", " ", ".", " ")
 )
 
 var _ bookmark.Repository = &Repository{}

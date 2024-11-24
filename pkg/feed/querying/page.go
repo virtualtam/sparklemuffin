@@ -11,12 +11,16 @@ type FeedPage struct {
 	TotalPages         uint
 	Offset             uint
 
+	SearchTerms       string
+	SearchResultCount uint
+
 	Header     string
 	Unread     uint
 	Categories []SubscribedFeedsByCategory
 	Entries    []SubscribedFeedEntry
 }
 
+// NewFeedPage initializes and returns a new FeedPage.
 func NewFeedPage(number uint, totalPages uint, header string, categories []SubscribedFeedsByCategory, entries []SubscribedFeedEntry) FeedPage {
 	var unread uint
 
@@ -46,6 +50,16 @@ func NewFeedPage(number uint, totalPages uint, header string, categories []Subsc
 	}
 
 	page.Offset = (page.PageNumber-1)*entriesPerPage + 1
+
+	return page
+}
+
+// NewFeedSearchResultPage initializes and returns a new FeedPage containing search results.
+func NewFeedSearchResultPage(searchTerms string, searchResultCount uint, number uint, totalPages uint, header string, categories []SubscribedFeedsByCategory, entries []SubscribedFeedEntry) FeedPage {
+	page := NewFeedPage(number, totalPages, header, categories, entries)
+
+	page.SearchTerms = searchTerms
+	page.SearchResultCount = searchResultCount
 
 	return page
 }

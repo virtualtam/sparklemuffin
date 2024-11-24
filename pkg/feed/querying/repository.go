@@ -20,7 +20,19 @@ type Repository interface {
 
 	// FeedEntryGetCountBySubscription returns the count of entries corresponding to a feed subscription
 	// for a giver user and subscription.
-	FeedEntryGetCountBySubscription(userUUID string, feedUUID string) (uint, error)
+	FeedEntryGetCountBySubscription(userUUID string, subscriptionUUID string) (uint, error)
+
+	// FeedEntryGetCount returns the count of entries corresponding to a feed subscription
+	// for a giver user, and matching a search query.
+	FeedEntryGetCountByQuery(userUUID string, searchTerms string) (uint, error)
+
+	// FeedEntryGetCountByCategoryAndQuery returns the count of entries corresponding to a feed subscription
+	// for a giver user and category, and matching a search query.
+	FeedEntryGetCountByCategoryAndQuery(userUUID string, categoryUUID string, query string) (uint, error)
+
+	// FeedEntryGetCountBySubscriptionAndQuery returns the count of entries corresponding to a feed subscription
+	// for a giver user and subscription, and matching a search query.
+	FeedEntryGetCountBySubscriptionAndQuery(userUUID string, subscriptionUUID string, query string) (uint, error)
 
 	// FeedSubscriptionCategoryGetAll returns SubscribedFeeds, sorted by SubscriptionCategory.
 	FeedSubscriptionCategoryGetAll(userUUID string) ([]SubscribedFeedsByCategory, error)
@@ -33,6 +45,15 @@ type Repository interface {
 
 	// FeedSubscriptionEntryGetNBySubscription returns at most n SubscriptionEntries, starting at a given offset.
 	FeedSubscriptionEntryGetNBySubscription(userUUID string, subscriptionUUID string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error)
+
+	// FeedSubscriptionEntryGetNByQuery returns at most n SubscriptionEntries matching a search query, starting at a given offset.
+	FeedSubscriptionEntryGetNByQuery(userUUID string, searchTerms string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error)
+
+	// FeedSubscriptionEntryGetNByCategoryAndQuery returns at most n SubscriptionEntries matching a search query, starting at a given offset.
+	FeedSubscriptionEntryGetNByCategoryAndQuery(userUUID string, categoryUUID string, query string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error)
+
+	// FeedSubscriptionEntryGetNBySubscriptionAndQuery returns at most n SubscriptionEntries matching a search query, starting at a given offset.
+	FeedSubscriptionEntryGetNBySubscriptionAndQuery(userUUID string, subscriptionUUID string, query string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error)
 
 	// FeedSubscriptionTitleByUUID returns feed subscription metadata for a given user and subscription.
 	FeedSubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (SubscriptionTitle, error)

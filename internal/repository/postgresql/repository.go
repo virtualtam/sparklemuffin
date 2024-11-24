@@ -6,10 +6,15 @@ package postgresql
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
+)
+
+var (
+	fullTextSearchReplacer = strings.NewReplacer("/", " ", ".", " ")
 )
 
 // Repository provides a PostgreSQL persistence layer.

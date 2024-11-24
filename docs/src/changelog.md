@@ -11,6 +11,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 #### Feeds
 - For each entry in the list, display the title of the corresponding feed
+- Add full-text search for feed entries
 
 ### Changed
 ### CI

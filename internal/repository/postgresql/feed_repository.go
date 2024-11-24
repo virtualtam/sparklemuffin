@@ -293,6 +293,7 @@ func (r *Repository) FeedEntryUpsertMany(entries []feed.Entry) (int64, error) {
 		ON CONFLICT (feed_uuid, url) DO UPDATE
 		SET
 			title              = EXCLUDED.title,
+			fulltextsearch_tsv = EXCLUDED.fulltextsearch_tsv,
 			updated_at         = EXCLUDED.updated_at
 		`,
 		entries,
@@ -387,6 +388,82 @@ func (r *Repository) FeedEntryGetCountBySubscription(userUUID string, subscripti
 		query,
 		userUUID,
 		subscriptionUUID,
+	).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *Repository) FeedEntryGetCountByQuery(userUUID string, searchTerms string) (uint, error) {
+	query := `
+	SELECT COUNT(*)
+	FROM feed_entries fe
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	WHERE fs.user_uuid=$1
+	AND   fe.fulltextsearch_tsv @@ websearch_to_tsquery($2)`
+
+	var count uint
+	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+
+	err := r.pool.QueryRow(
+		context.Background(),
+		query,
+		userUUID,
+		fullTextSearchTerms,
+	).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *Repository) FeedEntryGetCountByCategoryAndQuery(userUUID string, categoryUUID string, searchTerms string) (uint, error) {
+	query := `
+	SELECT COUNT(*)
+	FROM feed_entries fe
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	WHERE fs.user_uuid=$1
+	AND   fs.category_uuid=$2
+	AND   fe.fulltextsearch_tsv @@ websearch_to_tsquery($3)`
+
+	var count uint
+	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+
+	err := r.pool.QueryRow(
+		context.Background(),
+		query,
+		userUUID,
+		categoryUUID,
+		fullTextSearchTerms,
+	).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *Repository) FeedEntryGetCountBySubscriptionAndQuery(userUUID string, subscriptionUUID string, searchTerms string) (uint, error) {
+	query := `
+	SELECT COUNT(*)
+	FROM feed_entries fe
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	WHERE user_uuid=$1
+	AND   fs.uuid=$2
+	AND   fe.fulltextsearch_tsv @@ websearch_to_tsquery($3)`
+
+	var count uint
+	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+
+	err := r.pool.QueryRow(
+		context.Background(),
+		query,
+		userUUID,
+		subscriptionUUID,
+		fullTextSearchTerms,
 	).Scan(&count)
 	if err != nil {
 		return 0, err
@@ -641,6 +718,59 @@ func (r *Repository) FeedSubscriptionEntryGetNBySubscription(userUUID string, su
 	LIMIT $3 OFFSET $4`
 
 	return r.feedSubscriptionEntryGetN(query, userUUID, subscriptionUUID, n, offset)
+}
+
+func (r *Repository) FeedSubscriptionEntryGetNByQuery(userUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+	query := `
+	SELECT fe.uid, fe.url, fe.title, fe.published_at, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+	FROM feed_entries fe
+	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+	WHERE fs.user_uuid=$1
+	AND   fe.fulltextsearch_tsv @@ websearch_to_tsquery($2)
+	ORDER BY fe.published_at DESC
+	LIMIT $3 OFFSET $4`
+
+	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+
+	return r.feedSubscriptionEntryGetN(query, userUUID, fullTextSearchTerms, n, offset)
+}
+
+func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(userUUID string, categoryUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+	query := `
+	SELECT fe.uid, fe.url, fe.title, fe.published_at, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+	FROM feed_entries fe
+	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+	WHERE fs.user_uuid=$1
+	AND   fs.category_uuid=$2
+	AND   fe.fulltextsearch_tsv @@ websearch_to_tsquery($3)
+	ORDER BY fe.published_at DESC
+	LIMIT $4 OFFSET $5`
+
+	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+
+	return r.feedSubscriptionEntryGetN(query, userUUID, categoryUUID, fullTextSearchTerms, n, offset)
+}
+
+func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(userUUID string, subscriptionUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+	query := `
+	SELECT fe.uid, fe.url, fe.title, fe.published_at, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+	FROM feed_entries fe
+	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+	WHERE fs.user_uuid=$1
+	AND   fs.uuid=$2
+	AND   fe.fulltextsearch_tsv @@ websearch_to_tsquery($3)
+	ORDER BY fe.published_at DESC
+	LIMIT $4 OFFSET $5`
+
+	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+
+	return r.feedSubscriptionEntryGetN(query, userUUID, subscriptionUUID, fullTextSearchTerms, n, offset)
 }
 
 func (r *Repository) FeedSubscriptionIsRegistered(userUUID string, feedUUID string) (bool, error) {

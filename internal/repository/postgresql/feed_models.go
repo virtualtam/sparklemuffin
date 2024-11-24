@@ -83,6 +83,10 @@ func (e *DBEntry) asEntry() feed.Entry {
 	}
 }
 
+func feedEntryToFullTextSearchString(e feed.Entry) string {
+	return fullTextSearchReplacer.Replace(e.Title)
+}
+
 type DBEntryMetadata struct {
 	UserUUID string `db:"user_uuid"`
 	EntryUID string `db:"entry_uid"`

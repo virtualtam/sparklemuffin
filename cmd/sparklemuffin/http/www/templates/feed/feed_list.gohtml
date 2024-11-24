@@ -42,7 +42,7 @@
         ]
       </div>
     </div>
-
+    {{template "feedSearchForm" .}}
     {{template "pagination" .}}
     <ol start="{{.Offset}}">
       {{- range .Entries}}
@@ -72,6 +72,26 @@
 </div>
 {{end}}
 
+{{define "feedSearchForm"}}
+<div class="search">
+  <form action="{{.URLPath}}" method="GET">
+    <p>
+      <input type="text"
+             id="searchTerms"
+             name="search"
+             placeholder="Search terms"
+             value="{{.SearchTerms}}">
+      <button type="submit">Search</button>
+    </p>
+  </form>
+  {{if ne .SearchTerms "" }}
+  <p>
+    <strong>{{.SearchResultCount}}</strong> entr{{if gt .SearchResultCount 1}}ies{{else}}y{{end}} found
+  </p>
+  {{end}}
+</div>
+{{end}}
+
 {{define "pagination"}}
 <div class="pagination">
   <p>
@@ -80,13 +100,13 @@
     <br>
     Go to:
     {{if lt .PreviousPageNumber .PageNumber }}
-    <a href="?page=1">first</a>,
-    <a href="?page={{.PreviousPageNumber}}">previous</a>
+    <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page=1">first</a>,
+    <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}">previous</a>
     {{- if ne .PageNumber .TotalPages}},{{end}}
     {{end}}
     {{if lt .PageNumber .TotalPages }}
-    <a href="?page={{.NextPageNumber}}">next</a>,
-    <a href="?page={{.TotalPages}}">last</a>
+    <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">next</a>,
+    <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}">last</a>
     {{end}}
     {{end}}
   </p>

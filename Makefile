@@ -13,6 +13,10 @@ lint:
 	golangci-lint run ./...
 .PHONY: lint
 
+lint-sql:
+	sqlfluff lint --disable-progress-bar internal/repository/postgresql/
+.PHONY: lint-sql
+
 cover:
 	go test -coverprofile=coverage.out ./...
 .PHONY: cover
@@ -35,6 +39,10 @@ dev-install-tools:
 	go install github.com/hashicorp/copywrite@latest
 	go install golang.org/x/vuln/cmd/govulncheck@latest
 .PHONY: dev-install-tools
+
+dev-install-sqlfluff:
+	pip install 'sqlfluff==3.2.5'
+.PHONY: dev-install-sqlfluff
 
 # Licence headers
 copywrite:

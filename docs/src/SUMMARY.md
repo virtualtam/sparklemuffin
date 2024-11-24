@@ -16,6 +16,7 @@
         - [Development Tools](./developers/setup/development-tools.md)
         - [Getting the Source Code](./developers/setup/getting-the-source-code.md)
         - [Continuous Integration](./developers/setup/continuous-integration.md)
+        - [Running Static Analysis](./developers/setup/running-static-analysis.md)
         - [Running Tests](./developers/setup/running-tests.md)
         - [Compiling](./developers/setup/compiling.md)
         - [Live Development Server](./developers/setup/live-development-server.md)

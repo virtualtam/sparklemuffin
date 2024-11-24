@@ -13,6 +13,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - For each entry in the list, display the title of the corresponding feed
 
 ### Changed
+### CI
+- Lint and format SQL files with SQLFluff
+
+#### www
 - Update the home page
 - Render HTTP 4xx errors as HTML views
 

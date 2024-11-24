@@ -42,7 +42,6 @@ To install a specific version of Go, see:
 - [Installing Go from sources](https://go.dev/doc/install/source)
 - [Managing Go installations](https://go.dev/doc/manage-install)
 
-
 ## Docker
 [Docker](https://docs.docker.com/) is used to:
 

@@ -9,6 +9,8 @@ This workflow runs when:
 
 It runs all continuous integration tasks:
 
+- Documentation build;
+- SQL linter (static code analysis);
 - Go linters (static code analysis);
 - Go unitary and integration tests;
 - Go build.
@@ -28,6 +30,7 @@ the Github Container Registry (GHCR) at
 See:
 
 - [Development Tools](./development-tools.md)
+- [Running Static Analysis](./running-static-analysis.md)
 - [Running Tests](./running-tests.md)
 - [Compiling](./compiling.md)
 - [Live Development Server](./live-development-server.md)

@@ -1,22 +1,8 @@
 # Running tests
-## Prerequisites
+## Dependencies
 - [GNU Make](https://www.gnu.org/software/make/)
-- [golangci-lint](https://github.com/golangci/golangci-lint)
 - [Docker](https://docs.docker.com/) for integration tests with [Testcontainers](https://testcontainers.com/)
 
-## Install development utilities
-Install linters, vulnerability detection and license check tools:
-
-```shell
-$ make dev-install-tools
-```
-
-## Run linters
-We use to run Go linters:
-
-```shell
-$ make lint
-```
 
 ## Run tests
 Run unitary and integration tests:

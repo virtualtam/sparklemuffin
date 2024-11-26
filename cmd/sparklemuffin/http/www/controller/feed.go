@@ -61,7 +61,7 @@ func RegisterFeedHandlers(
 			return middleware.AuthenticatedUser(h.ServeHTTP)
 		})
 
-		r.Get("/", fc.handleFeedListView())
+		r.Get("/", fc.handleFeedListAllView())
 		r.Get("/add", fc.handleFeedAddView())
 		r.Post("/add", fc.handleFeedAdd())
 
@@ -186,8 +186,11 @@ func (fc *feedHandlerContext) handleFeedAdd() func(w http.ResponseWriter, r *htt
 	}
 }
 
-// handleFeedListView renders the syndication feed for the current authenticated user.
-func (fc *feedHandlerContext) handleFeedListView() func(w http.ResponseWriter, r *http.Request) {
+type (
+	feedsByPageCallback func(r *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error)
+)
+
+func (fc *feedHandlerContext) handleFeedListView(feedsByPage feedsByPageCallback) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedEntryMetadataEdit)
@@ -200,7 +203,7 @@ func (fc *feedHandlerContext) handleFeedListView() func(w http.ResponseWriter, r
 			return
 		}
 
-		feedPage, err := fc.feedQueryingService.FeedsByPage(user.UUID, pageNumber)
+		feedPage, err := feedsByPage(r, user, pageNumber)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feeds")
 			view.PutFlashError(w, "failed to retrieve feeds")
@@ -208,8 +211,10 @@ func (fc *feedHandlerContext) handleFeedListView() func(w http.ResponseWriter, r
 			return
 		}
 
+		title := fmt.Sprintf("Feeds: %s", feedPage.Header)
+
 		viewData := view.Data{
-			Title: "Feeds",
+			Title: title,
 			Content: feedQueryingPage{
 				FeedPage:  feedPage,
 				CSRFToken: csrfToken,
@@ -219,102 +224,55 @@ func (fc *feedHandlerContext) handleFeedListView() func(w http.ResponseWriter, r
 
 		fc.feedListView.Render(w, r, viewData)
 	}
+}
+
+// handleFeedListAllView renders the syndication feed for the current authenticated user.
+func (fc *feedHandlerContext) handleFeedListAllView() func(w http.ResponseWriter, r *http.Request) {
+	feedsByPage := func(_ *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error) {
+		return fc.feedQueryingService.FeedsByPage(user.UUID, pageNumber)
+	}
+
+	return fc.handleFeedListView(feedsByPage)
 }
 
 // handleFeedListByCategoryView renders the syndication feed for the current authenticated user.
 func (fc *feedHandlerContext) handleFeedListByCategoryView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
+	feedsByPage := func(r *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error) {
 		categorySlug := chi.URLParam(r, "slug")
-		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedEntryMetadataEdit)
-
-		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
-		if err != nil {
-			log.Error().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
-			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
 
 		category, err := fc.feedService.CategoryBySlug(user.UUID, categorySlug)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed category")
-			view.PutFlashError(w, "failed to retrieve feed category")
-			http.Redirect(w, r, "/feeds", http.StatusSeeOther)
-			return
+			return feedquerying.FeedPage{}, err
 		}
 
-		feedPage, err := fc.feedQueryingService.FeedsByCategoryAndPage(user.UUID, category, pageNumber)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve feeds")
-			view.PutFlashError(w, "failed to retrieve feeds")
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-
-		viewData := view.Data{
-			Title: fmt.Sprintf("Feeds: %s", category.Name),
-			Content: feedQueryingPage{
-				FeedPage:  feedPage,
-				CSRFToken: csrfToken,
-				URLPath:   r.URL.Path,
-			},
-		}
-
-		fc.feedListView.Render(w, r, viewData)
+		return fc.feedQueryingService.FeedsByCategoryAndPage(user.UUID, category, pageNumber)
 	}
+
+	return fc.handleFeedListView(feedsByPage)
 }
 
 // handleFeedListBySubscriptionView renders the syndication feed for the current authenticated user.
 func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
+	feedsByPage := func(r *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error) {
 		feedSlug := chi.URLParam(r, "slug")
-		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedEntryMetadataEdit)
-
-		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
-		if err != nil {
-			log.Error().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
-			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
 
 		feed, err := fc.feedService.FeedBySlug(user.UUID, feedSlug)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed")
-			view.PutFlashError(w, "failed to retrieve feed")
-			http.Redirect(w, r, "/feeds", http.StatusSeeOther)
-			return
+			return feedquerying.FeedPage{}, err
 		}
 
 		subscription, err := fc.feedService.SubscriptionByFeed(user.UUID, feed.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
-			view.PutFlashError(w, "failed to retrieve feed subscription")
-			http.Redirect(w, r, "/feeds", http.StatusSeeOther)
-			return
+			return feedquerying.FeedPage{}, err
 		}
 
-		feedPage, err := fc.feedQueryingService.FeedsBySubscriptionAndPage(user.UUID, subscription, pageNumber)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve feeds")
-			view.PutFlashError(w, "failed to retrieve feeds")
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-
-		viewData := view.Data{
-			Title: fmt.Sprintf("Feeds: %s", feed.Title),
-			Content: feedQueryingPage{
-				FeedPage:  feedPage,
-				CSRFToken: csrfToken,
-				URLPath:   r.URL.Path,
-			},
-		}
-
-		fc.feedListView.Render(w, r, viewData)
+		return fc.feedQueryingService.FeedsBySubscriptionAndPage(user.UUID, subscription, pageNumber)
 	}
+
+	return fc.handleFeedListView(feedsByPage)
 }
 
 // handleFeedCategoryAddView renders the feed category addition form.

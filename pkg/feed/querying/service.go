@@ -25,13 +25,23 @@ func NewService(r Repository) *Service {
 	}
 }
 
-// FeedsByPage returns a Page containing a limited and offset number of feeds.
-func (s *Service) FeedsByPage(userUUID string, number uint) (FeedPage, error) {
+type (
+	getCountCallback              func() (uint, error)
+	subscriptionEntryGetNCallback func(offset uint) ([]SubscribedFeedEntry, error)
+)
+
+func (s *Service) feedsByPage(
+	userUUID string,
+	number uint,
+	getCount getCountCallback,
+	subscriptionEntryGetN subscriptionEntryGetNCallback,
+	pageHeader string,
+) (FeedPage, error) {
 	if number < 1 {
 		return FeedPage{}, ErrPageNumberOutOfBounds
 	}
 
-	entryCount, err := s.r.FeedEntryGetCount(userUUID)
+	entryCount, err := getCount()
 	if err != nil {
 		return FeedPage{}, err
 	}
@@ -49,76 +59,53 @@ func (s *Service) FeedsByPage(userUUID string, number uint) (FeedPage, error) {
 
 	if len(categories) == 0 {
 		// early return: nothing to display
-		return NewFeedPage(1, 1, pageHeaderAll, []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{}), nil
+		return NewFeedPage(1, 1, pageHeader, []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{}), nil
 	}
 
 	offset := (number - 1) * entriesPerPage
 
-	entries, err := s.r.FeedSubscriptionEntryGetN(userUUID, entriesPerPage, offset)
+	entries, err := subscriptionEntryGetN(offset)
 	if err != nil {
 		return FeedPage{}, err
 	}
 
-	return NewFeedPage(number, totalPages, pageHeaderAll, categories, entries), nil
+	return NewFeedPage(number, totalPages, pageHeader, categories, entries), nil
+}
+
+// FeedsByPage returns a Page containing a limited and offset number of feeds.
+func (s *Service) FeedsByPage(userUUID string, number uint) (FeedPage, error) {
+	getCountFn := func() (uint, error) {
+		return s.r.FeedEntryGetCount(userUUID)
+	}
+
+	subscriptionEntryGetNFn := func(offset uint) ([]SubscribedFeedEntry, error) {
+		return s.r.FeedSubscriptionEntryGetN(userUUID, entriesPerPage, offset)
+	}
+
+	return s.feedsByPage(userUUID, number, getCountFn, subscriptionEntryGetNFn, pageHeaderAll)
 }
 
 // FeedsByCategoryAndPage returns a Page containing a limited and offset number of feeds.
 func (s *Service) FeedsByCategoryAndPage(userUUID string, category feed.Category, number uint) (FeedPage, error) {
-	if number < 1 {
-		return FeedPage{}, ErrPageNumberOutOfBounds
+	getCountFn := func() (uint, error) {
+		return s.r.FeedEntryGetCountByCategory(userUUID, category.UUID)
 	}
 
-	entryCount, err := s.r.FeedEntryGetCountByCategory(userUUID, category.UUID)
-	if err != nil {
-		return FeedPage{}, err
+	subscriptionEntryGetNFn := func(offset uint) ([]SubscribedFeedEntry, error) {
+		return s.r.FeedSubscriptionEntryGetNByCategory(userUUID, category.UUID, entriesPerPage, offset)
 	}
 
-	totalPages := paginate.PageCount(entryCount, entriesPerPage)
-
-	if number > totalPages {
-		return FeedPage{}, ErrPageNumberOutOfBounds
-	}
-
-	categories, err := s.r.FeedSubscriptionCategoryGetAll(userUUID)
-	if err != nil {
-		return FeedPage{}, err
-	}
-
-	if len(categories) == 0 {
-		// early return: nothing to display
-		return NewFeedPage(1, 1, category.Name, []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{}), nil
-	}
-
-	offset := (number - 1) * entriesPerPage
-
-	entries, err := s.r.FeedSubscriptionEntryGetNByCategory(userUUID, category.UUID, entriesPerPage, offset)
-	if err != nil {
-		return FeedPage{}, err
-	}
-
-	return NewFeedPage(number, totalPages, category.Name, categories, entries), nil
+	return s.feedsByPage(userUUID, number, getCountFn, subscriptionEntryGetNFn, category.Name)
 }
 
 // FeedsBySubscriptionAndPage returns a Page containing a limited and offset number of feeds.
 func (s *Service) FeedsBySubscriptionAndPage(userUUID string, subscription feed.Subscription, number uint) (FeedPage, error) {
-	if number < 1 {
-		return FeedPage{}, ErrPageNumberOutOfBounds
+	getCountFn := func() (uint, error) {
+		return s.r.FeedEntryGetCountBySubscription(userUUID, subscription.UUID)
 	}
 
-	entryCount, err := s.r.FeedEntryGetCountBySubscription(userUUID, subscription.UUID)
-	if err != nil {
-		return FeedPage{}, err
-	}
-
-	totalPages := paginate.PageCount(entryCount, entriesPerPage)
-
-	if number > totalPages {
-		return FeedPage{}, ErrPageNumberOutOfBounds
-	}
-
-	categories, err := s.r.FeedSubscriptionCategoryGetAll(userUUID)
-	if err != nil {
-		return FeedPage{}, err
+	subscriptionEntryGetNFn := func(offset uint) ([]SubscribedFeedEntry, error) {
+		return s.r.FeedSubscriptionEntryGetNBySubscription(userUUID, subscription.UUID, entriesPerPage, offset)
 	}
 
 	feed, err := s.r.FeedGetByUUID(subscription.FeedUUID)
@@ -126,19 +113,7 @@ func (s *Service) FeedsBySubscriptionAndPage(userUUID string, subscription feed.
 		return FeedPage{}, err
 	}
 
-	if len(categories) == 0 {
-		// early return: nothing to display
-		return NewFeedPage(1, 1, feed.Title, []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{}), nil
-	}
-
-	offset := (number - 1) * entriesPerPage
-
-	entries, err := s.r.FeedSubscriptionEntryGetNBySubscription(userUUID, subscription.UUID, entriesPerPage, offset)
-	if err != nil {
-		return FeedPage{}, err
-	}
-
-	return NewFeedPage(number, totalPages, feed.Title, categories, entries), nil
+	return s.feedsByPage(userUUID, number, getCountFn, subscriptionEntryGetNFn, feed.Title)
 }
 
 func (s *Service) SubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (SubscriptionTitle, error) {

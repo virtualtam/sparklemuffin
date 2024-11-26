@@ -382,7 +382,11 @@ func TestService(t *testing.T) {
 				tname:      "zeroth page",
 				pageNumber: 0,
 				userUUID:   user1.UUID,
-				wantErr:    ErrPageNumberOutOfBounds,
+				subscription: feed.Subscription{
+					UUID:     testRepository.Subscriptions[0].UUID,
+					FeedUUID: testRepository.Feeds[0].UUID,
+				},
+				wantErr: ErrPageNumberOutOfBounds,
 			},
 			{
 				tname: "page number out of bounds",

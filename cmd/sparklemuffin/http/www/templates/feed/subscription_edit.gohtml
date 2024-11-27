@@ -3,6 +3,9 @@
 <form action="/feeds/subscriptions/{{.SubscriptionTitle.SubscriptionUUID}}/edit" class="item-form" method="POST">
   <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
+  <label for="description">Description</label>
+  <span id="description">{{.SubscriptionTitle.FeedDescription}}</span>
+
   <label for="category">Category</label>
   <select name="category" id="category">
     {{- range .Categories}}

@@ -115,6 +115,17 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 		return nil
 	}
 
+	if feedStatus.Feed.Description != feed.Description {
+		feedMetadata := FeedMetadata{
+			UUID:        feed.UUID,
+			Description: feedStatus.Feed.Description,
+		}
+
+		if err := s.r.FeedUpdateMetadata(feedMetadata); err != nil {
+			return err
+		}
+	}
+
 	rowsAffected, err := s.createOrUpdateEntries(feed, now, feedStatus.Feed.Items)
 	if err != nil {
 		return err

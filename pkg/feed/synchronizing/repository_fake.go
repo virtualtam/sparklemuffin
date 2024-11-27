@@ -45,6 +45,18 @@ func (r *fakeRepository) FeedUpdateFetchMetadata(feedFetchMetadata FeedFetchMeta
 	return feed.ErrFeedNotFound
 }
 
+func (r *fakeRepository) FeedUpdateMetadata(feedMetadata FeedMetadata) error {
+	for index, f := range r.Feeds {
+		if f.UUID == feedMetadata.UUID {
+			r.Feeds[index].Description = feedMetadata.Description
+
+			return nil
+		}
+	}
+
+	return feed.ErrFeedNotFound
+}
+
 func (r *fakeRepository) FeedEntryUpsertMany(newEntries []feed.Entry) (int64, error) {
 	uniqueURLs := map[string]int{}
 	for index, entry := range r.Entries {

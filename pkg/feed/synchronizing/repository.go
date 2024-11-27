@@ -17,7 +17,10 @@ type Repository interface {
 	FeedGetNByLastSynchronizationTime(n uint, before time.Time) ([]feed.Feed, error)
 
 	// FeedUpdateFetchMetadata updates fetch metadata (ETag, FetchedAt, UpdatedAt) for a given feed.Feed.
-	FeedUpdateFetchMetadata(meta FeedFetchMetadata) error
+	FeedUpdateFetchMetadata(feedFetchMetadata FeedFetchMetadata) error
+
+	// FeedUpdateMetadata updates metadata (Description) for a given feed.Feed.
+	FeedUpdateMetadata(feedMetadata FeedMetadata) error
 
 	// FeedEntryUpsertMany adds a collection of new entries and updates existing entries.
 	FeedEntryUpsertMany(entries []feed.Entry) (int64, error)

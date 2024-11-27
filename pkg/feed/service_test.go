@@ -645,6 +645,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			wantFeed: Feed{
 				FeedURL:      "http://test.local",
 				Title:        "Local Test",
+				Description:  "A simple syndication feed, for testing purposes.",
 				Slug:         "local-test",
 				ETag:         feedETag,
 				LastModified: feedLastModified,
@@ -676,6 +677,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 					UUID:         "a8920612-b469-4729-85f3-2c8c30cb897f",
 					FeedURL:      "http://test.local",
 					Title:        "Existing Test",
+					Description:  "A simple syndication feed, for testing purposes.",
 					Slug:         "existing-test",
 					ETag:         feedETag,
 					LastModified: feedLastModified,
@@ -704,6 +706,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 				FeedURL:      "http://test.local",
 				Title:        "Existing Test",
 				Slug:         "existing-test",
+				Description:  "A simple syndication feed, for testing purposes.",
 				ETag:         feedETag,
 				LastModified: feedLastModified,
 				CreatedAt:    yesterday,

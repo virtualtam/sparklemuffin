@@ -121,6 +121,21 @@ func (r *Repository) FeedUpdateFetchMetadata(feedFetchMetadata feedsynchronizing
 	return r.queryTx("feeds", "FeedUpdateFetchMetadata", query, args)
 }
 
+func (r *Repository) FeedUpdateMetadata(feedMetadata feedsynchronizing.FeedMetadata) error {
+	query := `
+	UPDATE feed_feeds
+	SET
+		description=@description
+	WHERE uuid=@uuid`
+
+	args := pgx.NamedArgs{
+		"uuid":        feedMetadata.UUID,
+		"description": feedMetadata.Description,
+	}
+
+	return r.queryTx("feeds", "FeedUpdateFetchMetadata", query, args)
+}
+
 func (r *Repository) FeedCategoryCreate(c feed.Category) error {
 	query := `
 	INSERT INTO feed_categories(
@@ -884,11 +899,11 @@ func (r *Repository) FeedSubscriptionUpdate(s feed.Subscription) error {
 
 func (r *Repository) FeedSubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (feedquerying.SubscriptionTitle, error) {
 	query := `
-SELECT fs.uuid, f.title
-FROM feed_subscriptions fs
-JOIN feed_feeds f ON f.uuid = fs.feed_uuid
-WHERE fs.user_uuid=$1
-AND fs.uuid=$2`
+	SELECT fs.uuid, f.title, f.description
+	FROM   feed_subscriptions fs
+	JOIN   feed_feeds f ON f.uuid = fs.feed_uuid
+	WHERE  fs.user_uuid=$1
+	AND    fs.uuid=$2`
 
 	return r.feedSubscriptionTitleGetQuery(query, userUUID, subscriptionUUID)
 }

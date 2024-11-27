@@ -18,6 +18,9 @@ func assertFeedEquals(t *testing.T, got, want Feed) {
 	if got.Title != want.Title {
 		t.Errorf("want Title %q, got %q", want.Title, got.Title)
 	}
+	if got.Description != want.Description {
+		t.Errorf("want Description %q, got %q", want.Description, got.Description)
+	}
 	if got.FeedURL != want.FeedURL {
 		t.Errorf("want FeedURL %q, got %q", want.FeedURL, got.FeedURL)
 	}

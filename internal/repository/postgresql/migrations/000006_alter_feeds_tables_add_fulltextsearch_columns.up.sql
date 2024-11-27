@@ -1,6 +1,11 @@
 -- Copyright (c) VirtualTam
 -- SPDX-License-Identifier: MIT
 
+-- Feeds
+ALTER TABLE feed_feeds
+ADD COLUMN description TEXT NOT NULL DEFAULT '';
+
+-- Feed Entries
 ALTER TABLE feed_entries
 ADD COLUMN fulltextsearch_tsv TSVECTOR;
 

@@ -16,8 +16,9 @@ func GenerateDummyFeed(t *testing.T, now time.Time) feeds.Feed {
 	yesterday := now.Add(-24 * time.Hour)
 
 	return feeds.Feed{
-		Title:   "Local Test",
-		Updated: now,
+		Title:       "Local Test",
+		Description: "A simple syndication feed, for testing purposes.",
+		Updated:     now,
 		Items: []*feeds.Item{
 			{
 				Id:    "http://test.local/first-post",

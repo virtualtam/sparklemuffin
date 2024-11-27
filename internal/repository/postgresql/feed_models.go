@@ -168,11 +168,13 @@ func (s *DBSubscription) asSubscription() feed.Subscription {
 type DBSubscriptionTitle struct {
 	SubscriptionUUID string `db:"uuid"`
 	FeedTitle        string `db:"title"`
+	FeedDescription  string `db:"description"`
 }
 
 func (st *DBSubscriptionTitle) asSubscriptionTitle() feedquerying.SubscriptionTitle {
 	return feedquerying.SubscriptionTitle{
 		SubscriptionUUID: st.SubscriptionUUID,
 		FeedTitle:        st.FeedTitle,
+		FeedDescription:  st.FeedDescription,
 	}
 }

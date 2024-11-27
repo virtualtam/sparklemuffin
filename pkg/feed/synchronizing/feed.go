@@ -14,3 +14,9 @@ type FeedFetchMetadata struct {
 	UpdatedAt time.Time
 	FetchedAt time.Time
 }
+
+type FeedMetadata struct {
+	UUID string
+
+	Description string
+}

@@ -21,9 +21,10 @@ var (
 type Feed struct {
 	UUID string
 
-	FeedURL string
-	Title   string
-	Slug    string
+	FeedURL     string
+	Title       string
+	Description string
+	Slug        string
 
 	ETag         string
 	LastModified time.Time
@@ -57,11 +58,16 @@ func NewFeed(feedURL string) (Feed, error) {
 func (f *Feed) Normalize() {
 	f.normalizeURL()
 	f.normalizeTitle()
+	f.normalizeDescription()
 	f.slugify()
 }
 
 func (f *Feed) normalizeTitle() {
 	f.Title = strings.TrimSpace(f.Title)
+}
+
+func (f *Feed) normalizeDescription() {
+	f.Description = strings.TrimSpace(f.Description)
 }
 
 func (f *Feed) normalizeURL() {

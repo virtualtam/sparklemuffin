@@ -28,6 +28,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 		feed_url,
 		title,
 		slug,
+		fulltextsearch_tsv,
 		etag,
 		last_modified,
 		created_at,
@@ -39,6 +40,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 		@feed_url,
 		@title,
 		@slug,
+		to_tsvector(@fulltextsearch_string),
 		@etag,
 		@last_modified,
 		@created_at,
@@ -46,16 +48,19 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 		@fetched_at
 	)`
 
+	fullTextSearchString := feedToFullTextSearchString(f)
+
 	args := pgx.NamedArgs{
-		"uuid":          f.UUID,
-		"feed_url":      f.FeedURL,
-		"title":         f.Title,
-		"slug":          f.Slug,
-		"etag":          f.ETag,
-		"last_modified": f.LastModified,
-		"created_at":    f.CreatedAt,
-		"updated_at":    f.UpdatedAt,
-		"fetched_at":    f.FetchedAt,
+		"uuid":                  f.UUID,
+		"feed_url":              f.FeedURL,
+		"title":                 f.Title,
+		"slug":                  f.Slug,
+		"fulltextsearch_string": fullTextSearchString,
+		"etag":                  f.ETag,
+		"last_modified":         f.LastModified,
+		"created_at":            f.CreatedAt,
+		"updated_at":            f.UpdatedAt,
+		"fetched_at":            f.FetchedAt,
 	}
 
 	return r.queryTx("feeds", "FeedCreate", query, args)
@@ -125,12 +130,20 @@ func (r *Repository) FeedUpdateMetadata(feedMetadata feedsynchronizing.FeedMetad
 	query := `
 	UPDATE feed_feeds
 	SET
-		description=@description
+		title=@title,
+		description=@description,
+		fulltextsearch_tsv=to_tsvector(@fulltextsearch_string),
+		updated_at=@updated_at
 	WHERE uuid=@uuid`
 
+	fullTextSearchString := feedMetadataToFullTextSearchString(feedMetadata)
+
 	args := pgx.NamedArgs{
-		"uuid":        feedMetadata.UUID,
-		"description": feedMetadata.Description,
+		"uuid":                  feedMetadata.UUID,
+		"title":                 feedMetadata.Title,
+		"description":           feedMetadata.Description,
+		"fulltextsearch_string": fullTextSearchString,
+		"updated_at":            feedMetadata.UpdatedAt,
 	}
 
 	return r.queryTx("feeds", "FeedUpdateFetchMetadata", query, args)
@@ -415,9 +428,10 @@ func (r *Repository) FeedEntryGetCountByQuery(userUUID string, searchTerms strin
 	query := `
 	SELECT COUNT(*)
 	FROM feed_entries fe
+	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
 	WHERE fs.user_uuid=$1
-	AND   fe.fulltextsearch_tsv @@ websearch_to_tsquery($2)`
+	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($2)`
 
 	var count uint
 	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
@@ -439,10 +453,11 @@ func (r *Repository) FeedEntryGetCountByCategoryAndQuery(userUUID string, catego
 	query := `
 	SELECT COUNT(*)
 	FROM feed_entries fe
+	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
 	WHERE fs.user_uuid=$1
 	AND   fs.category_uuid=$2
-	AND   fe.fulltextsearch_tsv @@ websearch_to_tsquery($3)`
+	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($3)`
 
 	var count uint
 	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
@@ -465,10 +480,11 @@ func (r *Repository) FeedEntryGetCountBySubscriptionAndQuery(userUUID string, su
 	query := `
 	SELECT COUNT(*)
 	FROM feed_entries fe
+	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
 	WHERE user_uuid=$1
 	AND   fs.uuid=$2
-	AND   fe.fulltextsearch_tsv @@ websearch_to_tsquery($3)`
+	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($3)`
 
 	var count uint
 	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
@@ -743,7 +759,7 @@ func (r *Repository) FeedSubscriptionEntryGetNByQuery(userUUID string, searchTer
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
 	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
 	WHERE fs.user_uuid=$1
-	AND   fe.fulltextsearch_tsv @@ websearch_to_tsquery($2)
+	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($2)
 	ORDER BY fe.published_at DESC
 	LIMIT $3 OFFSET $4`
 
@@ -761,7 +777,7 @@ func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(userUUID string
 	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
 	WHERE fs.user_uuid=$1
 	AND   fs.category_uuid=$2
-	AND   fe.fulltextsearch_tsv @@ websearch_to_tsquery($3)
+	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($3)
 	ORDER BY fe.published_at DESC
 	LIMIT $4 OFFSET $5`
 
@@ -779,7 +795,7 @@ func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(userUUID st
 	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
 	WHERE fs.user_uuid=$1
 	AND   fs.uuid=$2
-	AND   fe.fulltextsearch_tsv @@ websearch_to_tsquery($3)
+	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($3)
 	ORDER BY fe.published_at DESC
 	LIMIT $4 OFFSET $5`
 

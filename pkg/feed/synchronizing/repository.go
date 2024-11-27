@@ -19,7 +19,7 @@ type Repository interface {
 	// FeedUpdateFetchMetadata updates fetch metadata (ETag, FetchedAt, UpdatedAt) for a given feed.Feed.
 	FeedUpdateFetchMetadata(feedFetchMetadata FeedFetchMetadata) error
 
-	// FeedUpdateMetadata updates metadata (Description) for a given feed.Feed.
+	// FeedUpdateMetadata updates metadata (Title, Description) for a given feed.Feed.
 	FeedUpdateMetadata(feedMetadata FeedMetadata) error
 
 	// FeedEntryUpsertMany adds a collection of new entries and updates existing entries.

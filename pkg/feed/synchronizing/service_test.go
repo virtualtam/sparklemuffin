@@ -43,7 +43,7 @@ func TestServiceSynchronize(t *testing.T) {
 	repositoryFeed := feed.Feed{
 		UUID:         fake.UUID().V4(),
 		FeedURL:      "http://test.local",
-		Title:        "Sync Test",
+		Title:        "Local Test",
 		Description:  "A simple syndication feed, for testing purposes.",
 		Slug:         "sync-test",
 		ETag:         feedETag,
@@ -179,6 +179,57 @@ func TestServiceSynchronize(t *testing.T) {
 					Description:  repositoryFeed.Description,
 					Slug:         repositoryFeed.Slug,
 					ETag:         repositoryFeed.ETag,
+					LastModified: repositoryFeed.LastModified,
+					CreatedAt:    repositoryFeed.CreatedAt,
+					UpdatedAt:    now,
+					FetchedAt:    now,
+				},
+			},
+			wantEntries: []feed.Entry{
+				secondEntry,
+				firstEntry,
+			},
+		},
+		{
+			tname:           "feed has a new title",
+			repositoryFeeds: []feed.Feed{repositoryFeed},
+			repositoryEntries: []feed.Entry{
+				secondEntry,
+				firstEntry,
+			},
+			atomFeed: feeds.Feed{
+				Title:       "Same flavour, but blazingly faster!",
+				Description: atomFeed.Description,
+				Updated:     today,
+				Items: []*feeds.Item{
+					{
+						Id:    "http://test.local/first-post",
+						Title: "First post!",
+						Link: &feeds.Link{
+							Href: "http://test.local/first-post",
+						},
+						Created: today,
+						Updated: today,
+					},
+					{
+						Id:    "http://test.local/hello-world",
+						Title: "Hello World",
+						Link: &feeds.Link{
+							Href: "http://test.local/hello-world",
+						},
+						Created: yesterday,
+						Updated: yesterday,
+					},
+				},
+			},
+			wantFeeds: []feed.Feed{
+				{
+					UUID:         repositoryFeed.UUID,
+					FeedURL:      repositoryFeed.FeedURL,
+					Title:        "Same flavour, but blazingly faster!",
+					Description:  repositoryFeed.Description,
+					Slug:         repositoryFeed.Slug,
+					ETag:         `W/"336949e591862f074258149ab2e3d009e7f2e73836e20f3290101a80662ffae2"`,
 					LastModified: repositoryFeed.LastModified,
 					CreatedAt:    repositoryFeed.CreatedAt,
 					UpdatedAt:    now,
@@ -347,7 +398,7 @@ func TestServiceSynchronize(t *testing.T) {
 					Title:        repositoryFeed.Title,
 					Description:  repositoryFeed.Description,
 					Slug:         repositoryFeed.Slug,
-					ETag:         `W/"3b98848aafd3641535f549fba1c9d00db968a359b6224a5933f17fe193322a48"`,
+					ETag:         `W/"f3ea5b4ab75e6a1673798ed07f90659588a51cafd06d99b597922bbfd2d9e3b8"`,
 					LastModified: feedLastModified,
 					CreatedAt:    yesterday,
 					UpdatedAt:    now,

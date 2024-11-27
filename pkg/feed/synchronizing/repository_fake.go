@@ -48,7 +48,9 @@ func (r *fakeRepository) FeedUpdateFetchMetadata(feedFetchMetadata FeedFetchMeta
 func (r *fakeRepository) FeedUpdateMetadata(feedMetadata FeedMetadata) error {
 	for index, f := range r.Feeds {
 		if f.UUID == feedMetadata.UUID {
+			r.Feeds[index].Title = feedMetadata.Title
 			r.Feeds[index].Description = feedMetadata.Description
+			r.Feeds[index].UpdatedAt = feedMetadata.UpdatedAt
 
 			return nil
 		}

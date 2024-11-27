@@ -4,10 +4,12 @@
 package postgresql
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
+	feedsynchronizing "github.com/virtualtam/sparklemuffin/pkg/feed/synchronizing"
 )
 
 type DBCategory struct {
@@ -59,6 +61,22 @@ func (f *DBFeed) asFeed() feed.Feed {
 		UpdatedAt:    f.UpdatedAt,
 		FetchedAt:    f.FetchedAt,
 	}
+}
+
+func feedToFullTextSearchString(f feed.Feed) string {
+	return fmt.Sprintf(
+		"%s %s",
+		fullTextSearchReplacer.Replace(f.Title),
+		fullTextSearchReplacer.Replace(f.Description),
+	)
+}
+
+func feedMetadataToFullTextSearchString(feedMetadata feedsynchronizing.FeedMetadata) string {
+	return fmt.Sprintf(
+		"%s %s",
+		fullTextSearchReplacer.Replace(feedMetadata.Title),
+		fullTextSearchReplacer.Replace(feedMetadata.Description),
+	)
 }
 
 type DBEntry struct {

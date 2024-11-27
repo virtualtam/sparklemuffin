@@ -18,5 +18,8 @@ type FeedFetchMetadata struct {
 type FeedMetadata struct {
 	UUID string
 
+	Title       string
 	Description string
+
+	UpdatedAt time.Time
 }

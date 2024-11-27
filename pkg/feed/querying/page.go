@@ -14,14 +14,15 @@ type FeedPage struct {
 	SearchTerms       string
 	SearchResultCount uint
 
-	Header     string
-	Unread     uint
-	Categories []SubscribedFeedsByCategory
-	Entries    []SubscribedFeedEntry
+	Header      string
+	Description string
+	Unread      uint
+	Categories  []SubscribedFeedsByCategory
+	Entries     []SubscribedFeedEntry
 }
 
 // NewFeedPage initializes and returns a new FeedPage.
-func NewFeedPage(number uint, totalPages uint, header string, categories []SubscribedFeedsByCategory, entries []SubscribedFeedEntry) FeedPage {
+func NewFeedPage(number uint, totalPages uint, header string, description string, categories []SubscribedFeedsByCategory, entries []SubscribedFeedEntry) FeedPage {
 	var unread uint
 
 	for _, category := range categories {
@@ -29,12 +30,13 @@ func NewFeedPage(number uint, totalPages uint, header string, categories []Subsc
 	}
 
 	page := FeedPage{
-		PageNumber: number,
-		TotalPages: totalPages,
-		Header:     header,
-		Unread:     unread,
-		Categories: categories,
-		Entries:    entries,
+		PageNumber:  number,
+		TotalPages:  totalPages,
+		Header:      header,
+		Description: description,
+		Unread:      unread,
+		Categories:  categories,
+		Entries:     entries,
 	}
 
 	if page.PageNumber == 1 {
@@ -55,8 +57,8 @@ func NewFeedPage(number uint, totalPages uint, header string, categories []Subsc
 }
 
 // NewFeedSearchResultPage initializes and returns a new FeedPage containing search results.
-func NewFeedSearchResultPage(searchTerms string, searchResultCount uint, number uint, totalPages uint, header string, categories []SubscribedFeedsByCategory, entries []SubscribedFeedEntry) FeedPage {
-	page := NewFeedPage(number, totalPages, header, categories, entries)
+func NewFeedSearchResultPage(searchTerms string, searchResultCount uint, number uint, totalPages uint, header string, description string, categories []SubscribedFeedsByCategory, entries []SubscribedFeedEntry) FeedPage {
+	page := NewFeedPage(number, totalPages, header, description, categories, entries)
 
 	page.SearchTerms = searchTerms
 	page.SearchResultCount = searchResultCount

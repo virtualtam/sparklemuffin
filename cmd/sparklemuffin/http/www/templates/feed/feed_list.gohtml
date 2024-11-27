@@ -32,7 +32,12 @@
 
   <div class="feed-entry-list">
     <div class="feed-title">
-      <h3>{{.Header}}</h3>
+      <div>
+        <h3>{{.Header}}</h3>
+        {{with .Description}}
+        <p class="feed-title-description">{{.}}</p>
+        {{end}}
+      </div>
       <div class="feed-entry-actions">
         [
         <form action="{{$.URLPath}}/entries/mark-all-read" method="POST">

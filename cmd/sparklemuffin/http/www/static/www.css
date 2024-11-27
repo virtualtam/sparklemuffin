@@ -410,8 +410,6 @@ ol {
 .feed-title {
   display: grid;
   grid-template-columns: fit-content(80ch) 1fr;
-  margin-bottom: 1em;
-  padding-bottom: 1em;
   padding-right: 1em;
 }
 
@@ -420,8 +418,13 @@ ol {
 }
 
 .feed-title h3 {
-  display: inline-block;
   margin-bottom: 0;
+}
+
+.feed-title-description {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  opacity: 70%;
 }
 
 .feed-title .feed-entry-actions,

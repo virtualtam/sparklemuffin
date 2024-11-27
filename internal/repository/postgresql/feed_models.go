@@ -37,9 +37,10 @@ func (c *DBCategory) asCategory() feed.Category {
 type DBFeed struct {
 	UUID string `db:"uuid"`
 
-	FeedURL string `db:"feed_url"`
-	Title   string `db:"title"`
-	Slug    string `db:"slug"`
+	FeedURL     string `db:"feed_url"`
+	Title       string `db:"title"`
+	Description string `db:"description"`
+	Slug        string `db:"slug"`
 
 	ETag         string    `db:"etag"`
 	LastModified time.Time `db:"last_modified"`
@@ -54,6 +55,7 @@ func (f *DBFeed) asFeed() feed.Feed {
 		UUID:         f.UUID,
 		FeedURL:      f.FeedURL,
 		Title:        f.Title,
+		Description:  f.Description,
 		Slug:         f.Slug,
 		ETag:         f.ETag,
 		LastModified: f.LastModified,

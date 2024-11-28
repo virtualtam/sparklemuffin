@@ -18,7 +18,7 @@
 }
 
 /**
- * Fira Code font family by The FIra Code Project Authors
+ * Fira Code font family by The Fira Code Project Authors
  * https://github.com/tonsky/FiraCode
  *
  * Fira Code is licensed under the SIL Open Font License, Version 1.1. This
@@ -53,6 +53,13 @@ html {
   margin: 0 auto 0 0;
   max-width: 1200px;
 }
+
+@media (min-width: 1200px) {
+  html {
+    max-width: 1400px;
+  }
+}
+
 
 @media (max-width: 500px) {
   code {
@@ -242,7 +249,7 @@ ol {
 @media(min-width: 700px) {
   .title {
     display: grid;
-    grid-template-columns: fit-content(80ch) 1fr;
+    grid-template-columns: fit-content(85%) 1fr;
   }
 
   .title date {
@@ -257,6 +264,12 @@ ol {
   .metadata-actions {
     text-align: right;
   }
+}
+
+.title div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .title a {
@@ -343,6 +356,12 @@ ol {
 .feeds {
   display: grid;
   grid-template-columns: minmax(20ch, 30ch) 1fr;
+}
+
+@media (min-width: 1200px) {
+  .feeds {
+    grid-template-columns: minmax(30ch, 40ch) 1fr;
+  }
 }
 
 .feed-category-list {

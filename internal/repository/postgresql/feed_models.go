@@ -85,8 +85,9 @@ type DBEntry struct {
 	UID      string `db:"uid"`
 	FeedUUID string `db:"feed_uuid"`
 
-	URL   string `db:"url"`
-	Title string `db:"title"`
+	URL     string `db:"url"`
+	Title   string `db:"title"`
+	Summary string `db:"summary"`
 
 	PublishedAt time.Time `db:"published_at"`
 	UpdatedAt   time.Time `db:"updated_at"`
@@ -98,6 +99,7 @@ func (e *DBEntry) asEntry() feed.Entry {
 		FeedUUID:    e.FeedUUID,
 		URL:         e.URL,
 		Title:       e.Title,
+		Summary:     e.Summary,
 		PublishedAt: e.PublishedAt,
 		UpdatedAt:   e.UpdatedAt,
 	}

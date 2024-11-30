@@ -117,6 +117,7 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 		feed_uuid,
 		url,
 		title,
+		summary,
 		fulltextsearch_tsv,
 		published_at,
 		updated_at
@@ -126,6 +127,7 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 		@feed_uuid,
 		@url,
 		@title,
+		@summary,
 		to_tsvector(@fulltextsearch_string),
 		@published_at,
 		@updated_at
@@ -143,6 +145,7 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 			"feed_uuid":             entry.FeedUUID,
 			"url":                   entry.URL,
 			"title":                 entry.Title,
+			"summary":               entry.Summary,
 			"fulltextsearch_string": fullTextSearchString,
 			"published_at":          entry.PublishedAt,
 			"updated_at":            entry.UpdatedAt,

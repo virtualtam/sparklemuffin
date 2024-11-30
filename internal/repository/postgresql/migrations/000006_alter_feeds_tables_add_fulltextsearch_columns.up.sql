@@ -15,6 +15,7 @@ SET fulltextsearch_tsv = to_tsvector(replace(title, '.', ' ') || ' ' || replace(
 
 -- Feed Entries
 ALTER TABLE feed_entries
+ADD COLUMN summary            TEXT NOT NULL DEFAULT '',
 ADD COLUMN fulltextsearch_tsv TSVECTOR;
 
 CREATE INDEX idx_feed_entries_fulltextsearch_tsv

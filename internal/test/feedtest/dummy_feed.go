@@ -26,8 +26,10 @@ func GenerateDummyFeed(t *testing.T, now time.Time) feeds.Feed {
 				Link: &feeds.Link{
 					Href: "http://test.local/first-post",
 				},
-				Created: now,
-				Updated: now,
+				Description: "This is the first post!",
+				Content:     `<h2>First post!</h2><p>This is the first post!</p>`,
+				Created:     now,
+				Updated:     now,
 			},
 			{
 				Id:    "http://test.local/hello-world",

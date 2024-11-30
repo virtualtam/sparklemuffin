@@ -451,6 +451,23 @@ ol {
   font-weight: bold;
 }
 
+.feed-entry {
+  display: grid;
+  grid-template-columns: 12ch 1fr;
+}
+
+@media (min-width: 1400px) {
+  .feed-entry {
+    grid-template-columns: 16ch 1fr;
+  }
+}
+
+@media (min-width: 1600px) {
+  .feed-entry {
+    grid-template-columns: 20ch 1fr;
+  }
+}
+
 .feed-entry:hover {
   background-color: var(--bg-accent);
 }
@@ -483,26 +500,15 @@ ol {
 }
 
 .feed-entry-feed-title {
-  display: inline-block;
-  font-size: 0.8rem;
-  opacity: 0.8;
+  opacity: 0.7;
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: bottom;
   white-space: nowrap;
-  width: 12ch;
 }
 
-@media (min-width: 1400px) {
-  .feed-entry-feed-title {
-    width: 16ch;
-  }
-}
-
-@media (min-width: 1600px) {
-  .feed-entry-feed-title {
-    width: 20ch;
-  }
+.feed-entry-summary {
+  opacity: 0.85;
 }
 
 /* Tools */

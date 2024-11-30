@@ -604,7 +604,7 @@ func TestServiceCreateEntries(t *testing.T) {
 				t.Fatalf("want no error, got %q", err)
 			}
 
-			assertEntriesEqual(t, r.Entries, tc.want)
+			AssertEntriesEqual(t, r.Entries, tc.want)
 		})
 	}
 }
@@ -658,6 +658,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 				{
 					URL:         "http://test.local/first-post",
 					Title:       "First post!",
+					Summary:     "First post!\n\nThis is the first post!",
 					PublishedAt: now,
 					UpdatedAt:   now,
 				},
@@ -793,8 +794,8 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 				t.Errorf("want isCreated %t, got %t", tc.wantIsCreated, gotIsCreated)
 			}
 
-			assertFeedEquals(t, gotFeed, tc.wantFeed)
-			assertEntriesEqual(t, r.Entries, tc.wantEntries)
+			AssertFeedEquals(t, gotFeed, tc.wantFeed)
+			AssertEntriesEqual(t, r.Entries, tc.wantEntries)
 		})
 	}
 }

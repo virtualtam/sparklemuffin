@@ -10,4 +10,5 @@ DROP COLUMN fulltextsearch_tsv;
 DROP INDEX IF EXISTS idx_feed_entries_fulltextsearch_tsv;
 
 ALTER TABLE feed_entries
+DROP COLUMN summary,
 DROP COLUMN fulltextsearch_tsv;

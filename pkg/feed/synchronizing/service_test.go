@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/feeds"
 	"github.com/jaswdr/faker"
-	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
@@ -64,6 +63,7 @@ func TestServiceSynchronize(t *testing.T) {
 		FeedUUID:    repositoryFeed.UUID,
 		URL:         "http://test.local/first-post",
 		Title:       "First post!",
+		Summary:     "First post!\n\nThis is the first post!",
 		PublishedAt: today,
 		UpdatedAt:   today,
 	}
@@ -201,26 +201,7 @@ func TestServiceSynchronize(t *testing.T) {
 				Title:       "Same flavour, but blazingly faster!",
 				Description: atomFeed.Description,
 				Updated:     today,
-				Items: []*feeds.Item{
-					{
-						Id:    "http://test.local/first-post",
-						Title: "First post!",
-						Link: &feeds.Link{
-							Href: "http://test.local/first-post",
-						},
-						Created: today,
-						Updated: today,
-					},
-					{
-						Id:    "http://test.local/hello-world",
-						Title: "Hello World",
-						Link: &feeds.Link{
-							Href: "http://test.local/hello-world",
-						},
-						Created: yesterday,
-						Updated: yesterday,
-					},
-				},
+				Items:       atomFeed.Items,
 			},
 			wantFeeds: []feed.Feed{
 				{
@@ -229,7 +210,7 @@ func TestServiceSynchronize(t *testing.T) {
 					Title:        "Same flavour, but blazingly faster!",
 					Description:  repositoryFeed.Description,
 					Slug:         repositoryFeed.Slug,
-					ETag:         `W/"336949e591862f074258149ab2e3d009e7f2e73836e20f3290101a80662ffae2"`,
+					ETag:         `W/"d2e704d224c9df7337a8e07b6d504267a1caf6e13bc9eec82aea8cbfd55eb85b"`,
 					LastModified: repositoryFeed.LastModified,
 					CreatedAt:    repositoryFeed.CreatedAt,
 					UpdatedAt:    now,
@@ -252,26 +233,7 @@ func TestServiceSynchronize(t *testing.T) {
 				Title:       atomFeed.Title,
 				Description: "Updated description.",
 				Updated:     today,
-				Items: []*feeds.Item{
-					{
-						Id:    "http://test.local/first-post",
-						Title: "First post!",
-						Link: &feeds.Link{
-							Href: "http://test.local/first-post",
-						},
-						Created: today,
-						Updated: today,
-					},
-					{
-						Id:    "http://test.local/hello-world",
-						Title: "Hello World",
-						Link: &feeds.Link{
-							Href: "http://test.local/hello-world",
-						},
-						Created: yesterday,
-						Updated: yesterday,
-					},
-				},
+				Items:       atomFeed.Items,
 			},
 			wantFeeds: []feed.Feed{
 				{
@@ -280,7 +242,7 @@ func TestServiceSynchronize(t *testing.T) {
 					Title:        repositoryFeed.Title,
 					Description:  "Updated description.",
 					Slug:         repositoryFeed.Slug,
-					ETag:         `W/"44daff216db8efd98d09e4c5eb7ad04faf152f0e13d8817d72f62629d9e7f731"`,
+					ETag:         `W/"bbc08d254d1abf71ac09a314d5886c45fe7bd45cd04fe4e31285f2da26b41962"`,
 					LastModified: repositoryFeed.LastModified,
 					CreatedAt:    repositoryFeed.CreatedAt,
 					UpdatedAt:    now,
@@ -310,27 +272,12 @@ func TestServiceSynchronize(t *testing.T) {
 						Link: &feeds.Link{
 							Href: "http://test.local/second-post",
 						},
-						Created: tomorrow,
-						Updated: tomorrow,
+						Description: "This is the second post!",
+						Created:     tomorrow,
+						Updated:     tomorrow,
 					},
-					{
-						Id:    "http://test.local/first-post",
-						Title: "First post!",
-						Link: &feeds.Link{
-							Href: "http://test.local/first-post",
-						},
-						Created: today,
-						Updated: today,
-					},
-					{
-						Id:    "http://test.local/hello-world",
-						Title: "Hello World",
-						Link: &feeds.Link{
-							Href: "http://test.local/hello-world",
-						},
-						Created: yesterday,
-						Updated: yesterday,
-					},
+					atomFeed.Items[1],
+					atomFeed.Items[0],
 				},
 			},
 			wantFeeds: []feed.Feed{
@@ -340,7 +287,7 @@ func TestServiceSynchronize(t *testing.T) {
 					Title:        repositoryFeed.Title,
 					Description:  repositoryFeed.Description,
 					Slug:         repositoryFeed.Slug,
-					ETag:         `W/"a845a875e134bd1857ac11e296efacf1767b5c6bb60708f9106670ef54bec038"`,
+					ETag:         `W/"1ae6400e4431ee18962bf860e3b3d9bc9e16bd81053d97cd57df5fa3d3313b49"`,
 					LastModified: tomorrow,
 					CreatedAt:    yesterday,
 					UpdatedAt:    now,
@@ -354,6 +301,7 @@ func TestServiceSynchronize(t *testing.T) {
 					FeedUUID:    repositoryFeed.UUID,
 					URL:         "http://test.local/second-post",
 					Title:       "Second post!",
+					Summary:     "This is the second post!",
 					PublishedAt: tomorrow,
 					UpdatedAt:   tomorrow,
 				},
@@ -450,67 +398,8 @@ func TestServiceSynchronize(t *testing.T) {
 				t.Fatalf("want no error, got %q", err)
 			}
 
-			assertFeedsEqual(t, r.Feeds, tc.wantFeeds)
-			assertEntriesEqual(t, r.Entries, tc.wantEntries)
+			feed.AssertFeedsEqual(t, r.Feeds, tc.wantFeeds)
+			feed.AssertEntriesEqual(t, r.Entries, tc.wantEntries)
 		})
-	}
-}
-
-func assertFeedsEqual(t *testing.T, got, want []feed.Feed) {
-	t.Helper()
-
-	if len(got) != len(want) {
-		t.Fatalf("want %d feeds, got %d", len(want), len(got))
-	}
-
-	for i, wantFeed := range want {
-		gotFeed := got[i]
-
-		if gotFeed.Slug != wantFeed.Slug {
-			t.Errorf("want Slug %q, got %q", wantFeed.Slug, gotFeed.Slug)
-		}
-		if gotFeed.Title != wantFeed.Title {
-			t.Errorf("want Title %q, got %q", wantFeed.Title, gotFeed.Title)
-		}
-		if gotFeed.Description != wantFeed.Description {
-			t.Errorf("want Description %q, got %q", wantFeed.Description, gotFeed.Description)
-		}
-		if gotFeed.FeedURL != wantFeed.FeedURL {
-			t.Errorf("want FeedURL %q, got %q", wantFeed.FeedURL, gotFeed.FeedURL)
-		}
-
-		if gotFeed.ETag != wantFeed.ETag {
-			t.Errorf("want ETag %q, got %q", wantFeed.ETag, gotFeed.ETag)
-		}
-
-		assert.TimeAlmostEquals(t, "LastModified", gotFeed.LastModified, wantFeed.LastModified, assert.TimeComparisonDelta)
-		assert.TimeAlmostEquals(t, "CreatedAt", gotFeed.CreatedAt, wantFeed.CreatedAt, assert.TimeComparisonDelta)
-		assert.TimeAlmostEquals(t, "UpdatedAt", gotFeed.UpdatedAt, wantFeed.UpdatedAt, assert.TimeComparisonDelta)
-		assert.TimeAlmostEquals(t, "FetchedAt", gotFeed.FetchedAt, wantFeed.FetchedAt, assert.TimeComparisonDelta)
-	}
-}
-
-func assertEntriesEqual(t *testing.T, got, want []feed.Entry) {
-	t.Helper()
-
-	if len(got) != len(want) {
-		t.Fatalf("want %d entries, got %d", len(want), len(got))
-	}
-
-	for i, wantEntry := range want {
-		gotEntry := got[i]
-
-		if gotEntry.FeedUUID != wantEntry.FeedUUID {
-			t.Errorf("want entry FeedUUID %q, got %q", wantEntry.FeedUUID, gotEntry.FeedUUID)
-		}
-		if gotEntry.Title != wantEntry.Title {
-			t.Errorf("want entry Title %q, got %q", wantEntry.Title, gotEntry.Title)
-		}
-		if gotEntry.URL != wantEntry.URL {
-			t.Errorf("want entry URL %q, got %q", wantEntry.URL, gotEntry.URL)
-		}
-
-		assert.TimeAlmostEquals(t, "entry PublishedAt", gotEntry.PublishedAt, wantEntry.PublishedAt, assert.TimeComparisonDelta)
-		assert.TimeAlmostEquals(t, "entry UpdatedAt", gotEntry.UpdatedAt, wantEntry.UpdatedAt, assert.TimeComparisonDelta)
 	}
 }

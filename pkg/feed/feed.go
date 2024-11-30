@@ -7,10 +7,12 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
+	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 )
 
 var (
@@ -160,4 +162,43 @@ func (f *Feed) requireTitle() error {
 		return ErrFeedTitleRequired
 	}
 	return nil
+}
+
+func AssertFeedEquals(t *testing.T, got, want Feed) {
+	t.Helper()
+
+	if got.Slug != want.Slug {
+		t.Errorf("want Slug %q, got %q", want.Slug, got.Slug)
+	}
+	if got.Title != want.Title {
+		t.Errorf("want Title %q, got %q", want.Title, got.Title)
+	}
+	if got.Description != want.Description {
+		t.Errorf("want Description %q, got %q", want.Description, got.Description)
+	}
+	if got.FeedURL != want.FeedURL {
+		t.Errorf("want FeedURL %q, got %q", want.FeedURL, got.FeedURL)
+	}
+
+	if got.ETag != want.ETag {
+		t.Errorf("want ETag %q, got %q", want.ETag, got.ETag)
+	}
+
+	assert.TimeAlmostEquals(t, "LastModified", got.LastModified, want.LastModified, assert.TimeComparisonDelta)
+	assert.TimeAlmostEquals(t, "CreatedAt", got.CreatedAt, want.CreatedAt, assert.TimeComparisonDelta)
+	assert.TimeAlmostEquals(t, "UpdatedAt", got.UpdatedAt, want.UpdatedAt, assert.TimeComparisonDelta)
+	assert.TimeAlmostEquals(t, "FetchedAt", got.FetchedAt, want.FetchedAt, assert.TimeComparisonDelta)
+}
+
+func AssertFeedsEqual(t *testing.T, gotFeeds, wantFeeds []Feed) {
+	t.Helper()
+
+	if len(gotFeeds) != len(wantFeeds) {
+		t.Fatalf("want %d feeds, got %d", len(wantFeeds), len(gotFeeds))
+	}
+
+	for i, wantFeed := range wantFeeds {
+		gotFeed := gotFeeds[i]
+		AssertFeedEquals(t, gotFeed, wantFeed)
+	}
 }

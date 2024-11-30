@@ -14,6 +14,7 @@ require (
 	github.com/gosimple/slug v1.14.0
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jaswdr/faker v1.19.1
+	github.com/k3a/html2text v1.2.1
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/prometheus/client_golang v1.20.5
 	github.com/rs/zerolog v1.33.0

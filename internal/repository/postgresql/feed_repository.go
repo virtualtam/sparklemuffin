@@ -322,6 +322,7 @@ func (r *Repository) FeedEntryUpsertMany(entries []feed.Entry) (int64, error) {
 		SET
 			title              = EXCLUDED.title,
 			summary            = EXCLUDED.summary,
+			textrank_terms     = EXCLUDED.textrank_terms,
 			fulltextsearch_tsv = EXCLUDED.fulltextsearch_tsv,
 			updated_at         = EXCLUDED.updated_at
 		`,

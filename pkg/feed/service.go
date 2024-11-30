@@ -10,6 +10,7 @@ import (
 
 	"github.com/mmcdole/gofeed"
 	"github.com/rs/zerolog/log"
+	"github.com/virtualtam/sparklemuffin/internal/textkit"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
 
@@ -18,13 +19,18 @@ type Service struct {
 	r Repository
 
 	client *fetching.Client
+
+	textRanker       *textkit.TextRanker
+	textRankMaxTerms int
 }
 
 // NewService initializes and returns a Feed Service.
 func NewService(r Repository, client *fetching.Client) *Service {
 	return &Service{
-		r:      r,
-		client: client,
+		r:                r,
+		client:           client,
+		textRanker:       textkit.NewTextRanker(),
+		textRankMaxTerms: EntryTextRankMaxTerms,
 	}
 }
 
@@ -231,6 +237,7 @@ func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) error {
 
 	for _, item := range items {
 		entry := NewEntryFromItem(feedUUID, now, item)
+		entry.ExtractTextRankTerms(s.textRanker, s.textRankMaxTerms)
 
 		if err := entry.ValidateForAddition(); err != nil {
 			log.

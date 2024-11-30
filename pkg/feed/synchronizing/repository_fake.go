@@ -73,6 +73,7 @@ func (r *fakeRepository) FeedEntryUpsertMany(newEntries []feed.Entry) (int64, er
 			r.Entries[index].Title = newEntry.Title
 			r.Entries[index].UpdatedAt = newEntry.UpdatedAt
 			r.Entries[index].Summary = newEntry.Summary
+			r.Entries[index].TextRankTerms = newEntry.TextRankTerms
 
 			newOrUpdated++
 

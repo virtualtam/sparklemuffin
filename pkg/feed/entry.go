@@ -17,6 +17,10 @@ import (
 	"github.com/virtualtam/sparklemuffin/internal/textkit"
 )
 
+const (
+	EntryTextRankMaxTerms = 10
+)
+
 // Entry represents an entry of a syndication feed (Atom or RSS).
 type Entry struct {
 	UID      string
@@ -25,9 +29,10 @@ type Entry struct {
 	URL   string
 	Title string
 
-	description string
-	content     string
-	Summary     string
+	description   string
+	content       string
+	Summary       string
+	TextRankTerms []string
 
 	PublishedAt time.Time
 	UpdatedAt   time.Time
@@ -69,6 +74,18 @@ func (e *Entry) Normalize() {
 	e.normalizeDescription()
 	e.normalizeContent()
 	e.summarize()
+}
+
+// ExtractTextRankTerms uses TextRank to extract the top ranking phrases from the Entry content or description.
+//
+// Given the TextRank implementation we use, ranked phrases (pairs of terms) seem semantically more relevant
+// than single ranked words.
+func (e *Entry) ExtractTextRankTerms(ranker *textkit.TextRanker, topN int) {
+	if len(e.content) > 0 {
+		e.TextRankTerms = ranker.RankTopNPhrases(e.content, topN)
+	} else if len(e.description) > 0 {
+		e.TextRankTerms = ranker.RankTopNPhrases(e.description, topN)
+	}
 }
 
 // ValidateForAddition ensures mandatory fields are properly set when adding an
@@ -166,6 +183,8 @@ func (e *Entry) validateUID() error {
 	return nil
 }
 
+// AssertEntriesEqual is a test helper function to assert that two slices of Entry
+// are equal.
 func AssertEntriesEqual(t *testing.T, gotEntries []Entry, wantEntries []Entry) {
 	t.Helper()
 
@@ -188,6 +207,17 @@ func AssertEntriesEqual(t *testing.T, gotEntries []Entry, wantEntries []Entry) {
 		}
 		if gotEntry.Summary != wantEntry.Summary {
 			t.Errorf("want Entry %d Summary %q, got %q", i, wantEntry.Summary, gotEntry.Summary)
+		}
+
+		if len(gotEntry.TextRankTerms) != len(wantEntry.TextRankTerms) {
+			t.Errorf("want Entry %d TextRankTerms %#v, got %#v", i, wantEntry.TextRankTerms, gotEntry.TextRankTerms)
+			t.Fatalf("want Entry %d TextRankTerms %d, got %d", i, len(wantEntry.TextRankTerms), len(gotEntry.TextRankTerms))
+		}
+
+		for j, wantTerm := range wantEntry.TextRankTerms {
+			if gotEntry.TextRankTerms[j] != wantTerm {
+				t.Errorf("want Entry %d TextRankTerms[%d] %q, got %q", i, j, wantTerm, gotEntry.TextRankTerms[j])
+			}
 		}
 
 		assert.TimeAlmostEquals(t, fmt.Sprintf("Entry %d PublishedAt", i), gotEntry.PublishedAt, wantEntry.PublishedAt, assert.TimeComparisonDelta)

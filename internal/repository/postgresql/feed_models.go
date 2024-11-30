@@ -5,6 +5,7 @@ package postgresql
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
@@ -85,9 +86,10 @@ type DBEntry struct {
 	UID      string `db:"uid"`
 	FeedUUID string `db:"feed_uuid"`
 
-	URL     string `db:"url"`
-	Title   string `db:"title"`
-	Summary string `db:"summary"`
+	URL           string   `db:"url"`
+	Title         string   `db:"title"`
+	Summary       string   `db:"summary"`
+	TextRankTerms []string `db:"textrank_terms"`
 
 	PublishedAt time.Time `db:"published_at"`
 	UpdatedAt   time.Time `db:"updated_at"`
@@ -95,18 +97,23 @@ type DBEntry struct {
 
 func (e *DBEntry) asEntry() feed.Entry {
 	return feed.Entry{
-		UID:         e.UID,
-		FeedUUID:    e.FeedUUID,
-		URL:         e.URL,
-		Title:       e.Title,
-		Summary:     e.Summary,
-		PublishedAt: e.PublishedAt,
-		UpdatedAt:   e.UpdatedAt,
+		UID:           e.UID,
+		FeedUUID:      e.FeedUUID,
+		URL:           e.URL,
+		Title:         e.Title,
+		Summary:       e.Summary,
+		TextRankTerms: e.TextRankTerms,
+		PublishedAt:   e.PublishedAt,
+		UpdatedAt:     e.UpdatedAt,
 	}
 }
 
 func feedEntryToFullTextSearchString(e feed.Entry) string {
-	return fullTextSearchReplacer.Replace(e.Title)
+	return fmt.Sprintf(
+		"%s %s",
+		fullTextSearchReplacer.Replace(e.Title),
+		fullTextSearchReplacer.Replace(strings.Join(e.TextRankTerms, " ")),
+	)
 }
 
 type DBEntryMetadata struct {

@@ -10,6 +10,7 @@ import (
 	"github.com/mmcdole/gofeed"
 	"github.com/rs/zerolog/log"
 	"github.com/sourcegraph/conc/pool"
+	"github.com/virtualtam/sparklemuffin/internal/textkit"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
@@ -23,14 +24,20 @@ const (
 
 // Service handles feed synchronization operations.
 type Service struct {
-	r      Repository
+	r Repository
+
 	client *fetching.Client
+
+	textRanker       *textkit.TextRanker
+	textRankMaxTerms int
 }
 
 func NewService(r Repository, client *fetching.Client) *Service {
 	return &Service{
-		r:      r,
-		client: client,
+		r:                r,
+		client:           client,
+		textRanker:       textkit.NewTextRanker(),
+		textRankMaxTerms: feed.EntryTextRankMaxTerms,
 	}
 }
 
@@ -147,6 +154,7 @@ func (s *Service) createOrUpdateEntries(f feed.Feed, now time.Time, items []*gof
 
 	for _, item := range items {
 		entry := feed.NewEntryFromItem(f.UUID, now, item)
+		entry.ExtractTextRankTerms(s.textRanker, s.textRankMaxTerms)
 
 		if err := entry.ValidateForAddition(); err != nil {
 			log.

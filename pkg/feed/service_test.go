@@ -531,6 +531,46 @@ func TestServiceCreateEntries(t *testing.T) {
 		want      []Entry
 		wantErr   error
 	}{
+		// nominal cases
+		{
+			tname: "entry with long description - expecting a Summary and TextRankTerms",
+			feedItems: []*gofeed.Item{
+				{
+					// The description for this entry is a plain-text extract from the Wikipedia article
+					// https://en.wikipedia.org/wiki/History_of_aluminium
+					//
+					// This article is licensed under the Creative Commons Attribution-Share-Alike License 4.0.
+					Link:  "http://test.local/dates",
+					Title: "History of aluminium",
+					Description: `
+Aluminium (or aluminum) metal is very rare in native form, and the process to refine it from ores is complex, so for most of human history it was unknown. However, the compound alum has been known since the 5th century BCE and was used extensively by the ancients for dyeing. During the Middle Ages, its use for dyeing made it a commodity of international commerce. Renaissance scientists believed that alum was a salt of a new earth; during the Age of Enlightenment, it was established that this earth, alumina, was an oxide of a new metal. Discovery of this metal was announced in 1825 by Danish physicist Hans Christian Ørsted, whose work was extended by German chemist Friedrich Wöhler.
+Aluminium was difficult to refine and thus uncommon in actual use. Soon after its discovery, the price of aluminium exceeded that of gold. It was reduced only after the initiation of the first industrial production by French chemist Henri Étienne Sainte-Claire Deville in 1856. Aluminium became much more available to the public with the Hall–Héroult process developed independently by French engineer Paul Héroult and American engineer Charles Martin Hall in 1886, and the Bayer process developed by Austrian chemist Carl Joseph Bayer in 1889. These processes have been used for aluminium production up to the present.
+The introduction of these methods for the mass production of aluminium led to extensive use of the light, corrosion-resistant metal in industry and everyday life. Aluminium began to be used in engineering and construction. In World Wars I and II, aluminium was a crucial strategic resource for aviation. World production of the metal grew from 6,800 metric tons in 1900 to 2,810,000 metric tons in 1954, when aluminium became the most produced non-ferrous metal, surpassing copper.
+In the second half of the 20th century, aluminium gained usage in transportation and packaging. Aluminium production became a source of concern due to its effect on the environment, and aluminium recycling gained ground. The metal became an exchange commodity in the 1970s. Production began to shift from developed countries to developing ones; by 2010, China had accumulated an especially large share in both production and consumption of aluminium. World production continued to rise, reaching 58,500,000 metric tons in 2015. Aluminium production exceeds those of all other non-ferrous metals combined.
+`,
+					PublishedParsed: &now,
+					UpdatedParsed:   &now,
+				},
+			},
+			want: []Entry{
+				{
+					FeedUUID: feedUUID,
+					URL:      "http://test.local/dates",
+					Title:    "History of aluminium",
+					Summary:  `Aluminium (or aluminum) metal is very rare in native form, and the process to refine it from ores is complex, so for most of human history it was unknown. However, the compound alum has been known since the 5th century BCE and was used extensively by the ancients for dyeing. During the Middle Ages, its use for dyeing made it a commodity of international commerce. Renaissance scientists believed t…`,
+					TextRankTerms: []string{
+						"production aluminium", "tons metric",
+						"non ferrous", "metric 000",
+						"developed process", "production world",
+						"metals combined", "metals ferrous",
+						"500 reaching", "500 000",
+					},
+					PublishedAt: now,
+					UpdatedAt:   now,
+				},
+			},
+		},
+
 		// edge cases
 		{
 			tname: "publication and update dates not set, default to now",

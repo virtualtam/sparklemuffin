@@ -14,6 +14,9 @@ lint:
 	golangci-lint run ./...
 .PHONY: lint
 
+format: copywrite format-sql
+.PHONY: format
+
 cover:
 	go test -coverprofile=coverage.out ./...
 .PHONY: cover

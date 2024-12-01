@@ -15,8 +15,8 @@ thanks to `watchexec`.
 
 For more information about how services are configured and started, see:
 
-- the [Makefile](https://github.com/dev/sparklemuffin/blob/main/Makefile);
-- the [docker-compose.dev.yml](https://github.com/dev/sparklemuffin/blob/main/docker-compose.dev.yml) Docker Compose configuration.
+- the [Makefile](https://github.com/virtualtam/sparklemuffin/blob/main/Makefile);
+- the [docker-compose.dev.yml](https://github.com/virtualtam/sparklemuffin/blob/main/docker-compose.dev.yml) Docker Compose configuration.
 
 Run a local development server:
 

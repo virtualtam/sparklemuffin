@@ -18,8 +18,15 @@ jobs:
 
       - uses: jontze/action-mdbook@v3
         with:
-          mdbook-version: "~0.4.36"
+          mdbook-version: "~0.4.43"
+          use-linkcheck: true
           token: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Show mdbook version
+        run: mdbook --version
+
+      - name: Show linkcheck version
+        run: mdbook-linkcheck --version
 
       - name: Generate documentation
         run: make docs
@@ -28,7 +35,7 @@ jobs:
         id: deployment
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './docs/book'
+          path: "./docs/book"
 
   publish:
     if: github.ref == 'refs/heads/main'
@@ -47,4 +54,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-

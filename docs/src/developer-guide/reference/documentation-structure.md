@@ -14,22 +14,20 @@ docs/
 └── src        # Markdown source files
 ```
 
-## Structure and sections
+## Sections and page categories
 
-The documentation follows the [Diátaxis](https://diataxis.org/) approach.
+There are two main sections:
 
-It is split in two main sections:
-
-- a [User Guide](./user-guide/index.md) that showcases SparkleMuffin's features and how to use them;
-- a [Developer Guide](./developer-guide/index.md) that provides information on how SparkleMuffin works,
+- a [User Guide](../../user-guide/index.md) that showcases SparkleMuffin's features and how to use them;
+- a [Developer Guide](../../developer-guide/index.md) that provides information on how SparkleMuffin works,
   and how to contribute to the project.
 
-Pages are then split into four categories:
+Pages are organized into four categories, according to the [Diátaxis](https://diataxis.fr/) approach:
 
-- Tutorials: learning-oriented lessons that take you through a series of steps to use a feature;
-- How-to Guides: practical step-by-step guides to help you achieve a specific goal;
-- Reference Guides: details about how SparkleMuffin works;
-- Concept Guides: thoughts and reflections about how why things work the way they do.
+- **Tutorials**: learning-oriented lessons that take you through a series of steps to use a feature;
+- **How-to Guides**: practical step-by-step guides to help you achieve a specific goal;
+- **Reference Guides**: details about how SparkleMuffin works;
+- **Concept Guides**: thoughts and reflections about how why things work the way they do.
 
 ## Reference
 - [mdbook build](https://rust-lang.github.io/mdBook/cli/build.html) command

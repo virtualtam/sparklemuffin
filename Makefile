@@ -103,7 +103,7 @@ dev-admin:
 
 # Documentation
 DOCS_DIR := docs
-DOCS_FILES := $(shell find docs -name "*.md")
+DOCS_FILES := $(shell find docs -name "*.md" -or -name "*.toml")
 
 docs: docs/book
 .PHONY: docs

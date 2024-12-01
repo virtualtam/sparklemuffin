@@ -23,6 +23,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Documentation
 - Update documentation structure to follow the Diátaxis approach
 - Disable mdBook file auto-creation
+- Check for broken links with mdbook-linkcheck
 
 #### www
 - Update the home page

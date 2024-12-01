@@ -1,5 +1,9 @@
 # Generating the HTML documentation
-## Building the HTML documentation once
+## Prerequisites
+- Install [mdBook](https://rust-lang.github.io/mdBook/);
+- Install [mdbook-linkcheck](https://github.com/Michael-F-Bryan/mdbook-linkcheck).
+
+## HTML Documentation
 Build the HTML documentation with:
 
 ```shell
@@ -13,8 +17,8 @@ mdbook build docs
 The generated website will be located under `docs/book`.
 
 
-## Building and serving the documentation (live-reload)
-Build and serve the documentation with:
+## Live-reload server
+Start `mdBook`'s live-reload server with:
 
 ```shell
 $ make live-docs
@@ -28,8 +32,8 @@ mdbook serve docs
 2023-11-05 16:19:25 [INFO] (warp::server): listening on http://[::1]:3000
 ```
 
-The generated website will be located under `docs/book`, and the live server can be
-accessed by opening [http://localhost:3000](http://localhost:3000) in a Web browser.
+- The generated website will be located under `docs/book`;
+- The live server can be accessed by opening [http://localhost:3000](http://localhost:3000) in a Web browser.
 
 ## Reference
 - [SparkleMuffin Documentation Structure](../reference/documentation-structure.md)

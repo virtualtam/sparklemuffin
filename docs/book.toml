@@ -7,3 +7,11 @@ title = "SparkleMuffin: Documentation"
 
 [build]
 create-missing = false
+
+[output.linkcheck]
+# https://github.com/Michael-F-Bryan/mdbook-linkcheck
+
+# Disabled by default, use to check links to external websites.
+# Remote servers may respond to HEAD requests with a HTTP 405 Method Not Allowed error status.
+#follow-web-links = true
+#exclude = ['localhost']

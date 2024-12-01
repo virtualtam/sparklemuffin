@@ -105,10 +105,10 @@ dev-admin:
 DOCS_DIR := docs
 DOCS_FILES := $(shell find docs -name "*.md" -or -name "*.toml")
 
-docs: docs/book
+docs: docs/book/html
 .PHONY: docs
 
-docs/book: $(DOCS_FILES)
+docs/book/html: $(DOCS_FILES)
 	mdbook build $(DOCS_DIR)
 
 live-docs:

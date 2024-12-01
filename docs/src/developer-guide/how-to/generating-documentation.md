@@ -14,7 +14,7 @@ mdbook build docs
 2023-11-05 16:19:04 [INFO] (mdbook::book): Running the html backend
 ```
 
-The generated website will be located under `docs/book`.
+The generated website will be located under `docs/book/html`.
 
 
 ## Live-reload server
@@ -32,7 +32,7 @@ mdbook serve docs
 2023-11-05 16:19:25 [INFO] (warp::server): listening on http://[::1]:3000
 ```
 
-- The generated website will be located under `docs/book`;
+- The generated website will be located under `docs/book/html`;
 - The live server can be accessed by opening [http://localhost:3000](http://localhost:3000) in a Web browser.
 
 ## Reference

@@ -35,7 +35,7 @@ jobs:
         id: deployment
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "./docs/book"
+          path: "./docs/book/html"
 
   publish:
     if: github.ref == 'refs/heads/main'

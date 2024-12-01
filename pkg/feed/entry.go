@@ -19,6 +19,10 @@ import (
 
 const (
 	EntryTextRankMaxTerms = 10
+
+	// Entry PublishedAt or UpdatedAt may be accepted as late as (time.Now() + entryTimeFutureBound)
+	// (Note: Feel free to suggest a better name for this constant)
+	entryTimeFutureBound = 2 * 24 * time.Hour
 )
 
 // Entry represents an entry of a syndication feed (Atom or RSS).
@@ -90,12 +94,16 @@ func (e *Entry) ExtractTextRankTerms(ranker *textkit.TextRanker, topN int) {
 
 // ValidateForAddition ensures mandatory fields are properly set when adding an
 // new Entry.
-func (e *Entry) ValidateForAddition() error {
+func (e *Entry) ValidateForAddition(now time.Time) error {
+	entryTimeMustBeBefore := now.Add(entryTimeFutureBound)
+
 	fns := []func() error{
 		e.requireURL,
 		e.ensureURLIsValid,
 		e.requireTitle,
 		e.validateUID,
+		e.ensurePublishedAtIsBefore(entryTimeMustBeBefore),
+		e.ensureUpdatedAtIsBefore(entryTimeMustBeBefore),
 	}
 
 	for _, fn := range fns {
@@ -177,10 +185,28 @@ func (e *Entry) requireURL() error {
 func (e *Entry) validateUID() error {
 	_, err := ksuid.Parse(e.UID)
 	if err != nil {
-		return ErrEntryUUIDInvalid
+		return ErrEntryUIDInvalid
 	}
 
 	return nil
+}
+
+func (e *Entry) ensurePublishedAtIsBefore(before time.Time) func() error {
+	return func() error {
+		if e.PublishedAt.After(before) {
+			return ErrEntryPublishedAtInTheFuture
+		}
+		return nil
+	}
+}
+
+func (e *Entry) ensureUpdatedAtIsBefore(before time.Time) func() error {
+	return func() error {
+		if e.UpdatedAt.After(before) {
+			return ErrEntryUpdatedAtInTheFuture
+		}
+		return nil
+	}
 }
 
 // AssertEntriesEqual is a test helper function to assert that two slices of Entry

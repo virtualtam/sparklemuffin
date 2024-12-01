@@ -30,14 +30,16 @@ var (
 	ErrCategoryUUIDRequired      error = errors.New("category: UUID required")
 
 	// Feed Entry
-	ErrEntryNotFound             error = errors.New("entry: not found")
-	ErrEntryTitleRequired        error = errors.New("entry: title required")
-	ErrEntryURLInvalid           error = errors.New("entry: invalid URL")
-	ErrEntryURLNoScheme          error = errors.New("entry: missing URL scheme")
-	ErrEntryURLNoHost            error = errors.New("entry: missing URL host")
-	ErrEntryURLRequired          error = errors.New("entry: URL required")
-	ErrEntryURLUnsupportedScheme error = errors.New("entry: unsupported URL scheme")
-	ErrEntryUUIDInvalid          error = errors.New("entry: invalid UUID")
+	ErrEntryNotFound               error = errors.New("entry: not found")
+	ErrEntryTitleRequired          error = errors.New("entry: title required")
+	ErrEntryPublishedAtInTheFuture error = errors.New("entry: publication date is in the future")
+	ErrEntryUpdatedAtInTheFuture   error = errors.New("entry: update date is in the future")
+	ErrEntryURLInvalid             error = errors.New("entry: invalid URL")
+	ErrEntryURLNoScheme            error = errors.New("entry: missing URL scheme")
+	ErrEntryURLNoHost              error = errors.New("entry: missing URL host")
+	ErrEntryURLRequired            error = errors.New("entry: URL required")
+	ErrEntryURLUnsupportedScheme   error = errors.New("entry: unsupported URL scheme")
+	ErrEntryUIDInvalid             error = errors.New("entry: invalid UID")
 
 	// Feed Entry Metadata
 	ErrEntryMetadataNotFound error = errors.New("entry-metadata: not found")

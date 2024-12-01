@@ -239,7 +239,7 @@ func (s *Service) createEntries(feedUUID string, items []*gofeed.Item) error {
 		entry := NewEntryFromItem(feedUUID, now, item)
 		entry.ExtractTextRankTerms(s.textRanker, s.textRankMaxTerms)
 
-		if err := entry.ValidateForAddition(); err != nil {
+		if err := entry.ValidateForAddition(now); err != nil {
 			log.
 				Warn().
 				Err(err).

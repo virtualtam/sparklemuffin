@@ -9,6 +9,7 @@ import (
 
 	"github.com/jaswdr/faker"
 	"github.com/mmcdole/gofeed"
+	"github.com/segmentio/ksuid"
 )
 
 func TestEntryNormalize(t *testing.T) {
@@ -137,6 +138,86 @@ culpa qui officia deserunt mollit anim id est laborum.`,
 
 			if got := e.Summary; got != tc.want {
 				t.Errorf("want %q, got %q", tc.want, got)
+			}
+		})
+	}
+}
+
+func TestEntryValidateForAddition(t *testing.T) {
+	now := time.Now().UTC()
+	fake := faker.New()
+	feedUUID := fake.UUID().V4()
+
+	cases := []struct {
+		tname   string
+		entry   Entry
+		wantErr error
+	}{
+		// error cases
+		{
+			tname: "empty URL",
+			entry: Entry{
+				URL: "",
+			},
+			wantErr: ErrEntryURLRequired,
+		},
+		{
+			tname: "invalid URL (no scheme)",
+			entry: Entry{
+				URL: "invalid",
+			},
+			wantErr: ErrEntryURLNoScheme,
+		},
+		{
+			tname: "invalid URL (unsupported scheme)",
+			entry: Entry{
+				URL: "ftp://example.com",
+			},
+			wantErr: ErrEntryURLUnsupportedScheme,
+		},
+		{
+			tname: "invalid URL (no host)",
+			entry: Entry{
+				URL: "https://",
+			},
+			wantErr: ErrEntryURLNoHost,
+		},
+		{
+			tname: "empty title",
+			entry: Entry{
+				URL:   "https://example.com",
+				Title: "",
+			},
+			wantErr: ErrEntryTitleRequired,
+		},
+		{
+			tname: "publication date in the future",
+			entry: Entry{
+				UID:         ksuid.New().String(),
+				FeedUUID:    feedUUID,
+				URL:         "https://example.com",
+				Title:       "Example Post",
+				PublishedAt: now.Add(7 * 24 * time.Hour).UTC(),
+			},
+			wantErr: ErrEntryPublishedAtInTheFuture,
+		},
+		{
+			tname: "update date in the future",
+			entry: Entry{
+				UID:       ksuid.New().String(),
+				FeedUUID:  feedUUID,
+				URL:       "https://example.com",
+				Title:     "Example Post",
+				UpdatedAt: now.Add(7 * 24 * time.Hour).UTC(),
+			},
+			wantErr: ErrEntryUpdatedAtInTheFuture,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			if err := tc.entry.ValidateForAddition(now); err != tc.wantErr {
+				t.Errorf("want %q, got %q", tc.wantErr, err)
 			}
 		})
 	}

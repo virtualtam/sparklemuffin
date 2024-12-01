@@ -156,7 +156,7 @@ func (s *Service) createOrUpdateEntries(f feed.Feed, now time.Time, items []*gof
 		entry := feed.NewEntryFromItem(f.UUID, now, item)
 		entry.ExtractTextRankTerms(s.textRanker, s.textRankMaxTerms)
 
-		if err := entry.ValidateForAddition(); err != nil {
+		if err := entry.ValidateForAddition(now); err != nil {
 			log.
 				Warn().
 				Err(err).

@@ -3,8 +3,8 @@
 SparkleMuffin can be configured by:
 
 - using a configuration file;
-- setting environment variables, e.g. `SPARKLEMUFFIN_LOG_LEVEL=debug`;
-- setting POSIX flags, e.g. `--log-level debug`.
+- setting POSIX flags, e.g. `--log-level debug`;
+- setting environment variables, e.g. `SPARKLEMUFFIN_LOG_LEVEL=debug`.
 
 ### Configuration variable precedence
 Configuration variables are evaluated in this order:

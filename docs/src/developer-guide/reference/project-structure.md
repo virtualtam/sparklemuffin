@@ -26,7 +26,7 @@ internal
 ├── hash            # Cryptographically secure hash helpers
 ├── paginate        # Pagination utilities
 ├── rand            # Cryptographically secure pseudo-random helpers
-└── repository
+├── repository
 │   └── postgresql  # PostgreSQL database persistence layer (repository)
 └── test            # Helpers for unitary and integration tests
 ```

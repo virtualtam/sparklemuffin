@@ -20,12 +20,16 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Lint and format SQL files with SQLFluff
 - Publish HTML documentation to Github Pages
 
+### Documentation
+- Update documentation structure to follow the Diátaxis approach
+- Disable mdBook file auto-creation
+
 #### www
 - Update the home page
 - Render HTTP 4xx errors as HTML views
 
 ### Fixed
-- Install the `ca-certificates` page in the Docker image for TLS connections
+- Install the `ca-certificates` package in the Docker image for TLS connections
 
 
 ## [v0.2.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.2.0) - 2024-11-14

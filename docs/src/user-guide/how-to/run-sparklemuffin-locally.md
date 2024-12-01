@@ -1,5 +1,5 @@
-# Quickstart
-## Foreword
+# Run SparkleMuffin locally
+## Goals
 This guide shows how to run SparkleMuffin locally on your computer, in development
 mode, with debug logging enabled.
 

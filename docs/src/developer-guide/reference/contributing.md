@@ -43,8 +43,8 @@ to discuss improvements to existing features, or request new features.
 ### Documentation
 To contribute to the documentation, you need to setup a local development environment:
 
-- [Getting the Source Code](./setup/getting-the-source-code.md)
-- [Documentation](./setup/documentation.md)
+- [Getting the source code](../how-to/getting-the-source-code.md)
+- [Generating the documentation](../how-to/generating-documentation.md)
 
 This will allow you to build the documentation locally and test your changes before
 submitting a Pull Request.

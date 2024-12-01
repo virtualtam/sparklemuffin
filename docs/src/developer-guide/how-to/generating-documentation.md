@@ -1,21 +1,6 @@
-# Documentation
-## Markdown sources
-The documentation is a static Website generated from
-[Markdown](https://rust-lang.github.io/mdBook/format/markdown.html) files
-using [mdBook](https://rust-lang.github.io/mdBook/).
-
-The documentation resources are part of the SparkleMuffin repository, and located
-under the `docs/` directory:
-
-```shell
-docs/
-├── book       # Generated Website (not tracked in Git)
-├── book.toml  # mdBook configuration
-└── src        # Markdown source files
-```
-
-## Building the documentation
-Build the documentation with:
+# Generating the HTML documentation
+## Building the HTML documentation once
+Build the HTML documentation with:
 
 ```shell
 $ make docs
@@ -29,7 +14,7 @@ The generated website will be located under `docs/book`.
 
 
 ## Building and serving the documentation (live-reload)
-Build ans serve the documentation with:
+Build and serve the documentation with:
 
 ```shell
 $ make live-docs
@@ -46,8 +31,8 @@ mdbook serve docs
 The generated website will be located under `docs/book`, and the live server can be
 accessed by opening [http://localhost:3000](http://localhost:3000) in a Web browser.
 
-
 ## Reference
+- [SparkleMuffin Documentation Structure](../reference/documentation-structure.md)
 - [mdbook build](https://rust-lang.github.io/mdBook/cli/build.html) command
 - [mdbook serve](https://rust-lang.github.io/mdBook/cli/serve.html) command
 - [SUMMARY.md](https://rust-lang.github.io/mdBook/format/summary.html)

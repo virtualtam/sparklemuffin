@@ -25,13 +25,14 @@ It builds and tags the SparkleMuffin production Docker images, and pushes them t
 the Github Container Registry (GHCR) at
 [ghcr.io/virtualtam/sparklemuffin](https://github.com/virtualtam/sparklemuffin/pkgs/container/sparklemuffin).
 
+### Documentation workflow
+This workflow runs when:
 
-## Local development
-See:
+- new commits are pushed to the `main` Git branch;
+- new Git tags are pushed;
+- Pull Requests are created or updated.
 
-- [Development Tools](./development-tools.md)
-- [Running Static Analysis](./running-static-analysis.md)
-- [Running Tests](./running-tests.md)
-- [Compiling](./compiling.md)
-- [Live Development Server](./live-development-server.md)
-- [Documentation](./documentation.md)
+It generates the HTML documentation with `mdBook`.
+
+When new commits are pushed to the `main` Git branch and the `CI` workflow is successful,
+the documentation is uploaded to Github Pages and can be accessed here: [SparkleMuffin Documentation](https://virtualtam.github.io/sparklemuffin/).

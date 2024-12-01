@@ -102,7 +102,9 @@ func (e *Entry) ValidateForAddition(now time.Time) error {
 		e.ensureURLIsValid,
 		e.requireTitle,
 		e.validateUID,
+		e.requirePublishedAt,
 		e.ensurePublishedAtIsBefore(entryTimeMustBeBefore),
+		e.requireUpdatedAt,
 		e.ensureUpdatedAtIsBefore(entryTimeMustBeBefore),
 	}
 
@@ -191,6 +193,13 @@ func (e *Entry) validateUID() error {
 	return nil
 }
 
+func (e *Entry) requirePublishedAt() error {
+	if e.PublishedAt.IsZero() {
+		return ErrEntryPublishedAtIsZero
+	}
+	return nil
+}
+
 func (e *Entry) ensurePublishedAtIsBefore(before time.Time) func() error {
 	return func() error {
 		if e.PublishedAt.After(before) {
@@ -198,6 +207,13 @@ func (e *Entry) ensurePublishedAtIsBefore(before time.Time) func() error {
 		}
 		return nil
 	}
+}
+
+func (e *Entry) requireUpdatedAt() error {
+	if e.UpdatedAt.IsZero() {
+		return ErrEntryUpdatedAtIsZero
+	}
+	return nil
 }
 
 func (e *Entry) ensureUpdatedAtIsBefore(before time.Time) func() error {

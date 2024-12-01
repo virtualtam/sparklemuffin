@@ -30,7 +30,12 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Render HTTP 4xx errors as HTML views
 
 ### Fixed
+#### Docker
 - Install the `ca-certificates` package in the Docker image for TLS connections
+
+#### Feeds
+- Ensure entry publication and update dates are non-zero
+- Ensure entry publication and update dates are not in the (far) future (limit: 2 days)
 
 
 ## [v0.2.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.2.0) - 2024-11-14

@@ -191,6 +191,17 @@ func TestEntryValidateForAddition(t *testing.T) {
 			wantErr: ErrEntryTitleRequired,
 		},
 		{
+			tname: "publication date has a zero value",
+			entry: Entry{
+				UID:         ksuid.New().String(),
+				FeedUUID:    feedUUID,
+				URL:         "https://example.com",
+				Title:       "Example Post",
+				PublishedAt: time.Time{},
+			},
+			wantErr: ErrEntryPublishedAtIsZero,
+		},
+		{
 			tname: "publication date in the future",
 			entry: Entry{
 				UID:         ksuid.New().String(),
@@ -202,13 +213,25 @@ func TestEntryValidateForAddition(t *testing.T) {
 			wantErr: ErrEntryPublishedAtInTheFuture,
 		},
 		{
+			tname: "update date has a zero value",
+			entry: Entry{
+				UID:         ksuid.New().String(),
+				FeedUUID:    feedUUID,
+				URL:         "https://example.com",
+				Title:       "Example Post",
+				PublishedAt: now,
+			},
+			wantErr: ErrEntryUpdatedAtIsZero,
+		},
+		{
 			tname: "update date in the future",
 			entry: Entry{
-				UID:       ksuid.New().String(),
-				FeedUUID:  feedUUID,
-				URL:       "https://example.com",
-				Title:     "Example Post",
-				UpdatedAt: now.Add(7 * 24 * time.Hour).UTC(),
+				UID:         ksuid.New().String(),
+				FeedUUID:    feedUUID,
+				URL:         "https://example.com",
+				Title:       "Example Post",
+				PublishedAt: now,
+				UpdatedAt:   now.Add(7 * 24 * time.Hour).UTC(),
 			},
 			wantErr: ErrEntryUpdatedAtInTheFuture,
 		},
@@ -216,8 +239,14 @@ func TestEntryValidateForAddition(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			if err := tc.entry.ValidateForAddition(now); err != tc.wantErr {
-				t.Errorf("want %q, got %q", tc.wantErr, err)
+			err := tc.entry.ValidateForAddition(now)
+
+			if err == nil {
+				t.Fatalf("want error %q, got nil", tc.wantErr)
+			}
+
+			if err != tc.wantErr {
+				t.Errorf("want error %q, got %q", tc.wantErr, err)
 			}
 		})
 	}

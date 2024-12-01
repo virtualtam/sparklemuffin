@@ -1031,10 +1031,7 @@ func TestServiceDeleteSubscription(t *testing.T) {
 
 	t.Run("subscription with entries", func(t *testing.T) {
 		category := Category{
-			UserUUID: userUUID,
-			UUID:     fake.UUID().V4(),
-			Name:     fake.Lorem().Text(10),
-			Slug:     fake.Internet().Slug(),
+			UUID: fake.UUID().V4(),
 		}
 
 		entries := []Entry{}

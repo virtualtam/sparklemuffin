@@ -9,6 +9,7 @@ title = "SparkleMuffin: Documentation"
 create-missing = false
 
 [output.html]
+additional-css = ["theme/css/custom.css"]
 
 [output.linkcheck]
 # https://github.com/Michael-F-Bryan/mdbook-linkcheck

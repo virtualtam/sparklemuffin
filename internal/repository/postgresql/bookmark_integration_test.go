@@ -84,7 +84,7 @@ func generateUniqueSortedTags(fake *faker.Faker, nTags int) []string {
 
 func TestBookmarkService(t *testing.T) {
 	ctx := context.Background()
-	pool := createTestDatabase(t, ctx)
+	pool := createAndMigrateTestDatabase(t, ctx)
 	r := postgresql.NewRepository(pool)
 	bs := bookmark.NewService(r)
 	us := user.NewService(r)
@@ -343,7 +343,7 @@ func TestBookmarkService(t *testing.T) {
 
 func TestQueryingService(t *testing.T) {
 	ctx := context.Background()
-	pool := createTestDatabase(t, ctx)
+	pool := createAndMigrateTestDatabase(t, ctx)
 	r := postgresql.NewRepository(pool)
 	bs := bookmark.NewService(r)
 	qs := bookmarkquerying.NewService(r)

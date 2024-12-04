@@ -9,6 +9,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ## [v0.3.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.0) - UNRELEASED
 
 ### Added
+#### Database
+- Add dedicated tests for PostrgeSQL database migrations (up/down)
+
 #### Feeds
 - For each entry in the list, display the title of the corresponding feed
 - Save and display feed descriptions

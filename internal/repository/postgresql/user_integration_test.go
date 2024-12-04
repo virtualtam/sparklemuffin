@@ -15,7 +15,7 @@ import (
 
 func TestUserService(t *testing.T) {
 	ctx := context.Background()
-	pool := createTestDatabase(t, ctx)
+	pool := createAndMigrateTestDatabase(t, ctx)
 	r := postgresql.NewRepository(pool)
 	s := user.NewService(r)
 

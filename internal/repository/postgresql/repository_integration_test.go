@@ -32,7 +32,25 @@ const (
 	databasePassword = "testpass"
 )
 
-func createTestDatabase(t *testing.T, ctx context.Context) *pgxpool.Pool {
+func createAndMigrateTestDatabase(t *testing.T, ctx context.Context) *pgxpool.Pool {
+	t.Helper()
+
+	databaseURI, db := createTestDatabase(t, ctx)
+
+	migrater := getDatabaseMigrater(t, db)
+	if err := migrater.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		t.Fatalf("failed to apply database migrations (up): %q", err)
+	}
+
+	pool, err := pgxpool.New(context.Background(), databaseURI)
+	if err != nil {
+		t.Fatalf("failed to open database connection: %q", err)
+	}
+
+	return pool
+}
+
+func createTestDatabase(t *testing.T, ctx context.Context) (string, *sql.DB) {
 	t.Helper()
 
 	pgContainer, err := testpostgres.Run(ctx,
@@ -66,23 +84,13 @@ func createTestDatabase(t *testing.T, ctx context.Context) *pgxpool.Pool {
 	if err != nil {
 		t.Fatalf("failed to open database connection: %q", err)
 	}
-	defer func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("failed to close database connection used for migrations: %q", err)
-		}
-	}()
 
-	migrateTestDatabase(t, db)
-
-	pool, err := pgxpool.New(context.Background(), databaseURI)
-	if err != nil {
-		t.Fatalf("failed to open database connection: %q", err)
-	}
-
-	return pool
+	return databaseURI, db
 }
 
-func migrateTestDatabase(t *testing.T, db *sql.DB) {
+func getDatabaseMigrater(t *testing.T, db *sql.DB) *migrate.Migrate {
+	t.Helper()
+
 	migrationsSource, err := iofs.New(migrations.FS, ".")
 	if err != nil {
 		t.Fatalf("failed to open the database migration filesystem: %q", err)
@@ -103,9 +111,7 @@ func migrateTestDatabase(t *testing.T, db *sql.DB) {
 		t.Fatalf("failed to load database migrations: %q", err)
 	}
 
-	if err := migrater.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		t.Fatalf("failed to apply database migrations: %q", err)
-	}
+	return migrater
 }
 
 func generateFakeUser(t *testing.T, fake *faker.Faker) user.User {
@@ -123,4 +129,23 @@ func generateFakeUser(t *testing.T, fake *faker.Faker) user.User {
 		DisplayName: person.Name(),
 		Password:    internet.Password(),
 	}
+}
+
+func TestMigrate(t *testing.T) {
+	ctx := context.Background()
+
+	_, db := createTestDatabase(t, ctx)
+	migrater := getDatabaseMigrater(t, db)
+
+	t.Run("up", func(t *testing.T) {
+		if err := migrater.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+			t.Fatalf("failed to apply database migrations (up): %q", err)
+		}
+	})
+
+	t.Run("down", func(t *testing.T) {
+		if err := migrater.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+			t.Fatalf("failed to apply database migrations (down): %q", err)
+		}
+	})
 }

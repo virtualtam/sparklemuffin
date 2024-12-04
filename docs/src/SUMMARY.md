@@ -29,4 +29,6 @@
         - [Database](./developer-guide/reference/database.md)
         - [Netscape Bookmark Parser](./developer-guide/reference/netscape.md)
         - [OPML Feed Subscription Parser](./developer-guide/reference/opml.md)
+    - [Concepts](./developer-guide/concepts/index.md)
+        - [Feed polling and Caching](./developer-guide/concepts/feed-polling-caching.md)
 

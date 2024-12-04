@@ -6,6 +6,7 @@ require (
 	github.com/DavidBelicza/TextRank/v2 v2.1.3
 	github.com/alecthomas/chroma/v2 v2.14.0
 	github.com/anyascii/go v0.3.2
+	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/earthboundkid/versioninfo/v2 v2.24.1
 	github.com/georgysavva/scany/v2 v2.1.3
 	github.com/go-chi/chi/v5 v5.1.0
@@ -46,7 +47,6 @@ require (
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
-	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect

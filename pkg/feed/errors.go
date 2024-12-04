@@ -7,6 +7,7 @@ import "errors"
 
 var (
 	// Feed
+	ErrFeedHashRequired         error = errors.New("feed: hash required")
 	ErrFeedNotFound             error = errors.New("feed: not found")
 	ErrFeedSlugInvalid          error = errors.New("feed: invalid slug")
 	ErrFeedSlugRequired         error = errors.New("feed: slug required")

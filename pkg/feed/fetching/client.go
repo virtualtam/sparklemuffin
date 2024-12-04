@@ -4,10 +4,13 @@
 package fetching
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"time"
 
+	"github.com/cespare/xxhash/v2"
 	"github.com/mmcdole/gofeed"
 )
 
@@ -87,12 +90,16 @@ func (c *Client) Fetch(feedURL string, eTag string, lastModified time.Time) (Fee
 		}
 	}
 
-	parsedFeed, err := c.feedParser.Parse(resp.Body)
+	var body bytes.Buffer
+	teeReader := io.TeeReader(resp.Body, &body)
+
+	parsedFeed, err := c.feedParser.Parse(teeReader)
 	if err != nil {
 		return FeedStatus{}, err
 	}
 
 	feedStatus.Feed = parsedFeed
+	feedStatus.Hash = xxhash.Sum64(body.Bytes())
 
 	return feedStatus, nil
 }

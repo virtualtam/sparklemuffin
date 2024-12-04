@@ -14,6 +14,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Save and display feed descriptions
 - Extract keywords (significant terms) from entry content/description with TextRank
 - Add full-text search based on feed and entry metadata
+- Store and compare the hash (xxHash64) of the feed data to avoid unnecessary database upserts
 
 ### Changed
 ### CI

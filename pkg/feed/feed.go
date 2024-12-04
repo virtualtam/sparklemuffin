@@ -21,6 +21,7 @@ var (
 
 // Feed represents a Web syndication feed (Atom or RSS).
 type Feed struct {
+	// UUID is a unique identifier for the feed.
 	UUID string
 
 	FeedURL     string
@@ -30,6 +31,8 @@ type Feed struct {
 
 	ETag         string
 	LastModified time.Time
+
+	Hash uint64
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -88,6 +91,7 @@ func (f *Feed) ValidateForCreation() error {
 		f.ensureURLIsValid,
 		f.requireTitle,
 		f.requireSlug,
+		f.requireHash,
 	}
 
 	for _, fn := range fns {
@@ -164,6 +168,13 @@ func (f *Feed) requireTitle() error {
 	return nil
 }
 
+func (f *Feed) requireHash() error {
+	if f.Hash == 0 {
+		return ErrFeedHashRequired
+	}
+	return nil
+}
+
 func AssertFeedEquals(t *testing.T, got, want Feed) {
 	t.Helper()
 
@@ -182,6 +193,10 @@ func AssertFeedEquals(t *testing.T, got, want Feed) {
 
 	if got.ETag != want.ETag {
 		t.Errorf("want ETag %q, got %q", want.ETag, got.ETag)
+	}
+
+	if got.Hash != want.Hash {
+		t.Errorf("want Hash %d, got %d", want.Hash, got.Hash)
 	}
 
 	assert.TimeAlmostEquals(t, "LastModified", got.LastModified, want.LastModified, assert.TimeComparisonDelta)

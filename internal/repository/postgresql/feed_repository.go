@@ -30,6 +30,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 		slug,
 		fulltextsearch_tsv,
 		etag,
+		hash_xxhash64,
 		last_modified,
 		created_at,
 		updated_at,
@@ -42,6 +43,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 		@slug,
 		to_tsvector(@fulltextsearch_string),
 		@etag,
+		@hash_xxhash64,
 		@last_modified,
 		@created_at,
 		@updated_at,
@@ -57,6 +59,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 		"slug":                  f.Slug,
 		"fulltextsearch_string": fullTextSearchString,
 		"etag":                  f.ETag,
+		"hash_xxhash64":         int64(f.Hash), // uint64 -> int64 (BIGINT)
 		"last_modified":         f.LastModified,
 		"created_at":            f.CreatedAt,
 		"updated_at":            f.UpdatedAt,
@@ -68,7 +71,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 
 func (r *Repository) FeedGetBySlug(feedSlug string) (feed.Feed, error) {
 	query := `
-	SELECT uuid, feed_url, title, description, slug, etag, last_modified
+	SELECT uuid, feed_url, title, description, slug, etag, last_modified, hash_xxhash64
 	FROM feed_feeds
 	WHERE slug=$1`
 
@@ -77,7 +80,7 @@ func (r *Repository) FeedGetBySlug(feedSlug string) (feed.Feed, error) {
 
 func (r *Repository) FeedGetByURL(feedURL string) (feed.Feed, error) {
 	query := `
-	SELECT uuid, feed_url, title, description, slug, etag, last_modified
+	SELECT uuid, feed_url, title, description, slug, etag, last_modified, hash_xxhash64
 	FROM feed_feeds
 	WHERE feed_url=$1`
 
@@ -86,7 +89,7 @@ func (r *Repository) FeedGetByURL(feedURL string) (feed.Feed, error) {
 
 func (r *Repository) FeedGetByUUID(feedUUID string) (feed.Feed, error) {
 	query := `
-	SELECT uuid, feed_url, title, description, slug, etag, last_modified
+	SELECT uuid, feed_url, title, description, slug, etag, last_modified, hash_xxhash64
 	FROM feed_feeds
 	WHERE uuid=$1`
 
@@ -95,7 +98,7 @@ func (r *Repository) FeedGetByUUID(feedUUID string) (feed.Feed, error) {
 
 func (r *Repository) FeedGetNByLastSynchronizationTime(n uint, before time.Time) ([]feed.Feed, error) {
 	query := `
-	SELECT f.uuid, f.feed_url, f.title, f.description, f.slug, f.etag, f.last_modified
+	SELECT f.uuid, f.feed_url, f.title, f.description, f.slug, f.etag, f.last_modified, f.hash_xxhash64
 	FROM feed_feeds f
 	INNER JOIN feed_subscriptions fs ON f.uuid = fs.feed_uuid
 	WHERE fetched_at < $1
@@ -132,6 +135,7 @@ func (r *Repository) FeedUpdateMetadata(feedMetadata feedsynchronizing.FeedMetad
 	SET
 		title=@title,
 		description=@description,
+		hash_xxhash64=@hash_xxhash64,
 		fulltextsearch_tsv=to_tsvector(@fulltextsearch_string),
 		updated_at=@updated_at
 	WHERE uuid=@uuid`
@@ -142,6 +146,7 @@ func (r *Repository) FeedUpdateMetadata(feedMetadata feedsynchronizing.FeedMetad
 		"uuid":                  feedMetadata.UUID,
 		"title":                 feedMetadata.Title,
 		"description":           feedMetadata.Description,
+		"hash_xxhash64":         int64(feedMetadata.Hash), // uint64 -> int64 (BIGINT)
 		"fulltextsearch_string": fullTextSearchString,
 		"updated_at":            feedMetadata.UpdatedAt,
 	}

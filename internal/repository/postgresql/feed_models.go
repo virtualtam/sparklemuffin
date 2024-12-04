@@ -46,6 +46,10 @@ type DBFeed struct {
 	ETag         string    `db:"etag"`
 	LastModified time.Time `db:"last_modified"`
 
+	// xxHash64 returns a 64-bit unsigned integer hash value,
+	// whereas it is stored as a 64-bit signed integer in the database (BIGINT).
+	Hash int64 `db:"hash_xxhash64"`
+
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 	FetchedAt time.Time `db:"fetched_at"`
@@ -59,6 +63,7 @@ func (f *DBFeed) asFeed() feed.Feed {
 		Description:  f.Description,
 		Slug:         f.Slug,
 		ETag:         f.ETag,
+		Hash:         uint64(f.Hash), // int64 (BIGINT) -> uint64
 		LastModified: f.LastModified,
 		CreatedAt:    f.CreatedAt,
 		UpdatedAt:    f.UpdatedAt,

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cespare/xxhash/v2"
 	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
@@ -29,6 +30,7 @@ func TestClientFetch(t *testing.T) {
 	}
 	feedETag := feedtest.HashETag(feedStr)
 	feedLastModified := feed.Updated
+	feedHash := xxhash.Sum64String(feedStr)
 
 	cases := []struct {
 		tname          string
@@ -101,6 +103,12 @@ func TestClientFetch(t *testing.T) {
 
 			if feedStatus.ETag != feedETag {
 				t.Errorf("want ETag %q, got %q", feedETag, feedStatus.ETag)
+			}
+
+			if feedStatus.StatusCode == http.StatusOK {
+				if feedStatus.Hash != feedHash {
+					t.Errorf("want Hash %d, got %d", feedHash, feedStatus.Hash)
+				}
 			}
 		})
 	}

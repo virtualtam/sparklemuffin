@@ -21,5 +21,7 @@ type FeedMetadata struct {
 	Title       string
 	Description string
 
+	Hash uint64
+
 	UpdatedAt time.Time
 }

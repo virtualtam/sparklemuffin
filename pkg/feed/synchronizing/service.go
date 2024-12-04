@@ -111,22 +111,38 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 	}
 
 	if feedStatus.StatusCode == http.StatusNotModified {
-		// the remote server responds with a '304 Not Modified' status, indicating that
+		// The remote server responds with a '304 Not Modified' status, indicating that
 		// we already have the latest version of the feed
 
 		log.Info().
 			Str("feed_url", feed.FeedURL).
 			Str("job_id", jobID).
-			Msg("feeds: already up-to-date, nothing to do")
+			Str("reason", "304 Not Modified").
+			Msg("feeds: skipping update, remote content not modified")
 
 		return nil
 	}
 
-	if feedStatus.Feed.Title != feed.Title || feedStatus.Feed.Description != feed.Description {
+	if feedStatus.Hash == feed.Hash {
+		// The feed data returned by the remote server is the same as the one we already have,
+		// or the remote server does not support HTTP conditional requests
+		// (no ETag nor Last-Modified headers are set).
+		//
+		// See https://inessential.com/2024/08/03/netnewswire_and_conditional_get_issues.html
+		log.Info().
+			Str("feed_url", feed.FeedURL).
+			Str("job_id", jobID).
+			Str("reason", "hashes match").
+			Msg("feeds: skipping update, remote content not modified")
+		return nil
+	}
+
+	if feedStatus.Feed.Title != feed.Title || feedStatus.Feed.Description != feed.Description || feedStatus.Hash != feed.Hash {
 		feedMetadata := FeedMetadata{
 			UUID:        feed.UUID,
 			Title:       feedStatus.Feed.Title,
 			Description: feedStatus.Feed.Description,
+			Hash:        feedStatus.Hash,
 			UpdatedAt:   now,
 		}
 

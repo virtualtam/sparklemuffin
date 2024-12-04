@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cespare/xxhash/v2"
 	"github.com/jaswdr/faker"
 	"github.com/mmcdole/gofeed"
 	"github.com/segmentio/ksuid"
@@ -660,6 +661,8 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 	}
 	feedETag := feedtest.HashETag(feedStr)
 	feedLastModified := now
+	feedHash := xxhash.Sum64String(feedStr)
+
 	transport := feedtest.NewRoundTripper(t, feed)
 
 	testHTTPClient := &http.Client{
@@ -689,6 +692,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 				Slug:         "local-test",
 				ETag:         feedETag,
 				LastModified: feedLastModified,
+				Hash:         feedHash,
 				CreatedAt:    now,
 				UpdatedAt:    now,
 				FetchedAt:    now,

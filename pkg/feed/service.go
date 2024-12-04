@@ -272,6 +272,7 @@ func (s *Service) createFeedAndEntries(feed Feed) (Feed, error) {
 	feed.Title = feedStatus.Feed.Title
 	feed.Description = feedStatus.Feed.Description
 	feed.ETag = feedStatus.ETag
+	feed.Hash = feedStatus.Hash
 	feed.LastModified = feedStatus.LastModified
 	feed.FetchedAt = time.Now().UTC()
 	feed.Normalize()

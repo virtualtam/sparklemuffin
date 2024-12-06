@@ -19,7 +19,7 @@
           {{- range .SubscribedFeeds}}
           <li>
             <span class="feed">
-              <a href="/feeds/subscriptions/{{.Slug}}">{{.Title}}</a>
+              <a href="/feeds/subscriptions/{{.Slug}}">{{or .Alias .Title}}</a>
               <span class="unread">{{.Unread}}</span>
             </span>
           </li>

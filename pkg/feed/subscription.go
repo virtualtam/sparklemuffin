@@ -4,6 +4,7 @@
 package feed
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,6 +16,8 @@ type Subscription struct {
 	CategoryUUID string
 	FeedUUID     string
 	UserUUID     string
+
+	Alias string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -39,6 +42,10 @@ func NewSubscription(categoryUUID string, feedUUID string, userUUID string) (Sub
 	}
 
 	return s, nil
+}
+
+func (s *Subscription) Normalize() {
+	s.normalizeAlias()
 }
 
 func (s *Subscription) ValidateForCreation(v ValidationRepository) error {
@@ -72,6 +79,10 @@ func (s *Subscription) ensureSubscriptionIsNotRegistered(v ValidationRepository)
 
 		return nil
 	}
+}
+
+func (s *Subscription) normalizeAlias() {
+	s.Alias = strings.TrimSpace(s.Alias)
 }
 
 func (s *Subscription) requireCategoryUUID() error {

@@ -906,7 +906,8 @@ func (r *Repository) FeedSubscriptionUpdate(s feed.Subscription) error {
 	UPDATE feed_subscriptions
 	SET
 		category_uuid=@category_uuid,
-		updated_at=@updated_at
+		updated_at=@updated_at,
+		alias=@alias
 	WHERE user_uuid=@user_uuid
 	AND uuid=@uuid`
 
@@ -914,6 +915,7 @@ func (r *Repository) FeedSubscriptionUpdate(s feed.Subscription) error {
 		"user_uuid":     s.UserUUID,
 		"uuid":          s.UUID,
 		"category_uuid": s.CategoryUUID,
+		"alias":         s.Alias,
 		"updated_at":    s.UpdatedAt,
 	}
 
@@ -922,7 +924,7 @@ func (r *Repository) FeedSubscriptionUpdate(s feed.Subscription) error {
 
 func (r *Repository) FeedSubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (feedquerying.SubscriptionTitle, error) {
 	query := `
-	SELECT fs.uuid, f.title, f.description
+	SELECT fs.uuid, fs.alias, f.title, f.description
 	FROM   feed_subscriptions fs
 	JOIN   feed_feeds f ON f.uuid = fs.feed_uuid
 	WHERE  fs.user_uuid=$1

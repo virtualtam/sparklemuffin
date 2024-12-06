@@ -156,7 +156,8 @@ type DBSubscribedFeed struct {
 	Title   string `db:"title"`
 	Slug    string `db:"slug"`
 
-	Unread uint `db:"unread"`
+	Alias  string `db:"alias"`
+	Unread uint   `db:"unread"`
 
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
@@ -174,6 +175,7 @@ func (f *DBSubscribedFeed) asSubscribedFeed() feedquerying.SubscribedFeed {
 			UpdatedAt: f.UpdatedAt,
 			FetchedAt: f.FetchedAt,
 		},
+		Alias:  f.Alias,
 		Unread: f.Unread,
 	}
 }
@@ -183,6 +185,8 @@ type DBSubscription struct {
 	CategoryUUID string `db:"category_uuid"`
 	FeedUUID     string `db:"feed_uuid"`
 	UserUUID     string `db:"user_uuid"`
+
+	Alias string `db:"alias"`
 
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
@@ -194,21 +198,24 @@ func (s *DBSubscription) asSubscription() feed.Subscription {
 		CategoryUUID: s.CategoryUUID,
 		FeedUUID:     s.FeedUUID,
 		UserUUID:     s.UserUUID,
+		Alias:        s.Alias,
 		CreatedAt:    s.CreatedAt,
 		UpdatedAt:    s.UpdatedAt,
 	}
 }
 
 type DBSubscriptionTitle struct {
-	SubscriptionUUID string `db:"uuid"`
-	FeedTitle        string `db:"title"`
-	FeedDescription  string `db:"description"`
+	SubscriptionUUID  string `db:"uuid"`
+	SubscriptionAlias string `db:"alias"`
+	FeedTitle         string `db:"title"`
+	FeedDescription   string `db:"description"`
 }
 
 func (st *DBSubscriptionTitle) asSubscriptionTitle() feedquerying.SubscriptionTitle {
 	return feedquerying.SubscriptionTitle{
-		SubscriptionUUID: st.SubscriptionUUID,
-		FeedTitle:        st.FeedTitle,
-		FeedDescription:  st.FeedDescription,
+		SubscriptionUUID:  st.SubscriptionUUID,
+		SubscriptionAlias: st.SubscriptionAlias,
+		FeedTitle:         st.FeedTitle,
+		FeedDescription:   st.FeedDescription,
 	}
 }

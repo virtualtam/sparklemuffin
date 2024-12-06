@@ -18,6 +18,7 @@ type SubscribedFeedsByCategory struct {
 type SubscribedFeed struct {
 	feed.Feed
 
+	Alias  string
 	Unread uint
 }
 
@@ -29,9 +30,10 @@ type SubscribedFeedEntry struct {
 }
 
 type SubscriptionTitle struct {
-	SubscriptionUUID string
-	FeedTitle        string
-	FeedDescription  string
+	SubscriptionUUID  string
+	SubscriptionAlias string
+	FeedTitle         string
+	FeedDescription   string
 }
 
 type SubscriptionsTitlesByCategory struct {

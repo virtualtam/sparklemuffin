@@ -685,6 +685,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionEditView() func(w http.Respo
 func (fc *feedHandlerContext) handleFeedSubscriptionEdit() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionEditForm struct {
 		CSRFToken    string `schema:"csrf_token"`
+		Alias        string `schema:"alias"`
 		CategoryUUID string `schema:"category"`
 	}
 
@@ -710,6 +711,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionEdit() func(w http.ResponseW
 		updatedSubscription := feed.Subscription{
 			UserUUID:     user.UUID,
 			UUID:         subscriptionUUID,
+			Alias:        form.Alias,
 			CategoryUUID: form.CategoryUUID,
 		}
 

@@ -208,15 +208,25 @@ func (r *Repository) feedSubscriptionEntryGetN(query string, queryParams ...any)
 
 func (r *Repository) feedGetSubscriptionsByCategory(userUUID string, categoryUUID string) ([]DBSubscribedFeed, error) {
 	query := `
-SELECT f.feed_url, f.title, f.slug, COUNT(NULLIF(COALESCE(fem.read, FALSE) = true, true)) AS unread
+SELECT
+    f.feed_url,
+    f.title,
+    f.slug,
+    fs.alias,
+    COUNT(NULLIF(COALESCE(fem.read, FALSE) = TRUE, TRUE)) AS unread
 FROM feed_subscriptions fs
-JOIN feed_feeds f ON f.uuid=fs.feed_uuid
-JOIN feed_entries fe ON fe.feed_uuid=fs.feed_uuid
-LEFT JOIN feed_entries_metadata fem ON fem.entry_uid=fe.uid
-WHERE fs.user_uuid=$1
-AND   fs.category_uuid=$2
-GROUP BY f.feed_url, f.title, f.slug
-ORDER BY f.title`
+JOIN feed_feeds f ON f.uuid = fs.feed_uuid
+JOIN feed_entries fe ON fe.feed_uuid = fs.feed_uuid
+LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+WHERE
+    fs.user_uuid = $1
+    AND fs.category_uuid = $2
+GROUP BY f.feed_url, f.title, f.slug, fs.alias
+ORDER BY
+    CASE
+        WHEN fs.alias != '' THEN fs.alias
+        ELSE f.title
+    END`
 
 	rows, err := r.pool.Query(context.Background(), query, userUUID, categoryUUID)
 	if err != nil {
@@ -275,12 +285,21 @@ func (r *Repository) feedSubscriptionTitleGetQuery(query string, queryParams ...
 
 func (r *Repository) feedGetSubscriptionTitlesByCategory(userUUID string, categoryUUID string) ([]DBSubscriptionTitle, error) {
 	query := `
-SELECT fs.uuid, f.title
+SELECT
+    fs.uuid,
+    fs.alias,
+    f.title,
+    f.description
 FROM feed_subscriptions fs
-JOIN feed_feeds f ON f.uuid=fs.feed_uuid
-WHERE fs.user_uuid=$1
-AND   fs.category_uuid=$2
-ORDER BY f.title`
+JOIN feed_feeds f ON f.uuid = fs.feed_uuid
+WHERE
+    fs.user_uuid = $1
+    AND fs.category_uuid = $2
+ORDER BY
+    CASE
+        WHEN fs.alias != '' THEN fs.alias
+        ELSE f.title
+    END`
 
 	rows, err := r.pool.Query(context.Background(), query, userUUID, categoryUUID)
 	if err != nil {

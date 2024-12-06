@@ -22,6 +22,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Add full-text search based on feed and entry metadata
 - Store and compare the hash (xxHash64) of the feed data to avoid unnecessary database upserts
 - Document the feed polling and caching strategy
+- Allow users to set an alias title for feed subscriptions
 
 ### Changed
 ### CI

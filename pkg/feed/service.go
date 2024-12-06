@@ -223,10 +223,13 @@ func (s *Service) UpdateSubscription(subscription Subscription) error {
 		return err
 	}
 
+	subscriptionToUpdate.Alias = subscription.Alias
 	subscriptionToUpdate.CategoryUUID = subscription.CategoryUUID
 
 	now := time.Now().UTC()
 	subscriptionToUpdate.UpdatedAt = now
+
+	subscriptionToUpdate.Normalize()
 
 	return s.r.FeedSubscriptionUpdate(subscriptionToUpdate)
 }

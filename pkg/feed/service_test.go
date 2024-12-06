@@ -13,6 +13,7 @@ import (
 	"github.com/jaswdr/faker"
 	"github.com/mmcdole/gofeed"
 	"github.com/segmentio/ksuid"
+	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
@@ -1079,4 +1080,165 @@ func TestServiceDeleteSubscription(t *testing.T) {
 			t.Fatalf("want 0 Subscriptions, got %d", len(r.Subscriptions))
 		}
 	})
+}
+
+func TestServiceUpdateSubscription(t *testing.T) {
+	fake := faker.New()
+	now := time.Now().UTC()
+	yesterday := now.Add(-24 * time.Hour)
+
+	userUUID := fake.UUID().V4()
+	category1UUID := fake.UUID().V4()
+	category2UUID := fake.UUID().V4()
+	feedUUID := fake.UUID().V4()
+	subscriptionUUID := fake.UUID().V4()
+
+	testSubscription := Subscription{
+		UUID:         subscriptionUUID,
+		CategoryUUID: category1UUID,
+		FeedUUID:     feedUUID,
+		UserUUID:     userUUID,
+		CreatedAt:    yesterday,
+		UpdatedAt:    yesterday,
+	}
+
+	testSubscriptions := []Subscription{
+		testSubscription,
+	}
+
+	cases := []struct {
+		tname                   string
+		repositorySubscriptions []Subscription
+		subscription            Subscription
+		wantSubscriptions       []Subscription
+		wantErr                 error
+	}{
+		// nominal cases
+		{
+			tname:                   "updated with no change",
+			repositorySubscriptions: testSubscriptions,
+			subscription: Subscription{
+				UUID:         subscriptionUUID,
+				CategoryUUID: category1UUID,
+				FeedUUID:     feedUUID,
+				UserUUID:     userUUID,
+			},
+			wantSubscriptions: []Subscription{
+				{
+					UUID:         subscriptionUUID,
+					CategoryUUID: category1UUID,
+					FeedUUID:     feedUUID,
+					UserUUID:     userUUID,
+					CreatedAt:    yesterday,
+					UpdatedAt:    now,
+				},
+			},
+		},
+		{
+			tname:                   "update category",
+			repositorySubscriptions: testSubscriptions,
+			subscription: Subscription{
+				UUID:         subscriptionUUID,
+				CategoryUUID: category2UUID,
+				FeedUUID:     feedUUID,
+				UserUUID:     userUUID,
+			},
+			wantSubscriptions: []Subscription{
+				{
+					UUID:         subscriptionUUID,
+					CategoryUUID: category2UUID,
+					FeedUUID:     feedUUID,
+					UserUUID:     userUUID,
+					CreatedAt:    yesterday,
+					UpdatedAt:    now,
+				},
+			},
+		},
+		{
+			tname:                   "add alias",
+			repositorySubscriptions: testSubscriptions,
+			subscription: Subscription{
+				UUID:         subscriptionUUID,
+				CategoryUUID: category1UUID,
+				FeedUUID:     feedUUID,
+				UserUUID:     userUUID,
+				Alias:        " I would prefer this feed to be displayed with this alias ",
+			},
+			wantSubscriptions: []Subscription{
+				{
+					UUID:         subscriptionUUID,
+					CategoryUUID: category1UUID,
+					FeedUUID:     feedUUID,
+					UserUUID:     userUUID,
+					Alias:        "I would prefer this feed to be displayed with this alias",
+					CreatedAt:    yesterday,
+					UpdatedAt:    now,
+				},
+			},
+		},
+
+		// error cases
+		{
+			tname: "not found",
+			subscription: Subscription{
+				UUID:     fake.UUID().V4(),
+				UserUUID: userUUID,
+			},
+			wantErr: ErrSubscriptionNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Subscriptions: tc.repositorySubscriptions,
+			}
+			s := NewService(r, nil)
+
+			err := s.UpdateSubscription(tc.subscription)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertSubscriptionsEqual(t, tc.wantSubscriptions, r.Subscriptions)
+		})
+	}
+}
+
+func assertSubscriptionsEqual(t *testing.T, want []Subscription, got []Subscription) {
+	t.Helper()
+
+	if len(got) != len(want) {
+		t.Fatalf("want %d subscriptions, got %d", len(want), len(got))
+	}
+
+	for i, wantSubscription := range want {
+		gotSubscription := got[i]
+		if wantSubscription.UUID != gotSubscription.UUID {
+			t.Errorf("want Subscription %d UUID %q, got %q", i, wantSubscription.UUID, gotSubscription.UUID)
+		}
+		if wantSubscription.CategoryUUID != gotSubscription.CategoryUUID {
+			t.Errorf("want Subscription %d CategoryUUID %q, got %q", i, wantSubscription.CategoryUUID, gotSubscription.CategoryUUID)
+		}
+		if wantSubscription.FeedUUID != gotSubscription.FeedUUID {
+			t.Errorf("want Subscription %d FeedUUID %q, got %q", i, wantSubscription.FeedUUID, gotSubscription.FeedUUID)
+		}
+		if wantSubscription.UserUUID != gotSubscription.UserUUID {
+			t.Errorf("want Subscription %d UserUUID %q, got %q", i, wantSubscription.UserUUID, gotSubscription.UserUUID)
+		}
+
+		assert.TimeEquals(t, "CreatedAt", gotSubscription.CreatedAt, wantSubscription.CreatedAt)
+		assert.TimeAlmostEquals(t, "UpdatedAt", gotSubscription.UpdatedAt, wantSubscription.UpdatedAt, assert.TimeComparisonDelta)
+	}
 }

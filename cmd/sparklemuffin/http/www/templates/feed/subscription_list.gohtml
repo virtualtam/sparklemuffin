@@ -36,7 +36,7 @@
                  title="Delete subscription: {{.FeedTitle}}">x</a>
             </span>
             ]
-            {{.FeedTitle}}
+            {{or .SubscriptionAlias .FeedTitle}}
           </div>
         </li>
         {{- end}}

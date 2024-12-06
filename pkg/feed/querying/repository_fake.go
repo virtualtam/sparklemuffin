@@ -76,6 +76,7 @@ func (r *fakeRepository) FeedSubscriptionCategoryGetAll(userUUID string) ([]Subs
 
 				subscribedFeed := SubscribedFeed{
 					Feed:   f,
+					Alias:  subscription.Alias,
 					Unread: subscriptionUnread,
 				}
 

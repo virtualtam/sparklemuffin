@@ -14,11 +14,12 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 #### Database
 - Split PostgreSQL repository into dedicated domain repositories
-- Use a tmpfs volume to speed up integration tests
+- Update testcontainers configuration to use a tmpfs volume and disable WAL features to speed up integration tests
 
 #### WWW
 - Relocate HTTP packages to `internal/http`
 - Relocate version detection helpers to `internal/version`
+
 
 ## [v0.3.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.1) - 2024-12-07
 

@@ -200,6 +200,7 @@ func TestFeedService(t *testing.T) {
 		wantEntries := []querying.SubscribedFeedEntry{
 			{
 				Entry: feed.Entry{
+					FeedUUID:    gotFeed.UUID,
 					URL:         "http://test.local/first-post",
 					Title:       "First post!",
 					Summary:     "First post!\n\nThis is the first post!",
@@ -210,6 +211,7 @@ func TestFeedService(t *testing.T) {
 			},
 			{
 				Entry: feed.Entry{
+					FeedUUID:    gotFeed.UUID,
 					URL:         "http://test.local/hello-world",
 					Title:       "Hello World",
 					PublishedAt: yesterday,

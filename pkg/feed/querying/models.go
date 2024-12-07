@@ -4,8 +4,6 @@
 package querying
 
 import (
-	"testing"
-
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 )
 
@@ -29,25 +27,6 @@ type SubscribedFeedEntry struct {
 
 	FeedTitle string
 	Read      bool
-}
-
-func AssertSubscribedFeedEntriesEqual(t *testing.T, got []SubscribedFeedEntry, want []SubscribedFeedEntry) {
-	t.Helper()
-
-	if len(got) != len(want) {
-		t.Fatalf("want %d Entries, got %d", len(want), len(got))
-	}
-
-	for i, wantSubscribedFeedEntry := range want {
-		feed.AssertEntryEquals(t, i, got[i].Entry, wantSubscribedFeedEntry.Entry)
-
-		if wantSubscribedFeedEntry.FeedTitle != got[i].FeedTitle {
-			t.Errorf("want Entry %d FeedTitle %q, got %q", i, wantSubscribedFeedEntry.FeedTitle, got[i].FeedTitle)
-		}
-		if wantSubscribedFeedEntry.Read != got[i].Read {
-			t.Errorf("want Entry %d Read %t, got %t", i, wantSubscribedFeedEntry.Read, got[i].Read)
-		}
-	}
 }
 
 type Subscription struct {

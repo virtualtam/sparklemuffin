@@ -702,7 +702,7 @@ func (r *Repository) FeedSubscriptionCategoryGetAll(userUUID string) ([]feedquer
 
 func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	query := `
-	SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+	SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
 	FROM feed_entries fe
 	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
@@ -716,7 +716,7 @@ func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset u
 
 func (r *Repository) FeedSubscriptionEntryGetNByCategory(userUUID string, categoryUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	query := `
-	SELECT  fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+	SELECT  fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
 	FROM feed_entries fe
 	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
@@ -731,7 +731,7 @@ func (r *Repository) FeedSubscriptionEntryGetNByCategory(userUUID string, catego
 
 func (r *Repository) FeedSubscriptionEntryGetNBySubscription(userUUID string, subscriptionUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	query := `
-	SELECT  fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+	SELECT  fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
 	FROM feed_entries fe
 	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
@@ -746,7 +746,7 @@ func (r *Repository) FeedSubscriptionEntryGetNBySubscription(userUUID string, su
 
 func (r *Repository) FeedSubscriptionEntryGetNByQuery(userUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	query := `
-	SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+	SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
 	FROM feed_entries fe
 	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
@@ -763,7 +763,7 @@ func (r *Repository) FeedSubscriptionEntryGetNByQuery(userUUID string, searchTer
 
 func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(userUUID string, categoryUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	query := `
-	SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+	SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
 	FROM feed_entries fe
 	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
@@ -781,7 +781,7 @@ func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(userUUID string
 
 func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(userUUID string, subscriptionUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	query := `
-	SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+	SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
 	FROM feed_entries fe
 	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
 	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid

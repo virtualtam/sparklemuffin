@@ -10,7 +10,7 @@ import (
 
 const (
 	entriesPerPage uint   = 20
-	pageHeaderAll  string = "All"
+	PageHeaderAll  string = "All"
 )
 
 // Service handles oprtaions related to displaying and paginating feeds.
@@ -83,7 +83,7 @@ func (s *Service) FeedsByPage(userUUID string, number uint) (FeedPage, error) {
 		return s.r.FeedSubscriptionEntryGetN(userUUID, entriesPerPage, offset)
 	}
 
-	return s.feedsByPage(userUUID, number, getCountFn, subscriptionEntryGetNFn, pageHeaderAll, "")
+	return s.feedsByPage(userUUID, number, getCountFn, subscriptionEntryGetNFn, PageHeaderAll, "")
 }
 
 // FeedsByCategoryAndPage returns a Page containing a limited and offset number of feeds.
@@ -148,7 +148,7 @@ func (s *Service) feedsByQueryAndPage(
 
 	if len(categories) == 0 {
 		// early return: nothing to display
-		return NewFeedSearchResultPage(query, 0, 1, 1, pageHeaderAll, pageDescription, []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{}), nil
+		return NewFeedSearchResultPage(query, 0, 1, 1, PageHeaderAll, pageDescription, []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{}), nil
 	}
 
 	offset := (number - 1) * entriesPerPage
@@ -170,7 +170,7 @@ func (s *Service) FeedsByQueryAndPage(userUUID string, query string, number uint
 		return s.r.FeedSubscriptionEntryGetNByQuery(userUUID, query, entriesPerPage, offset)
 	}
 
-	return s.feedsByQueryAndPage(userUUID, query, number, getCountFn, subscriptionEntryGetNFn, pageHeaderAll, "")
+	return s.feedsByQueryAndPage(userUUID, query, number, getCountFn, subscriptionEntryGetNFn, PageHeaderAll, "")
 }
 
 func (s *Service) FeedsByCategoryAndQueryAndPage(userUUID string, category feed.Category, query string, number uint) (FeedPage, error) {

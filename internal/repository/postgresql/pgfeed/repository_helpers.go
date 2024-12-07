@@ -212,6 +212,9 @@ SELECT
     f.feed_url,
     f.title,
     f.slug,
+	f.created_at,
+	f.updated_at,
+	f.fetched_at,
     fs.alias,
     COUNT(NULLIF(COALESCE(fem.read, FALSE) = TRUE, TRUE)) AS unread
 FROM feed_subscriptions fs
@@ -221,7 +224,7 @@ LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
 WHERE
     fs.user_uuid = $1
     AND fs.category_uuid = $2
-GROUP BY f.feed_url, f.title, f.slug, fs.alias
+GROUP BY f.feed_url, f.title, f.slug, f.created_at, f.updated_at, f.fetched_at, fs.alias
 ORDER BY
     CASE
         WHEN fs.alias != '' THEN fs.alias

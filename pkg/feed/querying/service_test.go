@@ -108,7 +108,7 @@ func TestService(t *testing.T) {
 					NextPageNumber:     1,
 					TotalPages:         1,
 					Offset:             1,
-					Header:             pageHeaderAll,
+					Header:             PageHeaderAll,
 				},
 			},
 			{
@@ -122,7 +122,7 @@ func TestService(t *testing.T) {
 					TotalPages:         1,
 					Offset:             1,
 
-					Header: pageHeaderAll,
+					Header: PageHeaderAll,
 					Unread: 1,
 
 					Categories: []SubscribedFeedsByCategory{
@@ -188,7 +188,7 @@ func TestService(t *testing.T) {
 					t.Fatalf("want no error, got %q", err)
 				}
 
-				assertPagesEqual(t, got, tc.want)
+				AssertPageEquals(t, got, tc.want)
 			})
 		}
 	})
@@ -313,7 +313,7 @@ func TestService(t *testing.T) {
 					t.Fatalf("want no error, got %q", err)
 				}
 
-				assertPagesEqual(t, got, tc.want)
+				AssertPageEquals(t, got, tc.want)
 			})
 		}
 	})
@@ -418,7 +418,7 @@ func TestService(t *testing.T) {
 					t.Fatalf("want no error, got %q", err)
 				}
 
-				assertPagesEqual(t, got, tc.want)
+				AssertPageEquals(t, got, tc.want)
 			})
 		}
 	})

@@ -8,8 +8,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ## [v0.4.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.0) - UNRELEASED
 
 ### Added
-#### Feeds
-- Add PostgreSQL integration tests
+#### Database
+- Add PostgreSQL integration tests for feed operations
 
 ### Changed
 #### Database

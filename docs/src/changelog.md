@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [v0.3.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.1) - 2024-12-07
+
+### Fixed
+#### Feeds
+- Fix HTML templates after renaming querying models
+
+
 ## [v0.3.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.0) - 2024-12-07
 
 ### Added

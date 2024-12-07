@@ -22,21 +22,21 @@
         <strong>{{.Name}}</strong>
       </div>
       <ul>
-        {{- range .SubscriptionTitles}}
+        {{- range .Subscriptions}}
         <li>
           <div>
             [
             <span class="item-edit">
-              <a href="/feeds/subscriptions/{{.SubscriptionUUID}}/edit"
+              <a href="/feeds/subscriptions/{{.UUID}}/edit"
                  title="Edit subscription: {{.FeedTitle}}">e</a>
             </span>
             ,
             <span class="item-delete">
-              <a href="/feeds/subscriptions/{{.SubscriptionUUID}}/delete"
+              <a href="/feeds/subscriptions/{{.UUID}}/delete"
                  title="Delete subscription: {{.FeedTitle}}">x</a>
             </span>
             ]
-            {{or .SubscriptionAlias .FeedTitle}}
+            {{or .Alias .FeedTitle}}
           </div>
         </li>
         {{- end}}

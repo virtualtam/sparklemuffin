@@ -554,7 +554,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionListView() func(w http.Respo
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 
-		subscriptionsByCategory, err := fc.feedQueryingService.SubscriptionTitlesByCategory(user.UUID)
+		subscriptionsByCategory, err := fc.feedQueryingService.SubscriptionsByCategory(user.UUID)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve feed subscriptions")
 			view.PutFlashError(w, "failed to retrieve feed subscriptions")
@@ -583,7 +583,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionDeleteView() func(w http.Res
 		user := httpcontext.UserValue(r.Context())
 		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedSubscriptionDelete)
 
-		subscriptionTitle, err := fc.feedQueryingService.SubscriptionTitleByUUID(user.UUID, subscriptionUUID)
+		subscriptionTitle, err := fc.feedQueryingService.SubscriptionByUUID(user.UUID, subscriptionUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
 			view.PutFlashError(w, "failed to retrieve feed subscription")
@@ -641,9 +641,9 @@ func (fc *feedHandlerContext) handleFeedSubscriptionDelete() func(w http.Respons
 // handleFeedSubscriptionEditView renders the feed subscription edition form.
 func (fc *feedHandlerContext) handleFeedSubscriptionEditView() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionEditFormContent struct {
-		CSRFToken         string
-		SubscriptionTitle feedquerying.Subscription
-		Categories        []feed.Category
+		CSRFToken    string
+		Subscription feedquerying.Subscription
+		Categories   []feed.Category
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -652,7 +652,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionEditView() func(w http.Respo
 
 		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedSubscriptionEdit)
 
-		subscriptionTitle, err := fc.feedQueryingService.SubscriptionTitleByUUID(user.UUID, subscriptionUUID)
+		subscription, err := fc.feedQueryingService.SubscriptionByUUID(user.UUID, subscriptionUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
 			view.PutFlashError(w, "failed to retrieve feed subscription")
@@ -670,9 +670,9 @@ func (fc *feedHandlerContext) handleFeedSubscriptionEditView() func(w http.Respo
 
 		viewData := view.Data{
 			Content: feedSubscriptionEditFormContent{
-				CSRFToken:         csrfToken,
-				SubscriptionTitle: subscriptionTitle,
-				Categories:        categories,
+				CSRFToken:    csrfToken,
+				Subscription: subscription,
+				Categories:   categories,
 			},
 			Title: "Edit feed subscription",
 		}

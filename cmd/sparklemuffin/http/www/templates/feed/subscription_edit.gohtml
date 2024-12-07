@@ -1,22 +1,22 @@
 {{define "content"}}
-<h2>Edit feed subscription: {{or .SubscriptionTitle.SubscriptionAlias .SubscriptionTitle.FeedTitle}}</h2>
-<form action="/feeds/subscriptions/{{.SubscriptionTitle.SubscriptionUUID}}/edit" class="item-form" method="POST">
+<h2>Edit feed subscription: {{or .Subscription.Alias .Subscription.FeedTitle}}</h2>
+<form action="/feeds/subscriptions/{{.Subscription.UUID}}/edit" class="item-form" method="POST">
   <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
   <label for="description">Description</label>
-  <span id="description">{{.SubscriptionTitle.FeedDescription}}</span>
+  <span id="description">{{.Subscription.FeedDescription}}</span>
 
   <label for="alias">Alias</label>
   <input type="text"
          id="alias"
          name="alias"
          placeholder="An optional alias to be displayed instead of the feed title"
-         value="{{.SubscriptionTitle.SubscriptionAlias}}">
+         value="{{.Subscription.Alias}}">
 
   <label for="category">Category</label>
   <select name="category" id="category">
     {{- range .Categories}}
-    <option value="{{.UUID}}" {{if eq .UUID $.SubscriptionTitle.CategoryUUID}} selected{{end}}>{{.Name}}</option>
+    <option value="{{.UUID}}" {{if eq .UUID $.Subscription.CategoryUUID}} selected{{end}}>{{.Name}}</option>
     {{- end}}
   </select>
 

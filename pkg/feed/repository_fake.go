@@ -144,26 +144,6 @@ func (r *FakeRepository) FeedEntryCreateMany(entries []Entry) (int64, error) {
 	return int64(len(entries)), nil
 }
 
-func (r *FakeRepository) FeedEntryGetN(feedUUID string, n uint) ([]Entry, error) {
-	var entries []Entry
-	var count uint
-
-	for _, entry := range r.Entries {
-		if entry.FeedUUID != feedUUID {
-			continue
-		}
-
-		count++
-		entries = append(entries, entry)
-
-		if count == n {
-			break
-		}
-	}
-
-	return entries, nil
-}
-
 func (r *FakeRepository) feedEntryExists(entryUID string) bool {
 	for _, entry := range r.Entries {
 		if entry.UID == entryUID {

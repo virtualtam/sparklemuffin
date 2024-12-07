@@ -55,9 +55,6 @@ type Repository interface {
 	// FeedEntryCreateMany creates a collection of new Entries.
 	FeedEntryCreateMany(entries []Entry) (int64, error)
 
-	// FeedEntryGetN returns at most N entries for a given Feed.
-	FeedEntryGetN(feedUUID string, n uint) ([]Entry, error)
-
 	// FeedEntryMarkAllAsRead marks all entries as "read" for a given User.
 	FeedEntryMarkAllAsRead(userUUID string) error
 

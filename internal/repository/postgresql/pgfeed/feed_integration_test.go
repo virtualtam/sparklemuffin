@@ -19,6 +19,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
+	"github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -196,30 +197,44 @@ func TestFeedService(t *testing.T) {
 
 		yesterday := now.Add(-24 * time.Hour)
 
-		wantEntries := []feed.Entry{
+		wantEntries := []querying.SubscribedFeedEntry{
 			{
-				URL:         "http://test.local/first-post",
-				Title:       "First post!",
-				Summary:     "First post!\n\nThis is the first post!",
-				PublishedAt: now,
-				UpdatedAt:   now,
+				Entry: feed.Entry{
+					URL:         "http://test.local/first-post",
+					Title:       "First post!",
+					Summary:     "First post!\n\nThis is the first post!",
+					PublishedAt: now,
+					UpdatedAt:   now,
+				},
+				FeedTitle: wantFeed.Title,
 			},
 			{
-				URL:         "http://test.local/hello-world",
-				Title:       "Hello World",
-				PublishedAt: yesterday,
-				UpdatedAt:   yesterday,
+				Entry: feed.Entry{
+					URL:         "http://test.local/hello-world",
+					Title:       "Hello World",
+					PublishedAt: yesterday,
+					UpdatedAt:   yesterday,
+				},
+				FeedTitle: wantFeed.Title,
 			},
 		}
+		wantNEntries := uint(len(wantEntries))
 
 		entryCount, err := r.FeedEntryGetCount(testUser.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve entry count: %q", err)
 		}
 
-		if entryCount != uint(len(wantEntries)) {
+		if entryCount != wantNEntries {
 			t.Errorf("want %d entries, got %d", len(wantEntries), entryCount)
 		}
+
+		gotEntries, err := r.FeedSubscriptionEntryGetN(testUser.UUID, wantNEntries, 0)
+		if err != nil {
+			t.Fatalf("failed to retrieve entries: %q", err)
+		}
+
+		querying.AssertSubscribedFeedEntriesEqual(t, gotEntries, wantEntries)
 
 		// 3. Teardown
 		if err := fs.DeleteCategory(testUser.UUID, category.UUID); err != nil {

@@ -225,8 +225,6 @@ func (e *Entry) ensureUpdatedAtIsBefore(before time.Time) func() error {
 	}
 }
 
-// AssertEntriesEqual is a test helper function to assert that two slices of Entry
-// are equal.
 func AssertEntriesEqual(t *testing.T, gotEntries []Entry, wantEntries []Entry) {
 	t.Helper()
 
@@ -235,34 +233,38 @@ func AssertEntriesEqual(t *testing.T, gotEntries []Entry, wantEntries []Entry) {
 	}
 
 	for i, wantEntry := range wantEntries {
-		gotEntry := gotEntries[i]
-
-		if gotEntry.FeedUUID != wantEntry.FeedUUID {
-			t.Errorf("want Entry %d FeedUUID %q, got %q", i, wantEntry.FeedUUID, gotEntry.FeedUUID)
-		}
-
-		if gotEntry.URL != wantEntry.URL {
-			t.Errorf("want Entry %d URL %q, got %q", i, wantEntry.URL, gotEntry.URL)
-		}
-		if gotEntry.Title != wantEntry.Title {
-			t.Errorf("want Entry %d Title %q, got %q", i, wantEntry.Title, gotEntry.Title)
-		}
-		if gotEntry.Summary != wantEntry.Summary {
-			t.Errorf("want Entry %d Summary %q, got %q", i, wantEntry.Summary, gotEntry.Summary)
-		}
-
-		if len(gotEntry.TextRankTerms) != len(wantEntry.TextRankTerms) {
-			t.Errorf("want Entry %d TextRankTerms %#v, got %#v", i, wantEntry.TextRankTerms, gotEntry.TextRankTerms)
-			t.Fatalf("want Entry %d TextRankTerms %d, got %d", i, len(wantEntry.TextRankTerms), len(gotEntry.TextRankTerms))
-		}
-
-		for j, wantTerm := range wantEntry.TextRankTerms {
-			if gotEntry.TextRankTerms[j] != wantTerm {
-				t.Errorf("want Entry %d TextRankTerms[%d] %q, got %q", i, j, wantTerm, gotEntry.TextRankTerms[j])
-			}
-		}
-
-		assert.TimeAlmostEquals(t, fmt.Sprintf("Entry %d PublishedAt", i), gotEntry.PublishedAt, wantEntry.PublishedAt, assert.TimeComparisonDelta)
-		assert.TimeAlmostEquals(t, fmt.Sprintf("Entry %d UpdatedAt", i), gotEntry.UpdatedAt, wantEntry.UpdatedAt, assert.TimeComparisonDelta)
+		AssertEntryEquals(t, i, gotEntries[i], wantEntry)
 	}
+}
+
+func AssertEntryEquals(t *testing.T, index int, gotEntry Entry, wantEntry Entry) {
+	t.Helper()
+
+	if gotEntry.FeedUUID != wantEntry.FeedUUID {
+		t.Errorf("want Entry %d FeedUUID %q, got %q", index, wantEntry.FeedUUID, gotEntry.FeedUUID)
+	}
+
+	if gotEntry.URL != wantEntry.URL {
+		t.Errorf("want Entry %d URL %q, got %q", index, wantEntry.URL, gotEntry.URL)
+	}
+	if gotEntry.Title != wantEntry.Title {
+		t.Errorf("want Entry %d Title %q, got %q", index, wantEntry.Title, gotEntry.Title)
+	}
+	if gotEntry.Summary != wantEntry.Summary {
+		t.Errorf("want Entry %d Summary %q, got %q", index, wantEntry.Summary, gotEntry.Summary)
+	}
+
+	if len(gotEntry.TextRankTerms) != len(wantEntry.TextRankTerms) {
+		t.Errorf("want Entry %d TextRankTerms %#v, got %#v", index, wantEntry.TextRankTerms, gotEntry.TextRankTerms)
+		t.Fatalf("want Entry %d TextRankTerms %d, got %d", index, len(wantEntry.TextRankTerms), len(gotEntry.TextRankTerms))
+	}
+
+	for j, wantTerm := range wantEntry.TextRankTerms {
+		if gotEntry.TextRankTerms[j] != wantTerm {
+			t.Errorf("want Entry %d TextRankTerms[%d] %q, got %q", index, j, wantTerm, gotEntry.TextRankTerms[j])
+		}
+	}
+
+	assert.TimeAlmostEquals(t, fmt.Sprintf("Entry %d PublishedAt", index), gotEntry.PublishedAt, wantEntry.PublishedAt, assert.TimeComparisonDelta)
+	assert.TimeAlmostEquals(t, fmt.Sprintf("Entry %d UpdatedAt", index), gotEntry.UpdatedAt, wantEntry.UpdatedAt, assert.TimeComparisonDelta)
 }

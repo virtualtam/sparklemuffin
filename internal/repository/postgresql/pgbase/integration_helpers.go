@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/golang-migrate/migrate/v4"
 	migratepgx "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
@@ -58,6 +59,11 @@ func createTestDatabase(t *testing.T, ctx context.Context) (string, *sql.DB) {
 		testpostgres.WithDatabase(databaseName),
 		testpostgres.WithUsername(databaseUser),
 		testpostgres.WithPassword(databasePassword),
+		testcontainers.WithHostConfigModifier(func(hostConfig *container.HostConfig) {
+			hostConfig.Tmpfs = map[string]string{
+				"/var/lib/postgresql/data": "rw",
+			}
+		}),
 		testcontainers.WithWaitStrategy(
 			wait.
 				ForLog("database system is ready to accept connections").

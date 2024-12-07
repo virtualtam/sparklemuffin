@@ -14,6 +14,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 #### Database
 - Split PostgreSQL repository into dedicated domain repositories
+- Use a tmpfs volume to speed up integration tests
 
 #### WWW
 - Relocate HTTP packages to `internal/http`

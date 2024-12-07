@@ -32,6 +32,7 @@ type SubscribedFeedEntry struct {
 type SubscriptionTitle struct {
 	SubscriptionUUID  string
 	SubscriptionAlias string
+	CategoryUUID      string
 	FeedTitle         string
 	FeedDescription   string
 }

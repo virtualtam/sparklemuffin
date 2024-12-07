@@ -924,7 +924,7 @@ func (r *Repository) FeedSubscriptionUpdate(s feed.Subscription) error {
 
 func (r *Repository) FeedSubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (feedquerying.SubscriptionTitle, error) {
 	query := `
-	SELECT fs.uuid, fs.alias, f.title, f.description
+	SELECT fs.uuid, fs.alias, fs.category_uuid, f.title, f.description
 	FROM   feed_subscriptions fs
 	JOIN   feed_feeds f ON f.uuid = fs.feed_uuid
 	WHERE  fs.user_uuid=$1

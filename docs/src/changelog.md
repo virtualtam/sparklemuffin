@@ -45,6 +45,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Feeds
 - Ensure entry publication and update dates are non-zero
 - Ensure entry publication and update dates are not in the (far) future (limit: 2 days)
+- In the subscription edit form, ensure the correct category is selected
 
 
 ## [v0.2.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.2.0) - 2024-11-14

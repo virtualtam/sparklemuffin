@@ -16,7 +16,7 @@
   <label for="category">Category</label>
   <select name="category" id="category">
     {{- range .Categories}}
-    <option value="{{.UUID}}">{{.Name}}</option>
+    <option value="{{.UUID}}" {{if eq .UUID $.SubscriptionTitle.CategoryUUID}} selected{{end}}>{{.Name}}</option>
     {{- end}}
   </select>
 

@@ -134,7 +134,7 @@ func (s *Service) UpdateCategory(category Category) error {
 }
 
 // FeedBySlug returns the Feed for a given slug.
-func (s *Service) FeedBySlug(userUUID string, slug string) (Feed, error) {
+func (s *Service) FeedBySlug(slug string) (Feed, error) {
 	feed := Feed{Slug: slug}
 
 	if err := feed.ValidateSlug(); err != nil {

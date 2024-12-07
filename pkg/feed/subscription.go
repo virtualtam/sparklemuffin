@@ -5,9 +5,11 @@ package feed
 
 import (
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 )
 
 // Subscription represents a given user's subscription to a Feed.
@@ -111,4 +113,36 @@ func (s *Subscription) requireUUID() error {
 		return ErrSubscriptionUUIDRequired
 	}
 	return nil
+}
+
+func AssertSubscriptionsEqual(t *testing.T, want []Subscription, got []Subscription) {
+	t.Helper()
+
+	if len(got) != len(want) {
+		t.Fatalf("want %d subscriptions, got %d", len(want), len(got))
+	}
+
+	for i, wantSubscription := range want {
+		AssertSubscriptionEquals(t, wantSubscription, got[i])
+	}
+}
+
+func AssertSubscriptionEquals(t *testing.T, want Subscription, got Subscription) {
+	t.Helper()
+
+	if want.UUID != got.UUID {
+		t.Errorf("want UUID %q, got %q", want.UUID, got.UUID)
+	}
+	if want.CategoryUUID != got.CategoryUUID {
+		t.Errorf("want CategoryUUID %q, got %q", want.CategoryUUID, got.CategoryUUID)
+	}
+	if want.FeedUUID != got.FeedUUID {
+		t.Errorf("want FeedUUID %q, got %q", want.FeedUUID, got.FeedUUID)
+	}
+	if want.UserUUID != got.UserUUID {
+		t.Errorf("want UserUUID %q, got %q", want.UserUUID, got.UserUUID)
+	}
+
+	assert.TimeAlmostEquals(t, "CreatedAt", got.CreatedAt, want.CreatedAt, assert.TimeComparisonDelta)
+	assert.TimeAlmostEquals(t, "UpdatedAt", got.UpdatedAt, want.UpdatedAt, assert.TimeComparisonDelta)
 }

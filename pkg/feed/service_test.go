@@ -13,7 +13,6 @@ import (
 	"github.com/jaswdr/faker"
 	"github.com/mmcdole/gofeed"
 	"github.com/segmentio/ksuid"
-	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
@@ -1211,34 +1210,7 @@ func TestServiceUpdateSubscription(t *testing.T) {
 				t.Fatalf("want no error, got %q", err)
 			}
 
-			assertSubscriptionsEqual(t, tc.wantSubscriptions, r.Subscriptions)
+			AssertSubscriptionsEqual(t, tc.wantSubscriptions, r.Subscriptions)
 		})
-	}
-}
-
-func assertSubscriptionsEqual(t *testing.T, want []Subscription, got []Subscription) {
-	t.Helper()
-
-	if len(got) != len(want) {
-		t.Fatalf("want %d subscriptions, got %d", len(want), len(got))
-	}
-
-	for i, wantSubscription := range want {
-		gotSubscription := got[i]
-		if wantSubscription.UUID != gotSubscription.UUID {
-			t.Errorf("want Subscription %d UUID %q, got %q", i, wantSubscription.UUID, gotSubscription.UUID)
-		}
-		if wantSubscription.CategoryUUID != gotSubscription.CategoryUUID {
-			t.Errorf("want Subscription %d CategoryUUID %q, got %q", i, wantSubscription.CategoryUUID, gotSubscription.CategoryUUID)
-		}
-		if wantSubscription.FeedUUID != gotSubscription.FeedUUID {
-			t.Errorf("want Subscription %d FeedUUID %q, got %q", i, wantSubscription.FeedUUID, gotSubscription.FeedUUID)
-		}
-		if wantSubscription.UserUUID != gotSubscription.UserUUID {
-			t.Errorf("want Subscription %d UserUUID %q, got %q", i, wantSubscription.UserUUID, gotSubscription.UserUUID)
-		}
-
-		assert.TimeEquals(t, "CreatedAt", gotSubscription.CreatedAt, wantSubscription.CreatedAt)
-		assert.TimeAlmostEquals(t, "UpdatedAt", gotSubscription.UpdatedAt, wantSubscription.UpdatedAt, assert.TimeComparisonDelta)
 	}
 }

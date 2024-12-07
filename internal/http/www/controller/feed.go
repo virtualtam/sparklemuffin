@@ -292,7 +292,7 @@ func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.Res
 	feedsByPage := func(r *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error) {
 		feedSlug := chi.URLParam(r, "slug")
 
-		feed, err := fc.feedService.FeedBySlug(user.UUID, feedSlug)
+		feed, err := fc.feedService.FeedBySlug(feedSlug)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed")
 			return feedquerying.FeedPage{}, err
@@ -310,7 +310,7 @@ func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.Res
 	feedsByQueryAndPage := func(r *http.Request, user *user.User, query string, pageNumber uint) (feedquerying.FeedPage, error) {
 		feedSlug := chi.URLParam(r, "slug")
 
-		feed, err := fc.feedService.FeedBySlug(user.UUID, feedSlug)
+		feed, err := fc.feedService.FeedBySlug(feedSlug)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed")
 			return feedquerying.FeedPage{}, err
@@ -815,7 +815,7 @@ func (fc *feedHandlerContext) handleEntryMetadataMarkAllAsReadByFeed() func(w ht
 			return
 		}
 
-		feed, err := fc.feedService.FeedBySlug(user.UUID, feedSlug)
+		feed, err := fc.feedService.FeedBySlug(feedSlug)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed")
 			view.PutFlashError(w, "failed to retrieve feed")

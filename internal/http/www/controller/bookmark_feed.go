@@ -10,7 +10,7 @@ import (
 
 	"github.com/gorilla/feeds"
 
-	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
+	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 )

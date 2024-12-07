@@ -22,11 +22,11 @@ import (
 	"github.com/virtualtam/venom"
 
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/config"
-	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/version"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbookmark"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgsession"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
+	"github.com/virtualtam/sparklemuffin/internal/version"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"

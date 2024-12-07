@@ -8,7 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/csrf"
+	"github.com/virtualtam/sparklemuffin/internal/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"

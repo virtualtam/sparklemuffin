@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/version"
+	"github.com/virtualtam/sparklemuffin/internal/version"
 )
 
 const (

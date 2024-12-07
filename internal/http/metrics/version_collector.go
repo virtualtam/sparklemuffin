@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/version"
+	"github.com/virtualtam/sparklemuffin/internal/version"
 )
 
 type versionCollector struct {

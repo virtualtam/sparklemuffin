@@ -11,6 +11,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Database
 - Split PostgreSQL repository into dedicated domain repositories
 
+#### WWW
+- Relocate HTTP packages to `internal/http`
+- Relocate version detection helpers to `internal/version`
 
 ## [v0.3.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.1) - 2024-12-07
 

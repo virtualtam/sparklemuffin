@@ -1,10 +1,10 @@
 # Project Structure
 ## Overview
-Source code is broken down into several packages:
+The Go source code is broken down into several top-level packages:
 
 ```shell
 .
-├── cmd       # Command-line application, HTTP servers, Web application
+├── cmd       # Command-line application
 ├── internal  # Private packages and test helpers
 └── pkg       # Domain packages
 ```
@@ -15,20 +15,20 @@ cmd
 └── sparklemuffin
     ├── command    # Command-line application commands and sub-commands (CLI parser)
     ├── config     # Configuration utilities
-    ├── http       # HTTP servers: metrics, Web application
-    ├── main.go    # Command-line entrypoint
-    └── version    # Version detection utilities
+    └── main.go    # Command-line entrypoint
 ```
 
 ## `internal` - Application-specific and private packages
 ```shell
 internal
 ├── hash            # Cryptographically secure hash helpers
+├── http            # HTTP servers: metrics, Web application
 ├── paginate        # Pagination utilities
 ├── rand            # Cryptographically secure pseudo-random helpers
 ├── repository
 │   └── postgresql  # PostgreSQL database persistence layer (repository)
-└── test            # Helpers for unitary and integration tests
+├── test            # Helpers for unitary and integration tests
+└── version         # Version detection utilities
 ```
 
 

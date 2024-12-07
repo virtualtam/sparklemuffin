@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/hlog"
-	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
-	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/view"
+	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 )
 
 var (

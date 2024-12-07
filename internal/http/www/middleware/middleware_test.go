@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 

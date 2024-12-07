@@ -1,13 +1,14 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package postgresql
+package pgfeed
 
 import (
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	feedsynchronizing "github.com/virtualtam/sparklemuffin/pkg/feed/synchronizing"
@@ -74,16 +75,16 @@ func (f *DBFeed) asFeed() feed.Feed {
 func feedToFullTextSearchString(f feed.Feed) string {
 	return fmt.Sprintf(
 		"%s %s",
-		fullTextSearchReplacer.Replace(f.Title),
-		fullTextSearchReplacer.Replace(f.Description),
+		pgbase.FullTextSearchReplacer.Replace(f.Title),
+		pgbase.FullTextSearchReplacer.Replace(f.Description),
 	)
 }
 
 func feedMetadataToFullTextSearchString(feedMetadata feedsynchronizing.FeedMetadata) string {
 	return fmt.Sprintf(
 		"%s %s",
-		fullTextSearchReplacer.Replace(feedMetadata.Title),
-		fullTextSearchReplacer.Replace(feedMetadata.Description),
+		pgbase.FullTextSearchReplacer.Replace(feedMetadata.Title),
+		pgbase.FullTextSearchReplacer.Replace(feedMetadata.Description),
 	)
 }
 
@@ -116,8 +117,8 @@ func (e *DBEntry) asEntry() feed.Entry {
 func feedEntryToFullTextSearchString(e feed.Entry) string {
 	return fmt.Sprintf(
 		"%s %s",
-		fullTextSearchReplacer.Replace(e.Title),
-		fullTextSearchReplacer.Replace(strings.Join(e.TextRankTerms, " ")),
+		pgbase.FullTextSearchReplacer.Replace(e.Title),
+		pgbase.FullTextSearchReplacer.Replace(strings.Join(e.TextRankTerms, " ")),
 	)
 }
 

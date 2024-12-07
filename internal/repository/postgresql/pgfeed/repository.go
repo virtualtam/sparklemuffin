@@ -1,7 +1,7 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package postgresql
+package pgfeed
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedexporting "github.com/virtualtam/sparklemuffin/pkg/feed/exporting"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
@@ -20,6 +22,16 @@ var _ feed.Repository = &Repository{}
 var _ feedexporting.Repository = &Repository{}
 var _ feedquerying.Repository = &Repository{}
 var _ feedsynchronizing.Repository = &Repository{}
+
+type Repository struct {
+	*pgbase.Repository
+}
+
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	return &Repository{
+		Repository: pgbase.NewRepository(pool),
+	}
+}
 
 func (r *Repository) FeedCreate(f feed.Feed) error {
 	query := `
@@ -66,7 +78,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 		"fetched_at":            f.FetchedAt,
 	}
 
-	return r.queryTx("feeds", "FeedCreate", query, args)
+	return r.QueryTx("feeds", "FeedCreate", query, args)
 }
 
 func (r *Repository) FeedGetBySlug(feedSlug string) (feed.Feed, error) {
@@ -126,7 +138,7 @@ func (r *Repository) FeedUpdateFetchMetadata(feedFetchMetadata feedsynchronizing
 		"fetched_at":    feedFetchMetadata.FetchedAt,
 	}
 
-	return r.queryTx("feeds", "FeedUpdateFetchMetadata", query, args)
+	return r.QueryTx("feeds", "FeedUpdateFetchMetadata", query, args)
 }
 
 func (r *Repository) FeedUpdateMetadata(feedMetadata feedsynchronizing.FeedMetadata) error {
@@ -151,7 +163,7 @@ func (r *Repository) FeedUpdateMetadata(feedMetadata feedsynchronizing.FeedMetad
 		"updated_at":            feedMetadata.UpdatedAt,
 	}
 
-	return r.queryTx("feeds", "FeedUpdateFetchMetadata", query, args)
+	return r.QueryTx("feeds", "FeedUpdateFetchMetadata", query, args)
 }
 
 func (r *Repository) FeedCategoryCreate(c feed.Category) error {
@@ -182,18 +194,18 @@ func (r *Repository) FeedCategoryCreate(c feed.Category) error {
 		"updated_at": c.UpdatedAt,
 	}
 
-	return r.queryTx("feeds", "FeedCategoryCreate", query, args)
+	return r.QueryTx("feeds", "FeedCategoryCreate", query, args)
 }
 
 func (r *Repository) FeedCategoryDelete(userUUID string, categoryUUID string) error {
 	ctx := context.Background()
 
-	tx, err := r.pool.Begin(ctx)
+	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer r.rollback(ctx, tx, "feeds", "FeedCategoryDelete")
+	defer r.Rollback(ctx, tx, "feeds", "FeedCategoryDelete")
 
 	commandTag, err := tx.Exec(
 		context.Background(),
@@ -251,7 +263,7 @@ FROM feed_categories
 WHERE user_uuid=$1
 ORDER BY name`
 
-	rows, err := r.pool.Query(context.Background(), query, userUUID)
+	rows, err := r.Pool.Query(context.Background(), query, userUUID)
 	if err != nil {
 		return []feed.Category{}, err
 	}
@@ -276,7 +288,7 @@ ORDER BY name`
 }
 
 func (r *Repository) FeedCategoryNameAndSlugAreRegistered(userUUID string, name string, slug string) (bool, error) {
-	return r.rowExistsByQuery(
+	return r.RowExistsByQuery(
 		"SELECT 1 FROM feed_categories WHERE user_uuid=$1 AND (name=$2 OR slug=$3)",
 		userUUID,
 		name,
@@ -285,7 +297,7 @@ func (r *Repository) FeedCategoryNameAndSlugAreRegistered(userUUID string, name 
 }
 
 func (r *Repository) FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(userUUID string, categoryUUID string, name string, slug string) (bool, error) {
-	return r.rowExistsByQuery(
+	return r.RowExistsByQuery(
 		"SELECT 1 FROM feed_categories WHERE user_uuid = $1 AND uuid != $2 AND (name = $3 OR slug = $4)",
 		userUUID,
 		categoryUUID,
@@ -312,7 +324,7 @@ func (r *Repository) FeedCategoryUpdate(c feed.Category) error {
 		"updated_at": c.UpdatedAt,
 	}
 
-	return r.queryTx("feeds", "FeedCategoryUpdate", query, args)
+	return r.QueryTx("feeds", "FeedCategoryUpdate", query, args)
 }
 
 func (r *Repository) FeedEntryCreateMany(entries []feed.Entry) (int64, error) {
@@ -343,7 +355,7 @@ func (r *Repository) FeedEntryGetN(feedUUID string, n uint) ([]feed.Entry, error
 	ORDER BY published_at DESC
 	LIMIT $2`
 
-	rows, err := r.pool.Query(context.Background(), query, feedUUID, n)
+	rows, err := r.Pool.Query(context.Background(), query, feedUUID, n)
 	if err != nil {
 		return []feed.Entry{}, err
 	}
@@ -373,7 +385,7 @@ func (r *Repository) FeedEntryGetCount(userUUID string) (uint, error) {
 
 	var count uint
 
-	err := r.pool.QueryRow(
+	err := r.Pool.QueryRow(
 		context.Background(),
 		query,
 		userUUID,
@@ -395,7 +407,7 @@ func (r *Repository) FeedEntryGetCountByCategory(userUUID string, categoryUUID s
 
 	var count uint
 
-	err := r.pool.QueryRow(
+	err := r.Pool.QueryRow(
 		context.Background(),
 		query,
 		userUUID,
@@ -418,7 +430,7 @@ func (r *Repository) FeedEntryGetCountBySubscription(userUUID string, subscripti
 
 	var count uint
 
-	err := r.pool.QueryRow(
+	err := r.Pool.QueryRow(
 		context.Background(),
 		query,
 		userUUID,
@@ -441,9 +453,9 @@ func (r *Repository) FeedEntryGetCountByQuery(userUUID string, searchTerms strin
 	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($2)`
 
 	var count uint
-	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
 
-	err := r.pool.QueryRow(
+	err := r.Pool.QueryRow(
 		context.Background(),
 		query,
 		userUUID,
@@ -467,9 +479,9 @@ func (r *Repository) FeedEntryGetCountByCategoryAndQuery(userUUID string, catego
 	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($3)`
 
 	var count uint
-	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
 
-	err := r.pool.QueryRow(
+	err := r.Pool.QueryRow(
 		context.Background(),
 		query,
 		userUUID,
@@ -494,9 +506,9 @@ func (r *Repository) FeedEntryGetCountBySubscriptionAndQuery(userUUID string, su
 	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($3)`
 
 	var count uint
-	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
 
-	err := r.pool.QueryRow(
+	err := r.Pool.QueryRow(
 		context.Background(),
 		query,
 		userUUID,
@@ -530,7 +542,7 @@ func (r *Repository) FeedEntryMarkAllAsRead(userUUID string) error {
 		"user_uuid": userUUID,
 	}
 
-	return r.queryTx("feeds", "FeedEntryMarkAllAsRead", query, args)
+	return r.QueryTx("feeds", "FeedEntryMarkAllAsRead", query, args)
 }
 
 func (r *Repository) FeedEntryMarkAllAsReadByCategory(userUUID string, categoryUUID string) error {
@@ -555,7 +567,7 @@ func (r *Repository) FeedEntryMarkAllAsReadByCategory(userUUID string, categoryU
 		"category_uuid": categoryUUID,
 	}
 
-	return r.queryTx("feeds", "FeedEntryMarkAllAsReadByCategory", query, args)
+	return r.QueryTx("feeds", "FeedEntryMarkAllAsReadByCategory", query, args)
 }
 
 func (r *Repository) FeedEntryMarkAllAsReadBySubscription(userUUID string, subscriptionUUID string) error {
@@ -580,7 +592,7 @@ func (r *Repository) FeedEntryMarkAllAsReadBySubscription(userUUID string, subsc
 		"subscription_uuid": subscriptionUUID,
 	}
 
-	return r.queryTx("feeds", "FeedEntryMarkAllAsReadBySubscription", query, args)
+	return r.QueryTx("feeds", "FeedEntryMarkAllAsReadBySubscription", query, args)
 }
 
 func (r *Repository) FeedEntryMetadataCreate(entryMetadata feed.EntryMetadata) error {
@@ -603,7 +615,7 @@ func (r *Repository) FeedEntryMetadataCreate(entryMetadata feed.EntryMetadata) e
 		"read":      entryMetadata.Read,
 	}
 
-	return r.queryTx("feeds", "FeedEntryMetadataCreate", query, args)
+	return r.QueryTx("feeds", "FeedEntryMetadataCreate", query, args)
 }
 
 func (r *Repository) FeedEntryMetadataGetByUID(userUUID string, entryUID string) (feed.EntryMetadata, error) {
@@ -614,7 +626,7 @@ func (r *Repository) FeedEntryMetadataGetByUID(userUUID string, entryUID string)
 	AND   entry_uid=$2
 	`
 
-	rows, err := r.pool.Query(context.Background(), query, userUUID, entryUID)
+	rows, err := r.Pool.Query(context.Background(), query, userUUID, entryUID)
 	if err != nil {
 		return feed.EntryMetadata{}, err
 	}
@@ -647,7 +659,7 @@ func (r *Repository) FeedEntryMetadataUpdate(entryMetadata feed.EntryMetadata) e
 		"read":      entryMetadata.Read,
 	}
 
-	return r.queryTx("feeds", "FeedEntryMetadataUpdate", query, args)
+	return r.QueryTx("feeds", "FeedEntryMetadataUpdate", query, args)
 }
 
 func (r *Repository) FeedCategorySubscriptionsGetAll(userUUID string) ([]feedexporting.CategorySubscriptions, error) {
@@ -770,7 +782,7 @@ func (r *Repository) FeedSubscriptionEntryGetNByQuery(userUUID string, searchTer
 	ORDER BY fe.published_at DESC
 	LIMIT $3 OFFSET $4`
 
-	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
 
 	return r.feedSubscriptionEntryGetN(query, userUUID, fullTextSearchTerms, n, offset)
 }
@@ -788,7 +800,7 @@ func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(userUUID string
 	ORDER BY fe.published_at DESC
 	LIMIT $4 OFFSET $5`
 
-	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
 
 	return r.feedSubscriptionEntryGetN(query, userUUID, categoryUUID, fullTextSearchTerms, n, offset)
 }
@@ -806,13 +818,13 @@ func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(userUUID st
 	ORDER BY fe.published_at DESC
 	LIMIT $4 OFFSET $5`
 
-	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
 
 	return r.feedSubscriptionEntryGetN(query, userUUID, subscriptionUUID, fullTextSearchTerms, n, offset)
 }
 
 func (r *Repository) FeedSubscriptionIsRegistered(userUUID string, feedUUID string) (bool, error) {
-	return r.rowExistsByQuery(
+	return r.RowExistsByQuery(
 		"SELECT 1 FROM feed_subscriptions WHERE user_uuid=$1 AND feed_uuid=$2",
 		userUUID,
 		feedUUID,
@@ -847,7 +859,7 @@ func (r *Repository) FeedSubscriptionCreate(s feed.Subscription) (feed.Subscript
 		"updated_at":    s.UpdatedAt,
 	}
 
-	if err := r.queryTx("feeds", "FeedSubscriptionCreate", query, args); err != nil {
+	if err := r.QueryTx("feeds", "FeedSubscriptionCreate", query, args); err != nil {
 		return feed.Subscription{}, err
 	}
 
@@ -857,12 +869,12 @@ func (r *Repository) FeedSubscriptionCreate(s feed.Subscription) (feed.Subscript
 func (r *Repository) FeedSubscriptionDelete(userUUID string, subscriptionUUID string) error {
 	ctx := context.Background()
 
-	tx, err := r.pool.Begin(ctx)
+	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer r.rollback(ctx, tx, "feeds", "FeedSubscriptionDelete")
+	defer r.Rollback(ctx, tx, "feeds", "FeedSubscriptionDelete")
 
 	commandTag, err := tx.Exec(
 		context.Background(),
@@ -919,7 +931,7 @@ func (r *Repository) FeedSubscriptionUpdate(s feed.Subscription) error {
 		"updated_at":    s.UpdatedAt,
 	}
 
-	return r.queryTx("feeds", "FeedSubscriptionUpdate", query, args)
+	return r.QueryTx("feeds", "FeedSubscriptionUpdate", query, args)
 }
 
 func (r *Repository) FeedQueryingSubscriptionByUUID(userUUID string, subscriptionUUID string) (feedquerying.Subscription, error) {

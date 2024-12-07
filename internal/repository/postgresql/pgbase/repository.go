@@ -1,7 +1,7 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package postgresql
+package pgbase
 
 import (
 	"context"
@@ -14,22 +14,22 @@ import (
 )
 
 var (
-	fullTextSearchReplacer = strings.NewReplacer("/", " ", ".", " ")
+	FullTextSearchReplacer = strings.NewReplacer("/", " ", ".", " ")
 )
 
 // Repository provides a PostgreSQL persistence layer.
 type Repository struct {
-	pool *pgxpool.Pool
+	Pool *pgxpool.Pool
 }
 
 // NewRepository initializes and returns a PostgreSQL Repository.
 func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{
-		pool: pool,
+		Pool: pool,
 	}
 }
 
-func (r *Repository) rollback(ctx context.Context, tx pgx.Tx, domain string, operation string) {
+func (r *Repository) Rollback(ctx context.Context, tx pgx.Tx, domain string, operation string) {
 	err := tx.Rollback(ctx)
 	if errors.Is(err, pgx.ErrTxClosed) {
 		return
@@ -50,10 +50,10 @@ func (r *Repository) rollback(ctx context.Context, tx pgx.Tx, domain string, ope
 		Msg("transaction rolled back")
 }
 
-func (r *Repository) rowExistsByQuery(query string, queryParams ...any) (bool, error) {
+func (r *Repository) RowExistsByQuery(query string, queryParams ...any) (bool, error) {
 	var exists int64
 
-	err := r.pool.QueryRow(
+	err := r.Pool.QueryRow(
 		context.Background(),
 		query,
 		queryParams...,
@@ -69,15 +69,15 @@ func (r *Repository) rowExistsByQuery(query string, queryParams ...any) (bool, e
 	return true, nil
 }
 
-func (r *Repository) queryTx(domain string, operation string, query string, args pgx.NamedArgs) error {
+func (r *Repository) QueryTx(domain string, operation string, query string, args pgx.NamedArgs) error {
 	ctx := context.Background()
 
-	tx, err := r.pool.Begin(ctx)
+	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer r.rollback(ctx, tx, domain, operation)
+	defer r.Rollback(ctx, tx, domain, operation)
 
 	_, err = tx.Exec(ctx, query, args)
 	if err != nil {

@@ -1,7 +1,7 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package postgresql_test
+package pguser_test
 
 import (
 	"context"
@@ -9,20 +9,22 @@ import (
 	"testing"
 
 	"github.com/jaswdr/faker"
-	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 func TestUserService(t *testing.T) {
 	ctx := context.Background()
-	pool := createAndMigrateTestDatabase(t, ctx)
-	r := postgresql.NewRepository(pool)
+	pool := pgbase.CreateAndMigrateTestDatabase(t, ctx)
+	r := pguser.NewRepository(pool)
+
 	s := user.NewService(r)
 
 	fake := faker.New()
 
 	t.Run("create, retrieve and delete user", func(t *testing.T) {
-		u := generateFakeUser(t, &fake)
+		u := pgbase.GenerateFakeUser(t, &fake)
 
 		if err := s.Add(u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
@@ -54,7 +56,7 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("update user", func(t *testing.T) {
-		u := generateFakeUser(t, &fake)
+		u := pgbase.GenerateFakeUser(t, &fake)
 
 		if err := s.Add(u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
@@ -93,7 +95,7 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("update user info with no change", func(t *testing.T) {
-		u := generateFakeUser(t, &fake)
+		u := pgbase.GenerateFakeUser(t, &fake)
 
 		if err := s.Add(u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
@@ -129,7 +131,7 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("update user info", func(t *testing.T) {
-		u := generateFakeUser(t, &fake)
+		u := pgbase.GenerateFakeUser(t, &fake)
 
 		if err := s.Add(u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
@@ -167,7 +169,7 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("update user password", func(t *testing.T) {
-		u := generateFakeUser(t, &fake)
+		u := pgbase.GenerateFakeUser(t, &fake)
 
 		if err := s.Add(u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
@@ -202,7 +204,7 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("authenticate user", func(t *testing.T) {
-		u := generateFakeUser(t, &fake)
+		u := pgbase.GenerateFakeUser(t, &fake)
 
 		if err := s.Add(u); err != nil {
 			t.Fatalf("failed to create user: %q", err)

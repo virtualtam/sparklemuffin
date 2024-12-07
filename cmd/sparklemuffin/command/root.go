@@ -23,7 +23,10 @@ import (
 
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/config"
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/version"
-	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbookmark"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgsession"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
@@ -169,9 +172,6 @@ func NewRootCommand() *cobra.Command {
 				Str("database_name", databaseName).
 				Msg("database: successfully created connection pool")
 
-			// Main database repository
-			repository := postgresql.NewRepository(pgxPool)
-
 			// HTTP client used to perform requests
 			httpClient := &http.Client{
 				Timeout: 30 * time.Second,
@@ -180,19 +180,24 @@ func NewRootCommand() *cobra.Command {
 			feedClient := feedfetching.NewClient(httpClient, userAgent)
 
 			// SparkleMuffin services
-			bookmarkService = bookmark.NewService(repository)
-			bookmarkExportingService = bookmarkexporting.NewService(repository)
-			bookmarkImportingService = bookmarkimporting.NewService(repository)
-			bookmarkQueryingService = bookmarkquerying.NewService(repository)
+			bookmarkRepository := pgbookmark.NewRepository(pgxPool)
+			bookmarkService = bookmark.NewService(bookmarkRepository)
+			bookmarkExportingService = bookmarkexporting.NewService(bookmarkRepository)
+			bookmarkImportingService = bookmarkimporting.NewService(bookmarkRepository)
+			bookmarkQueryingService = bookmarkquerying.NewService(bookmarkRepository)
 
-			feedService = feed.NewService(repository, feedClient)
-			feedExportingService = feedexporting.NewService(repository)
-			feedQueryingService = feedquerying.NewService(repository)
+			feedRepository := pgfeed.NewRepository(pgxPool)
+			feedService = feed.NewService(feedRepository, feedClient)
+			feedExportingService = feedexporting.NewService(feedRepository)
+			feedQueryingService = feedquerying.NewService(feedRepository)
 			feedImportingService = feedimporting.NewService(feedService)
-			feedSynchronizingService = feedsynchronizing.NewService(repository, feedClient)
+			feedSynchronizingService = feedsynchronizing.NewService(feedRepository, feedClient)
 
-			sessionService = session.NewService(repository, hmacKey)
-			userService = user.NewService(repository)
+			sessionRepository := pgsession.NewRepository(pgxPool)
+			sessionService = session.NewService(sessionRepository, hmacKey)
+
+			userRepository := pguser.NewRepository(pgxPool)
+			userService = user.NewService(userRepository)
 
 			return nil
 		},

@@ -1,7 +1,7 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package postgresql
+package pgfeed
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 )
 
 func (r *Repository) feedGetQuery(query string, queryParams ...any) (feed.Feed, error) {
-	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
 		return feed.Feed{}, err
 	}
@@ -36,7 +36,7 @@ func (r *Repository) feedGetQuery(query string, queryParams ...any) (feed.Feed, 
 }
 
 func (r *Repository) feedGetManyQuery(query string, queryParams ...any) ([]feed.Feed, error) {
-	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
 		return []feed.Feed{}, err
 	}
@@ -70,7 +70,7 @@ ORDER BY f.title`
 }
 
 func (r *Repository) feedCategoryGetQuery(query string, queryParams ...any) (feed.Category, error) {
-	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
 		return feed.Category{}, err
 	}
@@ -96,7 +96,7 @@ func (r *Repository) feedGetCategories(userUUID string) ([]DBCategory, error) {
 	WHERE user_uuid=$1
 	ORDER BY name`
 
-	rows, err := r.pool.Query(context.Background(), query, userUUID)
+	rows, err := r.Pool.Query(context.Background(), query, userUUID)
 	if err != nil {
 		return []DBCategory{}, fmt.Errorf("failed to retrieve categories: %w", err)
 	}
@@ -159,7 +159,7 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 
 	ctx := context.Background()
 
-	batchResults := r.pool.SendBatch(ctx, batch)
+	batchResults := r.Pool.SendBatch(ctx, batch)
 	defer func() {
 		if err := batchResults.Close(); err != nil {
 			log.Error().
@@ -185,7 +185,7 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 }
 
 func (r *Repository) feedSubscriptionEntryGetN(query string, queryParams ...any) ([]feedquerying.SubscribedFeedEntry, error) {
-	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
 		return []feedquerying.SubscribedFeedEntry{}, err
 	}
@@ -228,7 +228,7 @@ ORDER BY
         ELSE f.title
     END`
 
-	rows, err := r.pool.Query(context.Background(), query, userUUID, categoryUUID)
+	rows, err := r.Pool.Query(context.Background(), query, userUUID, categoryUUID)
 	if err != nil {
 		return []DBSubscribedFeed{}, err
 	}
@@ -244,7 +244,7 @@ ORDER BY
 }
 
 func (r *Repository) feedSubscriptionGetQuery(query string, queryParams ...any) (feed.Subscription, error) {
-	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
 		return feed.Subscription{}, err
 	}
@@ -264,7 +264,7 @@ func (r *Repository) feedSubscriptionGetQuery(query string, queryParams ...any) 
 }
 
 func (r *Repository) feedSubscriptionTitleGetQuery(query string, queryParams ...any) (feedquerying.Subscription, error) {
-	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
 		return feedquerying.Subscription{}, err
 	}
@@ -301,7 +301,7 @@ ORDER BY
         ELSE f.title
     END`
 
-	rows, err := r.pool.Query(context.Background(), query, userUUID, categoryUUID)
+	rows, err := r.Pool.Query(context.Background(), query, userUUID, categoryUUID)
 	if err != nil {
 		return []DBQueryingSubscription{}, err
 	}

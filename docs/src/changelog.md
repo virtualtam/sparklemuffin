@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [v0.4.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.0) - UNRELEASED
+
+### Changed
+#### Database
+- Split PostgreSQL repository into dedicated domain repositories
+
 
 ## [v0.3.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.1) - 2024-12-07
 

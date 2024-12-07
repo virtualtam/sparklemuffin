@@ -1,25 +1,30 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package postgresql
+package pgsession
 
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 )
 
-type DBSession struct {
-	UserUUID               string    `db:"user_uuid"`
-	RememberTokenHash      string    `db:"remember_token_hash"`
-	RememberTokenExpiresAt time.Time `db:"remember_token_expires_at"`
+var _ session.Repository = &Repository{}
+
+type Repository struct {
+	pgbase.Repository
 }
 
-var _ session.Repository = &Repository{}
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	return &Repository{
+		Repository: *pgbase.NewRepository(pool),
+	}
+}
 
 func (r *Repository) SessionAdd(sess session.Session) error {
 	query := `
@@ -40,7 +45,7 @@ func (r *Repository) SessionAdd(sess session.Session) error {
 		"remember_token_expires_at": sess.RememberTokenExpiresAt,
 	}
 
-	return r.queryTx("sessions", "SessionAdd", query, args)
+	return r.QueryTx("sessions", "SessionAdd", query, args)
 }
 
 func (r *Repository) SessionGetByRememberTokenHash(hash string) (session.Session, error) {
@@ -51,7 +56,7 @@ func (r *Repository) SessionGetByRememberTokenHash(hash string) (session.Session
 
 	dbSession := &DBSession{}
 
-	rows, err := r.pool.Query(
+	rows, err := r.Pool.Query(
 		context.Background(),
 		query,
 		hash,

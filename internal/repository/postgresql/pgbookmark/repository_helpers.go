@@ -1,7 +1,7 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package postgresql
+package pgbookmark
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 )
 
 func (r *Repository) bookmarkGetQuery(query string, queryParams ...any) (bookmark.Bookmark, error) {
-	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
 		return bookmark.Bookmark{}, err
 	}
@@ -45,7 +45,7 @@ func (r *Repository) bookmarkGetQuery(query string, queryParams ...any) (bookmar
 }
 
 func (r *Repository) bookmarkGetManyQuery(query string, queryParams ...any) ([]bookmark.Bookmark, error) {
-	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
 		return []bookmark.Bookmark{}, err
 	}
@@ -130,7 +130,7 @@ func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookm
 
 	ctx := context.Background()
 
-	batchResults := r.pool.SendBatch(ctx, batch)
+	batchResults := r.Pool.SendBatch(ctx, batch)
 	defer func() {
 		if err := batchResults.Close(); err != nil {
 			log.Error().
@@ -156,7 +156,7 @@ func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookm
 }
 
 func (r *Repository) tagGetQuery(query string, queryParams ...any) ([]bookmarkquerying.Tag, error) {
-	rows, err := r.pool.Query(context.Background(), query, queryParams...)
+	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
 		return []bookmarkquerying.Tag{}, err
 	}

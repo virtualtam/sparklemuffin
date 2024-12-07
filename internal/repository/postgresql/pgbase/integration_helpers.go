@@ -1,7 +1,7 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package postgresql_test
+package pgbase
 
 import (
 	"context"
@@ -32,7 +32,7 @@ const (
 	databasePassword = "testpass"
 )
 
-func createAndMigrateTestDatabase(t *testing.T, ctx context.Context) *pgxpool.Pool {
+func CreateAndMigrateTestDatabase(t *testing.T, ctx context.Context) *pgxpool.Pool {
 	t.Helper()
 
 	databaseURI, db := createTestDatabase(t, ctx)
@@ -114,7 +114,7 @@ func getDatabaseMigrater(t *testing.T, db *sql.DB) *migrate.Migrate {
 	return migrater
 }
 
-func generateFakeUser(t *testing.T, fake *faker.Faker) user.User {
+func GenerateFakeUser(t *testing.T, fake *faker.Faker) user.User {
 	t.Helper()
 
 	person := fake.Person()
@@ -129,23 +129,4 @@ func generateFakeUser(t *testing.T, fake *faker.Faker) user.User {
 		DisplayName: person.Name(),
 		Password:    internet.Password(),
 	}
-}
-
-func TestMigrate(t *testing.T) {
-	ctx := context.Background()
-
-	_, db := createTestDatabase(t, ctx)
-	migrater := getDatabaseMigrater(t, db)
-
-	t.Run("up", func(t *testing.T) {
-		if err := migrater.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-			t.Fatalf("failed to apply database migrations (up): %q", err)
-		}
-	})
-
-	t.Run("down", func(t *testing.T) {
-		if err := migrater.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-			t.Fatalf("failed to apply database migrations (down): %q", err)
-		}
-	})
 }

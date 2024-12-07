@@ -1,7 +1,7 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package postgresql_test
+package pgbookmark_test
 
 import (
 	"context"
@@ -13,7 +13,9 @@ import (
 	"github.com/jaswdr/faker"
 	"golang.org/x/exp/slices"
 
-	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbookmark"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -84,14 +86,16 @@ func generateUniqueSortedTags(fake *faker.Faker, nTags int) []string {
 
 func TestBookmarkService(t *testing.T) {
 	ctx := context.Background()
-	pool := createAndMigrateTestDatabase(t, ctx)
-	r := postgresql.NewRepository(pool)
+	pool := pgbase.CreateAndMigrateTestDatabase(t, ctx)
+	r := pgbookmark.NewRepository(pool)
 	bs := bookmark.NewService(r)
-	us := user.NewService(r)
+
+	ur := pguser.NewRepository(pool)
+	us := user.NewService(ur)
 
 	fake := faker.New()
 
-	u := generateFakeUser(t, &fake)
+	u := pgbase.GenerateFakeUser(t, &fake)
 
 	if err := us.Add(u); err != nil {
 		t.Fatalf("failed to create user: %q", err)
@@ -343,15 +347,17 @@ func TestBookmarkService(t *testing.T) {
 
 func TestQueryingService(t *testing.T) {
 	ctx := context.Background()
-	pool := createAndMigrateTestDatabase(t, ctx)
-	r := postgresql.NewRepository(pool)
+	pool := pgbase.CreateAndMigrateTestDatabase(t, ctx)
+	r := pgbookmark.NewRepository(pool)
 	bs := bookmark.NewService(r)
 	qs := bookmarkquerying.NewService(r)
-	us := user.NewService(r)
+
+	ur := pguser.NewRepository(pool)
+	us := user.NewService(ur)
 
 	fake := faker.New()
 
-	u := generateFakeUser(t, &fake)
+	u := pgbase.GenerateFakeUser(t, &fake)
 
 	if err := us.Add(u); err != nil {
 		t.Fatalf("failed to create user: %q", err)

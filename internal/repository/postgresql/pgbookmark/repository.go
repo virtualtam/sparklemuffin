@@ -1,7 +1,7 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package postgresql
+package pgbookmark
 
 import (
 	"context"
@@ -10,6 +10,9 @@ import (
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
@@ -20,6 +23,16 @@ var _ bookmark.Repository = &Repository{}
 var _ bookmarkexporting.Repository = &Repository{}
 var _ bookmarkimporting.Repository = &Repository{}
 var _ bookmarkquerying.Repository = &Repository{}
+
+type Repository struct {
+	*pgbase.Repository
+}
+
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	return &Repository{
+		Repository: pgbase.NewRepository(pool),
+	}
+}
 
 func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
 	query := `
@@ -63,7 +76,7 @@ func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
 		"updated_at":            b.UpdatedAt,
 	}
 
-	return r.queryTx("bookmarks", "BookmarkAdd", query, args)
+	return r.QueryTx("bookmarks", "BookmarkAdd", query, args)
 }
 
 func (r *Repository) BookmarkAddMany(bookmarks []bookmark.Bookmark) (int64, error) {
@@ -90,12 +103,12 @@ SET
 func (r *Repository) BookmarkDelete(userUUID, uid string) error {
 	ctx := context.Background()
 
-	tx, err := r.pool.Begin(ctx)
+	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer r.rollback(ctx, tx, "bookmarks", "BookmarkDelete")
+	defer r.Rollback(ctx, tx, "bookmarks", "BookmarkDelete")
 
 	commandTag, err := tx.Exec(
 		context.Background(),
@@ -212,7 +225,7 @@ func (r *Repository) BookmarkGetCount(userUUID string, visibility bookmarkqueryi
 
 	var count uint
 
-	err := r.pool.QueryRow(
+	err := r.Pool.QueryRow(
 		context.Background(),
 		query,
 		userUUID,
@@ -303,9 +316,9 @@ func (r *Repository) BookmarkSearchCount(userUUID string, visibility bookmarkque
 	}
 
 	var count uint
-	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
 
-	err := r.pool.QueryRow(
+	err := r.Pool.QueryRow(
 		context.Background(),
 		query,
 		userUUID,
@@ -352,7 +365,7 @@ func (r *Repository) BookmarkSearchN(userUUID string, visibility bookmarkqueryin
 		LIMIT $3 OFFSET $4`
 	}
 
-	fullTextSearchTerms := fullTextSearchReplacer.Replace(searchTerms)
+	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
 
 	return r.bookmarkGetManyQuery(
 		query,
@@ -364,7 +377,7 @@ func (r *Repository) BookmarkSearchN(userUUID string, visibility bookmarkqueryin
 }
 
 func (r *Repository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {
-	return r.rowExistsByQuery(
+	return r.RowExistsByQuery(
 		"SELECT 1 FROM bookmarks WHERE user_uuid=$1 AND url=$2",
 		userUUID,
 		url,
@@ -372,7 +385,7 @@ func (r *Repository) BookmarkIsURLRegistered(userUUID, url string) (bool, error)
 }
 
 func (r *Repository) BookmarkIsURLRegisteredToAnotherUID(userUUID, url, uid string) (bool, error) {
-	return r.rowExistsByQuery(
+	return r.RowExistsByQuery(
 		"SELECT 1 FROM bookmarks WHERE user_uuid=$1 AND url=$2 AND uid!=$3",
 		userUUID,
 		url,
@@ -413,7 +426,7 @@ func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
 		"updated_at":            b.UpdatedAt,
 	}
 
-	return r.queryTx("bookmarks", "BookmarkUpdate", query, args)
+	return r.QueryTx("bookmarks", "BookmarkUpdate", query, args)
 }
 
 func (r *Repository) OwnerGetByUUID(userUUID string) (bookmarkquerying.Owner, error) {
@@ -422,9 +435,9 @@ func (r *Repository) OwnerGetByUUID(userUUID string) (bookmarkquerying.Owner, er
 	FROM users
 	WHERE uuid=$1`
 
-	dbUser := &DBUser{}
+	dbUser := &pguser.DBUser{}
 
-	rows, err := r.pool.Query(
+	rows, err := r.Pool.Query(
 		context.Background(),
 		query,
 		userUUID,
@@ -486,7 +499,7 @@ func (r *Repository) BookmarkTagGetCount(userUUID string, visibility bookmarkque
 
 	var count uint
 
-	err := r.pool.QueryRow(
+	err := r.Pool.QueryRow(
 		context.Background(),
 		query,
 		userUUID,
@@ -626,7 +639,7 @@ func (r *Repository) BookmarkTagFilterCount(userUUID string, visibility bookmark
 
 	var count uint
 
-	err := r.pool.QueryRow(
+	err := r.Pool.QueryRow(
 		context.Background(),
 		query,
 		userUUID,

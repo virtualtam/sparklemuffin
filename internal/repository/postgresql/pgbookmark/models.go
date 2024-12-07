@@ -1,13 +1,14 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package postgresql
+package pgbookmark
 
 import (
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
@@ -32,8 +33,8 @@ func bookmarkToFullTextSearchString(b bookmark.Bookmark) string {
 	return fmt.Sprintf(
 		"%s %s %s",
 		b.Title,
-		fullTextSearchReplacer.Replace(b.Description),
-		fullTextSearchReplacer.Replace(strings.Join(b.Tags, " ")),
+		pgbase.FullTextSearchReplacer.Replace(b.Description),
+		pgbase.FullTextSearchReplacer.Replace(strings.Join(b.Tags, " ")),
 	)
 }
 

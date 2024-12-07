@@ -1,31 +1,30 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package postgresql
+package pguser
 
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
-type DBUser struct {
-	UUID         string `db:"uuid"`
-	Email        string `db:"email"`
-	NickName     string `db:"nick_name"`
-	DisplayName  string `db:"display_name"`
-	PasswordHash string `db:"password_hash"`
-	IsAdmin      bool   `db:"is_admin"`
+var _ user.Repository = &Repository{}
 
-	CreatedAt time.Time `db:"created_at"`
-	UpdatedAt time.Time `db:"updated_at"`
+type Repository struct {
+	*pgbase.Repository
 }
 
-var _ user.Repository = &Repository{}
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	return &Repository{
+		Repository: pgbase.NewRepository(pool),
+	}
+}
 
 func (r *Repository) UserAdd(u user.User) error {
 	query := `
@@ -61,18 +60,18 @@ func (r *Repository) UserAdd(u user.User) error {
 		"updated_at":    u.UpdatedAt,
 	}
 
-	return r.queryTx("users", "UserAdd", query, args)
+	return r.QueryTx("users", "UserAdd", query, args)
 }
 
 func (r *Repository) UserDeleteByUUID(userUUID string) error {
 	ctx := context.Background()
 
-	tx, err := r.pool.Begin(ctx)
+	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer r.rollback(ctx, tx, "users", "delete")
+	defer r.Rollback(ctx, tx, "users", "delete")
 
 	commandTag, err := tx.Exec(
 		context.Background(),
@@ -97,7 +96,7 @@ func (r *Repository) UserGetAll() ([]user.User, error) {
 	SELECT uuid, email, nick_name, display_name, is_admin, created_at, updated_at
 	FROM users`
 
-	rows, err := r.pool.Query(context.Background(), query)
+	rows, err := r.Pool.Query(context.Background(), query)
 	if err != nil {
 		return []user.User{}, err
 	}
@@ -129,7 +128,7 @@ func (r *Repository) UserGetAll() ([]user.User, error) {
 }
 
 func (r *Repository) userGetByQuery(query string, queryParams ...any) (user.User, error) {
-	rows, err := r.pool.Query(
+	rows, err := r.Pool.Query(
 		context.Background(),
 		query,
 		queryParams...,
@@ -190,14 +189,14 @@ func (r *Repository) UserGetByUUID(userUUID string) (user.User, error) {
 }
 
 func (r *Repository) UserIsEmailRegistered(email string) (bool, error) {
-	return r.rowExistsByQuery(
+	return r.RowExistsByQuery(
 		"SELECT 1 FROM users WHERE email=$1",
 		email,
 	)
 }
 
 func (r *Repository) UserIsNickNameRegistered(nick string) (bool, error) {
-	return r.rowExistsByQuery(
+	return r.RowExistsByQuery(
 		"SELECT 1 FROM users WHERE nick_name=$1",
 		nick,
 	)
@@ -225,7 +224,7 @@ func (r *Repository) UserUpdate(u user.User) error {
 		"updated_at":    u.UpdatedAt,
 	}
 
-	return r.queryTx("users", "UserUpdate", query, args)
+	return r.QueryTx("users", "UserUpdate", query, args)
 }
 
 func (r *Repository) UserUpdateInfo(info user.InfoUpdate) error {
@@ -246,7 +245,7 @@ func (r *Repository) UserUpdateInfo(info user.InfoUpdate) error {
 		"updated_at":   info.UpdatedAt,
 	}
 
-	return r.queryTx("users", "UserUpdateInfo", query, args)
+	return r.QueryTx("users", "UserUpdateInfo", query, args)
 }
 
 func (r *Repository) UserUpdatePasswordHash(passwordHash user.PasswordHashUpdate) error {
@@ -263,5 +262,5 @@ func (r *Repository) UserUpdatePasswordHash(passwordHash user.PasswordHashUpdate
 		"updated_at":    passwordHash.UpdatedAt,
 	}
 
-	return r.queryTx("users", "UserUpdatePasswordHash", query, args)
+	return r.QueryTx("users", "UserUpdatePasswordHash", query, args)
 }

@@ -29,16 +29,17 @@ type SubscribedFeedEntry struct {
 	Read      bool
 }
 
-type SubscriptionTitle struct {
-	SubscriptionUUID  string
-	SubscriptionAlias string
-	CategoryUUID      string
-	FeedTitle         string
-	FeedDescription   string
+type Subscription struct {
+	UUID         string
+	CategoryUUID string
+	Alias        string
+
+	FeedTitle       string
+	FeedDescription string
 }
 
-type SubscriptionsTitlesByCategory struct {
+type SubscriptionsByCategory struct {
 	feed.Category
 
-	SubscriptionTitles []SubscriptionTitle
+	Subscriptions []Subscription
 }

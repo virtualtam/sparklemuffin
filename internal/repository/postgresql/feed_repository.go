@@ -922,7 +922,7 @@ func (r *Repository) FeedSubscriptionUpdate(s feed.Subscription) error {
 	return r.queryTx("feeds", "FeedSubscriptionUpdate", query, args)
 }
 
-func (r *Repository) FeedSubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (feedquerying.SubscriptionTitle, error) {
+func (r *Repository) FeedQueryingSubscriptionByUUID(userUUID string, subscriptionUUID string) (feedquerying.Subscription, error) {
 	query := `
 	SELECT fs.uuid, fs.alias, fs.category_uuid, f.title, f.description
 	FROM   feed_subscriptions fs
@@ -933,29 +933,29 @@ func (r *Repository) FeedSubscriptionTitleByUUID(userUUID string, subscriptionUU
 	return r.feedSubscriptionTitleGetQuery(query, userUUID, subscriptionUUID)
 }
 
-func (r *Repository) FeedSubscriptionTitlesByCategory(userUUID string) ([]feedquerying.SubscriptionsTitlesByCategory, error) {
+func (r *Repository) FeedQueryingSubscriptionsByCategory(userUUID string) ([]feedquerying.SubscriptionsByCategory, error) {
 	dbCategories, err := r.feedGetCategories(userUUID)
 	if err != nil {
-		return []feedquerying.SubscriptionsTitlesByCategory{}, err
+		return []feedquerying.SubscriptionsByCategory{}, err
 	}
 
-	categories := make([]feedquerying.SubscriptionsTitlesByCategory, len(dbCategories))
+	categories := make([]feedquerying.SubscriptionsByCategory, len(dbCategories))
 
 	for i, dbCategory := range dbCategories {
 		dbSubscriptionTitles, err := r.feedGetSubscriptionTitlesByCategory(userUUID, dbCategory.UUID)
 		if err != nil {
-			return []feedquerying.SubscriptionsTitlesByCategory{}, err
+			return []feedquerying.SubscriptionsByCategory{}, err
 		}
 
-		subscriptionTitles := make([]feedquerying.SubscriptionTitle, len(dbSubscriptionTitles))
+		subscriptionTitles := make([]feedquerying.Subscription, len(dbSubscriptionTitles))
 
 		for j, dbSubscriptionTitle := range dbSubscriptionTitles {
-			subscriptionTitles[j] = dbSubscriptionTitle.asSubscriptionTitle()
+			subscriptionTitles[j] = dbSubscriptionTitle.asQueryingSubscription()
 		}
 
-		category := feedquerying.SubscriptionsTitlesByCategory{
-			Category:           dbCategory.asCategory(),
-			SubscriptionTitles: subscriptionTitles,
+		category := feedquerying.SubscriptionsByCategory{
+			Category:      dbCategory.asCategory(),
+			Subscriptions: subscriptionTitles,
 		}
 
 		categories[i] = category

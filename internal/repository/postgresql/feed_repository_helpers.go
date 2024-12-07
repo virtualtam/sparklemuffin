@@ -263,27 +263,27 @@ func (r *Repository) feedSubscriptionGetQuery(query string, queryParams ...any) 
 	return dbSubscription.asSubscription(), nil
 }
 
-func (r *Repository) feedSubscriptionTitleGetQuery(query string, queryParams ...any) (feedquerying.SubscriptionTitle, error) {
+func (r *Repository) feedSubscriptionTitleGetQuery(query string, queryParams ...any) (feedquerying.Subscription, error) {
 	rows, err := r.pool.Query(context.Background(), query, queryParams...)
 	if err != nil {
-		return feedquerying.SubscriptionTitle{}, err
+		return feedquerying.Subscription{}, err
 	}
 	defer rows.Close()
 
-	dbSubscriptionTitle := &DBSubscriptionTitle{}
+	dbSubscriptionTitle := &DBQueryingSubscription{}
 	err = pgxscan.ScanOne(dbSubscriptionTitle, rows)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return feedquerying.SubscriptionTitle{}, feed.ErrSubscriptionNotFound
+		return feedquerying.Subscription{}, feed.ErrSubscriptionNotFound
 	}
 	if err != nil {
-		return feedquerying.SubscriptionTitle{}, err
+		return feedquerying.Subscription{}, err
 	}
 
-	return dbSubscriptionTitle.asSubscriptionTitle(), nil
+	return dbSubscriptionTitle.asQueryingSubscription(), nil
 }
 
-func (r *Repository) feedGetSubscriptionTitlesByCategory(userUUID string, categoryUUID string) ([]DBSubscriptionTitle, error) {
+func (r *Repository) feedGetSubscriptionTitlesByCategory(userUUID string, categoryUUID string) ([]DBQueryingSubscription, error) {
 	query := `
 SELECT
     fs.uuid,
@@ -303,14 +303,14 @@ ORDER BY
 
 	rows, err := r.pool.Query(context.Background(), query, userUUID, categoryUUID)
 	if err != nil {
-		return []DBSubscriptionTitle{}, err
+		return []DBQueryingSubscription{}, err
 	}
 	defer rows.Close()
 
-	dbSubscriptionTitles := []DBSubscriptionTitle{}
+	dbSubscriptionTitles := []DBQueryingSubscription{}
 
 	if err := pgxscan.ScanAll(&dbSubscriptionTitles, rows); err != nil {
-		return []DBSubscriptionTitle{}, err
+		return []DBQueryingSubscription{}, err
 	}
 
 	return dbSubscriptionTitles, nil

@@ -575,7 +575,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionListView() func(w http.Respo
 func (fc *feedHandlerContext) handleFeedSubscriptionDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionTitleFormContent struct {
 		CSRFToken         string
-		SubscriptionTitle feedquerying.SubscriptionTitle
+		SubscriptionTitle feedquerying.Subscription
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -642,7 +642,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionDelete() func(w http.Respons
 func (fc *feedHandlerContext) handleFeedSubscriptionEditView() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionEditFormContent struct {
 		CSRFToken         string
-		SubscriptionTitle feedquerying.SubscriptionTitle
+		SubscriptionTitle feedquerying.Subscription
 		Categories        []feed.Category
 	}
 

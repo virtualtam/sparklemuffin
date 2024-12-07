@@ -327,10 +327,10 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(userUUI
 	return []SubscribedFeedEntry{}, errors.New("not implemented")
 }
 
-func (r *fakeRepository) FeedSubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (SubscriptionTitle, error) {
-	return SubscriptionTitle{}, errors.New("not implemented")
+func (r *fakeRepository) FeedQueryingSubscriptionByUUID(userUUID string, subscriptionUUID string) (Subscription, error) {
+	return Subscription{}, errors.New("not implemented")
 }
 
-func (r *fakeRepository) FeedSubscriptionTitlesByCategory(userUUID string) ([]SubscriptionsTitlesByCategory, error) {
-	return []SubscriptionsTitlesByCategory{}, errors.New("not implemented")
+func (r *fakeRepository) FeedQueryingSubscriptionsByCategory(userUUID string) ([]SubscriptionsByCategory, error) {
+	return []SubscriptionsByCategory{}, errors.New("not implemented")
 }

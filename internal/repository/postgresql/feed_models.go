@@ -204,20 +204,21 @@ func (s *DBSubscription) asSubscription() feed.Subscription {
 	}
 }
 
-type DBSubscriptionTitle struct {
+type DBQueryingSubscription struct {
 	SubscriptionUUID  string `db:"uuid"`
 	SubscriptionAlias string `db:"alias"`
 	CategoryUUID      string `db:"category_uuid"`
-	FeedTitle         string `db:"title"`
-	FeedDescription   string `db:"description"`
+
+	FeedTitle       string `db:"title"`
+	FeedDescription string `db:"description"`
 }
 
-func (st *DBSubscriptionTitle) asSubscriptionTitle() feedquerying.SubscriptionTitle {
-	return feedquerying.SubscriptionTitle{
-		SubscriptionUUID:  st.SubscriptionUUID,
-		SubscriptionAlias: st.SubscriptionAlias,
-		CategoryUUID:      st.CategoryUUID,
-		FeedTitle:         st.FeedTitle,
-		FeedDescription:   st.FeedDescription,
+func (s *DBQueryingSubscription) asQueryingSubscription() feedquerying.Subscription {
+	return feedquerying.Subscription{
+		UUID:            s.SubscriptionUUID,
+		Alias:           s.SubscriptionAlias,
+		CategoryUUID:    s.CategoryUUID,
+		FeedTitle:       s.FeedTitle,
+		FeedDescription: s.FeedDescription,
 	}
 }

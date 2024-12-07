@@ -201,10 +201,10 @@ func (s *Service) FeedsBySubscriptionAndQueryAndPage(userUUID string, subscripti
 	return s.feedsByQueryAndPage(userUUID, query, number, getCountFn, subscriptionEntryGetNFn, feed.Title, feed.Description)
 }
 
-func (s *Service) SubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (SubscriptionTitle, error) {
-	return s.r.FeedSubscriptionTitleByUUID(userUUID, subscriptionUUID)
+func (s *Service) SubscriptionTitleByUUID(userUUID string, subscriptionUUID string) (Subscription, error) {
+	return s.r.FeedQueryingSubscriptionByUUID(userUUID, subscriptionUUID)
 }
 
-func (s *Service) SubscriptionTitlesByCategory(userUUID string) ([]SubscriptionsTitlesByCategory, error) {
-	return s.r.FeedSubscriptionTitlesByCategory(userUUID)
+func (s *Service) SubscriptionTitlesByCategory(userUUID string) ([]SubscriptionsByCategory, error) {
+	return s.r.FeedQueryingSubscriptionsByCategory(userUUID)
 }

@@ -224,7 +224,7 @@ func (fc *feedHandlerContext) handleFeedListView(
 				return
 			}
 
-			viewData.Title = fmt.Sprintf("Feeds: %s", feedPage.Header)
+			viewData.Title = fmt.Sprintf("Feeds: %s", feedPage.PageTitle)
 			feedQueryingPage.FeedPage = feedPage
 		} else {
 			feedPage, err := feedsByQueryAndPage(r, user, searchQuery, pageNumber)
@@ -235,7 +235,7 @@ func (fc *feedHandlerContext) handleFeedListView(
 				return
 			}
 
-			viewData.Title = fmt.Sprintf("Feed search in %s: %q", feedPage.Header, searchQuery)
+			viewData.Title = fmt.Sprintf("Feed search in %s: %q", feedPage.PageTitle, searchQuery)
 			feedQueryingPage.FeedPage = feedPage
 		}
 

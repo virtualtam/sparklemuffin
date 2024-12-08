@@ -167,6 +167,16 @@ func (r *fakeRepository) FeedSubscriptionGetByUUID(userUUID string, subscription
 	return feed.Subscription{}, feed.ErrSubscriptionNotFound
 }
 
+func (r *fakeRepository) feedSubscriptionGetByFeed(userUUID string, feedUUID string) (feed.Subscription, error) {
+	for _, subscription := range r.Subscriptions {
+		if subscription.UserUUID == userUUID && subscription.FeedUUID == feedUUID {
+			return subscription, nil
+		}
+	}
+
+	return feed.Subscription{}, feed.ErrSubscriptionNotFound
+}
+
 func (r *fakeRepository) FeedEntryGetCountBySubscription(userUUID string, subscriptionUUID string) (uint, error) {
 	var count uint
 
@@ -186,10 +196,15 @@ func (r *fakeRepository) FeedEntryGetCountBySubscription(userUUID string, subscr
 	return count, nil
 }
 
-func (r *fakeRepository) subscribedFeedEntryGetByFeed(feedUUID string) ([]SubscribedFeedEntry, error) {
+func (r *fakeRepository) subscribedFeedEntryGetByFeed(userUUID string, feedUUID string) ([]SubscribedFeedEntry, error) {
 	var subscriptionEntries []SubscribedFeedEntry
 
 	f, err := r.FeedGetByUUID(feedUUID)
+	if err != nil {
+		return []SubscribedFeedEntry{}, err
+	}
+
+	subscription, err := r.feedSubscriptionGetByFeed(userUUID, feedUUID)
 	if err != nil {
 		return []SubscribedFeedEntry{}, err
 	}
@@ -209,9 +224,10 @@ func (r *fakeRepository) subscribedFeedEntryGetByFeed(feedUUID string) ([]Subscr
 		}
 
 		subscriptionEntry := SubscribedFeedEntry{
-			Entry:     entry,
-			FeedTitle: f.Title,
-			Read:      read,
+			Entry:             entry,
+			SubscriptionAlias: subscription.Alias,
+			FeedTitle:         f.Title,
+			Read:              read,
 		}
 
 		subscriptionEntries = append(subscriptionEntries, subscriptionEntry)
@@ -228,7 +244,7 @@ func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, n uint, offs
 			continue
 		}
 
-		subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(subscription.FeedUUID)
+		subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(userUUID, subscription.FeedUUID)
 		if err != nil {
 			return []SubscribedFeedEntry{}, err
 		}
@@ -264,7 +280,7 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, ca
 			continue
 		}
 
-		subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(subscription.FeedUUID)
+		subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(userUUID, subscription.FeedUUID)
 		if err != nil {
 			return []SubscribedFeedEntry{}, err
 		}
@@ -294,7 +310,7 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscription(userUUID string
 		return []SubscribedFeedEntry{}, err
 	}
 
-	subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(subscription.FeedUUID)
+	subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(userUUID, subscription.FeedUUID)
 	if err != nil {
 		return []SubscribedFeedEntry{}, err
 	}

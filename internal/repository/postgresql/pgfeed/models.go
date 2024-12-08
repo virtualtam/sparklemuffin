@@ -139,15 +139,17 @@ func (em *DBEntryMetadata) asEntryMetadata() feed.EntryMetadata {
 type DBQueryingSubscribedFeedEntry struct {
 	DBEntry
 
-	FeedTitle string `db:"feed_title"`
-	Read      bool   `db:"read"`
+	SubscriptionAlias string `db:"subscription_alias"`
+	FeedTitle         string `db:"feed_title"`
+	Read              bool   `db:"read"`
 }
 
 func (qe *DBQueryingSubscribedFeedEntry) asQueryingSubscribedFeedEntry() feedquerying.SubscribedFeedEntry {
 	return feedquerying.SubscribedFeedEntry{
-		Entry:     qe.asEntry(),
-		FeedTitle: qe.FeedTitle,
-		Read:      qe.Read,
+		Entry:             qe.asEntry(),
+		SubscriptionAlias: qe.SubscriptionAlias,
+		FeedTitle:         qe.FeedTitle,
+		Read:              qe.Read,
 	}
 }
 

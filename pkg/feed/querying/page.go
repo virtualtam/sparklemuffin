@@ -14,7 +14,7 @@ type FeedPage struct {
 	SearchTerms       string
 	SearchResultCount uint
 
-	Header      string
+	PageTitle   string
 	Description string
 	Unread      uint
 	Categories  []SubscribedFeedsByCategory
@@ -22,7 +22,7 @@ type FeedPage struct {
 }
 
 // NewFeedPage initializes and returns a new FeedPage.
-func NewFeedPage(number uint, totalPages uint, header string, description string, categories []SubscribedFeedsByCategory, entries []SubscribedFeedEntry) FeedPage {
+func NewFeedPage(number uint, totalPages uint, pageTitle string, description string, categories []SubscribedFeedsByCategory, entries []SubscribedFeedEntry) FeedPage {
 	var unread uint
 
 	for _, category := range categories {
@@ -32,7 +32,7 @@ func NewFeedPage(number uint, totalPages uint, header string, description string
 	page := FeedPage{
 		PageNumber:  number,
 		TotalPages:  totalPages,
-		Header:      header,
+		PageTitle:   pageTitle,
 		Description: description,
 		Unread:      unread,
 		Categories:  categories,
@@ -57,8 +57,8 @@ func NewFeedPage(number uint, totalPages uint, header string, description string
 }
 
 // NewFeedSearchResultPage initializes and returns a new FeedPage containing search results.
-func NewFeedSearchResultPage(searchTerms string, searchResultCount uint, number uint, totalPages uint, header string, description string, categories []SubscribedFeedsByCategory, entries []SubscribedFeedEntry) FeedPage {
-	page := NewFeedPage(number, totalPages, header, description, categories, entries)
+func NewFeedSearchResultPage(searchTerms string, searchResultCount uint, number uint, totalPages uint, pageTitle, description string, categories []SubscribedFeedsByCategory, entries []SubscribedFeedEntry) FeedPage {
+	page := NewFeedPage(number, totalPages, pageTitle, description, categories, entries)
 
 	page.SearchTerms = searchTerms
 	page.SearchResultCount = searchResultCount

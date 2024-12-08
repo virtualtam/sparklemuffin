@@ -35,7 +35,7 @@ func (s *Service) feedsByPage(
 	number uint,
 	getCount getCountCallback,
 	subscriptionEntryGetN subscriptionEntryGetNCallback,
-	pageHeader string,
+	pageTitle string,
 	pageDescription string,
 ) (FeedPage, error) {
 	if number < 1 {
@@ -60,7 +60,7 @@ func (s *Service) feedsByPage(
 
 	if len(categories) == 0 {
 		// early return: nothing to display
-		return NewFeedPage(1, 1, pageHeader, pageDescription, []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{}), nil
+		return NewFeedPage(1, 1, pageTitle, pageDescription, []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{}), nil
 	}
 
 	offset := (number - 1) * entriesPerPage
@@ -70,7 +70,7 @@ func (s *Service) feedsByPage(
 		return FeedPage{}, err
 	}
 
-	return NewFeedPage(number, totalPages, pageHeader, pageDescription, categories, entries), nil
+	return NewFeedPage(number, totalPages, pageTitle, pageDescription, categories, entries), nil
 }
 
 // FeedsByPage returns a Page containing a limited and offset number of feeds.
@@ -114,7 +114,12 @@ func (s *Service) FeedsBySubscriptionAndPage(userUUID string, subscription feed.
 		return FeedPage{}, err
 	}
 
-	return s.feedsByPage(userUUID, number, getCountFn, subscriptionEntryGetNFn, feed.Title, feed.Description)
+	pageTitle := feed.Title
+	if subscription.Alias != "" {
+		pageTitle = subscription.Alias
+	}
+
+	return s.feedsByPage(userUUID, number, getCountFn, subscriptionEntryGetNFn, pageTitle, feed.Description)
 }
 
 func (s *Service) feedsByQueryAndPage(
@@ -123,7 +128,7 @@ func (s *Service) feedsByQueryAndPage(
 	number uint,
 	getCount getCountCallback,
 	subscriptionEntryGetN subscriptionEntryGetNCallback,
-	pageHeader string,
+	pageTitle string,
 	pageDescription string,
 ) (FeedPage, error) {
 	if number < 1 {
@@ -158,7 +163,7 @@ func (s *Service) feedsByQueryAndPage(
 		return FeedPage{}, err
 	}
 
-	return NewFeedSearchResultPage(query, entryCount, number, totalPages, pageHeader, pageDescription, categories, entries), nil
+	return NewFeedSearchResultPage(query, entryCount, number, totalPages, pageTitle, pageDescription, categories, entries), nil
 }
 
 func (s *Service) FeedsByQueryAndPage(userUUID string, query string, number uint) (FeedPage, error) {
@@ -198,7 +203,12 @@ func (s *Service) FeedsBySubscriptionAndQueryAndPage(userUUID string, subscripti
 		return FeedPage{}, err
 	}
 
-	return s.feedsByQueryAndPage(userUUID, query, number, getCountFn, subscriptionEntryGetNFn, feed.Title, feed.Description)
+	pageTitle := feed.Title
+	if subscription.Alias != "" {
+		pageTitle = subscription.Alias
+	}
+
+	return s.feedsByQueryAndPage(userUUID, query, number, getCountFn, subscriptionEntryGetNFn, pageTitle, feed.Description)
 }
 
 func (s *Service) SubscriptionByUUID(userUUID string, subscriptionUUID string) (Subscription, error) {

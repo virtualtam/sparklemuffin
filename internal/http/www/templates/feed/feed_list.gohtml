@@ -33,7 +33,7 @@
   <div class="feed-entry-list">
     <div class="feed-title">
       <div>
-        <h3>{{.Header}}</h3>
+        <h3>{{.PageTitle}}</h3>
         {{with .Description}}
         <p class="feed-title-description">{{.}}</p>
         {{end}}
@@ -53,7 +53,7 @@
       {{- range .Entries}}
       <li>
         <div class="feed-entry{{if .Read}} feed-entry-read{{end}}">
-          <div class="feed-entry-feed-title">{{ .FeedTitle }}</div>
+          <div class="feed-entry-feed-title">{{ or .SubscriptionAlias .FeedTitle }}</div>
           <div>
             <div class="title">
               <a href="{{.URL}}">{{.Title}}</a>

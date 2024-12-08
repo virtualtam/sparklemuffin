@@ -60,6 +60,7 @@ func TestService(t *testing.T) {
 		CategoryUUID: user1Category1.UUID,
 		FeedUUID:     feed1.UUID,
 		UserUUID:     user1.UUID,
+		Alias:        "Feed #1",
 	}
 
 	user1Feed1Entry2Metadata := feed.EntryMetadata{
@@ -108,7 +109,7 @@ func TestService(t *testing.T) {
 					NextPageNumber:     1,
 					TotalPages:         1,
 					Offset:             1,
-					Header:             PageHeaderAll,
+					PageTitle:          PageHeaderAll,
 				},
 			},
 			{
@@ -122,8 +123,8 @@ func TestService(t *testing.T) {
 					TotalPages:         1,
 					Offset:             1,
 
-					Header: PageHeaderAll,
-					Unread: 1,
+					PageTitle: PageHeaderAll,
+					Unread:    1,
 
 					Categories: []SubscribedFeedsByCategory{
 						{
@@ -142,14 +143,16 @@ func TestService(t *testing.T) {
 					},
 					Entries: []SubscribedFeedEntry{
 						{
-							Entry:     feed1Entry1,
-							FeedTitle: feed1.Title,
-							Read:      false,
+							Entry:             feed1Entry1,
+							SubscriptionAlias: user1Subscription1.Alias,
+							FeedTitle:         feed1.Title,
+							Read:              false,
 						},
 						{
-							Entry:     feed1Entry2,
-							FeedTitle: feed1.Title,
-							Read:      true,
+							Entry:             feed1Entry2,
+							SubscriptionAlias: user1Subscription1.Alias,
+							FeedTitle:         feed1.Title,
+							Read:              true,
 						},
 					},
 				},
@@ -215,8 +218,8 @@ func TestService(t *testing.T) {
 					TotalPages:         1,
 					Offset:             1,
 
-					Header: "Empty Category",
-					Unread: 1,
+					PageTitle: "Empty Category",
+					Unread:    1,
 
 					Categories: []SubscribedFeedsByCategory{
 						{
@@ -247,8 +250,8 @@ func TestService(t *testing.T) {
 					TotalPages:         1,
 					Offset:             1,
 
-					Header: "Test Category",
-					Unread: 1,
+					PageTitle: "Test Category",
+					Unread:    1,
 
 					Categories: []SubscribedFeedsByCategory{
 						{
@@ -267,14 +270,16 @@ func TestService(t *testing.T) {
 					},
 					Entries: []SubscribedFeedEntry{
 						{
-							Entry:     feed1Entry1,
-							FeedTitle: feed1.Title,
-							Read:      false,
+							Entry:             feed1Entry1,
+							SubscriptionAlias: user1Subscription1.Alias,
+							FeedTitle:         feed1.Title,
+							Read:              false,
 						},
 						{
-							Entry:     feed1Entry2,
-							FeedTitle: feed1.Title,
-							Read:      true,
+							Entry:             feed1Entry2,
+							SubscriptionAlias: user1Subscription1.Alias,
+							FeedTitle:         feed1.Title,
+							Read:              true,
 						},
 					},
 				},
@@ -343,8 +348,8 @@ func TestService(t *testing.T) {
 					TotalPages:         1,
 					Offset:             1,
 
-					Header: "Local Test",
-					Unread: 1,
+					PageTitle: "Local Test",
+					Unread:    1,
 
 					Categories: []SubscribedFeedsByCategory{
 						{
@@ -364,14 +369,16 @@ func TestService(t *testing.T) {
 
 					Entries: []SubscribedFeedEntry{
 						{
-							Entry:     feed1Entry1,
-							FeedTitle: feed1.Title,
-							Read:      false,
+							Entry:             feed1Entry1,
+							FeedTitle:         feed1.Title,
+							SubscriptionAlias: user1Subscription1.Alias,
+							Read:              false,
 						},
 						{
-							Entry:     feed1Entry2,
-							FeedTitle: feed1.Title,
-							Read:      true,
+							Entry:             feed1Entry2,
+							SubscriptionAlias: user1Subscription1.Alias,
+							FeedTitle:         feed1.Title,
+							Read:              true,
 						},
 					},
 				},

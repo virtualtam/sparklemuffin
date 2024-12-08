@@ -30,8 +30,8 @@ func AssertPageEquals(t *testing.T, got, want FeedPage) {
 		t.Errorf("want Offset %d, got %d", want.Offset, got.Offset)
 	}
 
-	if got.Header != want.Header {
-		t.Errorf("want Header %q, got %q", want.Header, got.Header)
+	if got.PageTitle != want.PageTitle {
+		t.Errorf("want Header %q, got %q", want.PageTitle, got.PageTitle)
 	}
 	if got.Description != want.Description {
 		t.Errorf("want Description %q, got %q", want.Description, got.Description)
@@ -99,6 +99,9 @@ func AssertSubscriptionEntriesEqual(t *testing.T, got []SubscribedFeedEntry, wan
 		assert.TimeAlmostEquals(t, fmt.Sprintf("Entry %d UpdatedAt", i), gotEntry.UpdatedAt, wantEntry.UpdatedAt, assert.TimeComparisonDelta)
 
 		// querying.SubscribedFeedEntry fields
+		if gotEntry.SubscriptionAlias != wantEntry.SubscriptionAlias {
+			t.Errorf("want Entry %d SubscriptionAlias %q, got %q", i, wantEntry.SubscriptionAlias, gotEntry.SubscriptionAlias)
+		}
 		if gotEntry.FeedTitle != wantEntry.FeedTitle {
 			t.Errorf("want Entry %d FeedTitle %q, got %q", i, wantEntry.FeedTitle, gotEntry.FeedTitle)
 		}

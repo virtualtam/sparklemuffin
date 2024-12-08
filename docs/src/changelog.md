@@ -16,6 +16,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Split PostgreSQL repository into dedicated domain repositories
 - Update testcontainers configuration to use a tmpfs volume and disable WAL features to speed up integration tests
 
+#### Feeds
+- Update page title to display the subscription alias (if set) or the feed title
+- Update listed entries to display the subscription alias (if set) or the feed title
+
 #### WWW
 - Relocate HTTP packages to `internal/http`
 - Relocate version detection helpers to `internal/version`

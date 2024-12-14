@@ -5,8 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## [v0.4.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.0) - 2024-12-10
+## [v0.4.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.1) - 2024-12-14
+### Security
+- Bump `golang.org/x/crypto` to v0.31.0:
+    - [CVE-2024-45337](https://nvd.nist.gov/vuln/detail/CVE-2024-45337)
+    - [[security] Vulnerability in golang.org/x/crypto](https://groups.google.com/g/golang-announce/c/-nPEi39gI4Q)
 
+
+## [v0.4.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.0) - 2024-12-10
 ### Added
 #### Database
 - Add PostgreSQL integration tests for feed operations
@@ -26,14 +32,12 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 
 ## [v0.3.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.1) - 2024-12-07
-
 ### Fixed
 #### Feeds
 - Fix HTML templates after renaming querying models
 
 
 ## [v0.3.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.0) - 2024-12-07
-
 ### Added
 #### Database
 - Add dedicated tests for PostrgeSQL database migrations (up/down)

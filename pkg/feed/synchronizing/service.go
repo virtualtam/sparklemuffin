@@ -48,6 +48,11 @@ func (s *Service) Synchronize(jobID string) error {
 	// 1. List all feeds that have last been synchronized before a given time.Time
 	feeds, err := s.r.FeedGetNByLastSynchronizationTime(feedsToSynchronize, lastSyncBefore)
 	if err != nil {
+		log.
+			Error().
+			Err(err).
+			Str("job_id", jobID).
+			Msg("feeds: failed to list feeds to synchronize")
 		return err
 	}
 
@@ -93,6 +98,12 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 
 	feedStatus, err := s.client.Fetch(feed.FeedURL, feed.ETag, feed.LastModified)
 	if err != nil {
+		log.
+			Error().
+			Err(err).
+			Str("feed_url", feed.FeedURL).
+			Str("job_id", jobID).
+			Msg("feeds: failed to fetch feed")
 		return err
 	}
 
@@ -107,6 +118,12 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 	}
 
 	if err := s.r.FeedUpdateFetchMetadata(feedFetchMetadata); err != nil {
+		log.
+			Error().
+			Err(err).
+			Str("feed_url", feed.FeedURL).
+			Str("job_id", jobID).
+			Msg("feeds: failed to update fetch metadata")
 		return err
 	}
 
@@ -147,12 +164,24 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 		}
 
 		if err := s.r.FeedUpdateMetadata(feedMetadata); err != nil {
+			log.
+				Error().
+				Err(err).
+				Str("feed_url", feed.FeedURL).
+				Str("job_id", jobID).
+				Msg("feeds: failed to update metadata")
 			return err
 		}
 	}
 
 	rowsAffected, err := s.createOrUpdateEntries(feed, now, feedStatus.Feed.Items)
 	if err != nil {
+		log.
+			Error().
+			Err(err).
+			Str("feed_url", feed.FeedURL).
+			Str("job_id", jobID).
+			Msg("feeds: failed to create or update entries")
 		return err
 	}
 
@@ -187,6 +216,11 @@ func (s *Service) createOrUpdateEntries(f feed.Feed, now time.Time, items []*gof
 
 	rowsAffected, err := s.r.FeedEntryUpsertMany(entries)
 	if err != nil {
+		log.
+			Error().
+			Err(err).
+			Str("feed_uuid", f.UUID).
+			Msg("feeds: failed to create or update entries")
 		return 0, err
 	}
 

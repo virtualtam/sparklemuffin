@@ -12,6 +12,7 @@ import (
 
 	"github.com/cespare/xxhash/v2"
 	"github.com/mmcdole/gofeed"
+	"github.com/rs/zerolog/log"
 )
 
 // A Client performs outgoing HTTP requests to get remote feed data.
@@ -45,6 +46,11 @@ func (c *Client) Fetch(feedURL string, eTag string, lastModified time.Time) (Fee
 
 	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
 	if err != nil {
+		log.
+			Error().
+			Err(err).
+			Str("feed_url", feedURL).
+			Msg("feed: failed to create request")
 		return FeedStatus{}, err
 	}
 
@@ -60,6 +66,11 @@ func (c *Client) Fetch(feedURL string, eTag string, lastModified time.Time) (Fee
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		log.
+			Error().
+			Err(err).
+			Str("feed_url", feedURL).
+			Msg("feed: failed to perform request")
 		return FeedStatus{}, err
 	}
 
@@ -95,6 +106,11 @@ func (c *Client) Fetch(feedURL string, eTag string, lastModified time.Time) (Fee
 
 	parsedFeed, err := c.feedParser.Parse(teeReader)
 	if err != nil {
+		log.
+			Error().
+			Err(err).
+			Str("feed_url", feedURL).
+			Msg("feed: failed to parse feed")
 		return FeedStatus{}, err
 	}
 

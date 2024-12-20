@@ -574,8 +574,8 @@ func (fc *feedHandlerContext) handleFeedSubscriptionListView() func(w http.Respo
 // handleFeedSubscriptionDeleteView renders the feed subscription deletion form.
 func (fc *feedHandlerContext) handleFeedSubscriptionDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionTitleFormContent struct {
-		CSRFToken         string
-		SubscriptionTitle feedquerying.Subscription
+		CSRFToken    string
+		Subscription feedquerying.Subscription
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -583,7 +583,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionDeleteView() func(w http.Res
 		user := httpcontext.UserValue(r.Context())
 		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedSubscriptionDelete)
 
-		subscriptionTitle, err := fc.feedQueryingService.SubscriptionByUUID(user.UUID, subscriptionUUID)
+		subscription, err := fc.feedQueryingService.SubscriptionByUUID(user.UUID, subscriptionUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
 			view.PutFlashError(w, "failed to retrieve feed subscription")
@@ -593,10 +593,10 @@ func (fc *feedHandlerContext) handleFeedSubscriptionDeleteView() func(w http.Res
 
 		viewData := view.Data{
 			Content: feedSubscriptionTitleFormContent{
-				CSRFToken:         csrfToken,
-				SubscriptionTitle: subscriptionTitle,
+				CSRFToken:    csrfToken,
+				Subscription: subscription,
 			},
-			Title: fmt.Sprintf("Delete subscription: %s", subscriptionTitle.FeedTitle),
+			Title: fmt.Sprintf("Delete subscription: %s", subscription.FeedTitle),
 		}
 
 		fc.feedSubscriptionDeleteView.Render(w, r, viewData)

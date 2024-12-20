@@ -1,8 +1,8 @@
 {{define "content"}}
 <h2>Delete subscription</h2>
-<form action="/feeds/subscriptions/{{.SubscriptionTitle.SubscriptionUUID}}/delete" method="POST">
+<form action="/feeds/subscriptions/{{.Subscription.UUID}}/delete" method="POST">
   <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-  <p>Delete feed subscription: <strong>{{.SubscriptionTitle.FeedTitle}}</strong>?
+  <p>Delete feed subscription: <strong>{{.Subscription.FeedTitle}}</strong>?
   <p>
     <button type="submit">Delete</button>
   </p>

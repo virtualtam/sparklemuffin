@@ -7,10 +7,10 @@ require (
 	github.com/alecthomas/chroma/v2 v2.14.0
 	github.com/anyascii/go v0.3.2
 	github.com/cespare/xxhash/v2 v2.3.0
-	github.com/docker/docker v27.4.0+incompatible
+	github.com/docker/docker v27.4.1+incompatible
 	github.com/earthboundkid/versioninfo/v2 v2.24.1
 	github.com/georgysavva/scany/v2 v2.1.3
-	github.com/go-chi/chi/v5 v5.1.0
+	github.com/go-chi/chi/v5 v5.2.0
 	github.com/golang-migrate/migrate/v4 v4.18.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/feeds v1.2.0
@@ -35,8 +35,8 @@ require (
 	github.com/yuin/goldmark v1.7.8
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
 	golang.org/x/crypto v0.31.0
-	golang.org/x/exp v0.0.0-20241210194714-1829a127f884
-	golang.org/x/net v0.32.0
+	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
+	golang.org/x/net v0.33.0
 )
 
 require (
@@ -45,7 +45,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/PuerkitoBio/goquery v1.10.0 // indirect
-	github.com/andybalholm/cascadia v1.3.2 // indirect
+	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
@@ -112,7 +112,7 @@ require (
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
-	github.com/spf13/cast v1.7.0 // indirect
+	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
@@ -131,8 +131,8 @@ require (
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	google.golang.org/grpc v1.69.0 // indirect
-	google.golang.org/protobuf v1.35.2 // indirect
+	google.golang.org/grpc v1.69.2 // indirect
+	google.golang.org/protobuf v1.36.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

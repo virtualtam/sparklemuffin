@@ -239,6 +239,14 @@ func TestFeedService(t *testing.T) {
 		querying.AssertSubscribedFeedEntriesEqual(t, gotEntries, wantEntries)
 
 		// 3. Teardown
+		if err := fs.DeleteSubscription(testUser.UUID, gotSubscription.UUID); err != nil {
+			t.Fatalf("failed to delete subscription: %q", err)
+		}
+
+		if _, err := r.FeedGetByUUID(gotFeed.UUID); !errors.Is(err, feed.ErrFeedNotFound) {
+			t.Errorf("want ErrFeedNotFound, got %q", err)
+		}
+
 		if err := fs.DeleteCategory(testUser.UUID, category.UUID); err != nil {
 			t.Fatalf("failed to delete category: %q", err)
 		}

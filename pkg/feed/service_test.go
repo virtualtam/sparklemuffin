@@ -384,6 +384,15 @@ func TestServiceDeleteCategory(t *testing.T) {
 		if len(r.Subscriptions) != 0 {
 			t.Fatalf("want 0 Subscriptions, got %d", len(r.Subscriptions))
 		}
+
+		// Ensure the subscription deletion is propagated to feeds
+		// and entries (each feed only has one subscription)
+		if len(r.Feeds) != 0 {
+			t.Fatalf("want 0 Feeds, got %d", len(r.Feeds))
+		}
+		if len(r.Entries) != 0 {
+			t.Fatalf("want 0 Entries, got %d", len(r.Entries))
+		}
 	})
 }
 
@@ -1077,6 +1086,10 @@ func TestServiceDeleteSubscription(t *testing.T) {
 
 		if len(r.Subscriptions) != 0 {
 			t.Fatalf("want 0 Subscriptions, got %d", len(r.Subscriptions))
+		}
+
+		if _, err := r.FeedGetByURL(feed.FeedURL); !errors.Is(err, ErrFeedNotFound) {
+			t.Fatalf("want ErrFeedNotFound, got %q", err)
 		}
 	})
 }

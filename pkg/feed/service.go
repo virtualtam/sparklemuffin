@@ -210,7 +210,16 @@ func (s *Service) ToggleEntryRead(userUUID string, entryUID string) error {
 }
 
 func (s *Service) DeleteSubscription(userUUID string, subscriptionUUID string) error {
-	return s.r.FeedSubscriptionDelete(userUUID, subscriptionUUID)
+	subscription, err := s.r.FeedSubscriptionGetByUUID(userUUID, subscriptionUUID)
+	if err != nil {
+		return err
+	}
+
+	if err := s.r.FeedSubscriptionDelete(userUUID, subscription.UUID); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) SubscriptionByFeed(userUUID string, feedUUID string) (Subscription, error) {

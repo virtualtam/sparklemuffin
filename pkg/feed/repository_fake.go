@@ -23,6 +23,26 @@ func (r *FakeRepository) FeedCreate(feed Feed) error {
 	return nil
 }
 
+func (r *FakeRepository) FeedDelete(feedUUID string) error {
+	for _, entry := range r.Entries {
+		if entry.FeedUUID == feedUUID {
+			r.EntriesMetadata = slices.DeleteFunc(r.EntriesMetadata, func(em EntryMetadata) bool {
+				return em.EntryUID == entry.UID
+			})
+		}
+	}
+
+	r.Entries = slices.DeleteFunc(r.Entries, func(e Entry) bool {
+		return e.FeedUUID == feedUUID
+	})
+
+	r.Feeds = slices.DeleteFunc(r.Feeds, func(f Feed) bool {
+		return f.UUID == feedUUID
+	})
+
+	return nil
+}
+
 func (r *FakeRepository) FeedGetByURL(feedURL string) (Feed, error) {
 	for _, f := range r.Feeds {
 		if f.FeedURL == feedURL {
@@ -53,13 +73,18 @@ func (r *FakeRepository) FeedCategoryDelete(userUUID string, categoryUUID string
 		return c.UserUUID == userUUID && c.UUID == categoryUUID
 	})
 
-	deletedSubscriptionsUUIDs := []string{}
+	subscriptionUUIDs := []string{}
+	for _, subscription := range r.Subscriptions {
+		if subscription.UserUUID == userUUID && subscription.CategoryUUID == categoryUUID {
+			subscriptionUUIDs = append(subscriptionUUIDs, subscription.UUID)
+		}
+	}
 
-	r.Subscriptions = slices.DeleteFunc(r.Subscriptions, func(s Subscription) bool {
-		deletedSubscriptionsUUIDs = append(deletedSubscriptionsUUIDs, s.UUID)
-
-		return s.UserUUID == userUUID && s.CategoryUUID == categoryUUID
-	})
+	for _, subscriptionUUID := range subscriptionUUIDs {
+		if err := r.FeedSubscriptionDelete(userUUID, subscriptionUUID); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -200,6 +225,17 @@ func (r *FakeRepository) FeedEntryMetadataUpdate(updatedEntryMetadata EntryMetad
 	return ErrEntryMetadataNotFound
 }
 
+func (r *FakeRepository) FeedSubscriptionCountByFeed(feedUUID string) (uint, error) {
+	var count uint
+	for _, s := range r.Subscriptions {
+		if s.FeedUUID == feedUUID {
+			count++
+		}
+	}
+
+	return count, nil
+}
+
 func (r *FakeRepository) FeedSubscriptionIsRegistered(userUUID string, feedUUID string) (bool, error) {
 	for _, s := range r.Subscriptions {
 		if s.UserUUID == userUUID && s.FeedUUID == feedUUID {
@@ -216,15 +252,45 @@ func (r *FakeRepository) FeedSubscriptionCreate(subscription Subscription) (Subs
 }
 
 func (r *FakeRepository) FeedSubscriptionDelete(userUUID string, subscriptionUUID string) error {
-	for index, s := range r.Subscriptions {
-		if s.UserUUID == userUUID && s.UUID == subscriptionUUID {
-			r.Subscriptions = append(r.Subscriptions[:index], r.Subscriptions[index+1:]...)
-
-			return nil
-		}
+	if _, err := r.FeedSubscriptionGetByUUID(userUUID, subscriptionUUID); err != nil {
+		return err
 	}
 
-	return ErrSubscriptionNotFound
+	// 1. Delete the subscription
+	r.Subscriptions = slices.DeleteFunc(r.Subscriptions, func(s Subscription) bool {
+		return s.UserUUID == userUUID && s.UUID == subscriptionUUID
+	})
+
+	// 2. Propagate the deletion to feeds that are not referenced anymore
+	deletedFeedUUIDs := []string{}
+	r.Feeds = slices.DeleteFunc(r.Feeds, func(f Feed) bool {
+		for _, s := range r.Subscriptions {
+			if s.FeedUUID == f.UUID {
+				// This feed is referenced by subscriptions for other users
+				return false
+			}
+		}
+
+		deletedFeedUUIDs = append(deletedFeedUUIDs, f.UUID)
+
+		return true
+	})
+
+	deletedEntryUIDs := []string{}
+	r.Entries = slices.DeleteFunc(r.Entries, func(e Entry) bool {
+		if slices.Contains(deletedFeedUUIDs, e.FeedUUID) {
+			deletedEntryUIDs = append(deletedEntryUIDs, e.UID)
+			return true
+		}
+
+		return false
+	})
+
+	r.EntriesMetadata = slices.DeleteFunc(r.EntriesMetadata, func(em EntryMetadata) bool {
+		return slices.Contains(deletedEntryUIDs, em.EntryUID)
+	})
+
+	return nil
 }
 
 func (r *FakeRepository) FeedSubscriptionGetByFeed(userUUID string, feedUUID string) (Subscription, error) {

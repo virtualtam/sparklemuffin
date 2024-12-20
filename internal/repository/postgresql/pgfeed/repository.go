@@ -210,8 +210,9 @@ func (r *Repository) FeedCategoryDelete(userUUID string, categoryUUID string) er
 
 	defer r.Rollback(ctx, tx, "feeds", "FeedCategoryDelete")
 
+	// 1. Delete the category (cascaded to subscriptions)
 	commandTag, err := tx.Exec(
-		context.Background(),
+		ctx,
 		"DELETE FROM feed_categories WHERE user_uuid=$1 AND uuid=$2",
 		userUUID,
 		categoryUUID,
@@ -224,6 +225,20 @@ func (r *Repository) FeedCategoryDelete(userUUID string, categoryUUID string) er
 
 	if rowsAffected != 1 {
 		return feed.ErrCategoryNotFound
+	}
+
+	// 2. Delete feeds with no remaining subscriptions
+	_, err = tx.Exec(
+		ctx,
+		`
+		DELETE FROM feed_feeds
+		WHERE uuid NOT IN (
+			SELECT feed_uuid
+			FROM feed_subscriptions
+		)`,
+	)
+	if err != nil {
+		return err
 	}
 
 	return tx.Commit(ctx)
@@ -850,8 +865,9 @@ func (r *Repository) FeedSubscriptionDelete(userUUID string, subscriptionUUID st
 
 	defer r.Rollback(ctx, tx, "feeds", "FeedSubscriptionDelete")
 
+	// 1. Delete the subscription
 	commandTag, err := tx.Exec(
-		context.Background(),
+		ctx,
 		"DELETE FROM feed_subscriptions WHERE user_uuid=$1 AND uuid=$2",
 		userUUID,
 		subscriptionUUID,
@@ -864,6 +880,20 @@ func (r *Repository) FeedSubscriptionDelete(userUUID string, subscriptionUUID st
 
 	if rowsAffected != 1 {
 		return feed.ErrSubscriptionNotFound
+	}
+
+	// 2. Delete feeds with no remaining subscriptions
+	_, err = tx.Exec(
+		ctx,
+		`
+		DELETE FROM feed_feeds
+		WHERE uuid NOT IN (
+			SELECT feed_uuid
+			FROM feed_subscriptions
+		)`,
+	)
+	if err != nil {
+		return err
 	}
 
 	return tx.Commit(ctx)

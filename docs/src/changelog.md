@@ -5,11 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [v0.4.2](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.2) - 2024-12-21
+### Changed
+#### Feeds
+- When deleting a category or subscription, propagate the deletion to feeds with no remaining subscriptions
+
+#### Security
+- Bump `golang/x/net` to v0.33.0:
+    - [CVE-2024-45338](https://nvd.nist.gov/vuln/detail/CVE-2024-45338)
+    - [Vulnerability in golang.org/x/net](https://groups.google.com/g/golang-announce/c/wSCRmFnNmPA/m/Lvcd0mRMAwAJ)
+
+
 ## [v0.4.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.1) - 2024-12-14
 ### Security
 - Bump `golang.org/x/crypto` to v0.31.0:
     - [CVE-2024-45337](https://nvd.nist.gov/vuln/detail/CVE-2024-45337)
-    - [[security] Vulnerability in golang.org/x/crypto](https://groups.google.com/g/golang-announce/c/-nPEi39gI4Q)
+    - [Vulnerability in golang.org/x/crypto](https://groups.google.com/g/golang-announce/c/-nPEi39gI4Q)
 
 
 ## [v0.4.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.0) - 2024-12-10

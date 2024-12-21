@@ -10,7 +10,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Feeds
 - When deleting a category or subscription, propagate the deletion to feeds with no remaining subscriptions
 
-#### Security
+### Security
 - Bump `golang/x/net` to v0.33.0:
     - [CVE-2024-45338](https://nvd.nist.gov/vuln/detail/CVE-2024-45338)
     - [Vulnerability in golang.org/x/net](https://groups.google.com/g/golang-announce/c/wSCRmFnNmPA/m/Lvcd0mRMAwAJ)

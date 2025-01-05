@@ -567,7 +567,7 @@ In the second half of the 20th century, aluminium gained usage in transportation
 					FeedUUID: feedUUID,
 					URL:      "http://test.local/dates",
 					Title:    "History of aluminium",
-					Summary:  `Aluminium (or aluminum) metal is very rare in native form, and the process to refine it from ores is complex, so for most of human history it was unknown. However, the compound alum has been known since the 5th century BCE and was used extensively by the ancients for dyeing. During the Middle Ages, its use for dyeing made it a commodity of international commerce. Renaissance scientists believed t…`,
+					Summary:  `Aluminium (or aluminum) metal is very rare in native form, and the process to refine it from ores is complex, so for most of human history it was unknown. However, the compound alum has been known since the 5th century BCE and was used extensively by the ancients for dyeing. During the Middle Ages, its use for dyeing made it a commodity of international commerce. Renaissance scientists believed th…`,
 					TextRankTerms: []string{
 						"production aluminium", "tons metric",
 						"non ferrous", "metric 000",

@@ -6,6 +6,8 @@ package textkit
 import (
 	"regexp"
 	"strings"
+
+	"golang.org/x/exp/utf8string"
 )
 
 var (
@@ -27,12 +29,13 @@ func Summarize(text string, keepIfUnder int, truncateAfter int) string {
 
 	paragraphs := paragraphSplitRegexp.Split(text, -1)
 	if len(paragraphs) == 1 {
-		paragraphLength := len(paragraphs[0])
-		if paragraphLength < truncateAfter {
-			return text[:paragraphLength-1] + "…"
+		utf8paragraph := utf8string.NewString(paragraphs[0])
+
+		if utf8paragraph.RuneCount() <= truncateAfter {
+			return paragraphs[0]
 		}
 
-		return text[:truncateAfter-1] + "…"
+		return strings.TrimSpace(utf8paragraph.Slice(0, truncateAfter)) + "…"
 	}
 
 	return summarizeParagraphs(paragraphs, truncateAfter)

@@ -29,9 +29,29 @@ func TestSummarize(t *testing.T) {
 			want:  "Hello",
 		},
 		{
-			tname: "one long paragraph",
+			tname: "one medium paragraph",
+			text:  "Hello world! This is a medium string.",
+			want:  "Hello world! This is a medium string.",
+		},
+		{
+			tname: "one long paragraph, truncated on a whitespace",
 			text:  "Hello world! This is a long string that should be summarized.",
 			want:  "Hello world! This is a long string that should be…",
+		},
+		{
+			tname: "one long paragraph, truncated on a word",
+			text:  "Hello world! This is a long string that should rather be summarized.",
+			want:  "Hello world! This is a long string that should rat…",
+		},
+		{
+			tname: "one medium paragraph with Unicode characters",
+			text:  "Hello! This is a medium Unicode string: 🧡💛💚💙💜",
+			want:  "Hello! This is a medium Unicode string: 🧡💛💚💙💜",
+		},
+		{
+			tname: "one long paragraph with Unicode characters",
+			text:  "Hello, world! This is a longer Unicode string: 🧡💛💚💙💜",
+			want:  "Hello, world! This is a longer Unicode string: 🧡💛💚…",
 		},
 		{
 			tname: "two paragraphs",

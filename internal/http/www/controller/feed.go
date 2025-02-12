@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -208,7 +209,7 @@ func (fc *feedHandlerContext) handleFeedListView(
 
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
-			log.Error().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
+			log.Warn().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
 			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
@@ -217,7 +218,13 @@ func (fc *feedHandlerContext) handleFeedListView(
 		searchQuery := r.URL.Query().Get("search")
 		if searchQuery == "" {
 			feedPage, err := feedsByPage(r, user, pageNumber)
-			if err != nil {
+			if errors.Is(err, feedquerying.ErrPageNumberOutOfBounds) {
+				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
+				log.Warn().Err(err).Msg(msg)
+				view.PutFlashError(w, msg)
+				http.Redirect(w, r, "/feeds", http.StatusSeeOther)
+				return
+			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve feeds")
 				view.PutFlashError(w, "failed to retrieve feeds")
 				http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -228,7 +235,13 @@ func (fc *feedHandlerContext) handleFeedListView(
 			feedQueryingPage.FeedPage = feedPage
 		} else {
 			feedPage, err := feedsByQueryAndPage(r, user, searchQuery, pageNumber)
-			if err != nil {
+			if errors.Is(err, feedquerying.ErrPageNumberOutOfBounds) {
+				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
+				log.Warn().Err(err).Msg(msg)
+				view.PutFlashError(w, msg)
+				http.Redirect(w, r, "/feeds", http.StatusSeeOther)
+				return
+			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve feeds")
 				view.PutFlashError(w, "failed to retrieve feeds")
 				http.Redirect(w, r, "/", http.StatusSeeOther)

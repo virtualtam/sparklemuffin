@@ -7,6 +7,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [v0.5.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.0) - UNRELEASED
 ### Changed
+#### WWW
+- Log pagination errors as warnings
+
 #### Packaging and automation
 - Build with Go 1.24
 - Update direct and transitive dependencies

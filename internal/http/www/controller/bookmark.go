@@ -347,7 +347,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkListView() func(w http.ResponseW
 
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
-			log.Error().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
+			log.Warn().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
 			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
 			http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
 			return
@@ -424,7 +424,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
-			log.Error().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
+			log.Warn().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
 			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
@@ -714,7 +714,7 @@ func (hc *bookmarkHandlerContext) handleTagListView() func(w http.ResponseWriter
 
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
-			log.Error().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
+			log.Warn().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
 			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [v0.5.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.0) - UNRELEASED
+### Changed
+#### Packaging and automation
+- Build with Go 1.24
+- Update direct and transitive dependencies
+
+
 ## [v0.4.3](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.3) - 2025-01-05
 ### Fixed
 #### Feeds

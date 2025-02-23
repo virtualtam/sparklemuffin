@@ -12,6 +12,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 #### Packaging and automation
 - Build with Go 1.24
+- Update CI workflow
 - Update direct and transitive dependencies
 
 

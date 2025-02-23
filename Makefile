@@ -43,7 +43,7 @@ lint-sql:
 
 # Install development tools
 dev-install-tools:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.64.2
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.64.5
 	go install github.com/hashicorp/copywrite@latest
 	go install golang.org/x/vuln/cmd/govulncheck@latest
 .PHONY: dev-install-tools

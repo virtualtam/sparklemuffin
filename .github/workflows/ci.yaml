@@ -50,7 +50,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           args: --timeout=10m
-          version: "v1.64.2"
+          version: "v1.64.5"
 
   test:
     runs-on: ubuntu-latest

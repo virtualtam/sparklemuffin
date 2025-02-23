@@ -29,7 +29,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/testcontainers/testcontainers-go v0.35.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.35.0
-	github.com/virtualtam/netscape-go/v2 v2.2.0
+	github.com/virtualtam/netscape-go/v2 v2.3.0
 	github.com/virtualtam/opml-go v1.2.0
 	github.com/virtualtam/venom v1.1.0
 	github.com/yuin/goldmark v1.7.8

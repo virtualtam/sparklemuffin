@@ -359,8 +359,8 @@ github.com/tklauser/go-sysconf v0.3.14 h1:g5vzr9iPFFz24v2KZXs/pvpvh8/V9Fw6vQK5ZZ
 github.com/tklauser/go-sysconf v0.3.14/go.mod h1:1ym4lWMLUOhuBOPGtRcJm7tEGX4SCYNEEEtghGG/8uY=
 github.com/tklauser/numcpus v0.9.0 h1:lmyCHtANi8aRUgkckBgoDk1nHCux3n2cgkJLXdQGPDo=
 github.com/tklauser/numcpus v0.9.0/go.mod h1:SN6Nq1O3VychhC1npsWostA+oW+VOQTxZrS604NSRyI=
-github.com/virtualtam/netscape-go/v2 v2.2.0 h1:zJOHSsha8ldywS7+c8d23GY0plH/XihdAiz22wIzu7w=
-github.com/virtualtam/netscape-go/v2 v2.2.0/go.mod h1:MM8mRCEJbTnydVcl+MG0/uZ5Xk1g6yM2etJjFiEAPbE=
+github.com/virtualtam/netscape-go/v2 v2.3.0 h1:nj7s/ZpntbbUUrj8DdOMexq2TxWQ389wtGJYBJsW5OU=
+github.com/virtualtam/netscape-go/v2 v2.3.0/go.mod h1:QfN/y3+SLfVYKpX7cmFuO3fDTpEHmZbZmbKtuLJ+XO0=
 github.com/virtualtam/opml-go v1.2.0 h1:D6XM98imEZ4x3zD0p3FYlJ6yL8t6uWjagF6SXrHR2+4=
 github.com/virtualtam/opml-go v1.2.0/go.mod h1:TueF94NxUy4JYD2UQXU3KOMkF5AifZFQ4kWKFeReoWQ=
 github.com/virtualtam/venom v1.1.0 h1:uvyshmDNGGxyfGidKSib5CmCjcQt+vRckyRXvOHkiWg=

@@ -6,6 +6,7 @@ package controller
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -126,10 +127,11 @@ func (hc *toolsHandlerContext) handleBookmarkExportView() func(w http.ResponseWr
 }
 
 // handleBookmarkExport processes the bookmarks export form and sends the
-// corresponding file to the client.
+// corresponding file to the user.
 func (hc *toolsHandlerContext) handleBookmarkExport() func(w http.ResponseWriter, r *http.Request) {
 	type exportForm struct {
 		CSRFToken  string                       `schema:"csrf_token"`
+		Format     bookmarkexporting.Format     `schema:"format"`
 		Visibility bookmarkexporting.Visibility `schema:"visibility"`
 	}
 
@@ -151,30 +153,62 @@ func (hc *toolsHandlerContext) handleBookmarkExport() func(w http.ResponseWriter
 			return
 		}
 
-		document, err := hc.bookmarkExportingService.ExportAsNetscapeDocument(ctxUser.UUID, form.Visibility)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve bookmarks")
+		var marshaled []byte
+		var fileExtension string
+
+		switch form.Format {
+		case bookmarkexporting.FormatJSON:
+			fileExtension = "json"
+
+			jsonDocument, err := hc.bookmarkExportingService.ExportAsJSONDocument(ctxUser.UUID, form.Visibility)
+			if err != nil {
+				log.Error().Err(err).Msg("bookmark: failed to retrieve bookmarks")
+				view.PutFlashError(w, "failed to export bookmarks")
+				http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+				return
+			}
+
+			marshaled, err = json.MarshalIndent(jsonDocument, "", "  ")
+			if err != nil {
+				log.Error().Err(err).Msg("bookmark: failed to marshal JSON document")
+				view.PutFlashError(w, "failed to export bookmarks")
+				http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+				return
+			}
+
+		case bookmarkexporting.FormatNetscape:
+			fileExtension = "htm"
+
+			netscapeDocument, err := hc.bookmarkExportingService.ExportAsNetscapeDocument(ctxUser.UUID, form.Visibility)
+			if err != nil {
+				log.Error().Err(err).Msg("bookmark: failed to retrieve bookmarks")
+				view.PutFlashError(w, "failed to export bookmarks")
+				http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+				return
+			}
+
+			marshaled, err = netscape.Marshal(netscapeDocument)
+			if err != nil {
+				log.Error().Err(err).Msg("bookmark: failed to marshal Netscape document")
+				view.PutFlashError(w, "failed to export bookmarks")
+				http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+				return
+			}
+
+		default:
+			log.Error().Str("format", string(form.Format)).Msg("bookmark: invalid export format")
 			view.PutFlashError(w, "failed to export bookmarks")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
-		marshaled, err := netscape.Marshal(document)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to marshal Netscape bookmarks")
-			view.PutFlashError(w, "failed to export bookmarks")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
-
-		filename := fmt.Sprintf("bookmarks-%s.htm", form.Visibility)
+		filename := fmt.Sprintf("bookmarks-%s.%s", form.Visibility, fileExtension)
 
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 		w.Header().Set("Content-Type", "application/octet-stream")
 
-		_, err = w.Write(marshaled)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to send marshaled Netscape bookmark export")
+		if _, err := w.Write(marshaled); err != nil {
+			log.Error().Err(err).Str("format", string(form.Format)).Msg("bookmark: failed to send marshaled export")
 		}
 	}
 }

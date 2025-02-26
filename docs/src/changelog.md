@@ -11,6 +11,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
     - [Vulnerability Report: GO-2025-3487](https://pkg.go.dev/vuln/GO-2025-3487)
     - [CVE-2025-22869](https://www.cve.org/CVERecord?id=CVE-2025-22869)
 
+### Added
+#### Bookmarks
+- Export as a JSON document
+
 ### Changed
 #### WWW
 - Log pagination errors as warnings

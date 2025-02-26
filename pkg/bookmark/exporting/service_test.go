@@ -7,13 +7,16 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/virtualtam/netscape-go/v2"
+
+	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
-func TestServiceExportAsNetscapeDocument(t *testing.T) {
-	repositoryBookmarks := []bookmark.Bookmark{
+var (
+	repositoryBookmarks = []bookmark.Bookmark{
 		{
 			UserUUID: "5d75c769-059c-4b36-9db6-1c82619e704a",
 			Title:    "Bookmark 1",
@@ -49,7 +52,143 @@ func TestServiceExportAsNetscapeDocument(t *testing.T) {
 			URL:      "https://other.co.uk",
 		},
 	}
+)
 
+func TestServiceExportAsJSONDocument(t *testing.T) {
+	now := time.Now().UTC()
+
+	cases := []struct {
+		tname string
+
+		userUUID   string
+		visibility Visibility
+
+		want    *jsonDocument
+		wantErr error
+	}{
+		// error cases
+		{
+			tname:   "empty visibility",
+			wantErr: ErrVisibilityInvalid,
+		},
+		{
+			tname:      "invalid visibility",
+			visibility: "foggy",
+			wantErr:    ErrVisibilityInvalid,
+		},
+
+		// nominal cases
+		{
+			tname:      "export all bookmarks, user has none",
+			userUUID:   "b9e785dc-3613-4d8d-909b-31a4728b530d",
+			visibility: VisibilityAll,
+			want: &jsonDocument{
+				Title:      "SparkleMuffin export of all bookmarks",
+				ExportedAt: now,
+			},
+		},
+		{
+			tname:      "export all bookmarks",
+			userUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility: VisibilityAll,
+			want: &jsonDocument{
+				Title:      "SparkleMuffin export of all bookmarks",
+				ExportedAt: now,
+				Bookmarks: []jsonBookmark{
+					{
+						Title: "Bookmark 1",
+						URL:   "https://example1.tld",
+					},
+					{
+						Title:       "Bookmark 2",
+						URL:         "https://example2.tld",
+						Description: "Second bookmark",
+						Tags:        []string{"example", "test"},
+					},
+					{
+						Title:   "Bookmark 3 (private)",
+						URL:     "https://example3.tld",
+						Private: true,
+					},
+				},
+			},
+		},
+		{
+			tname:      "export private bookmarks",
+			userUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility: VisibilityPrivate,
+			want: &jsonDocument{
+				Title:      "SparkleMuffin export of private bookmarks",
+				ExportedAt: now,
+				Bookmarks: []jsonBookmark{
+					{
+						Title:   "Bookmark 3 (private)",
+						URL:     "https://example3.tld",
+						Private: true,
+					},
+				},
+			},
+		},
+		{
+			tname:      "export public bookmarks",
+			userUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility: VisibilityPublic,
+			want: &jsonDocument{
+				Title:      "SparkleMuffin export of public bookmarks",
+				ExportedAt: now,
+				Bookmarks: []jsonBookmark{
+					{
+						Title: "Bookmark 1",
+						URL:   "https://example1.tld",
+					},
+					{
+						Title:       "Bookmark 2",
+						URL:         "https://example2.tld",
+						Description: "Second bookmark",
+						Tags:        []string{"example", "test"},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Bookmarks: repositoryBookmarks,
+			}
+			s := NewService(r)
+
+			got, err := s.ExportAsJSONDocument(tc.userUUID, tc.visibility)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			if got.Title != tc.want.Title {
+				t.Errorf("want Title %q, got %q", tc.want.Title, got.Title)
+			}
+
+			assert.TimeAlmostEquals(t, "ExportedAt", got.ExportedAt, tc.want.ExportedAt, assert.TimeComparisonDelta)
+
+			if !reflect.DeepEqual(got.Bookmarks, tc.want.Bookmarks) {
+				t.Errorf("want exported bookmarks %#v, got %#v", tc.want.Bookmarks, got.Bookmarks)
+			}
+		})
+	}
+}
+
+func TestServiceExportAsNetscapeDocument(t *testing.T) {
 	cases := []struct {
 		tname string
 

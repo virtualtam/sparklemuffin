@@ -338,7 +338,7 @@ func TestServiceDeleteCategory(t *testing.T) {
 		entries := []Entry{}
 		subscriptions := []Subscription{}
 
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			feed := Feed{
 				UUID:    fake.UUID().V4(),
 				FeedURL: fake.Internet().URL(),
@@ -355,7 +355,7 @@ func TestServiceDeleteCategory(t *testing.T) {
 			}
 			subscriptions = append(subscriptions, subscription)
 
-			for j := 0; j < 10; j++ {
+			for range 10 {
 				entry := Entry{
 					UID:      ksuid.New().String(),
 					FeedUUID: feed.UUID,
@@ -839,7 +839,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			}
 
 			// Update expected FeedUUID
-			for i := 0; i < len(tc.wantEntries); i++ {
+			for i := range tc.wantEntries {
 				tc.wantEntries[i].FeedUUID = gotFeed.UUID
 			}
 
@@ -1063,7 +1063,7 @@ func TestServiceDeleteSubscription(t *testing.T) {
 			UserUUID:     userUUID,
 		}
 
-		for j := 0; j < 10; j++ {
+		for range 10 {
 			entry := Entry{
 				UID:      ksuid.New().String(),
 				FeedUUID: feed.UUID,

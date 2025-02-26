@@ -224,7 +224,7 @@ func TestBookmarkService(t *testing.T) {
 		nRandomTags := 10
 		nTags := nRandomTags + len(commonTags)
 
-		for i := 0; i < nBookmarks; i++ {
+		for range nBookmarks {
 			tags := append(commonTags, generateUniqueSortedTags(&fake, nRandomTags)...)
 			sort.Strings(tags)
 
@@ -289,7 +289,7 @@ func TestBookmarkService(t *testing.T) {
 		nRandomTags := 10
 		nTags := nRandomTags + len(commonTags)
 
-		for i := 0; i < nBookmarks; i++ {
+		for range nBookmarks {
 			tags := append(commonTags, generateUniqueSortedTags(&fake, nRandomTags)...)
 			sort.Strings(tags)
 
@@ -373,7 +373,7 @@ func TestQueryingService(t *testing.T) {
 
 	bookmarks := []bookmark.Bookmark{}
 
-	for i := 0; i < nBookmarks; i++ {
+	for i := range nBookmarks {
 		private := false
 		if i%10 == 0 {
 			private = true

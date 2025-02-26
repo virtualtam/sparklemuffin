@@ -45,6 +45,7 @@ lint-sql:
 dev-install-tools:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.64.5
 	go install github.com/hashicorp/copywrite@latest
+	go install golang.org/x/tools/gopls@latest
 	go install golang.org/x/vuln/cmd/govulncheck@latest
 .PHONY: dev-install-tools
 
@@ -56,6 +57,11 @@ dev-install-sqlfluff:
 copywrite:
 	copywrite headers
 .PHONY: copywrite
+
+# Modernize
+modernize:
+	go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -fix -test ./...
+.PHONY: modernize
 
 # Vulnerability check
 vulncheck:

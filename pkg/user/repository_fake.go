@@ -3,6 +3,8 @@
 
 package user
 
+import "slices"
+
 var _ Repository = &FakeRepository{}
 
 type FakeRepository struct {
@@ -18,7 +20,7 @@ func (r *FakeRepository) UserAdd(user User) error {
 func (r *FakeRepository) UserDeleteByUUID(userUUID string) error {
 	for index, user := range r.Users {
 		if user.UUID == userUUID {
-			r.Users = append(r.Users[:index], r.Users[index+1:]...)
+			r.Users = slices.Delete(r.Users, index, index+1)
 		}
 	}
 

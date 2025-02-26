@@ -23,7 +23,7 @@ type migrateLogger struct {
 	verbose bool
 }
 
-func (l migrateLogger) Printf(format string, v ...interface{}) {
+func (l migrateLogger) Printf(format string, v ...any) {
 	log.Printf(format, v...)
 }
 

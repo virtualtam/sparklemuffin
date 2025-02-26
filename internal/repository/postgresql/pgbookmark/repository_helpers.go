@@ -143,7 +143,7 @@ func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookm
 
 	var rowsAffected int64
 
-	for i := 0; i < len(bookmarks); i++ {
+	for range bookmarks {
 		commandTag, qerr := batchResults.Exec()
 		if qerr != nil {
 			return 0, qerr

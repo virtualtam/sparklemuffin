@@ -4,6 +4,7 @@
 package bookmark
 
 import (
+	"slices"
 	"time"
 )
 
@@ -148,7 +149,7 @@ func (s *Service) DeleteTag(dq TagDeleteQuery) (int64, error) {
 	for i, bookmark := range bookmarks {
 		for j, bookmarkTag := range bookmark.Tags {
 			if bookmarkTag == dq.Name {
-				bookmark.Tags = append(bookmark.Tags[:j], bookmark.Tags[j+1:]...)
+				bookmark.Tags = slices.Delete(bookmark.Tags, j, j+1)
 				break
 			}
 		}

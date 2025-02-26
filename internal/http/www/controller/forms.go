@@ -14,7 +14,7 @@ var (
 )
 
 // decodeForm parses and decodes values from a submitted HTML form.
-func decodeForm(r *http.Request, dst interface{}) error {
+func decodeForm(r *http.Request, dst any) error {
 	if err := r.ParseForm(); err != nil {
 		return err
 	}

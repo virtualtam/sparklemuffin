@@ -172,7 +172,7 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 
 	var rowsAffected int64
 
-	for i := 0; i < len(entries); i++ {
+	for range entries {
 		commandTag, qerr := batchResults.Exec()
 		if qerr != nil {
 			return 0, qerr

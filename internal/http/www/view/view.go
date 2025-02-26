@@ -70,7 +70,7 @@ func (v *View) Handle(w http.ResponseWriter, r *http.Request) {
 	v.Render(w, r, nil)
 }
 
-func (v *View) Render(w http.ResponseWriter, r *http.Request, data interface{}) {
+func (v *View) Render(w http.ResponseWriter, r *http.Request, data any) {
 	w.Header().Set("Content-Type", "text/html")
 
 	var viewData Data

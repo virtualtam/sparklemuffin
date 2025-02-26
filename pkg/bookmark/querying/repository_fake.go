@@ -45,13 +45,7 @@ func (r *fakeRepository) BookmarkGetN(userUUID string, visibility Visibility, n 
 		return userBookmarks[i].CreatedAt.After(userBookmarks[j].CreatedAt)
 	})
 
-	var nBookmarks uint
-
-	if n > uint(len(userBookmarks[offset:])) {
-		nBookmarks = uint(len(userBookmarks[offset:]))
-	} else {
-		nBookmarks = n
-	}
+	nBookmarks := min(n, uint(len(userBookmarks[offset:])))
 
 	return userBookmarks[offset : offset+nBookmarks], nil
 }

@@ -257,13 +257,7 @@ func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, n uint, offs
 		return userEntries[i].PublishedAt.After(userEntries[j].PublishedAt)
 	})
 
-	var nEntries uint
-
-	if n > uint(len(userEntries[offset:])) {
-		nEntries = uint(len(userEntries[offset:]))
-	} else {
-		nEntries = n
-	}
+	nEntries := min(n, uint(len(userEntries[offset:])))
 
 	return userEntries[offset : offset+nEntries], nil
 }
@@ -293,13 +287,7 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, ca
 		return categoryEntries[i].PublishedAt.After(categoryEntries[j].PublishedAt)
 	})
 
-	var nEntries uint
-
-	if n > uint(len(categoryEntries[offset:])) {
-		nEntries = uint(len(categoryEntries[offset:]))
-	} else {
-		nEntries = n
-	}
+	nEntries := min(n, uint(len(categoryEntries[offset:])))
 
 	return categoryEntries[offset : offset+nEntries], nil
 }
@@ -320,13 +308,7 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscription(userUUID string
 		return subscriptionEntries[i].PublishedAt.After(subscriptionEntries[j].PublishedAt)
 	})
 
-	var nEntries uint
-
-	if n > uint(len(subscriptionEntries[offset:])) {
-		nEntries = uint(len(subscriptionEntries[offset:]))
-	} else {
-		nEntries = n
-	}
+	nEntries := min(n, uint(len(subscriptionEntries[offset:])))
 
 	return subscriptionEntries[offset : offset+nEntries], nil
 }

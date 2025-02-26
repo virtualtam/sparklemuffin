@@ -14,6 +14,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Build with Go 1.24
 - Update CI workflow
 - Update direct and transitive dependencies
+- Run the `modernize` analyzer and apply fixes
 
 ### Removed
 #### Feed

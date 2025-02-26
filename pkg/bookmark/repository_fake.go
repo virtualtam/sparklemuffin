@@ -3,6 +3,8 @@
 
 package bookmark
 
+import "slices"
+
 var _ Repository = &FakeRepository{}
 
 type FakeRepository struct {
@@ -17,7 +19,7 @@ func (r *FakeRepository) BookmarkAdd(bookmark Bookmark) error {
 func (r *FakeRepository) BookmarkDelete(userUUID, uid string) error {
 	for index, b := range r.Bookmarks {
 		if b.UserUUID == userUUID && b.UID == uid {
-			r.Bookmarks = append(r.Bookmarks[:index], r.Bookmarks[index+1:]...)
+			r.Bookmarks = slices.Delete(r.Bookmarks, index, index+1)
 			return nil
 		}
 	}

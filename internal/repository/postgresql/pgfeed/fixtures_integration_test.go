@@ -129,7 +129,7 @@ func generateFakeEntries(t *testing.T, fake *faker.Faker, now time.Time, feedUUI
 
 	entries := make([]feed.Entry, n)
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		publishedAt := now.Add(-time.Duration(i) * 12 * time.Hour)
 
 		entry := feed.Entry{

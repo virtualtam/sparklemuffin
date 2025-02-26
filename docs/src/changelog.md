@@ -15,6 +15,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Update CI workflow
 - Update direct and transitive dependencies
 
+### Removed
+#### Feed
+- Remove unused `importing.Repository` type
+
 
 ## [v0.4.3](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.3) - 2025-01-05
 ### Fixed

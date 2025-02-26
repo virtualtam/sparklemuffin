@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [v0.5.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.0) - UNRELEASED
+### Security
+- Bump `golang.org/x/crypto` to v0.35.0:
+    - [Vulnerability Report: GO-2025-3487](https://pkg.go.dev/vuln/GO-2025-3487)
+    - [CVE-2025-22869](https://www.cve.org/CVERecord?id=CVE-2025-22869)
+
 ### Changed
 #### WWW
 - Log pagination errors as warnings

@@ -43,7 +43,7 @@ func CreateAndMigrateTestDatabase(t *testing.T, ctx context.Context) *pgxpool.Po
 		t.Fatalf("failed to apply database migrations (up): %q", err)
 	}
 
-	pool, err := pgxpool.New(context.Background(), databaseURI)
+	pool, err := pgxpool.New(ctx, databaseURI)
 	if err != nil {
 		t.Fatalf("failed to open database connection: %q", err)
 	}

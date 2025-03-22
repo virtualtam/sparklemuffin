@@ -7,9 +7,7 @@ max-same-issues = 0
 new = false
 
 [linters]
-enable = [
-    "unparam",
-]
+enable = ["contextcheck", "unparam"]
 
 [linters-settings.errcheck]
 # Don't allow setting of error to the blank identifier. If there is a legitimate

@@ -95,18 +95,22 @@ func NewMigrateCommand() *cobra.Command {
 					Str("database_driver", databaseDriver).
 					Str("database_addr", databaseAddr).
 					Msg("migrate: the database schema is up to date")
-			} else if err != nil {
+				return nil
+			}
+
+			if err != nil {
 				log.Error().
 					Err(err).
 					Str("database_driver", databaseDriver).
 					Str("database_addr", databaseAddr).
 					Msg("migrate: failed to apply database migrations")
-			} else {
-				log.Info().
-					Str("database_driver", databaseDriver).
-					Str("database_addr", databaseAddr).
-					Msg("migrate: all database migrations have been applied")
+				return err
 			}
+
+			log.Info().
+				Str("database_driver", databaseDriver).
+				Str("database_addr", databaseAddr).
+				Msg("migrate: all database migrations have been applied")
 
 			return nil
 		},

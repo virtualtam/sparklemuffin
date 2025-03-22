@@ -84,7 +84,6 @@ func TestTextRanker(t *testing.T) {
 				"south",
 				"king",
 				"project",
-				//"metro",
 			},
 		},
 		{

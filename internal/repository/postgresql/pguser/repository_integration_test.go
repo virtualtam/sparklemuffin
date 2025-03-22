@@ -4,7 +4,6 @@
 package pguser_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -15,8 +14,7 @@ import (
 )
 
 func TestUserService(t *testing.T) {
-	ctx := context.Background()
-	pool := pgbase.CreateAndMigrateTestDatabase(t, ctx)
+	pool := pgbase.CreateAndMigrateTestDatabase(t)
 	r := pguser.NewRepository(pool)
 
 	s := user.NewService(r)

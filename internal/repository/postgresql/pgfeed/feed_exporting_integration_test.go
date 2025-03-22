@@ -4,7 +4,6 @@
 package pgfeed_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -20,8 +19,7 @@ import (
 )
 
 func TestFeedExportingService(t *testing.T) {
-	ctx := context.Background()
-	pool := pgbase.CreateAndMigrateTestDatabase(t, ctx)
+	pool := pgbase.CreateAndMigrateTestDatabase(t)
 
 	r := pgfeed.NewRepository(pool)
 	es := exporting.NewService(r)

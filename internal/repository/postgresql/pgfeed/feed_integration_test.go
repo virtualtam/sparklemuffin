@@ -4,7 +4,6 @@
 package pgfeed_test
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"testing"
@@ -24,8 +23,7 @@ import (
 )
 
 func TestFeedService(t *testing.T) {
-	ctx := context.Background()
-	pool := pgbase.CreateAndMigrateTestDatabase(t, ctx)
+	pool := pgbase.CreateAndMigrateTestDatabase(t)
 
 	now := time.Now().UTC()
 

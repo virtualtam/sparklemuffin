@@ -4,7 +4,6 @@
 package pgbase
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -12,9 +11,7 @@ import (
 )
 
 func TestMigrate(t *testing.T) {
-	ctx := context.Background()
-
-	_, db := createTestDatabase(t, ctx)
+	_, db := createTestDatabase(t)
 	migrater := getDatabaseMigrater(t, db)
 
 	t.Run("up", func(t *testing.T) {

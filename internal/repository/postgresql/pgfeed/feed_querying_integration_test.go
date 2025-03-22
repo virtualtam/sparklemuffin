@@ -4,7 +4,6 @@
 package pgfeed_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -17,8 +16,7 @@ import (
 )
 
 func TestFeedQueryingService(t *testing.T) {
-	ctx := context.Background()
-	pool := pgbase.CreateAndMigrateTestDatabase(t, ctx)
+	pool := pgbase.CreateAndMigrateTestDatabase(t)
 
 	r := pgfeed.NewRepository(pool)
 	qs := querying.NewService(r)

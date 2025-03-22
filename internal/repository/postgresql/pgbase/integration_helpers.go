@@ -35,17 +35,17 @@ const (
 	databasePassword = "testpass"
 )
 
-func CreateAndMigrateTestDatabase(t *testing.T, ctx context.Context) *pgxpool.Pool {
+func CreateAndMigrateTestDatabase(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 
-	databaseURI, db := createTestDatabase(t, ctx)
+	databaseURI, db := createTestDatabase(t)
 
 	migrater := getDatabaseMigrater(t, db)
 	if err := migrater.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		t.Fatalf("failed to apply database migrations (up): %q", err)
 	}
 
-	pool, err := pgxpool.New(ctx, databaseURI)
+	pool, err := pgxpool.New(t.Context(), databaseURI)
 	if err != nil {
 		t.Fatalf("failed to open database connection: %q", err)
 	}
@@ -63,8 +63,10 @@ func CreateAndMigrateTestDatabase(t *testing.T, ctx context.Context) *pgxpool.Po
 // - https://www.postgresql.org/docs/15/runtime-config-wal.html
 // - https://stackoverflow.com/questions/9407442/optimise-postgresql-for-fast-testing
 // - https://stackoverflow.com/questions/30848670/how-to-customize-the-configuration-file-of-the-official-postgresql-docker-image
-func createTestDatabase(t *testing.T, ctx context.Context) (string, *sql.DB) {
+func createTestDatabase(t *testing.T) (string, *sql.DB) {
 	t.Helper()
+
+	ctx := t.Context()
 
 	pgContainer, err := testpostgres.Run(ctx,
 		"postgres:15",
@@ -98,7 +100,9 @@ func createTestDatabase(t *testing.T, ctx context.Context) (string, *sql.DB) {
 	}
 
 	t.Cleanup(func() {
-		if err := pgContainer.Terminate(ctx); err != nil {
+		//nolint: usetesting
+		// t.Context() has already been canceled, create a new context to terminate the container.
+		if err := pgContainer.Terminate(context.Background()); err != nil {
 			t.Fatalf("failed to terminate postgres container: %q", err)
 		}
 	})

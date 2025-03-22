@@ -4,7 +4,6 @@
 package pgfeed_test
 
 import (
-	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -22,8 +21,7 @@ import (
 )
 
 func TestImportingService(t *testing.T) {
-	ctx := context.Background()
-	pool := pgbase.CreateAndMigrateTestDatabase(t, ctx)
+	pool := pgbase.CreateAndMigrateTestDatabase(t)
 
 	now := time.Now().UTC()
 	atomFeed := feedtest.GenerateDummyFeed(t, now)

@@ -4,7 +4,6 @@
 package pgbookmark_test
 
 import (
-	"context"
 	"errors"
 	"math/rand"
 	"sort"
@@ -85,8 +84,7 @@ func generateUniqueSortedTags(fake *faker.Faker, nTags int) []string {
 }
 
 func TestBookmarkService(t *testing.T) {
-	ctx := context.Background()
-	pool := pgbase.CreateAndMigrateTestDatabase(t, ctx)
+	pool := pgbase.CreateAndMigrateTestDatabase(t)
 	r := pgbookmark.NewRepository(pool)
 	bs := bookmark.NewService(r)
 
@@ -346,8 +344,7 @@ func TestBookmarkService(t *testing.T) {
 }
 
 func TestQueryingService(t *testing.T) {
-	ctx := context.Background()
-	pool := pgbase.CreateAndMigrateTestDatabase(t, ctx)
+	pool := pgbase.CreateAndMigrateTestDatabase(t)
 	r := pgbookmark.NewRepository(pool)
 	bs := bookmark.NewService(r)
 	qs := bookmarkquerying.NewService(r)

@@ -28,10 +28,13 @@ enable = [
     "stylecheck",
     "staticcheck",
     "tagliatelle",
+    "thelper",
+    "tparallel",
     "unconvert",
     "unparam",
     "unused",
     "usestdlibvars",
+    "usetesting",
     "wastedassign",
 ]
 

@@ -406,7 +406,7 @@ func (hc *toolsHandlerContext) handleFeedImportView() func(w http.ResponseWriter
 	}
 }
 
-// handleFeedImport processes data submitted through the feed subscripton import form.
+// handleFeedImport processes data submitted through the feed subscription import form.
 func (hc *toolsHandlerContext) handleFeedImport() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		multipartReader, err := r.MultipartReader()

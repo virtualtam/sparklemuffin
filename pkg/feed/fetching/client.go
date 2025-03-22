@@ -38,9 +38,9 @@ func NewClient(httpClient *http.Client, userAgent string) *Client {
 // Fetch performs a HTTP request to get feed data and parses it.
 //
 // Adapted from gofeed.Parser.ParseURL with the following modifications:
-// - User-Agent header
-// - Use the value of the ETag header to set the If-None-Match header
-// - Use the value of the Last-Modified header to set the If-Modified-Since header
+// - User-Agent header;
+// - Use the value of the ETag header to set the If-None-Match header;
+// - Use the value of the Last-Modified header to set the If-Modified-Since header.
 func (c *Client) Fetch(feedURL string, eTag string, lastModified time.Time) (FeedStatus, error) {
 	ctx := context.Background()
 

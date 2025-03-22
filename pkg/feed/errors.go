@@ -6,7 +6,6 @@ package feed
 import "errors"
 
 var (
-	// Feed
 	ErrFeedHashRequired         error = errors.New("feed: hash required")
 	ErrFeedNotFound             error = errors.New("feed: not found")
 	ErrFeedSlugInvalid          error = errors.New("feed: invalid slug")
@@ -20,7 +19,6 @@ var (
 	ErrFeedURLRequired          error = errors.New("feed: URL required")
 	ErrFeedURLUnsupportedScheme error = errors.New("feed: unsupported URL scheme")
 
-	// Feed Category
 	ErrCategoryAlreadyRegistered error = errors.New("category: already registered")
 	ErrCategoryNameRequired      error = errors.New("category: name required")
 	ErrCategoryNotFound          error = errors.New("category: Not Found")
@@ -30,7 +28,6 @@ var (
 	ErrCategoryUUIDInvalid       error = errors.New("category: invalid UUID")
 	ErrCategoryUUIDRequired      error = errors.New("category: UUID required")
 
-	// Feed Entry
 	ErrEntryNotFound               error = errors.New("entry: not found")
 	ErrEntryTitleRequired          error = errors.New("entry: title required")
 	ErrEntryPublishedAtInTheFuture error = errors.New("entry: publication date is in the future")
@@ -44,14 +41,11 @@ var (
 	ErrEntryURLUnsupportedScheme   error = errors.New("entry: unsupported URL scheme")
 	ErrEntryUIDInvalid             error = errors.New("entry: invalid UID")
 
-	// Feed Entry Metadata
 	ErrEntryMetadataNotFound error = errors.New("entry-metadata: not found")
 
-	// Feed Subscription
 	ErrSubscriptionAlreadyRegistered error = errors.New("subscription: already registered")
 	ErrSubscriptionNotFound          error = errors.New("subscription: not found")
 	ErrSubscriptionUUIDRequired      error = errors.New("subscription: UUID required")
 
-	// Feed user
 	ErrUserUUIDRequired error = errors.New("user: UUID required")
 )

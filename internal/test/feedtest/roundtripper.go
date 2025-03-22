@@ -20,8 +20,8 @@ var (
 // RoundTripper records incoming HTTP requests and responds with Atom feed data.
 //
 // It supports HTTP conditional requests using the following HTTP headers:
-// - ETag (response) / If-None-Match (request)
-// - Last-Modified (response) / If-Modified-Since (request)
+// - ETag (response) / If-None-Match (request);
+// - Last-Modified (response) / If-Modified-Since (request).
 type RoundTripper struct {
 	content         string
 	eTag            string

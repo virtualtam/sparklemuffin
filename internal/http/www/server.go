@@ -143,7 +143,6 @@ func (s *Server) registerHandlers() {
 	s.router.NotFound(s.handleNotFound())
 }
 
-// ServeHTTP satisfies the http.Handler interface,
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }

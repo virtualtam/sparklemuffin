@@ -54,14 +54,13 @@ func CreateAndMigrateTestDatabase(t *testing.T, ctx context.Context) *pgxpool.Po
 // createTestDatabase creates a PostgreSQL container and returns the connection string and database connection.
 //
 // PostgreSQL is configured for speed:
-// - data is stored using a tmpfs volume
-// - WAL features are disabled
+// - data is stored using a tmpfs volume;
+// - WAL features are disabled.
 //
 // See:
 // - https://www.postgresql.org/docs/15/runtime-config-wal.html
 // - https://stackoverflow.com/questions/9407442/optimise-postgresql-for-fast-testing
 // - https://stackoverflow.com/questions/30848670/how-to-customize-the-configuration-file-of-the-official-postgresql-docker-image
-// -
 func createTestDatabase(t *testing.T, ctx context.Context) (string, *sql.DB) {
 	t.Helper()
 

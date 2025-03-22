@@ -20,8 +20,7 @@ import (
 const (
 	EntryTextRankMaxTerms = 10
 
-	// Entry PublishedAt or UpdatedAt may be accepted as late as (time.Now() + entryTimeFutureBound)
-	// (Note: Feel free to suggest a better name for this constant)
+	// Entry PublishedAt or UpdatedAt may be accepted as late as (time.Now() + entryTimeFutureBound).
 	entryTimeFutureBound = 2 * 24 * time.Hour
 )
 

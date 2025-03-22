@@ -3,9 +3,11 @@
 
 package bookmark
 
+import "github.com/virtualtam/sparklemuffin/pkg/user"
+
 func requireUserUUID(userUUID string) error {
 	if userUUID == "" {
-		return ErrUserUUIDRequired
+		return user.ErrUUIDRequired
 	}
 	return nil
 }

@@ -6,6 +6,8 @@ package bookmark
 import (
 	"errors"
 	"testing"
+
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 func TestServiceAdd(t *testing.T) {
@@ -19,7 +21,7 @@ func TestServiceAdd(t *testing.T) {
 		// error cases
 		{
 			tname:   "empty bookmark",
-			wantErr: ErrUserUUIDRequired,
+			wantErr: user.ErrUUIDRequired,
 		},
 		{
 			tname: "missing user UUID",
@@ -27,7 +29,7 @@ func TestServiceAdd(t *testing.T) {
 				URL:   "https://domain.tld",
 				Title: "Example Domain",
 			},
-			wantErr: ErrUserUUIDRequired,
+			wantErr: user.ErrUUIDRequired,
 		},
 		{
 			tname: "empty URL",
@@ -284,7 +286,7 @@ func TestServiceByUID(t *testing.T) {
 		{
 			tname:   "empty user UUID",
 			uid:     "27L5erU5VNJzIGY1uPUqzLkc9zV",
-			wantErr: ErrUserUUIDRequired,
+			wantErr: user.ErrUUIDRequired,
 		},
 		{
 			tname:    "not found",
@@ -371,7 +373,7 @@ func TestServiceDelete(t *testing.T) {
 		{
 			tname:   "empty user UUID",
 			uid:     "27L5erU5VNJzIGY1uPUqzLkc9zV",
-			wantErr: ErrUserUUIDRequired,
+			wantErr: user.ErrUUIDRequired,
 		},
 		{
 			tname:    "not found",
@@ -447,7 +449,7 @@ func TestServiceUpdate(t *testing.T) {
 				URL:   "https://domain.tld",
 				Title: "Example Domain",
 			},
-			wantErr: ErrUserUUIDRequired,
+			wantErr: user.ErrUUIDRequired,
 		},
 		{
 			tname: "empty URL",

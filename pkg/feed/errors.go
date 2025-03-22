@@ -46,6 +46,4 @@ var (
 	ErrSubscriptionAlreadyRegistered error = errors.New("subscription: already registered")
 	ErrSubscriptionNotFound          error = errors.New("subscription: not found")
 	ErrSubscriptionUUIDRequired      error = errors.New("subscription: UUID required")
-
-	ErrUserUUIDRequired error = errors.New("user: UUID required")
 )

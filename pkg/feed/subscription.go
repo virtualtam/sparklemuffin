@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/virtualtam/sparklemuffin/internal/test/assert"
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 // Subscription represents a given user's subscription to a Feed.
@@ -103,7 +104,7 @@ func (s *Subscription) requireFeedUUID() error {
 
 func (s *Subscription) requireUserUUID() error {
 	if s.UserUUID == "" {
-		return ErrUserUUIDRequired
+		return user.ErrUUIDRequired
 	}
 	return nil
 }

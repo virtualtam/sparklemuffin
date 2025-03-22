@@ -6,6 +6,8 @@ package session
 import (
 	"errors"
 	"testing"
+
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 func TestServiceAdd(t *testing.T) {
@@ -16,7 +18,7 @@ func TestServiceAdd(t *testing.T) {
 	}{
 		{
 			tname:   "empty session",
-			wantErr: ErrUserUUIDRequired,
+			wantErr: user.ErrUUIDRequired,
 		},
 		{
 			tname: "empty remember token",

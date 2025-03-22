@@ -5,6 +5,7 @@ package session
 
 import (
 	"github.com/virtualtam/sparklemuffin/internal/hash"
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 // Service handles operations for the user session domain.
@@ -86,7 +87,7 @@ func (s *Service) requireRememberTokenHash(session *Session) error {
 
 func (s *Service) requireUserUUID(session *Session) error {
 	if session.UserUUID == "" {
-		return ErrUserUUIDRequired
+		return user.ErrUUIDRequired
 	}
 	return nil
 }

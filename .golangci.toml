@@ -9,12 +9,19 @@ new = false
 [linters]
 enable = [
     "contextcheck",
+    "copyloopvar",
     "errcheck",
     "errname",
     "errorlint",
+    "ineffassign",
+    "nakedret",
     "nilerr",
     "nilnil",
+    "reassign",
+    "unconvert",
     "unparam",
+    "unused",
+    "wastedassign",
 ]
 
 [linters-settings.errcheck]

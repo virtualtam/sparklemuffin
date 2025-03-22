@@ -74,14 +74,13 @@ func (s *Service) Authenticate(email, password string) (User, error) {
 		[]byte(password),
 	)
 
-	switch err {
-	case nil:
-		return user, nil
-	case bcrypt.ErrMismatchedHashAndPassword:
+	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 		return User{}, ErrPasswordIncorrect
-	default:
+	} else if err != nil {
 		return User{}, err
 	}
+
+	return user, nil
 }
 
 // ByNickName returns the user corresponding to a given NickName.

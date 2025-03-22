@@ -4,6 +4,8 @@
 package querying
 
 import (
+	"errors"
+
 	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
@@ -108,7 +110,7 @@ func (s *Service) PublicBookmarkByUID(ownerUUID string, uid string) (BookmarkPag
 	}
 
 	b, err := s.r.BookmarkGetPublicByUID(owner.UUID, uid)
-	if err == bookmark.ErrNotFound {
+	if errors.Is(err, bookmark.ErrNotFound) {
 		return NewBookmarkPage(owner, 1, 1, []bookmark.Bookmark{}), nil
 	} else if err != nil {
 		return BookmarkPage{}, err

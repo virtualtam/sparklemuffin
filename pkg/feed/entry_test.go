@@ -4,6 +4,7 @@
 package feed
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -245,7 +246,7 @@ func TestEntryValidateForAddition(t *testing.T) {
 				t.Fatalf("want error %q, got nil", tc.wantErr)
 			}
 
-			if err != tc.wantErr {
+			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("want error %q, got %q", tc.wantErr, err)
 			}
 		})

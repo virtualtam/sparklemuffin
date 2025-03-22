@@ -14,15 +14,22 @@ enable = [
     "errname",
     "errorlint",
     "godot",
+    "gofmt",
+    "goimports",
+    "govet",
     "ineffassign",
     "misspell",
     "nakedret",
     "nilerr",
     "nilnil",
+    "predeclared",
     "reassign",
+    "stylecheck",
+    "tagliatelle",
     "unconvert",
     "unparam",
     "unused",
+    "usestdlibvars",
     "wastedassign",
 ]
 
@@ -30,3 +37,6 @@ enable = [
 # Don't allow setting of error to the blank identifier. If there is a legitimate
 # reason, there should be a nolint with an explanation.
 check-blank = true
+
+[linters-settings.tagliatelle.case]
+rules = { json = "snake" }

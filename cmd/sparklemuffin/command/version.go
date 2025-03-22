@@ -19,7 +19,7 @@ const (
 
 var (
 	versionVerbose    bool
-	versionFormatJson bool
+	versionFormatJSON bool
 )
 
 // NewVersionCommand initializes and returns a CLI command to display the program version.
@@ -28,7 +28,7 @@ func NewVersionCommand() *cobra.Command {
 		Use:   versionCmdName,
 		Short: "Display the prorgam version",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if versionFormatJson {
+			if versionFormatJSON {
 				detailsBytes, err := json.Marshal(versionDetails)
 				if err != nil {
 					return fmt.Errorf("failed to marshal version details as JSON: %w", err)
@@ -63,7 +63,7 @@ func NewVersionCommand() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(
-		&versionFormatJson,
+		&versionFormatJSON,
 		"json",
 		false,
 		"Format version information as JSON",

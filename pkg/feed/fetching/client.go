@@ -44,7 +44,7 @@ func NewClient(httpClient *http.Client, userAgent string) *Client {
 func (c *Client) Fetch(feedURL string, eTag string, lastModified time.Time) (FeedStatus, error) {
 	ctx := context.Background()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, feedURL, nil)
 	if err != nil {
 		log.
 			Error().

@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrRandUnexpectedLength error = errors.New("rand: unexpected length")
-	ErrRandNegativeLength   error = errors.New("rand: negative length")
+	ErrRandUnexpectedLength = errors.New("rand: unexpected length")
+	ErrRandNegativeLength   = errors.New("rand: negative length")
 )
 
 // RandomBytes generates a cryptographically secure random byte array.

@@ -14,12 +14,14 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/virtualtam/venom"
+
+	// Load the pgx PostgreSQL driver.
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/config"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbookmark"

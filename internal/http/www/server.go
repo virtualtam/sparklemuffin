@@ -66,10 +66,11 @@ type Server struct {
 	errorView *view.ErrorView
 }
 
-type optionFunc func(*Server)
+// OptionFunc represents a function that configures a set of options for a Server.
+type OptionFunc func(*Server)
 
 // NewServer initializes and returns a new Server.
-func NewServer(optionFuncs ...optionFunc) *Server {
+func NewServer(optionFuncs ...OptionFunc) *Server {
 	s := &Server{
 		router: chi.NewRouter(),
 

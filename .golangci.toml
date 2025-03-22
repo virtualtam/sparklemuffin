@@ -24,7 +24,9 @@ enable = [
     "nilnil",
     "predeclared",
     "reassign",
+    #"revive", # Quite nitpicky, useful to run manually.
     "stylecheck",
+    "staticcheck",
     "tagliatelle",
     "unconvert",
     "unparam",

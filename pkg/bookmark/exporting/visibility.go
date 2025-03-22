@@ -20,5 +20,5 @@ const (
 )
 
 var (
-	ErrVisibilityInvalid error = errors.New("invalid value for visibility")
+	ErrVisibilityInvalid = errors.New("invalid value for visibility")
 )

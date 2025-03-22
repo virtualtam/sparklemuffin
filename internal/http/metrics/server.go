@@ -37,7 +37,7 @@ func NewServer(metricsPrefix string, metricsListenAddr string, versionDetails *v
 	router := http.NewServeMux()
 
 	router.Handle("/metrics", promhttp.HandlerFor(metricsRegistry, opts))
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		_, err := w.Write([]byte(webroot))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

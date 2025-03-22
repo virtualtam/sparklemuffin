@@ -30,10 +30,10 @@ const (
 )
 
 var (
-	locationGMT *time.Location = gmtLocation()
+	locationGMT = mustLoadTimeLocationGMT()
 )
 
-func gmtLocation() *time.Location {
+func mustLoadTimeLocationGMT() *time.Location {
 	location, err := time.LoadLocation("GMT")
 	if err != nil {
 		panic(err)

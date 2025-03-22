@@ -6,7 +6,7 @@ package session
 import "errors"
 
 var (
-	ErrNotFound                  error = errors.New("not found")
-	ErrRememberTokenRequired     error = errors.New("remember token required")
-	ErrRememberTokenHashRequired error = errors.New("remember token hash required")
+	ErrNotFound                  = errors.New("not found")
+	ErrRememberTokenRequired     = errors.New("remember token required")
+	ErrRememberTokenHashRequired = errors.New("remember token hash required")
 )

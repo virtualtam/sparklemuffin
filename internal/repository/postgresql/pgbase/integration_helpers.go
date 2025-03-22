@@ -16,11 +16,13 @@ import (
 	migratepgx "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jaswdr/faker"
 	"github.com/testcontainers/testcontainers-go"
 	testpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+
+	// Load the pgx PostgreSQL driver.
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/migrations"
 	"github.com/virtualtam/sparklemuffin/pkg/user"

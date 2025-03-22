@@ -21,20 +21,20 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
-func WithCSRFKey(csrfKey string) optionFunc {
+func WithCSRFKey(csrfKey string) OptionFunc {
 	return func(s *Server) {
 		s.csrfService = csrf.NewService(csrfKey)
 	}
 }
 
-func WithMetricsRegistry(prefix string, registry *prometheus.Registry) optionFunc {
+func WithMetricsRegistry(prefix string, registry *prometheus.Registry) OptionFunc {
 	return func(s *Server) {
 		s.metricsPrefix = prefix
 		s.metricsRegistry = registry
 	}
 }
 
-func WithPublicURL(publicURL *url.URL) optionFunc {
+func WithPublicURL(publicURL *url.URL) OptionFunc {
 	return func(s *Server) {
 		s.publicURL = publicURL
 	}
@@ -45,7 +45,7 @@ func WithBookmarkServices(
 	exportingService *bookmarkexporting.Service,
 	importingService *bookmarkimporting.Service,
 	queryingService *bookmarkquerying.Service,
-) optionFunc {
+) OptionFunc {
 	return func(s *Server) {
 		s.bookmarkService = bookmarkService
 		s.bookmarkExportingService = exportingService
@@ -59,7 +59,7 @@ func WithFeedServices(
 	feedExportingService *feedexporting.Service,
 	feedImportingService *feedimporting.Service,
 	feedQueryingService *feedquerying.Service,
-) optionFunc {
+) OptionFunc {
 	return func(s *Server) {
 		s.feedService = feedService
 		s.feedExportingService = feedExportingService
@@ -68,13 +68,13 @@ func WithFeedServices(
 	}
 }
 
-func WithSessionService(sessionService *session.Service) optionFunc {
+func WithSessionService(sessionService *session.Service) OptionFunc {
 	return func(s *Server) {
 		s.sessionService = sessionService
 	}
 }
 
-func WithUserService(userService *user.Service) optionFunc {
+func WithUserService(userService *user.Service) OptionFunc {
 	return func(s *Server) {
 		s.userService = userService
 	}

@@ -18,5 +18,5 @@ const (
 )
 
 var (
-	ErrOnConflictStrategyInvalid error = errors.New("invalid value for on-conflict strategy")
+	ErrOnConflictStrategyInvalid = errors.New("invalid value for on-conflict strategy")
 )

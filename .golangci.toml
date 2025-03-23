@@ -24,6 +24,7 @@ enable = [
     "nakedret",
     "nilerr",
     "nilnil",
+    "noctx",
     "predeclared",
     "reassign",
     #"revive", # Quite nitpicky, useful to run manually.
@@ -44,6 +45,8 @@ enable = [
 # Don't allow setting of error to the blank identifier. If there is a legitimate
 # reason, there should be a nolint with an explanation.
 check-blank = true
+
+check-type-assertions = true
 
 [linters-settings.tagliatelle.case]
 rules = { json = "snake" }

@@ -1,10 +1,19 @@
 {{define "content"}}
-<h2>Delete bookmark</h2>
-<form action="/bookmarks/{{.Content.UID}}/delete" method="POST">
-  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-  <p>Delete bookmark: <a href="{{.Content.URL}}">{{.Content.Title}}</a>?
-  <p>
-    <button type="submit">Delete</button>
-  </p>
-</form>
+<section class="section pt-3">
+  <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      <li><a href="/bookmarks">Bookmarks</a></li>
+      <li class="is-active"><a href="#" aria-current="page">Delete</a></li>
+    </ul>
+  </nav>
+
+  <p class="mb-4">Delete bookmark: <a href="{{.Content.URL}}">{{.Content.Title}}</a>?</p>
+
+  <form action="/bookmarks/{{.Content.UID}}/delete" method="POST">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+    <div class="field">
+      <button type="submit" class="button is-danger">Delete</button>
+    </div>
+  </form>
+</section>
 {{end}}

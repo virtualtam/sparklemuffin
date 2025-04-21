@@ -1,9 +1,18 @@
 {{define "content"}}
-<h2>Delete tag</h2>
-<form action="/bookmarks/tags/{{(.EncodedName)}}/delete" method="POST">
-  <p>Delete tag: <span class="tag">{{.Name}}</span>?</p>
-  <p>
-    <button type="submit">Delete</button>
-  </p>
-</form>
+<section class="section pt-3">
+  <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      <li><a href="/bookmarks">Bookmarks</a></li>
+      <li><a href="/bookmarks/tags">Tags</a></li>
+      <li class="is-active"><a href="#" aria-current="page">Delete</a></li>
+    </ul>
+  </nav>
+
+  <p class="mb-4">Delete tag: <span class="tag">{{.Name}}</span>?</p>
+  <form action="/bookmarks/tags/{{(.EncodedName)}}/delete" method="POST">
+    <div class="field">
+      <button type="submit" class="button is-danger">Delete</button>
+    </div>
+  </form>
+</section>
 {{end}}

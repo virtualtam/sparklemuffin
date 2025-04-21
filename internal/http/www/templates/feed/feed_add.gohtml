@@ -1,25 +1,57 @@
 {{define "content"}}
-<h2>Add feed</h2>
-<form action="/feeds/add" class="item-form" method="POST">
-  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+<section class="section pt-3">
+  <nav class="breadcrumb">
+    <ul>
+      <li><a href="/feeds">Feeds</a></li>
+      <li class="is-active"><a href="#">Add subscription</a></li>
+    </ul>
+  </nav>
 
-  <label for="url">URL</label>
-  <input type="url"
-         id="url"
-         name="url"
-         placeholder="URL"
-         required="">
+  <form action="/feeds/add" method="POST">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
-  <label for="category">Category</label>
-  <select name="category" id="category">
-    {{- range .Categories}}
-    <option value="{{.UUID}}">{{.Name}}</option>
-    {{- end}}
-  </select>
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label class="label" for="url">URL</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="url" id="url" name="url" placeholder="URL" required="">
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <br>
-  <span class="submit">
-    <button type="submit">Save</button>
-  </span>
-</form>
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label class="label" for="category">Category</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <div class="select">
+              <select name="category" id="category">
+                {{- range .Categories}}
+                <option value="{{.UUID}}">{{.Name}}</option>
+                {{- end}}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field is-horizontal">
+      <div class="field-label"></div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</section>
 {{end}}

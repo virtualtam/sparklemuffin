@@ -1,11 +1,23 @@
 {{define "content"}}
-<h2>Administration</h2>
-<h3>Delete user: {{.Content.Email}}</h3>
-<form action="/admin/users/{{.Content.UUID}}/delete" method="POST">
-  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-  <p>Delete user <strong>{{.Content.Email}}</strong> and all associated data?
-  <p>
-    <button type="submit">Delete</button>
+<section class="section pt-3">
+  <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      <li><a href="/admin">Administration</a></li>
+      <li class="is-active"><a href="#" aria-current="page">Delete user</a></li>
+    </ul>
+  </nav>
+
+  <h2 class="title">Delete user - {{.Content.Email}}</h2>
+
+  <p class="mb-4">
+    Delete user <strong>{{.Content.Email}}</strong> and all associated data?
   </p>
-</form>
+
+  <form action="/admin/users/{{.Content.UUID}}/delete" method="POST">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+    <div class="field">
+      <button type="submit" class="button is-danger">Delete</button>
+    </div>
+  </form>
+</section>
 {{end}}

@@ -1,18 +1,38 @@
 {{define "content"}}
-<h2>Add feed category</h2>
-<form action="/feeds/categories/add" class="item-form" method="POST">
-  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+<section class="section pt-3">
+  <nav class="breadcrumb">
+    <ul>
+      <li><a href="/feeds">Feeds</a></li>
+      <li class="is-active"><a href="#">Add category</a></li>
+    </ul>
+  </nav>
 
-  <label for="name">Name</label>
-  <input type="text"
-         id="name"
-         name="name"
-         placeholder="Name"
-         required="">
+  <form action="/feeds/categories/add" method="POST">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
-  <br>
-  <span class="submit">
-    <button type="submit">Save</button>
-  </span>
-</form>
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label class="label" for="name">Category name</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="text" id="name" name="name" placeholder="Name" required="">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field is-horizontal">
+      <div class="field-label"></div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</section>
 {{end}}

@@ -3,10 +3,18 @@
  * SPDX-License-Identifier: MIT
  */
 
+.awesomplete {
+  display: initial;
+}
+
+.awesomplete>ul {
+  min-width: 30ch;
+}
+
 .awesomplete>ul,
 .awesomplete>ul:before {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--bulma-primary-100);
+  color: var(--bulma-text);
 }
 
 .awesomplete input[type=text] {

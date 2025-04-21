@@ -1,43 +1,94 @@
 {{define "content"}}
-<h2>Add bookmark</h2>
-<form action="/bookmarks/add" autocomplete="off" class="item-form" method="POST">
-  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-  <label for="url">URL</label>
-  <input type="url"
-         id="url"
-         name="url"
-         placeholder="URL"
-         required="">
+<section class="section pt-3">
+  <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      <li><a href="/bookmarks">Bookmarks</a></li>
+      <li class="is-active"><a href="#" aria-current="page">Add</a></li>
+    </ul>
+  </nav>
 
-  <label for="title">Title</label>
-  <input type="text"
-         id="title"
-         name="title"
-         placeholder="Title"
-         required="">
+  <form action="/bookmarks/add" autocomplete="off" method="POST">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
-  <label for="description">Description</label>
-  <textarea id="description" name="description" placeholder="Description" rows="10"></textarea>
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label class="label" for="url">URL</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="url" id="url" name="url" placeholder="URL" required="">
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <label for="tags">Tags</label>
-  <input type="text"
-         id="tags"
-         name="tags"
-         placeholder="Tags, separated by spaces"
-         data-list="{{Join .Tags ","}}">
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label class="label" for="title">Title</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="text" id="title" name="title" placeholder="Title" required="">
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <label for="private">Private?</label>
-  <div>
-    <input type="checkbox"
-           id="private"
-           name="private">
-  </div>
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label class="label" for="description">Description</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <textarea class="textarea" id="description" name="description" placeholder="Description"
+              rows="10"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <br>
-  <span class="submit">
-    <button type="submit">Save</button>
-  </span>
-</form>
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label class="label" for="tags">Tags</label>
+      </div>
+      <div class="field-body">
+        <div class="field is-expanded">
+          <div class="control">
+            <input class="input" type="text" id="tags" name="tags" placeholder="Tags, separated by spaces"
+              data-list="{{Join .Tags " ,"}}">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label class="label" for="private">Private?</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input type="checkbox" id="private" name="private">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field is-horizontal">
+      <div class="field-label"></div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</section>
 {{template "awesomplete"}}
 {{template "easymde" "description"}}
 {{end}}

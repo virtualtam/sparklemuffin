@@ -54,6 +54,7 @@ func New(templateFiles ...string) *View {
 		Funcs(template.FuncMap{
 			"Join":           strings.Join,
 			"MarkdownToHTML": MarkdownToHTMLFunc(),
+			"mod":            func(i, j int) int { return i % j },
 		}).
 		ParseFS(templates.FS, templateFiles...)
 

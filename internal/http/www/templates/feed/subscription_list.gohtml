@@ -1,48 +1,50 @@
 {{define "content"}}
-<div id="nav-actions">
-  <nav>
-    <a href="/feeds/categories/add">+ Add category</a>
+<section class="section pt-3">
+  <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      <li><a href="/feeds">Feeds</a></li>
+      <li class="is-active"><a href="#">Subscriptions</a></li>
+    </ul>
   </nav>
-</div>
 
-<div>
-  <ul>
-    {{- range .}}
-    <li>
-      <div>
-        [
-        <span class="item-edit">
-          <a href="/feeds/categories/{{.UUID}}/edit" title="Edit category: {{.Name}}">e</a>
-        </span>
-        ,
-        <span class="item-delete">
-          <a href="/feeds/categories/{{.UUID}}/delete" title="Delete category: {{.Name}}">x</a>
-        </span>
-        ]
-        <strong>{{.Name}}</strong>
-      </div>
-      <ul>
-        {{- range .Subscriptions}}
-        <li>
-          <div>
-            [
-            <span class="item-edit">
-              <a href="/feeds/subscriptions/{{.UUID}}/edit"
-                 title="Edit subscription: {{.FeedTitle}}">e</a>
-            </span>
-            ,
-            <span class="item-delete">
-              <a href="/feeds/subscriptions/{{.UUID}}/delete"
-                 title="Delete subscription: {{.FeedTitle}}">x</a>
-            </span>
-            ]
-            {{or .Alias .FeedTitle}}
-          </div>
-        </li>
-        {{- end}}
-      </ul>
-    </li>
-    {{- end}}
-  </ul>
-</div>
+  <div>
+    <ul>
+      {{- range .}}
+      <li>
+        <div>
+          [
+          <span class="item-edit">
+            <a href="/feeds/categories/{{.UUID}}/edit" title="Edit category: {{.Name}}">e</a>
+          </span>
+          ,
+          <span class="item-delete">
+            <a href="/feeds/categories/{{.UUID}}/delete" title="Delete category: {{.Name}}">x</a>
+          </span>
+          ]
+          <strong>{{.Name}}</strong>
+        </div>
+        <ul class="ml-4">
+          {{- range .Subscriptions}}
+          <li>
+            <div>
+              [
+              <span class="item-edit">
+                <a href="/feeds/subscriptions/{{.UUID}}/edit" title="Edit subscription: {{.FeedTitle}}">e</a>
+              </span>
+              ,
+              <span class="item-delete">
+                <a class="has-text-danger" href="/feeds/subscriptions/{{.UUID}}/delete"
+                  title="Delete subscription: {{.FeedTitle}}">x</a>
+              </span>
+              ]
+              {{or .Alias .FeedTitle}}
+            </div>
+          </li>
+          {{- end}}
+        </ul>
+      </li>
+      {{- end}}
+    </ul>
+  </div>
+</section>
 {{end}}

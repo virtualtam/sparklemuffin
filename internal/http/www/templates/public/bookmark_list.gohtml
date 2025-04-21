@@ -1,83 +1,120 @@
 {{define "content"}}
-<h3>{{.Owner.DisplayName}}'s bookmarks</h3>
-
-<div class="search">
-  <form action="/u/{{.Owner.NickName}}/bookmarks" method="GET">
-    <p>
-      <input
-        type="text"
-        id="searchTerms"
-        name="search"
-        placeholder="Search terms"
-        value="{{.SearchTerms}}">
-      <button type="submit">Search</button>
-    </p>
-  </form>
-{{if ne .SearchTerms "" }}
-  <p>
-    <strong>{{.SearchResultCount}}</strong> bookmark{{if gt .SearchResultCount 1}}s{{end}} found
-  </p>
-{{end}}
-</div>
-
-{{template "pagination" .}}
-
-<ol start="{{.Offset}}">
-{{range .Bookmarks}}
-  <li>
-    <div class="bookmark">
-      <div class="title">
-        <span>
-          {{- if .Private}}
-            <span class="private">[Private]</span>
-          {{- end}}
-          <a href="{{.URL}}">{{.Title}}</a>
-        </span>
-        <date>{{.CreatedAt.Format "2006-01-02"}}</date>
-      </div>
-      <div class="metadata">
-        <div class="metadata-tags">
-        {{- with .Tags}}
-          tags:
-          {{- range $index, $tag := .}}
-          {{- if $index}},{{end}}
-          <a href="/u/{{$.Owner.NickName}}/bookmarks?search={{$tag}}">{{$tag}}</a>
-          {{- end}}
-        {{- end}}
+<section class="section pt-3">
+  <h2 class="title">{{.Owner.DisplayName}}'s bookmarks</h2>
+  {{template "bookmarkSearchForm" .}}
+  <ol start="{{.Offset}}">
+    {{range .Bookmarks}}
+    <li class="bookmark mb-5">
+      <div class="level mb-1">
+        <div class="level-left">
+          <div class="level-item">
+            <strong>
+              {{- if .Private}}
+              <span class="has-text-danger-30">[Private]</span>
+              {{- end}}
+              <a class="bookmark-title" href="{{.URL}}">{{.Title}}</a>
+            </strong>
+          </div>
         </div>
-        <div class="metadata-actions">
-          [ <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">permalink</a> ]
+        <div class="level-right">
+          <div class="level-item">
+            <div class="dots"></div>
+          </div>
+          <div class="level-item">
+            <strong>
+              <date>{{.CreatedAt.Format "2006-01-02"}}</date>
+            </strong>
+          </div>
+        </div>
+      </div>
+      <div class="level mb-1">
+        <div class="level-left">
+          <div class="level-item">
+            <div class="tags">
+              {{- range .Tags}}
+              <span class="tag">
+                <a href="/u/{{$.Owner.NickName}}/bookmarks?search={{.}}">{{.}}</a>
+              </span>
+              {{- end}}
+            </div>
+          </div>
+        </div>
+        <div class="level-right">
+          <div class="level-item">
+            [ <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">permalink</a> ]
+          </div>
         </div>
       </div>
       {{- with .Description}}
-      <div class="description">
+      <div class="content">
         {{. | MarkdownToHTML}}
       </div>
       {{- end}}
-    </div>
-  </li>
+    </li>
+    {{end}}
+  </ol>
+</section>
 {{end}}
-</ol>
 
-{{template "pagination" .}}
-{{end}}
 {{define "pagination"}}
 <div class="pagination">
   <p>
     Page <span class="page-number">{{.PageNumber}}</span> of <span class="page-number">{{.TotalPages}}</span>
-  {{if gt .TotalPages 1}}
+    {{if gt .TotalPages 1}}
     <br>
     Go to:
     {{if lt .PreviousPageNumber .PageNumber }}
     <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page=1">first</a>,
-    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}">previous</a>
+    <a
+      href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}">previous</a>
     {{- if ne .PageNumber .TotalPages}},{{end}}
     {{end}}
     {{if lt .PageNumber .TotalPages }}
-    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">next</a>,
-    <a href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}">last</a>
+    <a
+      href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">next</a>,
+    <a
+      href="/u/{{.Owner.NickName}}/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}">last</a>
     {{end}}
-  {{end}}
+    {{end}}
   </p>
 </div>
+{{end}}
+
+{{define "bookmarkSearchForm"}}
+<nav class="level">
+  <div class="level-left">
+    <div class="level-item">
+      <p class="subtitle is-5">
+        {{if ne .SearchTerms "" }}
+        <strong>{{.SearchResultCount}}</strong> bookmark{{if gt .SearchResultCount 1}}s{{end}} found
+        {{else}}
+        <strong>FIXME</strong> bookmarks
+        {{end}}
+      </p>
+    </div>
+    <div class="level-item">
+      <form action="/u/{{.Owner.NickName}}/bookmarks" method="GET">
+        <div class="field has-addons">
+          <div class="control">
+            <input class="input" type="text" id="searchTerms" name="search" placeholder="Search terms"
+              value="{{.SearchTerms}}">
+          </div>
+          <div class="control">
+            <button type="submit" class="button">Search</button>
+          </div>
+        </div>
+      </form>
+      {{if ne .SearchTerms "" }}
+      <p>
+        <strong>{{.SearchResultCount}}</strong> bookmark{{if gt .SearchResultCount 1}}s{{end}} found
+      </p>
+      {{end}}
+    </div>
+  </div>
+  <div class="level-right">
+    <div class="level-item">
+      {{template "pagination" .}}
+    </div>
+  </div>
+</nav>
 {{end}}

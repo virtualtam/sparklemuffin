@@ -1,12 +1,22 @@
 {{define "content"}}
-<h2>Edit tag</h2>
-<form action="/bookmarks/tags/{{(.EncodedName)}}/edit" class="item-form" method="POST">
-  <label for="name">Name</label>
-  <input type="text" id="name" name="name" placeholder="Name" size="80" value="{{.Name}}" required="">
+<section class="section pt-3">
+  <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      <li><a href="/bookmarks">Bookmarks</a></li>
+      <li><a href="/bookmarks/tags">Tags</a></li>
+      <li class="is-active"><a href="#" aria-current="page">Edit</a></li>
+    </ul>
+  </nav>
 
-  <br>
-  <span class="submit">
-    <button type="submit">Rename</button>
-  </span>
-</form>
+  <form action="/bookmarks/tags/{{(.EncodedName)}}/edit" method="POST">
+    <div class="field">
+      <label for="name" class="label">Name</label>
+      <input class="input" type="text" id="name" name="name" placeholder="Name" size="80" value="{{.Name}}" required="">
+    </div>
+
+    <div class="field">
+      <button type="submit" class="button is-primary">Rename</button>
+    </div>
+  </form>
+</section>
 {{end}}

@@ -1,55 +1,50 @@
 {{define "content"}}
-<h2>Administration</h2>
-<h3>Edit user: {{.Content.Email}}</h3>
-<form action="/admin/users/{{.Content.UUID}}" class="item-form" method="POST">
-  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-  <label for="email">Email address</label>
-  <input
-         type="email"
-         id="email"
-         name="email"
-         placeholder="Email"
-         value="{{.Content.Email}}"
-         required="">
+<section class="section pt-3">
+  <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      <li><a href="/admin">Administration</a></li>
+      <li class="is-active"><a href="#" aria-current="page">Edit user</a></li>
+    </ul>
+  </nav>
 
-  <label for="nick_name">Nickname</label>
-  <input
-         type="text"
-         id="nick_name"
-         name="nick_name"
-         placeholder="Nickname"
-         value="{{.Content.NickName}}"
-         required="">
+  <h2 class="title">Edit user - {{.Content.Email}}</h2>
 
-  <label for="display_name">Display Name</label>
-  <input
-         type="text"
-         id="display_name"
-         name="display_name"
-         placeholder="Display Name"
-         value="{{.Content.DisplayName}}"
-         required="">
+  <form action="/admin/users/{{.Content.UUID}}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
-  <label for="password">Password</label>
-  <input
-         type="password"
-         id="password"
-         name="password"
-         placeholder="Password"
-         required="">
+    <div class="field">
+      <label for="email" class="label">Email address</label>
+      <input class="input" type="email" id="email" name="email" placeholder="Email" value="{{.Content.Email}}"
+        required="">
+    </div>
 
-  <label for="is_admin">Administrator?</label>
-  <span>
-    <input
-           type="checkbox"
-           {{if .Content.IsAdmin}}checked{{end}}
-           id="is_admin"
-           name="is_admin">
-  </span>
+    <div class="field">
+      <label for="nick_name" class="label">Nickname</label>
+      <input class="input" type="text" id="nick_name" name="nick_name" placeholder="Nickname"
+        value="{{.Content.NickName}}" required="">
+    </div>
 
-  <br>
-  <span>
-    <button type="submit">Save changes</button>
-  </span>
-</form>
+    <div class="field">
+      <label for="display_name" class="label">Display Name</label>
+      <input class="input" type="text" id="display_name" name="display_name" placeholder="Display Name"
+        value="{{.Content.DisplayName}}" required="">
+    </div>
+
+    <div class="field">
+      <label for="password" class="label">Password</label>
+      <input class="input" type="password" id="password" name="password" placeholder="Password" required="">
+    </div>
+
+    <div class="field">
+      <label for="is_admin" class="label">Administrator?</label>
+      <label class="checkbox">
+        <input type="checkbox" {{if .Content.IsAdmin}}checked{{end}} id="is_admin" name="is_admin">
+      </label>
+    </div>
+
+    <div class="field">
+      <button type="submit" class="button is-primary">Save changes</button>
+    </div>
+  </form>
+</section>
 {{end}}

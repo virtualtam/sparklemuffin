@@ -1,17 +1,18 @@
 {{define "content"}}
-<h2>Administration</h2>
-<div id="nav-actions">
-  <nav>
-    <a href="/admin/users/add">+ Add user</a>
-  </nav>
-</div>
-<br>
+<section class="section pt-3">
+  <h2 class="title">Administration</h2>
+  <div id="nav-actions">
+    <nav>
+      <a href="/admin/users/add">+ Add user</a>
+    </nav>
+  </div>
+  <br>
 
-{{template "userTable" .}}
-{{end}}
+  {{template "userTable" .}}
+  {{end}}
 
-{{define "userTable"}}
-  <table>
+  {{define "userTable"}}
+  <table class="table is-striped is-hoverable">
     <thead>
       <th>Email</th>
       <th>Nickname</th>
@@ -20,22 +21,23 @@
       <th>Actions</th>
     </thead>
     <tbody>
-  {{range .}}
-    {{template "userRow" .}}
-  {{end}}
+      {{range .}}
+      {{template "userRow" .}}
+      {{end}}
     </tbody>
   </table>
-{{end}}
+  {{end}}
 
-{{define "userRow"}}
-<tr>
-  <td>{{.Email}}</td>
-  <td>{{.NickName}}</td>
-  <td>{{.DisplayName}}</td>
-  <td>{{if .IsAdmin}}yes{{else}}no{{end}}</td>
-  <td>
-    <a href="/admin/users/{{.UUID}}">edit</a>,
-    <a href="/admin/users/{{.UUID}}/delete">delete</a>
-  </td>
-</tr>
+  {{define "userRow"}}
+  <tr>
+    <td>{{.Email}}</td>
+    <td>{{.NickName}}</td>
+    <td>{{.DisplayName}}</td>
+    <td>{{if .IsAdmin}}yes{{else}}no{{end}}</td>
+    <td>
+      <a href="/admin/users/{{.UUID}}">edit</a>,
+      <a class="has-text-danger" href="/admin/users/{{.UUID}}/delete">delete</a>
+    </td>
+  </tr>
+</section>
 {{end}}

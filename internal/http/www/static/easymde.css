@@ -10,12 +10,15 @@
 }
 
 .EasyMDEContainer .CodeMirror {
-  border-color: var(--border);
-  border-radius: 0;
-  color: var(--text);
+  border-color: hsl(var(--bulma-input-h), var(--bulma-input-s), calc(var(--bulma-input-border-l) + var(--bulma-input-border-l-delta)));
+  border-bottom-left-radius: var(--bulma-radius);
+  border-bottom-right-radius: var(--bulma-radius);
+  box-shadow: inset 0 .0625em .125em hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), var(--bulma-scheme-invert-l), .05);
+  color: var(--bulma-text);
   font-family: firacode, monospace;
   font-size: 14px;
 }
+
 @media (max-width: 500px) {
   .EasyMDEContainer .CodeMirror {
     font-size: 12px;
@@ -23,7 +26,7 @@
 }
 
 .cm-s-easymde .cm-link {
-  color: var(--text);
+  color: var(--bulma-text);
 }
 
 .cm-s-easymde .cm-url {
@@ -31,7 +34,7 @@
 }
 
 .editor-statusbar {
-  color: var(--text);
+  color: var(--bulma-text);
   font-size: .8rem;
   text-align: left;
 }
@@ -42,19 +45,20 @@
 }
 
 .editor-toolbar {
-  border-color: var(--border);
-  border-radius: 0;
+  border-color: hsl(var(--bulma-input-h), var(--bulma-input-s), calc(var(--bulma-input-border-l) + var(--bulma-input-border-l-delta)));
+  border-top-left-radius: var(--bulma-radius);
+  border-top-right-radius: var(--bulma-radius);
 }
 
 .editor-toolbar button {
-  color: var(--text);
+  color: var(--bulma-text);
 }
 
 .editor-toolbar button.active,
 .editor-toolbar button:hover {
-  background: white;
-  border-color: var(--text);
-  color: var(--text);
+  background: var(--bulma-primary-90);
+  border-color: hsl(var(--bulma-input-h), var(--bulma-input-s), calc(var(--bulma-input-border-l) + var(--bulma-input-border-l-delta)));
+  color: var(--bulma-text);
 }
 
 .editor-toolbar i.separator {

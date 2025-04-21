@@ -1,28 +1,77 @@
 {{define "content"}}
-<h2>Edit feed subscription: {{or .Subscription.Alias .Subscription.FeedTitle}}</h2>
-<form action="/feeds/subscriptions/{{.Subscription.UUID}}/edit" class="item-form" method="POST">
-  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+<section class="section pt-3">
+  <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      <li><a href="/feeds">Feeds</a></li>
+      <li><a href="/feeds/subscriptions">Subscriptions</a></li>
+      <li class="is-active"><a href="#">Edit</a></li>
+    </ul>
+  </nav>
 
-  <label for="description">Description</label>
-  <span id="description">{{.Subscription.FeedDescription}}</span>
+  <form action="/feeds/subscriptions/{{.Subscription.UUID}}/edit" method="POST">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
-  <label for="alias">Alias</label>
-  <input type="text"
-         id="alias"
-         name="alias"
-         placeholder="An optional alias to be displayed instead of the feed title"
-         value="{{.Subscription.Alias}}">
+    <div class="field is-horizontal">
+      <div class="field-label">
+        <label class="label" for="title">Title</label>
+      </div>
+      <div class="field-body">
+        <p>{{.Subscription.FeedTitle}}</p>
+      </div>
+    </div>
 
-  <label for="category">Category</label>
-  <select name="category" id="category">
-    {{- range .Categories}}
-    <option value="{{.UUID}}" {{if eq .UUID $.Subscription.CategoryUUID}} selected{{end}}>{{.Name}}</option>
-    {{- end}}
-  </select>
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label class="label" for="alias">Alias</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="text" id="alias" name="alias"
+              placeholder="An optional alias to be displayed instead of the feed title" value="{{.Subscription.Alias}}">
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <br>
-  <span class="submit">
-    <button type="submit">Save</button>
-  </span>
-</form>
+    <div class="field is-horizontal">
+      <div class="field-label">
+        <label class="label" for="description">Description</label>
+      </div>
+      <div class="field-body">
+        <span id="description">{{.Subscription.FeedDescription}}</span>
+      </div>
+    </div>
+
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label class="label" for="category">Category</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <div class="select">
+              <select name="category" id="category">
+                {{- range .Categories}}
+                <option value="{{.UUID}}" {{if eq .UUID $.Subscription.CategoryUUID}} selected{{end}}>{{.Name}}</option>
+                {{- end}}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field is-horizontal">
+      <div class="field-label"></div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</section>
 {{end}}

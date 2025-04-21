@@ -1,10 +1,19 @@
 {{define "content"}}
-<h2>Delete category</h2>
-<form action="/feeds/categories/{{.Category.UUID}}/delete" method="POST">
-  <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-  <p>Delete feed category and subscriptions: <strong>{{.Category.Name}}</strong>?
-  <p>
-    <button type="submit">Delete</button>
-  </p>
-</form>
+<section class="section pt-3">
+  <nav class="breadcrumb">
+    <ul>
+      <li><a href="/feeds">Feeds</a></li>
+      <li class="is-active"><a href="#">Delete category</a></li>
+    </ul>
+  </nav>
+
+  <p class="mb-4">Delete feed category and subscriptions: <strong>{{.Category.Name}}</strong>?</p>
+
+  <form action="/feeds/categories/{{.Category.UUID}}/delete" method="POST">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+    <p>
+      <button type="submit" class="button is-danger">Delete</button>
+    </p>
+  </form>
+</section>
 {{end}}

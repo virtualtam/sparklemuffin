@@ -1,103 +1,143 @@
 {{define "content"}}
-<div class="feeds">
-  <div class="feed-category-list">
-    <div id="nav-actions">
-      <nav>
-        <a href="/feeds/add">+ Add feed</a>
-      </nav>
-    </div>
-    <ul>
-      <li>
-        <span class="feed-category"><a href="/feeds">All</a> <span class="unread">{{.Unread}}</span></span>
-      </li>
-      {{- range .Categories}}
-      <li>
-        <span class="feed-category">
-          <a href="/feeds/categories/{{.Slug}}">{{.Name}}</a> <span class="unread">{{.Unread}}</span>
-        </span>
-        <ul>
-          {{- range .SubscribedFeeds}}
+<section class="section pt-3">
+  <div class="columns">
+    <div class="column is-one-quarter pl-0">
+      <aside class="menu">
+        <ul class="menu-list">
           <li>
-            <span class="feed">
-              <a href="/feeds/subscriptions/{{.Slug}}">{{or .Alias .Title}}</a>
-              <span class="unread">{{.Unread}}</span>
-            </span>
+            <a class="pl-0" href="/feeds">
+              <strong>
+                All
+                <span class="tag is-light is-pulled-right">{{.Unread}}</span>
+              </strong>
+            </a>
+            <hr class="my-1">
+          </li>
+          {{- range .Categories}}
+          <li>
+            <a class="pl-0" href="/feeds/categories/{{.Slug}}">
+              <strong>
+                {{.Name}}
+                <span class="tag is-light is-pulled-right">{{.Unread}}</span>
+              </strong>
+            </a>
+            <ul>
+              {{- range .SubscribedFeeds}}
+              <li>
+                <a class="pr-0" href="/feeds/subscriptions/{{.Slug}}">{{or .Alias .Title}}
+                  <span class="tag is-light is-pulled-right">{{.Unread}}</span>
+                </a>
+              </li>
+              {{- end}}
+            </ul>
           </li>
           {{- end}}
         </ul>
-      </li>
-      {{- end}}
-    </ul>
-  </div>
-
-  <div class="feed-entry-list">
-    <div class="feed-title">
-      <div>
-        <h3>{{.PageTitle}}</h3>
-        {{with .Description}}
-        <p class="feed-title-description">{{.}}</p>
-        {{end}}
-      </div>
-      <div class="feed-entry-actions">
-        [
-        <form action="{{$.URLPath}}/entries/mark-all-read" method="POST">
-          <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-          <button type=submit>mark all as read</button>
-        </form>
-        ]
-      </div>
+      </aside>
     </div>
-    {{template "feedSearchForm" .}}
-    {{template "pagination" .}}
-    <ol start="{{.Offset}}">
-      {{- range .Entries}}
-      <li>
-        <div class="feed-entry{{if .Read}} feed-entry-read{{end}}">
-          <div class="feed-entry-feed-title">{{ or .SubscriptionAlias .FeedTitle }}</div>
-          <div>
-            <div class="title">
-              <a href="{{.URL}}">{{.Title}}</a>
-              <date>{{.PublishedAt.Format "2006-01-02"}}</date>
-            </div>
-            <div class="feed-entry-actions">
-              [
-              <form action="/feeds/entries/{{.UID}}/toggle-read" method="POST">
-                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-                <button type=submit>mark as {{if .Read}}un{{end}}read</button>
-              </form>
-              ]
-            </div>
-            {{- with .Summary }}
-            <div class="feed-entry-summary">{{. | MarkdownToHTML}}</div>
-            {{- end}}
+
+    <div class="column">
+      <div class="level mb-3">
+        <div class="level-left">
+          <div class="level-item">
+            <h2 class="title">{{.PageTitle}}</h2>
           </div>
         </div>
-      </li>
-      {{- end}}
-    </ol>
-    {{template "pagination" .}}
+        <div class="level-right">
+          <div class="level-item">
+            <form action="{{$.URLPath}}/entries/mark-all-read" method="POST">
+              <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+              <button type="submit" class="button is-small">mark all as read</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {{with .Description}}
+      <h3 class="subtitle">{{.}}</h3>
+      {{end}}
+
+      {{template "feedSearchForm" .}}
+
+      <ol start="{{.Offset}}">
+        {{- range .Entries}}
+        <li class="mb-5">
+          <div class="level mb-1">
+            <div class="level-left">
+              <div class="level-item">
+                <strong><a class="feed-title{{if .Read}} has-text-grey-light{{end}}"
+                    href="{{.URL}}">{{.Title}}</a></strong>
+              </div>
+            </div>
+            <div class="level-right">
+              <div class="level-item">
+                <strong>
+                  <date>{{.PublishedAt.Format "2006-01-02"}}</date>
+                </strong>
+              </div>
+            </div>
+          </div>
+          <div class="level mb-1">
+            <div class="level-left">
+              <div class="level-item{{if .Read}} has-text-grey-light{{end}}">
+                <em>{{ or .SubscriptionAlias .FeedTitle }}</em>
+              </div>
+            </div>
+            <div class="level-right">
+              <div class="level-item">
+                <form action="/feeds/entries/{{.UID}}/toggle-read" method="POST">
+                  <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                  <button type="submit" class="button is-small">mark as {{if .Read}}un{{end}}read</button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="{{if .Read}}has-text-grey-light{{end}}">
+            {{- with .Summary }}
+            <div class="content">{{. | MarkdownToHTML}}</div>
+            {{- end}}
+          </div>
+        </li>
+        {{- end}}
+      </ol>
+    </div>
   </div>
-</div>
+</section>
 {{end}}
 
 {{define "feedSearchForm"}}
-<div class="search">
-  <form action="{{.URLPath}}" method="GET">
-    <p>
-      <input type="text"
-             id="searchTerms"
-             name="search"
-             placeholder="Search terms"
-             value="{{.SearchTerms}}">
-      <button type="submit">Search</button>
-    </p>
-  </form>
-  {{if ne .SearchTerms "" }}
-  <p>
-    <strong>{{.SearchResultCount}}</strong> entr{{if gt .SearchResultCount 1}}ies{{else}}y{{end}} found
-  </p>
-  {{end}}
-</div>
+<nav class="level">
+  <div class="level-left">
+    <div class="level-item">
+      <p class="subtitle is-5">
+        {{if ne .SearchTerms "" }}
+        <strong>{{.SearchResultCount}}</strong> entr{{if gt .SearchResultCount 1}}ies{{else}}y{{end}} found
+        {{else}}
+        <strong>FIXME</strong> entries
+        {{end}}
+      </p>
+    </div>
+    <div class="level-item">
+      <form action="{{.URLPath}}" method="GET">
+        <div class="field has-addons">
+          <div class="control">
+            <input class="input" type="text" id="searchTerms" name="search" placeholder="Search terms"
+              value="{{.SearchTerms}}">
+          </div>
+          <div class="control">
+            <button class="button" type="submit">Search</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="level-right">
+    <div class="level-item">
+      {{template "pagination" .}}
+    </div>
+  </div>
+</nav>
 {{end}}
 
 {{define "pagination"}}

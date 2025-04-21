@@ -1,40 +1,65 @@
 {{define "content"}}
-{{template "tagFilterForm" .}}
-{{template "pagination" .}}
+<section class="section pt-3">
+  <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      <li><a href="/bookmarks">Bookmarks</a></li>
+      <li class="is-active"><a href="#" aria-current="page">Tags</a></li>
+    </ul>
+  </nav>
 
-<div class="item-list">
-  {{range .Tags}}
-  <div>
-    <span class="item-count">{{.Count}}</span>
-    [
-    <span class="item-edit">
-      <a href="/bookmarks/tags/{{.EncodedName}}/edit" title="Edit tag: {{.Name}}">e</a>
-    </span>
-    ,
-    <span class="item-delete">
-      <a href="/bookmarks/tags/{{.EncodedName}}/delete" title="Delete tag: {{.Name}}">x</a>
-    </span>
-    ]
-    <span class="tag">
-      <a href="/bookmarks?search={{.Name}}" title="Bookmarks tagged {{.Name}}">{{.Name}}</a>
-    </span>
+  {{template "tagFilterForm" .}}
+
+  <div class="columns is-multiline">
+    {{range $i, $tag := .Tags}}
+    {{- if eq (mod $i 30) 0 }}
+    {{- if ne $i 0 }}</div>{{ end }}
+  <div class="column is-one-third">
+    {{- end }}
+    <div>
+      <span class="tag-count has-text-right pr-1">{{.Count}}</span>
+      [
+      <a href="/bookmarks/tags/{{$tag.EncodedName}}/edit" title="Edit tag: {{$tag.Name}}">e</a>
+      ,
+      <a href="/bookmarks/tags/{{$tag.EncodedName}}/delete" title="Delete tag: {{$tag.Name}}"
+        class="has-text-danger">x</a>
+      ]
+      <span class="tag">
+        <a href="/bookmarks?search={{$tag.Name}}" title="Bookmarks tagged {{.Name}}">{{$tag.Name}}</a>
+      </span>
+    </div>
+    {{- end}}
   </div>
-  {{end}}
-</div>
+</section>
 {{end}}
 
 {{define "tagFilterForm"}}
-<div class="search">
-  <form action="/bookmarks/tags" method="GET">
-    <p>
-      <input type="text" id="filterTerm" name="filter" placeholder="Filter tags" value="{{.FilterTerm}}">
-      <button type="submit">Filter</button>
-    </p>
-  </form>
-  <p>
-    <strong>{{.TagCount}}</strong> tag{{if gt .TagCount 1}}s{{end}}
-  </p>
-</div>
+<nav class="level">
+  <div class="level-left">
+    <div class="level-item">
+      <p class="subtitle is-5">
+        <strong>{{.TagCount}}</strong> tag{{if gt .TagCount 1}}s{{end}}
+      </p>
+    </div>
+    <div class="level-item">
+      <form action="/bookmarks/tags" method="GET">
+        <div class="field has-addons">
+          <div class="control">
+            <input class="input" type="text" id="filterTerm" name="filter" placeholder="Filter by name"
+              value="{{.FilterTerm}}">
+          </div>
+          <div class="control">
+            <button type="submit" class="button">Filter</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="level-right">
+    <div class="level-item">
+      {{template "pagination" .}}
+    </div>
+  </div>
+</nav>
 {{end}}
 
 {{define "pagination"}}
@@ -47,7 +72,7 @@
     {{if lt .PreviousPageNumber .PageNumber }}
     <a href="/bookmarks/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page=1">first</a>,
     <a
-       href="/bookmarks/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.PreviousPageNumber}}">previous</a>
+      href="/bookmarks/tags?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.PreviousPageNumber}}">previous</a>
     {{- if ne .PageNumber .TotalPages}},{{end}}
     {{end}}
     {{if lt .PageNumber .TotalPages }}

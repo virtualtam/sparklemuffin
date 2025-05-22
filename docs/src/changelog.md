@@ -24,6 +24,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Update CI workflow
 - Update direct and transitive dependencies
 - Run the `modernize` analyzer and apply fixes
+- Bump golangci-lint to v2
 - Setup golangci-lint to run additional linters
 
 ### Removed

@@ -50,7 +50,7 @@ dev-install-tools:
 .PHONY: dev-install-tools
 
 dev-install-sqlfluff:
-	pip install 'sqlfluff==3.2.5'
+	pip install 'sqlfluff==3.4.0'
 .PHONY: dev-install-sqlfluff
 
 # Licence headers

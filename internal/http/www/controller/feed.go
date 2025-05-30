@@ -4,19 +4,25 @@
 package controller
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 
+	"github.com/virtualtam/opml-go"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
+	feedexporting "github.com/virtualtam/sparklemuffin/pkg/feed/exporting"
+	feedimporting "github.com/virtualtam/sparklemuffin/pkg/feed/importing"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -29,6 +35,9 @@ const (
 	actionFeedSubscriptionAdd    string = "feed-subscription-add"
 	actionFeedSubscriptionDelete string = "feed-subscription-delete"
 	actionFeedSubscriptionEdit   string = "feed-subscription-edit"
+
+	actionFeedSubscriptionExport string = "feed-subscription-export"
+	actionFeedSubscriptionImport string = "feed-subscription-import"
 )
 
 // RegisterFeedHandlers registers HTTP handlers for syndication feed operations.
@@ -36,14 +45,18 @@ func RegisterFeedHandlers(
 	r *chi.Mux,
 	csrfService *csrf.Service,
 	feedService *feed.Service,
-	feedQueryingService *feedquerying.Service,
+	exportingService *feedexporting.Service,
+	importingService *feedimporting.Service,
+	queryingService *feedquerying.Service,
 	userService *user.Service,
 ) {
 	fc := feedHandlerContext{
-		csrfService:         csrfService,
-		feedService:         feedService,
-		feedQueryingService: feedQueryingService,
-		userService:         userService,
+		csrfService:      csrfService,
+		feedService:      feedService,
+		exportingService: exportingService,
+		importingService: importingService,
+		queryingService:  queryingService,
+		userService:      userService,
 
 		feedListView: view.New("feed/feed_list.gohtml"),
 		feedAddView:  view.New("feed/feed_add.gohtml"),
@@ -55,6 +68,9 @@ func RegisterFeedHandlers(
 		feedSubscriptionDeleteView: view.New("feed/subscription_delete.gohtml"),
 		feedSubscriptionEditView:   view.New("feed/subscription_edit.gohtml"),
 		feedSubscriptionListView:   view.New("feed/subscription_list.gohtml"),
+
+		feedExportView: view.New("feed/feed_export.gohtml"),
+		feedImportView: view.New("feed/feed_import.gohtml"),
 	}
 
 	r.Route("/feeds", func(r chi.Router) {
@@ -65,6 +81,11 @@ func RegisterFeedHandlers(
 		r.Get("/", fc.handleFeedListAllView())
 		r.Get("/add", fc.handleFeedAddView())
 		r.Post("/add", fc.handleFeedAdd())
+
+		r.Get("/export", fc.handleFeedExportView())
+		r.Post("/export", fc.handleFeedExport())
+		r.Get("/import", fc.handleFeedImportView())
+		r.Post("/import", fc.handleFeedImport())
 
 		r.Route("/categories", func(sr chi.Router) {
 			sr.Get("/add", fc.handleFeedCategoryAddView())
@@ -97,10 +118,12 @@ func RegisterFeedHandlers(
 }
 
 type feedHandlerContext struct {
-	csrfService         *csrf.Service
-	feedService         *feed.Service
-	feedQueryingService *feedquerying.Service
-	userService         *user.Service
+	csrfService      *csrf.Service
+	feedService      *feed.Service
+	exportingService *feedexporting.Service
+	importingService *feedimporting.Service
+	queryingService  *feedquerying.Service
+	userService      *user.Service
 
 	feedAddView  *view.View
 	feedListView *view.View
@@ -112,6 +135,9 @@ type feedHandlerContext struct {
 	feedSubscriptionDeleteView *view.View
 	feedSubscriptionEditView   *view.View
 	feedSubscriptionListView   *view.View
+
+	feedExportView *view.View
+	feedImportView *view.View
 }
 
 type feedFormContent struct {
@@ -261,11 +287,11 @@ func (fc *feedHandlerContext) handleFeedListView(
 // handleFeedListAllView renders the syndication feed for the current authenticated user.
 func (fc *feedHandlerContext) handleFeedListAllView() func(w http.ResponseWriter, r *http.Request) {
 	feedsByPage := func(_ *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error) {
-		return fc.feedQueryingService.FeedsByPage(user.UUID, pageNumber)
+		return fc.queryingService.FeedsByPage(user.UUID, pageNumber)
 	}
 
 	feedsByQueryAndPage := func(_ *http.Request, user *user.User, query string, pageNumber uint) (feedquerying.FeedPage, error) {
-		return fc.feedQueryingService.FeedsByQueryAndPage(user.UUID, query, pageNumber)
+		return fc.queryingService.FeedsByQueryAndPage(user.UUID, query, pageNumber)
 	}
 
 	return fc.handleFeedListView(feedsByPage, feedsByQueryAndPage)
@@ -282,7 +308,7 @@ func (fc *feedHandlerContext) handleFeedListByCategoryView() func(w http.Respons
 			return feedquerying.FeedPage{}, err
 		}
 
-		return fc.feedQueryingService.FeedsByCategoryAndPage(user.UUID, category, pageNumber)
+		return fc.queryingService.FeedsByCategoryAndPage(user.UUID, category, pageNumber)
 	}
 
 	feedsByQueryAndPage := func(r *http.Request, user *user.User, query string, pageNumber uint) (feedquerying.FeedPage, error) {
@@ -294,7 +320,7 @@ func (fc *feedHandlerContext) handleFeedListByCategoryView() func(w http.Respons
 			return feedquerying.FeedPage{}, err
 		}
 
-		return fc.feedQueryingService.FeedsByCategoryAndQueryAndPage(user.UUID, category, query, pageNumber)
+		return fc.queryingService.FeedsByCategoryAndQueryAndPage(user.UUID, category, query, pageNumber)
 	}
 
 	return fc.handleFeedListView(feedsByPage, feedsByQueryAndPage)
@@ -317,7 +343,7 @@ func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.Res
 			return feedquerying.FeedPage{}, err
 		}
 
-		return fc.feedQueryingService.FeedsBySubscriptionAndPage(user.UUID, subscription, pageNumber)
+		return fc.queryingService.FeedsBySubscriptionAndPage(user.UUID, subscription, pageNumber)
 	}
 
 	feedsByQueryAndPage := func(r *http.Request, user *user.User, query string, pageNumber uint) (feedquerying.FeedPage, error) {
@@ -335,7 +361,7 @@ func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.Res
 			return feedquerying.FeedPage{}, err
 		}
 
-		return fc.feedQueryingService.FeedsBySubscriptionAndQueryAndPage(user.UUID, subscription, query, pageNumber)
+		return fc.queryingService.FeedsBySubscriptionAndQueryAndPage(user.UUID, subscription, query, pageNumber)
 	}
 
 	return fc.handleFeedListView(feedsByPage, feedsByQueryAndPage)
@@ -567,7 +593,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionListView() func(w http.Respo
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 
-		subscriptionsByCategory, err := fc.feedQueryingService.SubscriptionsByCategory(user.UUID)
+		subscriptionsByCategory, err := fc.queryingService.SubscriptionsByCategory(user.UUID)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve feed subscriptions")
 			view.PutFlashError(w, "failed to retrieve feed subscriptions")
@@ -596,7 +622,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionDeleteView() func(w http.Res
 		user := httpcontext.UserValue(r.Context())
 		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedSubscriptionDelete)
 
-		subscription, err := fc.feedQueryingService.SubscriptionByUUID(user.UUID, subscriptionUUID)
+		subscription, err := fc.queryingService.SubscriptionByUUID(user.UUID, subscriptionUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
 			view.PutFlashError(w, "failed to retrieve feed subscription")
@@ -665,7 +691,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionEditView() func(w http.Respo
 
 		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedSubscriptionEdit)
 
-		subscription, err := fc.feedQueryingService.SubscriptionByUUID(user.UUID, subscriptionUUID)
+		subscription, err := fc.queryingService.SubscriptionByUUID(user.UUID, subscriptionUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
 			view.PutFlashError(w, "failed to retrieve feed subscription")
@@ -851,6 +877,170 @@ func (fc *feedHandlerContext) handleEntryMetadataMarkAllAsReadByFeed() func(w ht
 			return
 		}
 
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+	}
+}
+
+// handleFeedExportView renders the feed export page.
+func (fc *feedHandlerContext) handleFeedExportView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedSubscriptionExport)
+
+		viewData := view.Data{
+			Content: csrf.Data{
+				CSRFToken: csrfToken,
+			},
+			Title: "Export feed subscriptions",
+		}
+
+		fc.feedExportView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedExport processes the feed subscription export form and sends the
+// corresponding file to the client.
+func (fc *feedHandlerContext) handleFeedExport() func(w http.ResponseWriter, r *http.Request) {
+	type exportForm struct {
+		CSRFToken string `schema:"csrf_token"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+
+		var form exportForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed export form")
+			view.PutFlashError(w, "failed to process form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedSubscriptionExport) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		opmlDocument, err := fc.exportingService.ExportAsOPMLDocument(*ctxUser)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to encode feeds as OPML")
+			view.PutFlashError(w, "failed to process form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		marshaled, err := opml.Marshal(opmlDocument)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to marshal OPML feed subscriptions")
+			view.PutFlashError(w, "failed to export feed subscriptions")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		w.Header().Set("Content-Disposition", "attachment; filename=feeds.opml")
+		w.Header().Set("Content-Type", "application/xml")
+
+		if _, err := w.Write(marshaled); err != nil {
+			log.Error().Err(err).Msg("failed to send OPML export")
+		}
+	}
+}
+
+// handleFeedExportView renders the feed subscription import page.
+func (fc *feedHandlerContext) handleFeedImportView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedSubscriptionImport)
+
+		viewData := view.Data{
+			Content: csrf.Data{
+				CSRFToken: csrfToken,
+			},
+			Title: "Import feed subscriptions",
+		}
+
+		fc.feedImportView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedImport processes data submitted through the feed subscription import form.
+func (fc *feedHandlerContext) handleFeedImport() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		multipartReader, err := r.MultipartReader()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to access multipart reader")
+			view.PutFlashError(w, "failed to process import form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		var (
+			csrfTokenBuffer  bytes.Buffer
+			importFileBuffer bytes.Buffer
+		)
+		csrfTokenWriter := bufio.NewWriter(&csrfTokenBuffer)
+		importFileWriter := bufio.NewWriter(&importFileBuffer)
+
+		for {
+			part, err := multipartReader.NextPart()
+
+			if errors.Is(err, io.EOF) {
+				// no more parts to process
+				break
+			}
+
+			if err != nil {
+				log.Error().Err(err).Msg("failed to access multipart form data")
+				view.PutFlashError(w, "failed to process import form")
+				http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+				return
+			}
+
+			switch part.FormName() {
+			case "csrf_token":
+				_, err = io.Copy(csrfTokenWriter, part)
+			case "importfile":
+				_, err = io.Copy(importFileWriter, part)
+			default:
+				err = fmt.Errorf("unexpected multipart form field: %q", part.FormName())
+			}
+
+			if err != nil {
+				log.Error().Err(err).Msg(fmt.Sprintf("failed to process multipart form part %q", part.FormName()))
+				view.PutFlashError(w, "failed to process import form")
+				http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+				return
+			}
+		}
+
+		ctxUser := httpcontext.UserValue(r.Context())
+
+		if !fc.csrfService.Validate(csrfTokenBuffer.String(), ctxUser.UUID, actionFeedSubscriptionImport) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		document, err := opml.Unmarshal(importFileBuffer.Bytes())
+		if err != nil {
+			log.Error().Err(err).Msg("failed to process OPML feed subscription file")
+			view.PutFlashError(w, "failed to import feed subscriptions from the uploaded file")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		importStatus, err := fc.importingService.ImportFromOPMLDocument(ctxUser.UUID, document)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to save imported feed subscriptions")
+			view.PutFlashError(w, "failed to save imported feed subscriptions")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		view.PutFlashSuccess(w, fmt.Sprintf("Import status: %s", importStatus.UserSummary()))
 		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 	}
 }

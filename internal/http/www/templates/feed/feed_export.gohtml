@@ -2,12 +2,15 @@
 <section class="section pt-3">
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
-      <li><a href="/tools">Tools</a></li>
-      <li class="is-active"><a href="#" aria-current="page">Export feed subscriptions</a></li>
+      <li><a href="/feeds">Feeds</a></li>
+      <li><a href="/feeds/subscriptions">Subscriptions</a></li>
+      <li class="is-active"><a href="#" aria-current="page">Export</a></li>
     </ul>
   </nav>
 
-  <form action="/tools/feeds/export" method="POST">
+  <p class="mb-4">Export your subscriptions to OPML.</p>
+
+  <form action="/feeds/export" method="POST">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
     <div class="field">
       <button type="submit" class="button is-primary">Export</button>

@@ -9,6 +9,12 @@
         <div class="navbar-dropdown">
           <a class="navbar-item" href="/bookmarks/add">+ Add bookmark</a>
           <a class="navbar-item" href="/bookmarks/tags">Tags</a>
+          <hr class="navbar-divider">
+          <a class="navbar-item" href="/bookmarks/export">Export bookmarks</a>
+          <a class="navbar-item" href="/bookmarks/import">Import bookmarks</a>
+          <hr class="navbar-divider">
+          <a class="navbar-item" href="/u/{{.User.NickName}}/bookmarks">Public bookmark URL</a>
+          <a class="navbar-item" href="/u/{{.User.NickName}}/feed/atom">Public Atom feed</a>
         </div>
       </div>
 

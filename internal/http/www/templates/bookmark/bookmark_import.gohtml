@@ -2,12 +2,12 @@
 <section class="section pt-3">
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
-      <li><a href="/tools">Tools</a></li>
-      <li class="is-active"><a href="#" aria-current="page">Import bookmarks</a></li>
+      <li><a href="/bookmarks">Bookmarks</a></li>
+      <li class="is-active"><a href="#" aria-current="page">Import</a></li>
     </ul>
   </nav>
 
-  <form action="/tools/bookmarks/import" enctype="multipart/form-data" method="POST">
+  <form action="/bookmarks/import" enctype="multipart/form-data" method="POST">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
     <div class="field">

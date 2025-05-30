@@ -136,9 +136,9 @@ func (s *Server) registerHandlers() {
 	controller.RegisterSessionHandlers(s.router, s.sessionService, s.userService)
 	controller.RegisterAdminHandlers(s.router, s.csrfService, s.userService)
 	controller.RegisterAccounthandlers(s.router, s.csrfService, s.userService)
-	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.bookmarkQueryingService, s.userService)
+	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.bookmarkExportingService, s.bookmarkImportingService, s.bookmarkQueryingService, s.userService)
 	controller.RegisterFeedHandlers(s.router, s.csrfService, s.feedService, s.feedQueryingService, s.userService)
-	controller.RegisterToolsHandlers(s.router, s.bookmarkExportingService, s.bookmarkImportingService, s.csrfService, s.feedExportingService, s.feedImportingService)
+	controller.RegisterToolsHandlers(s.router, s.csrfService, s.feedExportingService, s.feedImportingService)
 
 	// 404 handler
 	s.router.NotFound(s.handleNotFound())

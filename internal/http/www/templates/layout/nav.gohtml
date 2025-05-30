@@ -4,30 +4,121 @@
     <div class="navbar-start">
       {{- if .User}}
       <div class="navbar-item has-dropdown is-hoverable">
-        <a class="navbar-link" href="/bookmarks">Bookmarks</a>
+        <a class="navbar-link" href="/bookmarks">
+          <span class="icon-text">
+            <span class="icon">
+              <ion-icon name="bookmarks-outline"></ion-icon>
+            </span>
+            <span>Bookmarks</span>
+          </span>
+        </a>
 
         <div class="navbar-dropdown">
-          <a class="navbar-item" href="/bookmarks/add">+ Add bookmark</a>
-          <a class="navbar-item" href="/bookmarks/tags">Tags</a>
+          <a class="navbar-item" href="/bookmarks/add">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="add-outline"></ion-icon>
+              </span>
+              <span>Add bookmark</span>
+            </span>
+          </a>
+          <a class="navbar-item" href="/bookmarks/tags">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="pricetags-outline"></ion-icon>
+              </span>
+              <span>Tags</span>
+            </span>
+          </a>
           <hr class="navbar-divider">
-          <a class="navbar-item" href="/bookmarks/export">Export bookmarks</a>
-          <a class="navbar-item" href="/bookmarks/import">Import bookmarks</a>
+          <a class="navbar-item" href="/bookmarks/export">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="cloud-download-outline"></ion-icon>
+              </span>
+              <span>Export bookmarks</span>
+            </span>
+          </a>
+          <a class="navbar-item" href="/bookmarks/import">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="cloud-upload-outline"></ion-icon>
+              </span>
+              <span>Import bookmarks</span>
+            </span>
+          </a>
           <hr class="navbar-divider">
-          <a class="navbar-item" href="/u/{{.User.NickName}}/bookmarks">Public bookmark URL</a>
-          <a class="navbar-item" href="/u/{{.User.NickName}}/feed/atom">Public Atom feed</a>
+          <a class="navbar-item" href="/u/{{.User.NickName}}/bookmarks">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="share-social-outline"></ion-icon>
+              </span>
+              <span>Public bookmark URL</span>
+            </span>
+          </a>
+          <a class="navbar-item" href="/u/{{.User.NickName}}/feed/atom">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="logo-rss"></ion-icon>
+              </span>
+              <span>Public Atom feed</span>
+            </span>
+          </a>
         </div>
       </div>
 
       <div class="navbar-item has-dropdown is-hoverable">
-        <a class="navbar-link" href="/feeds">Feeds</a>
+        <a class="navbar-link" href="/feeds">
+          <span class="icon-text">
+            <span class="icon">
+              <ion-icon name="newspaper-outline"></ion-icon>
+            </span>
+            <span>Feeds</span>
+          </span>
+        </a>
 
         <div class="navbar-dropdown">
-          <a class="navbar-item" href="/feeds/add">+ Add subscription</a>
-          <a class="navbar-item" href="/feeds/categories/add">+ Add category</a>
-          <a class="navbar-item" href="/feeds/subscriptions">Manage subscriptions</a>
+          <a class="navbar-item" href="/feeds/add">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="add-outline"></ion-icon>
+              </span>
+              <span>Add subscription</span>
+            </span>
+          </a>
+          <a class="navbar-item" href="/feeds/categories/add">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="add-outline"></ion-icon>
+              </span>
+              <span>Add category</span>
+            </span>
+          </a>
+          <a class="navbar-item" href="/feeds/subscriptions">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="newspaper-outline"></ion-icon>
+              </span>
+              <span>Manage subscriptions</span>
+            </span>
+          </a>
           <hr class="navbar-divider">
-          <a class="navbar-item" href="/feeds/export">Export subscriptions</a>
-          <a class="navbar-item" href="/feeds/import">Import subscriptions</a>
+          <a class="navbar-item" href="/feeds/export">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="cloud-download-outline"></ion-icon>
+              </span>
+              <span>Export subscriptions</span>
+            </span>
+          </a>
+          <a class="navbar-item" href="/feeds/import">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="cloud-upload-outline"></ion-icon>
+              </span>
+              <span>Import subscriptions</span>
+            </span>
+          </a>
         </div>
       </div>
       {{- end}}
@@ -37,28 +128,77 @@
       {{- if .User}}
       {{- if .User.IsAdmin}}
       <div class="navbar-item has-dropdown is-hoverable">
-        <a class="navbar-link">Administration</a>
+        <a class="navbar-link">
+          <span class="icon-text">
+            <span class="icon">
+              <ion-icon name="lock-closed-outline"></ion-icon>
+            </span>
+            <span>Administration</span>
+          </span>
+        </a>
 
         <div class="navbar-dropdown">
-          <a class="navbar-item" href="/admin/users/add">+ Add user</a>
-          <a class="navbar-item" href="/admin/users">Users</a>
+          <a class="navbar-item" href="/admin/users/add">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="person-add-outline"></ion-icon>
+              </span>
+              <span>Add user</span>
+            </span>
+          </a>
+          <a class="navbar-item" href="/admin/users">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="people-outline"></ion-icon>
+              </span>
+              <span>Users</span>
+            </span>
+          </a>
         </div>
       </div>
       {{- end}}
       <div class="navbar-item has-dropdown is-hoverable">
-        <a class="navbar-link">Account</a>
+        <a class="navbar-link">
+          <span class="icon-text">
+            <span class="icon">
+              <ion-icon name="person-outline"></ion-icon>
+            </span>
+            <span>Account</span>
+          </span>
+        </a>
 
         <div class="navbar-dropdown is-right">
           <div class="navbar-item">
             <p class="has-text-weight-semibold">{{.User.Email}}</p>
           </div>
           <hr class="navbar-divider">
-          <a class="navbar-item" href="/account/info">Update information</a>
-          <a class="navbar-item" href="/account/password">Update password</a>
+          <a class="navbar-item" href="/account/info">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="person-outline"></ion-icon>
+              </span>
+              <span>Information</span>
+            </span>
+          </a>
+          <a class="navbar-item" href="/account/password">
+            <span class="icon-text">
+              <span class="icon">
+                <ion-icon name="lock-closed-outline"></ion-icon>
+              </span>
+              <span>Password</span>
+            </span>
+          </a>
           <hr class="navbar-divider">
           <div class="navbar-item">
             <form action="/logout" method="POST">
-              <button type="submit" class="is-link">Log out</button>
+              <button type="submit" class="is-link">
+                <span class="icon-text">
+                  <span class="icon">
+                    <ion-icon name="log-out-outline"></ion-icon>
+                  </span>
+                  <span>Log out</span>
+                </span>
+              </button>
             </form>
           </div>
         </div>

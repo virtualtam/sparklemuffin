@@ -57,6 +57,10 @@ code {
   color: var(--bulma-success-30);
 }
 
+.icon-text {
+  flex-wrap: nowrap;
+}
+
 .tag a {
   color: var(--bulma-text);
 }

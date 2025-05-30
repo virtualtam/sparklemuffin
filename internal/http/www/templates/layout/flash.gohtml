@@ -1,5 +1,9 @@
 {{define "flash"}}
-<p class="flash flash-{{.Level}}">
-  {{.Message}}
-</p>
+<section class="section py-3">
+  <article class="message is-{{.Level}}">
+    <div class="message-body">
+      {{.Message}}
+    </div>
+  </article>
+</section>
 {{end}}

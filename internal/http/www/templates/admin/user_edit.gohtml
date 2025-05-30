@@ -2,12 +2,10 @@
 <section class="section pt-3">
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
-      <li><a href="/admin">Administration</a></li>
+      <li class="is-active"><a href="#" aria-current="page">Administration</a></li>
       <li class="is-active"><a href="#" aria-current="page">Edit user</a></li>
     </ul>
   </nav>
-
-  <h2 class="title">Edit user - {{.Content.Email}}</h2>
 
   <form action="/admin/users/{{.Content.UUID}}" method="POST">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">

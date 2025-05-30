@@ -17,7 +17,7 @@ import (
 type flashLevel string
 
 const (
-	flashLevelError   flashLevel = "error"
+	flashLevelDanger  flashLevel = "danger"
 	flashLevelInfo    flashLevel = "info"
 	flashLevelSuccess flashLevel = "success"
 	flashLevelWarning flashLevel = "warning"
@@ -82,7 +82,7 @@ func putFlash(w http.ResponseWriter, level flashLevel, message string) {
 
 // PutFlashError sets a Flash that will be rendered as an error message.
 func PutFlashError(w http.ResponseWriter, message string) {
-	putFlash(w, flashLevelError, fmt.Sprintf("Error: %s", message))
+	putFlash(w, flashLevelDanger, fmt.Sprintf("Error: %s", message))
 }
 
 // PutFlashInfo sets a Flash that will be rendered as an information message.

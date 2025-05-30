@@ -1,12 +1,11 @@
 {{define "content"}}
 <section class="section pt-3">
-  <h2 class="title">Administration</h2>
-  <div id="nav-actions">
-    <nav>
-      <a href="/admin/users/add">+ Add user</a>
-    </nav>
-  </div>
-  <br>
+  <nav class="breadcrumb" aria-label="breadcrumbs">
+    <ul>
+      <li class="is-active"><a href="#" aria-current="page">Administration</a></li>
+      <li class="is-active"><a href="#" aria-current="page">Users</a></li>
+    </ul>
+  </nav>
 
   {{template "userTable" .}}
   {{end}}

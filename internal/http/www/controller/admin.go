@@ -27,10 +27,10 @@ type adminHandlerContext struct {
 	csrfService *csrf.Service
 	userService *user.Service
 
-	adminView           *view.View
 	adminUserAddView    *view.View
 	adminUserDeleteView *view.View
 	adminUserEditView   *view.View
+	adminUserListView   *view.View
 }
 
 func RegisterAdminHandlers(
@@ -42,10 +42,10 @@ func RegisterAdminHandlers(
 		csrfService: csrfService,
 		userService: userService,
 
-		adminView:           view.New("admin/admin.gohtml"),
 		adminUserAddView:    view.New("admin/user_add.gohtml"),
 		adminUserDeleteView: view.New("admin/user_delete.gohtml"),
 		adminUserEditView:   view.New("admin/user_edit.gohtml"),
+		adminUserListView:   view.New("admin/user_list.gohtml"),
 	}
 
 	// administration
@@ -54,7 +54,7 @@ func RegisterAdminHandlers(
 			return middleware.AdminUser(h.ServeHTTP)
 		})
 
-		r.Get("/", hc.handleAdmin())
+		r.Get("/users", hc.handleAdminUserListView())
 		r.Get("/users/add", hc.handleAdminUserAddView())
 		r.Post("/users", hc.handleAdminUserAdd())
 		r.Get("/users/{uuid}", hc.handleAdminUserEditView())
@@ -64,8 +64,8 @@ func RegisterAdminHandlers(
 	})
 }
 
-// handleAdmin renders the main administration page.
-func (hc *adminHandlerContext) handleAdmin() func(w http.ResponseWriter, r *http.Request) {
+// handleAdminUserListView renders the main administration page.
+func (hc *adminHandlerContext) handleAdminUserListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		viewData := view.Data{Title: "Administration"}
 
@@ -76,7 +76,7 @@ func (hc *adminHandlerContext) handleAdmin() func(w http.ResponseWriter, r *http
 			viewData.Content = users
 		}
 
-		hc.adminView.Render(w, r, viewData)
+		hc.adminUserListView.Render(w, r, viewData)
 	}
 }
 
@@ -142,7 +142,7 @@ func (hc *adminHandlerContext) handleAdminUserAdd() func(w http.ResponseWriter, 
 		}
 
 		view.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully created", newUser.Email))
-		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
 	}
 }
 
@@ -215,7 +215,7 @@ func (hc *adminHandlerContext) handleAdminUserDelete() func(w http.ResponseWrite
 		}
 
 		view.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully deleted", user.Email))
-		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
 	}
 }
 

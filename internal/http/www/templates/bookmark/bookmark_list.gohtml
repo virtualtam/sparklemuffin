@@ -64,15 +64,6 @@
 <nav class="level">
   <div class="level-left">
     <div class="level-item">
-      <p class="subtitle is-5">
-        {{if ne .SearchTerms "" }}
-        <strong>{{.SearchResultCount}}</strong> bookmark{{if gt .SearchResultCount 1}}s{{end}} found
-        {{else}}
-        <strong>FIXME</strong> bookmarks
-        {{end}}
-      </p>
-    </div>
-    <div class="level-item">
       <form action="/bookmarks" method="GET">
         <div class="field has-addons">
           <div class="control">
@@ -84,6 +75,15 @@
           </div>
         </div>
       </form>
+    </div>
+    <div class="level-item">
+      <p class="subtitle is-5">
+        {{if ne .SearchTerms "" }}
+        <strong>{{.TotalBookmarkCount}}</strong> bookmark{{if gt .TotalBookmarkCount 1}}s{{end}} found
+        {{else}}
+        <strong>{{.TotalBookmarkCount}}</strong> bookmark{{if gt .TotalBookmarkCount 1}}s{{end}}
+        {{end}}
+      </p>
     </div>
   </div>
   <div class="level-right">

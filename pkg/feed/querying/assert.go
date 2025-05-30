@@ -39,6 +39,9 @@ func AssertPageEquals(t *testing.T, got, want FeedPage) {
 	if got.Unread != want.Unread {
 		t.Errorf("want Unread %d, got %d", want.Unread, got.Unread)
 	}
+	if got.TotalEntryCount != want.TotalEntryCount {
+		t.Errorf("want TotalEntryCount %d, got %d", want.TotalEntryCount, got.TotalEntryCount)
+	}
 
 	AssertCategoriesEqual(t, got.Categories, want.Categories)
 	AssertSubscriptionEntriesEqual(t, got.Entries, want.Entries)

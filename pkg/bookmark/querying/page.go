@@ -20,19 +20,23 @@ type BookmarkPage struct {
 	TotalPages         uint
 	Offset             uint
 
-	SearchTerms       string
-	SearchResultCount uint
+	// Terms used in a search query.
+	SearchTerms string
+
+	// Number of bookmarks found for a search query.
+	TotalBookmarkCount uint
 
 	Bookmarks []bookmark.Bookmark
 }
 
 // NewBookmarkPage initializes and returns a new BookmarkPage.
-func NewBookmarkPage(owner Owner, number uint, totalPages uint, bookmarks []bookmark.Bookmark) BookmarkPage {
+func NewBookmarkPage(owner Owner, number uint, totalPages uint, totalBookmarkCount uint, bookmarks []bookmark.Bookmark) BookmarkPage {
 	page := BookmarkPage{
-		Owner:      owner,
-		PageNumber: number,
-		TotalPages: totalPages,
-		Bookmarks:  bookmarks,
+		Owner:              owner,
+		PageNumber:         number,
+		TotalPages:         totalPages,
+		TotalBookmarkCount: totalBookmarkCount,
+		Bookmarks:          bookmarks,
 	}
 
 	if page.PageNumber == 1 {
@@ -54,10 +58,8 @@ func NewBookmarkPage(owner Owner, number uint, totalPages uint, bookmarks []book
 
 // NewBookmarkSearchResultPage initializes and returns a new BookmarkPage containing search results.
 func NewBookmarkSearchResultPage(owner Owner, searchTerms string, searchResultCount uint, number uint, totalPages uint, bookmarks []bookmark.Bookmark) BookmarkPage {
-	page := NewBookmarkPage(owner, number, totalPages, bookmarks)
-
+	page := NewBookmarkPage(owner, number, totalPages, searchResultCount, bookmarks)
 	page.SearchTerms = searchTerms
-	page.SearchResultCount = searchResultCount
 
 	return page
 }

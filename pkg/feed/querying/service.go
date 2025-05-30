@@ -60,7 +60,7 @@ func (s *Service) feedsByPage(
 
 	if len(categories) == 0 {
 		// early return: nothing to display
-		return NewFeedPage(1, 1, pageTitle, pageDescription, []SubscribedFeedsByCategory{}, []SubscribedFeedEntry{}), nil
+		return NewFeedPage(1, 1, pageTitle, pageDescription, []SubscribedFeedsByCategory{}, 0, []SubscribedFeedEntry{}), nil
 	}
 
 	offset := (number - 1) * entriesPerPage
@@ -70,7 +70,7 @@ func (s *Service) feedsByPage(
 		return FeedPage{}, err
 	}
 
-	return NewFeedPage(number, totalPages, pageTitle, pageDescription, categories, entries), nil
+	return NewFeedPage(number, totalPages, pageTitle, pageDescription, categories, entryCount, entries), nil
 }
 
 // FeedsByPage returns a Page containing a limited and offset number of feeds.

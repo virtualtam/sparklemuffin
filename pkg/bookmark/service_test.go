@@ -260,7 +260,7 @@ func TestServiceAdd(t *testing.T) {
 
 			got := r.Bookmarks[len(r.Bookmarks)-1]
 
-			assertBookmarksEqual(t, got, tc.want)
+			AssertBookmarkEquals(t, got, tc.want)
 		})
 	}
 }
@@ -617,7 +617,7 @@ func TestServiceUpdate(t *testing.T) {
 				t.Fatalf("want no error, got %q", err)
 			}
 
-			assertBookmarksEqual(t, got, tc.want)
+			AssertBookmarkEquals(t, got, tc.want)
 		})
 	}
 }
@@ -720,7 +720,7 @@ func TestServiceDeleteTag(t *testing.T) {
 			}
 
 			for index, bookmark := range r.Bookmarks {
-				assertBookmarksEqual(t, bookmark, tc.wantRepositoryBookmarks[index])
+				AssertBookmarkEquals(t, bookmark, tc.wantRepositoryBookmarks[index])
 			}
 		})
 	}
@@ -861,38 +861,8 @@ func TestServiceUpdateTag(t *testing.T) {
 			}
 
 			for index, bookmark := range r.Bookmarks {
-				assertBookmarksEqual(t, bookmark, tc.wantRepositoryBookmarks[index])
+				AssertBookmarkEquals(t, bookmark, tc.wantRepositoryBookmarks[index])
 			}
 		})
-	}
-}
-
-func assertBookmarksEqual(t *testing.T, got, want Bookmark) {
-	t.Helper()
-
-	if got.URL != want.URL {
-		t.Errorf("want URL %q, got %q", want.URL, got.URL)
-	}
-
-	if got.Title != want.Title {
-		t.Errorf("want Title %q, got %q", want.Title, got.Title)
-	}
-
-	if got.Description != want.Description {
-		t.Errorf("want Description %q, got %q", want.Description, got.Description)
-	}
-
-	if got.Private != want.Private {
-		t.Errorf("want Private %t, got %t", want.Private, got.Private)
-	}
-
-	if len(got.Tags) != len(want.Tags) {
-		t.Fatalf("want %d tags, got %d", len(want.Tags), len(got.Tags))
-	}
-
-	for i, wantTag := range want.Tags {
-		if got.Tags[i] != wantTag {
-			t.Errorf("want tag %d Name %q, got %q", i, wantTag, got.Tags[i])
-		}
 	}
 }

@@ -69,6 +69,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Description:        "",
 			Unread:             3,
 			Categories:         wantCategories,
+			TotalEntryCount:    5,
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[0],
@@ -114,6 +115,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Description:        "",
 			Unread:             3,
 			Categories:         wantCategories,
+			TotalEntryCount:    5,
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[0],
@@ -159,6 +161,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Description:        fakeData.feeds[1].Description,
 			Unread:             3,
 			Categories:         wantCategories,
+			TotalEntryCount:    2,
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
@@ -191,6 +194,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Description:        "",
 			Unread:             3,
 			Categories:         wantCategories,
+			TotalEntryCount:    2,
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
@@ -223,6 +227,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Description:        "",
 			Unread:             3,
 			Categories:         wantCategories,
+			TotalEntryCount:    2,
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
@@ -255,6 +260,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Description:        fakeData.feeds[1].Description,
 			Unread:             3,
 			Categories:         wantCategories,
+			TotalEntryCount:    2,
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],

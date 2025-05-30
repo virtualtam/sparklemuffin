@@ -110,15 +110,6 @@
 <nav class="level">
   <div class="level-left">
     <div class="level-item">
-      <p class="subtitle is-5">
-        {{if ne .SearchTerms "" }}
-        <strong>{{.SearchResultCount}}</strong> entr{{if gt .SearchResultCount 1}}ies{{else}}y{{end}} found
-        {{else}}
-        <strong>FIXME</strong> entries
-        {{end}}
-      </p>
-    </div>
-    <div class="level-item">
       <form action="{{.URLPath}}" method="GET">
         <div class="field has-addons">
           <div class="control">
@@ -130,6 +121,15 @@
           </div>
         </div>
       </form>
+    </div>
+    <div class="level-item">
+      <p class="subtitle is-5">
+        {{if ne .SearchTerms "" }}
+        <strong>{{.TotalEntryCount}}</strong> entr{{if gt .TotalEntryCount 1}}ies{{else}}y{{end}} found
+        {{else}}
+        <strong>{{.TotalEntryCount}}</strong> entr{{if gt .TotalEntryCount 1}}ies{{else}}y{{end}}
+        {{end}}
+      </p>
     </div>
   </div>
   <div class="level-right">

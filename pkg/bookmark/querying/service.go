@@ -51,7 +51,7 @@ func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, numbe
 
 	if bookmarkCount == 0 {
 		// early return: nothing to display
-		return NewBookmarkPage(owner, 1, 1, []bookmark.Bookmark{}), nil
+		return NewBookmarkPage(owner, 1, 1, 0, []bookmark.Bookmark{}), nil
 	}
 
 	dbOffset := (number - 1) * bookmarksPerPage
@@ -61,7 +61,7 @@ func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, numbe
 		return BookmarkPage{}, err
 	}
 
-	return NewBookmarkPage(owner, number, totalPages, bookmarks), nil
+	return NewBookmarkPage(owner, number, totalPages, bookmarkCount, bookmarks), nil
 }
 
 // BookmarksBySearchQueryAndPage returns a SearchPage containing a limited and offset
@@ -111,12 +111,12 @@ func (s *Service) PublicBookmarkByUID(ownerUUID string, uid string) (BookmarkPag
 
 	b, err := s.r.BookmarkGetPublicByUID(owner.UUID, uid)
 	if errors.Is(err, bookmark.ErrNotFound) {
-		return NewBookmarkPage(owner, 1, 1, []bookmark.Bookmark{}), nil
+		return NewBookmarkPage(owner, 1, 1, 0, []bookmark.Bookmark{}), nil
 	} else if err != nil {
 		return BookmarkPage{}, err
 	}
 
-	return NewBookmarkPage(owner, 1, 1, []bookmark.Bookmark{b}), nil
+	return NewBookmarkPage(owner, 1, 1, 1, []bookmark.Bookmark{b}), nil
 }
 
 // PublicBookmarksByPage returns a Page containing a limited and offset number of bookmarks.

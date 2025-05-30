@@ -101,6 +101,7 @@ func TestServiceByPage(t *testing.T) {
 				NextPageNumber:     1,
 				TotalPages:         1,
 				Offset:             1,
+				TotalBookmarkCount: 3,
 				Bookmarks: []bookmark.Bookmark{
 					{
 						UserUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
@@ -138,6 +139,7 @@ func TestServiceByPage(t *testing.T) {
 				NextPageNumber:     1,
 				TotalPages:         1,
 				Offset:             1,
+				TotalBookmarkCount: 1,
 				Bookmarks: []bookmark.Bookmark{
 					{
 						UserUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
@@ -161,6 +163,7 @@ func TestServiceByPage(t *testing.T) {
 				NextPageNumber:     1,
 				TotalPages:         1,
 				Offset:             1,
+				TotalBookmarkCount: 2,
 				Bookmarks: []bookmark.Bookmark{
 					{
 						UserUUID:    "5d75c769-059c-4b36-9db6-1c82619e704a",

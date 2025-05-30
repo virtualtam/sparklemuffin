@@ -36,11 +36,6 @@
 <nav class="level">
   <div class="level-left">
     <div class="level-item">
-      <p class="subtitle is-5">
-        <strong>{{.TagCount}}</strong> tag{{if gt .TagCount 1}}s{{end}}
-      </p>
-    </div>
-    <div class="level-item">
       <form action="/bookmarks/tags" method="GET">
         <div class="field has-addons">
           <div class="control">
@@ -52,6 +47,15 @@
           </div>
         </div>
       </form>
+    </div>
+    <div class="level-item">
+      <p class="subtitle is-5">
+        {{if ne .FilterTerm "" }}
+        <strong>{{.TagCount}}</strong> tag{{if gt .TagCount 1}}s{{end}} found
+        {{else}}
+        <strong>{{.TagCount}}</strong> tag{{if gt .TagCount 1}}s{{end}}
+        {{end}}
+      </p>
     </div>
   </div>
   <div class="level-right">

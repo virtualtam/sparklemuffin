@@ -11,18 +11,18 @@ type FeedPage struct {
 	TotalPages         uint
 	Offset             uint
 
-	SearchTerms       string
-	SearchResultCount uint
+	SearchTerms string
 
-	PageTitle   string
-	Description string
-	Unread      uint
-	Categories  []SubscribedFeedsByCategory
-	Entries     []SubscribedFeedEntry
+	PageTitle       string
+	Description     string
+	Unread          uint
+	Categories      []SubscribedFeedsByCategory
+	TotalEntryCount uint
+	Entries         []SubscribedFeedEntry
 }
 
 // NewFeedPage initializes and returns a new FeedPage.
-func NewFeedPage(number uint, totalPages uint, pageTitle string, description string, categories []SubscribedFeedsByCategory, entries []SubscribedFeedEntry) FeedPage {
+func NewFeedPage(number uint, totalPages uint, pageTitle string, description string, categories []SubscribedFeedsByCategory, totalEntryCount uint, entries []SubscribedFeedEntry) FeedPage {
 	var unread uint
 
 	for _, category := range categories {
@@ -30,13 +30,14 @@ func NewFeedPage(number uint, totalPages uint, pageTitle string, description str
 	}
 
 	page := FeedPage{
-		PageNumber:  number,
-		TotalPages:  totalPages,
-		PageTitle:   pageTitle,
-		Description: description,
-		Unread:      unread,
-		Categories:  categories,
-		Entries:     entries,
+		PageNumber:      number,
+		TotalPages:      totalPages,
+		PageTitle:       pageTitle,
+		Description:     description,
+		Unread:          unread,
+		Categories:      categories,
+		TotalEntryCount: totalEntryCount,
+		Entries:         entries,
 	}
 
 	if page.PageNumber == 1 {
@@ -58,10 +59,8 @@ func NewFeedPage(number uint, totalPages uint, pageTitle string, description str
 
 // NewFeedSearchResultPage initializes and returns a new FeedPage containing search results.
 func NewFeedSearchResultPage(searchTerms string, searchResultCount uint, number uint, totalPages uint, pageTitle, description string, categories []SubscribedFeedsByCategory, entries []SubscribedFeedEntry) FeedPage {
-	page := NewFeedPage(number, totalPages, pageTitle, description, categories, entries)
-
+	page := NewFeedPage(number, totalPages, pageTitle, description, categories, searchResultCount, entries)
 	page.SearchTerms = searchTerms
-	page.SearchResultCount = searchResultCount
 
 	return page
 }

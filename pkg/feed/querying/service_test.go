@@ -141,6 +141,7 @@ func TestService(t *testing.T) {
 							},
 						},
 					},
+					TotalEntryCount: 2,
 					Entries: []SubscribedFeedEntry{
 						{
 							Entry:             feed1Entry1,
@@ -268,6 +269,7 @@ func TestService(t *testing.T) {
 							},
 						},
 					},
+					TotalEntryCount: 2,
 					Entries: []SubscribedFeedEntry{
 						{
 							Entry:             feed1Entry1,
@@ -366,7 +368,7 @@ func TestService(t *testing.T) {
 							},
 						},
 					},
-
+					TotalEntryCount: 2,
 					Entries: []SubscribedFeedEntry{
 						{
 							Entry:             feed1Entry1,

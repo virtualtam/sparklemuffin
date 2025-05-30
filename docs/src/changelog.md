@@ -18,6 +18,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 #### WWW
 - Log pagination errors as warnings
+- Rewrite HTML templates and CSS with the Bulma framework
 
 #### Packaging and automation
 - Build with Go 1.24

@@ -1,6 +1,6 @@
 {{define "nav"}}
 <header>
-  <nav class="navbar has-shadow is-fixed-top" role="navigation" aria-label="main navigation">
+  <nav class="navbar has-shadow is-fixed-top is-light" role="navigation" aria-label="main navigation">
     <div class="navbar-start">
       {{- if .User}}
       <div class="navbar-item has-dropdown is-hoverable">
@@ -31,7 +31,24 @@
 
     <div class="navbar-end">
       {{- if .User}}
-      <a class="navbar-item" href="/account">Account</a>
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">Account</a>
+
+        <div class="navbar-dropdown is-right">
+          <div class="navbar-item">
+            <p class="has-text-weight-semibold">{{.User.Email}}</p>
+          </div>
+          <hr class="navbar-divider">
+          <a class="navbar-item" href="/account/info">Update information</a>
+          <a class="navbar-item" href="/account/password">Update password</a>
+          <hr class="navbar-divider">
+          <div class="navbar-item">
+            <form action="/logout" method="POST">
+              <button type="submit" class="is-link">Log out</button>
+            </form>
+          </div>
+        </div>
+      </div>
       {{- else}}
       <a class="navbar-item" href="/login">Login</a>
       {{- end}}

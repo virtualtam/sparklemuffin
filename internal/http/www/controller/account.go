@@ -25,7 +25,6 @@ type accountHandlerContext struct {
 	csrfService *csrf.Service
 	userService *user.Service
 
-	accountView         *view.View
 	accountInfoView     *view.View
 	accountPasswordView *view.View
 }
@@ -39,7 +38,6 @@ func RegisterAccounthandlers(
 		csrfService: csrfService,
 		userService: userService,
 
-		accountView:         view.New("account/account.gohtml"),
 		accountInfoView:     view.New("account/info.gohtml"),
 		accountPasswordView: view.New("account/password.gohtml"),
 	}
@@ -50,30 +48,11 @@ func RegisterAccounthandlers(
 			return middleware.AuthenticatedUser(h.ServeHTTP)
 		})
 
-		r.Get("/", hc.handleAccountView())
 		r.Get("/info", hc.handleAccountInfoView())
 		r.Post("/info", hc.handleAccountInfoUpdate())
 		r.Get("/password", hc.handleAccountPasswordView())
 		r.Post("/password", hc.handleAccountPasswordUpdate())
 	})
-}
-
-// handleAccountView renders the user account management page.
-func (hc *accountHandlerContext) handleAccountView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
-		csrfToken := hc.csrfService.Generate(user.UUID, actionAccountUpdate)
-
-		viewData := view.Data{
-			Content: view.FormContent{
-				CSRFToken: csrfToken,
-				Content:   user,
-			},
-			Title: "Account",
-		}
-
-		hc.accountView.Render(w, r, viewData)
-	}
 }
 
 // handleAccountInfoUpdate processes the account information update form.

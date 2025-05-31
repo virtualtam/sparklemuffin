@@ -18,6 +18,7 @@ type BookmarkPage struct {
 	PreviousPageNumber uint
 	NextPageNumber     uint
 	TotalPages         uint
+	PagesLeft          uint
 	Offset             uint
 
 	// Terms used in a search query.
@@ -35,6 +36,7 @@ func NewBookmarkPage(owner Owner, number uint, totalPages uint, totalBookmarkCou
 		Owner:              owner,
 		PageNumber:         number,
 		TotalPages:         totalPages,
+		PagesLeft:          totalPages - number,
 		TotalBookmarkCount: totalBookmarkCount,
 		Bookmarks:          bookmarks,
 	}
@@ -89,6 +91,7 @@ type TagPage struct {
 	PreviousPageNumber uint
 	NextPageNumber     uint
 	TotalPages         uint
+	PagesLeft          uint
 	Offset             uint
 
 	FilterTerm string
@@ -103,6 +106,7 @@ func NewTagPage(owner Owner, number uint, totalPages uint, tagCount uint, tags [
 		Owner:      owner,
 		PageNumber: number,
 		TotalPages: totalPages,
+		PagesLeft:  totalPages - number,
 		TagCount:   tagCount,
 		Tags:       tags,
 	}
@@ -127,7 +131,6 @@ func NewTagPage(owner Owner, number uint, totalPages uint, tagCount uint, tags [
 // NewTagFilterResultPage initializes and returns a new bookmark Page containing filtered results.
 func NewTagFilterResultPage(owner Owner, filterTerm string, tagCount uint, number uint, totalPages uint, tags []Tag) TagPage {
 	page := NewTagPage(owner, number, totalPages, tagCount, tags)
-
 	page.FilterTerm = filterTerm
 
 	return page

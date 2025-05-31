@@ -9,7 +9,91 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
-func assertPagesEqual(t *testing.T, got, want BookmarkPage) {
+func TestNewPage(t *testing.T) {
+	cases := []struct {
+		tname              string
+		number             uint
+		totalPages         uint
+		totalBookmarkCount uint
+		want               BookmarkPage
+	}{
+		{
+			tname:              "page 1 of 1",
+			number:             1,
+			totalPages:         1,
+			totalBookmarkCount: 10,
+			want: BookmarkPage{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				PagesLeft:          0,
+				Offset:             1,
+				TotalBookmarkCount: 10,
+			},
+		},
+		{
+			tname:              "page 1 of 8",
+			number:             1,
+			totalPages:         8,
+			totalBookmarkCount: 7*bookmarksPerPage + 10,
+			want: BookmarkPage{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     2,
+				TotalPages:         8,
+				PagesLeft:          7,
+				Offset:             1,
+				TotalBookmarkCount: 7*bookmarksPerPage + 10,
+			},
+		},
+		{
+			tname:              "page 7 of 8",
+			number:             7,
+			totalPages:         8,
+			totalBookmarkCount: 7*bookmarksPerPage + 10,
+			want: BookmarkPage{
+				PageNumber:         7,
+				PreviousPageNumber: 6,
+				NextPageNumber:     8,
+				TotalPages:         8,
+				PagesLeft:          1,
+				Offset:             6*bookmarksPerPage + 1,
+				TotalBookmarkCount: 7*bookmarksPerPage + 10,
+			},
+		},
+		{
+			tname:              "page 8 of 8",
+			number:             8,
+			totalPages:         8,
+			totalBookmarkCount: 7*bookmarksPerPage + 10,
+			want: BookmarkPage{
+				PageNumber:         8,
+				PreviousPageNumber: 7,
+				NextPageNumber:     8,
+				TotalPages:         8,
+				PagesLeft:          0,
+				Offset:             7*bookmarksPerPage + 1,
+				TotalBookmarkCount: 7*bookmarksPerPage + 10,
+			},
+		},
+	}
+
+	owner := Owner{
+		UUID:        "13faccd4-8b67-46cf-823a-87e1fa0f7e62",
+		NickName:    "test-user",
+		DisplayName: "Test User",
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			got := NewBookmarkPage(owner, tc.number, tc.totalPages, tc.totalBookmarkCount, []bookmark.Bookmark{})
+			assertBookmarkPageEquals(t, got, tc.want)
+		})
+	}
+}
+
+func assertBookmarkPageEquals(t *testing.T, got, want BookmarkPage) {
 	t.Helper()
 
 	if got.SearchTerms != want.SearchTerms {
@@ -26,6 +110,9 @@ func assertPagesEqual(t *testing.T, got, want BookmarkPage) {
 	}
 	if got.TotalPages != want.TotalPages {
 		t.Errorf("want %d total pages, got %d", want.TotalPages, got.TotalPages)
+	}
+	if got.PagesLeft != want.PagesLeft {
+		t.Errorf("want %d pages left, got %d", want.PagesLeft, got.PagesLeft)
 	}
 	if got.Offset != want.Offset {
 		t.Errorf("want offset %d, got %d", want.Offset, got.Offset)
@@ -46,85 +133,5 @@ func assertPagesEqual(t *testing.T, got, want BookmarkPage) {
 		if !got.Bookmarks[i].CreatedAt.Equal(wantBookmark.CreatedAt) {
 			t.Errorf("want bookmark %d created at %q, got %q", i, wantBookmark.CreatedAt, got.Bookmarks[i].CreatedAt)
 		}
-	}
-}
-
-func TestNewPage(t *testing.T) {
-	cases := []struct {
-		tname              string
-		number             uint
-		totalPages         uint
-		totalBookmarkCount uint
-		want               BookmarkPage
-	}{
-		{
-			tname:              "page 1 of 1",
-			number:             1,
-			totalPages:         1,
-			totalBookmarkCount: 10,
-			want: BookmarkPage{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				Offset:             1,
-				TotalBookmarkCount: 10,
-			},
-		},
-		{
-			tname:              "page 1 of 8",
-			number:             1,
-			totalPages:         8,
-			totalBookmarkCount: 7*bookmarksPerPage + 10,
-			want: BookmarkPage{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     2,
-				TotalPages:         8,
-				Offset:             1,
-				TotalBookmarkCount: 7*bookmarksPerPage + 10,
-			},
-		},
-		{
-			tname:              "page 7 of 8",
-			number:             7,
-			totalPages:         8,
-			totalBookmarkCount: 7*bookmarksPerPage + 10,
-			want: BookmarkPage{
-				PageNumber:         7,
-				PreviousPageNumber: 6,
-				NextPageNumber:     8,
-				TotalPages:         8,
-				Offset:             6*bookmarksPerPage + 1,
-				TotalBookmarkCount: 7*bookmarksPerPage + 10,
-			},
-		},
-		{
-			tname:              "page 8 of 8",
-			number:             8,
-			totalPages:         8,
-			totalBookmarkCount: 7*bookmarksPerPage + 10,
-			want: BookmarkPage{
-				PageNumber:         8,
-				PreviousPageNumber: 7,
-				NextPageNumber:     8,
-				TotalPages:         8,
-				Offset:             7*bookmarksPerPage + 1,
-				TotalBookmarkCount: 7*bookmarksPerPage + 10,
-			},
-		},
-	}
-
-	owner := Owner{
-		UUID:        "13faccd4-8b67-46cf-823a-87e1fa0f7e62",
-		NickName:    "test-user",
-		DisplayName: "Test User",
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.tname, func(t *testing.T) {
-			got := NewBookmarkPage(owner, tc.number, tc.totalPages, tc.totalBookmarkCount, []bookmark.Bookmark{})
-			assertPagesEqual(t, got, tc.want)
-		})
 	}
 }

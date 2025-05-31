@@ -229,7 +229,7 @@ func TestServiceByPage(t *testing.T) {
 				t.Fatalf("want no error, got %q", err)
 			}
 
-			assertPagesEqual(t, got, tc.want)
+			assertBookmarkPageEquals(t, got, tc.want)
 		})
 	}
 }

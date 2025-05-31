@@ -57,6 +57,25 @@
     </li>
     {{end}}
   </ol>
+  <nav class="level">
+    <div class="level-left">
+      <div class="level-item">
+        <a href="#" class="button is-small">
+          <span class="icon-text">
+            <span class="icon">
+              <ion-icon name="chevron-up-outline"></ion-icon>
+            </span>
+            <span>Back to top</span>
+          </span>
+        </a>
+      </div>
+    </div>
+    <div class="level-right">
+      <div class="level-item">
+        {{template "pagination" .}}
+      </div>
+    </div>
+  </nav>
 </section>
 {{end}}
 
@@ -95,22 +114,49 @@
 {{end}}
 
 {{define "pagination"}}
-<div class="pagination">
-  <p>
-    Page <span class="page-number">{{.PageNumber}}</span> of <span class="page-number">{{.TotalPages}}</span>
-    {{if gt .TotalPages 1}}
-    <br>
-    Go to:
-    {{if lt .PreviousPageNumber .PageNumber }}
-    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page=1">first</a>,
-    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}">previous</a>
-    {{- if ne .PageNumber .TotalPages}},{{end}}
+<nav class="pagination is-small">
+  <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}"
+    class="pagination-previous{{if eq .PreviousPageNumber .PageNumber }} is-disabled{{end}}">Previous</a>
+  <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}"
+    class="pagination-next{{if eq .NextPageNumber .PageNumber }} is-disabled{{end}}">Next</a>
+  <ul class="pagination-list">
+    {{if gt .PageNumber 1}}
+    <li>
+      <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page=1" class="pagination-link"
+        aria-label="Goto page 1">1</a>
+    </li>
     {{end}}
-    {{if lt .PageNumber .TotalPages }}
-    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}">next</a>,
-    <a href="/bookmarks?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}">last</a>
+    {{if gt .PageNumber 3}}
+    <li>
+      <span class="pagination-ellipsis">&hellip;</span>
+    </li>
     {{end}}
+    {{if gt .PageNumber 2}}
+    <li>
+      <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}"
+        class="pagination-link" aria-label="Goto page {{.PreviousPageNumber}}">{{.PreviousPageNumber}}</a>
+    </li>
     {{end}}
-  </p>
-</div>
+    <li>
+      <a class="pagination-link is-current" aria-label="Page {{.PageNumber}}" aria-current="page">{{.PageNumber}}</a>
+    </li>
+    {{if lt .NextPageNumber .TotalPages}}
+    <li>
+      <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}" class="pagination-link"
+        aria-label="Goto page {{.NextPageNumber}}">{{.NextPageNumber}}</a>
+    </li>
+    {{end}}
+    {{if gt .PagesLeft 2}}
+    <li>
+      <span class="pagination-ellipsis">&hellip;</span>
+    </li>
+    {{end}}
+    {{if lt .PageNumber .TotalPages}}
+    <li>
+      <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}" class="pagination-link"
+        aria-label="Goto page {{.TotalPages}}">{{.TotalPages}}</a>
+    </li>
+    {{end}}
+  </ul>
+</nav>
 {{end}}

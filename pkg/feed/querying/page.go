@@ -9,6 +9,7 @@ type FeedPage struct {
 	PreviousPageNumber uint
 	NextPageNumber     uint
 	TotalPages         uint
+	PagesLeft          uint
 	Offset             uint
 
 	SearchTerms string
@@ -32,6 +33,7 @@ func NewFeedPage(number uint, totalPages uint, pageTitle string, description str
 	page := FeedPage{
 		PageNumber:      number,
 		TotalPages:      totalPages,
+		PagesLeft:       totalPages - number,
 		PageTitle:       pageTitle,
 		Description:     description,
 		Unread:          unread,

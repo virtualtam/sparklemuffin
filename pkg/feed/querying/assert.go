@@ -26,6 +26,9 @@ func AssertPageEquals(t *testing.T, got, want FeedPage) {
 	if got.TotalPages != want.TotalPages {
 		t.Errorf("want TotalPages %d, got %d", want.TotalPages, got.TotalPages)
 	}
+	if got.PagesLeft != want.PagesLeft {
+		t.Errorf("want PagesLeft %d, got %d", want.PagesLeft, got.PagesLeft)
+	}
 	if got.Offset != want.Offset {
 		t.Errorf("want Offset %d, got %d", want.Offset, got.Offset)
 	}

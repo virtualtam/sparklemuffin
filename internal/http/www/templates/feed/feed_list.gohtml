@@ -40,21 +40,26 @@
       <div class="level mb-3">
         <div class="level-left">
           <div class="level-item">
-            <h2 class="title">{{.PageTitle}}</h2>
+            <h2 class="title is-4">{{.PageTitle}}</h2>
           </div>
         </div>
         <div class="level-right">
           <div class="level-item">
             <form action="{{$.URLPath}}/entries/mark-all-read" method="POST">
               <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-              <button type="submit" class="button is-small">mark all as read</button>
+              <button type="submit" class="button is-small">
+                <span class="icon">
+                  <ion-icon name="eye-off-outline"></ion-icon>
+                </span>
+                <span>Mark all as read</span>
+              </button>
             </form>
           </div>
         </div>
       </div>
 
       {{with .Description}}
-      <h3 class="subtitle">{{.}}</h3>
+      <h3 class="subtitle is-6">{{.}}</h3>
       {{end}}
 
       {{template "feedSearchForm" .}}
@@ -80,14 +85,28 @@
           <div class="level mb-1">
             <div class="level-left">
               <div class="level-item{{if .Read}} has-text-grey-light{{end}}">
-                <em>{{ or .SubscriptionAlias .FeedTitle }}</em>
+                <span class="icon-text">
+                  <span class="icon">
+                    <ion-icon name="newspaper-outline"></ion-icon>
+                  </span>
+                  <span><em>{{ or .SubscriptionAlias .FeedTitle }}</em></span>
+                </span>
               </div>
             </div>
             <div class="level-right">
               <div class="level-item">
                 <form action="/feeds/entries/{{.UID}}/toggle-read" method="POST">
                   <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-                  <button type="submit" class="button is-small">mark as {{if .Read}}un{{end}}read</button>
+                  <button type="submit" class="button is-small">
+                    <span class="icon">
+                      {{if .Read}}
+                      <ion-icon name="eye-outline"></ion-icon>
+                      {{else}}
+                      <ion-icon name="eye-off-outline"></ion-icon>
+                      {{end}}
+                    </span>
+                    <span>Mark as {{if .Read}}unread{{else}}read{{end}}</span>
+                  </button>
                 </form>
               </div>
             </div>

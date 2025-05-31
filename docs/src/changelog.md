@@ -21,7 +21,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Rewrite HTML templates and CSS with the Bulma framework
 - Rework site navigation using navbar dropdowns
 - Rework search forms
-- Rework result pagination
+- Rework result pagination templates and helpers
 
 #### Packaging and automation
 - Build with Go 1.24

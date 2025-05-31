@@ -5,6 +5,8 @@ package querying
 
 import (
 	"testing"
+
+	"github.com/virtualtam/sparklemuffin/internal/paginate"
 )
 
 func TestNewPage(t *testing.T) {
@@ -20,12 +22,14 @@ func TestNewPage(t *testing.T) {
 			number:     1,
 			totalPages: 1,
 			want: FeedPage{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				PagesLeft:          0,
-				Offset:             1,
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					PagesLeft:          0,
+					ItemOffset:         1,
+				},
 			},
 		},
 		{
@@ -34,13 +38,15 @@ func TestNewPage(t *testing.T) {
 			totalPages:      8,
 			totalEntryCount: 7*entriesPerPage + 10,
 			want: FeedPage{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     2,
-				TotalPages:         8,
-				PagesLeft:          7,
-				Offset:             1,
-				TotalEntryCount:    7*entriesPerPage + 10,
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     2,
+					TotalPages:         8,
+					PagesLeft:          7,
+					ItemOffset:         1,
+					ItemCount:          7*entriesPerPage + 10,
+				},
 			},
 		},
 		{
@@ -49,13 +55,15 @@ func TestNewPage(t *testing.T) {
 			totalPages:      8,
 			totalEntryCount: 7*entriesPerPage + 10,
 			want: FeedPage{
-				PageNumber:         7,
-				PreviousPageNumber: 6,
-				NextPageNumber:     8,
-				TotalPages:         8,
-				PagesLeft:          1,
-				Offset:             6*entriesPerPage + 1,
-				TotalEntryCount:    7*entriesPerPage + 10,
+				Page: paginate.Page{
+					PageNumber:         7,
+					PreviousPageNumber: 6,
+					NextPageNumber:     8,
+					TotalPages:         8,
+					PagesLeft:          1,
+					ItemOffset:         6*entriesPerPage + 1,
+					ItemCount:          7*entriesPerPage + 10,
+				},
 			},
 		},
 		{
@@ -64,13 +72,15 @@ func TestNewPage(t *testing.T) {
 			totalPages:      8,
 			totalEntryCount: 7*entriesPerPage + 10,
 			want: FeedPage{
-				PageNumber:         8,
-				PreviousPageNumber: 7,
-				NextPageNumber:     8,
-				TotalPages:         8,
-				PagesLeft:          0,
-				Offset:             7*entriesPerPage + 1,
-				TotalEntryCount:    7*entriesPerPage + 10,
+				Page: paginate.Page{
+					PageNumber:         8,
+					PreviousPageNumber: 7,
+					NextPageNumber:     8,
+					TotalPages:         8,
+					PagesLeft:          0,
+					ItemOffset:         7*entriesPerPage + 1,
+					ItemCount:          7*entriesPerPage + 10,
+				},
 			},
 		},
 	}

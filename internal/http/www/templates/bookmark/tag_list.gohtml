@@ -45,7 +45,7 @@
     </div>
     <div class="level-right">
       <div class="level-item">
-        {{template "pagination" .}}
+        {{template "pagination" .Page}}
       </div>
     </div>
   </nav>
@@ -60,7 +60,7 @@
         <div class="field has-addons">
           <div class="control">
             <input class="input" type="text" id="filterTerm" name="filter" placeholder="Filter by name"
-              value="{{.FilterTerm}}">
+              value="{{.Page.SearchTerms}}">
           </div>
           <div class="control">
             <button type="submit" class="button">Filter</button>
@@ -70,66 +70,18 @@
     </div>
     <div class="level-item">
       <p class="subtitle is-5">
-        {{if ne .FilterTerm "" }}
-        <strong>{{.TagCount}}</strong> tag{{if gt .TagCount 1}}s{{end}} found
+        {{if ne .Page.SearchTerms "" }}
+        <strong>{{.Page.ItemCount}}</strong> tag{{if gt .Page.ItemCount 1}}s{{end}} found
         {{else}}
-        <strong>{{.TagCount}}</strong> tag{{if gt .TagCount 1}}s{{end}}
+        <strong>{{.Page.ItemCount}}</strong> tag{{if gt .Page.ItemCount 1}}s{{end}}
         {{end}}
       </p>
     </div>
   </div>
   <div class="level-right">
     <div class="level-item">
-      {{template "pagination" .}}
+      {{template "pagination" .Page}}
     </div>
   </div>
-</nav>
-{{end}}
-
-{{define "pagination"}}
-<nav class="pagination is-small">
-  <a href="?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.PreviousPageNumber}}"
-    class="pagination-previous{{if eq .PreviousPageNumber .PageNumber }} is-disabled{{end}}">Previous</a>
-  <a href="?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.NextPageNumber}}"
-    class="pagination-next{{if eq .NextPageNumber .PageNumber }} is-disabled{{end}}">Next</a>
-  <ul class="pagination-list">
-    {{if gt .PageNumber 1}}
-    <li>
-      <a href="?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page=1" class="pagination-link"
-        aria-label="Goto page 1">1</a>
-    </li>
-    {{end}}
-    {{if gt .PageNumber 3}}
-    <li>
-      <span class="pagination-ellipsis">&hellip;</span>
-    </li>
-    {{end}}
-    {{if gt .PageNumber 2}}
-    <li>
-      <a href="?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.PreviousPageNumber}}"
-        class="pagination-link" aria-label="Goto page {{.PreviousPageNumber}}">{{.PreviousPageNumber}}</a>
-    </li>
-    {{end}}
-    <li>
-      <a class="pagination-link is-current" aria-label="Page {{.PageNumber}}" aria-current="page">{{.PageNumber}}</a>
-    </li>
-    {{if lt .NextPageNumber .TotalPages}}
-    <li>
-      <a href="?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.NextPageNumber}}" class="pagination-link"
-        aria-label="Goto page {{.NextPageNumber}}">{{.NextPageNumber}}</a>
-    </li>
-    {{end}}
-    {{if gt .PagesLeft 2}}
-    <li>
-      <span class="pagination-ellipsis">&hellip;</span>
-    </li>
-    {{end}}
-    {{if lt .PageNumber .TotalPages}}
-    <li>
-      <a href="?{{if .FilterTerm}}filter={{.FilterTerm}}&amp;{{end}}page={{.TotalPages}}" class="pagination-link"
-        aria-label="Goto page {{.TotalPages}}">{{.TotalPages}}</a>
-    </li>
-    {{end}}
-  </ul>
 </nav>
 {{end}}

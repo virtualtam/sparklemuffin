@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 )
@@ -14,24 +15,7 @@ import (
 func AssertPageEquals(t *testing.T, got, want FeedPage) {
 	t.Helper()
 
-	if got.PageNumber != want.PageNumber {
-		t.Errorf("want PageNumber %d, got %d", want.PageNumber, got.PageNumber)
-	}
-	if got.PreviousPageNumber != want.PreviousPageNumber {
-		t.Errorf("want PreviousPageNumber %d, got %d", want.PreviousPageNumber, got.PreviousPageNumber)
-	}
-	if got.NextPageNumber != want.NextPageNumber {
-		t.Errorf("want NextPageNumber %d, got %d", want.NextPageNumber, got.NextPageNumber)
-	}
-	if got.TotalPages != want.TotalPages {
-		t.Errorf("want TotalPages %d, got %d", want.TotalPages, got.TotalPages)
-	}
-	if got.PagesLeft != want.PagesLeft {
-		t.Errorf("want PagesLeft %d, got %d", want.PagesLeft, got.PagesLeft)
-	}
-	if got.Offset != want.Offset {
-		t.Errorf("want Offset %d, got %d", want.Offset, got.Offset)
-	}
+	paginate.AssertPageEquals(t, got.Page, want.Page)
 
 	if got.PageTitle != want.PageTitle {
 		t.Errorf("want Header %q, got %q", want.PageTitle, got.PageTitle)
@@ -41,9 +25,6 @@ func AssertPageEquals(t *testing.T, got, want FeedPage) {
 	}
 	if got.Unread != want.Unread {
 		t.Errorf("want Unread %d, got %d", want.Unread, got.Unread)
-	}
-	if got.TotalEntryCount != want.TotalEntryCount {
-		t.Errorf("want TotalEntryCount %d, got %d", want.TotalEntryCount, got.TotalEntryCount)
 	}
 
 	AssertCategoriesEqual(t, got.Categories, want.Categories)

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jaswdr/faker"
+	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
@@ -60,16 +61,19 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByPage", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			PageNumber:         1,
-			PreviousPageNumber: 1,
-			NextPageNumber:     1,
-			TotalPages:         1,
-			Offset:             1,
-			PageTitle:          querying.PageHeaderAll,
-			Description:        "",
-			Unread:             3,
-			Categories:         wantCategories,
-			TotalEntryCount:    5,
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          5,
+			},
+
+			PageTitle:   querying.PageHeaderAll,
+			Description: "",
+			Unread:      3,
+			Categories:  wantCategories,
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[0],
@@ -106,16 +110,19 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByCategoryAndPage", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			PageNumber:         1,
-			PreviousPageNumber: 1,
-			NextPageNumber:     1,
-			TotalPages:         1,
-			Offset:             1,
-			PageTitle:          fakeData.categories[0].Name,
-			Description:        "",
-			Unread:             3,
-			Categories:         wantCategories,
-			TotalEntryCount:    5,
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          5,
+			},
+
+			PageTitle:   fakeData.categories[0].Name,
+			Description: "",
+			Unread:      3,
+			Categories:  wantCategories,
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[0],
@@ -152,16 +159,19 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsBySubscriptionAndPage", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			PageNumber:         1,
-			PreviousPageNumber: 1,
-			NextPageNumber:     1,
-			TotalPages:         1,
-			Offset:             1,
-			PageTitle:          fakeData.feeds[1].Title,
-			Description:        fakeData.feeds[1].Description,
-			Unread:             3,
-			Categories:         wantCategories,
-			TotalEntryCount:    2,
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          2,
+			},
+
+			PageTitle:   fakeData.feeds[1].Title,
+			Description: fakeData.feeds[1].Description,
+			Unread:      3,
+			Categories:  wantCategories,
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
@@ -185,16 +195,19 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByQueryAndPage", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			PageNumber:         1,
-			PreviousPageNumber: 1,
-			NextPageNumber:     1,
-			TotalPages:         1,
-			Offset:             1,
-			PageTitle:          querying.PageHeaderAll,
-			Description:        "",
-			Unread:             3,
-			Categories:         wantCategories,
-			TotalEntryCount:    2,
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          2,
+				SearchTerms:        "authentic production",
+			},
+
+			PageTitle:  querying.PageHeaderAll,
+			Unread:     3,
+			Categories: wantCategories,
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
@@ -218,16 +231,20 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByCategoryAndQueryAndPage", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			PageNumber:         1,
-			PreviousPageNumber: 1,
-			NextPageNumber:     1,
-			TotalPages:         1,
-			Offset:             1,
-			PageTitle:          fakeData.categories[0].Name,
-			Description:        "",
-			Unread:             3,
-			Categories:         wantCategories,
-			TotalEntryCount:    2,
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          2,
+				SearchTerms:        "authentic production",
+			},
+
+			PageTitle:   fakeData.categories[0].Name,
+			Description: "",
+			Unread:      3,
+			Categories:  wantCategories,
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
@@ -251,16 +268,20 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsBySubscriptionAndQueryAndPage", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			PageNumber:         1,
-			PreviousPageNumber: 1,
-			NextPageNumber:     1,
-			TotalPages:         1,
-			Offset:             1,
-			PageTitle:          fakeData.feeds[1].Title,
-			Description:        fakeData.feeds[1].Description,
-			Unread:             3,
-			Categories:         wantCategories,
-			TotalEntryCount:    2,
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          2,
+				SearchTerms:        "authentic production",
+			},
+
+			PageTitle:   fakeData.feeds[1].Title,
+			Description: fakeData.feeds[1].Description,
+			Unread:      3,
+			Categories:  wantCategories,
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],

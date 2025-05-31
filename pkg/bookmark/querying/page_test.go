@@ -6,6 +6,7 @@ package querying
 import (
 	"testing"
 
+	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
@@ -23,13 +24,15 @@ func TestNewPage(t *testing.T) {
 			totalPages:         1,
 			totalBookmarkCount: 10,
 			want: BookmarkPage{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				PagesLeft:          0,
-				Offset:             1,
-				TotalBookmarkCount: 10,
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					PagesLeft:          0,
+					ItemOffset:         1,
+					ItemCount:          10,
+				},
 			},
 		},
 		{
@@ -38,13 +41,15 @@ func TestNewPage(t *testing.T) {
 			totalPages:         8,
 			totalBookmarkCount: 7*bookmarksPerPage + 10,
 			want: BookmarkPage{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     2,
-				TotalPages:         8,
-				PagesLeft:          7,
-				Offset:             1,
-				TotalBookmarkCount: 7*bookmarksPerPage + 10,
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     2,
+					TotalPages:         8,
+					PagesLeft:          7,
+					ItemOffset:         1,
+					ItemCount:          7*bookmarksPerPage + 10,
+				},
 			},
 		},
 		{
@@ -53,13 +58,15 @@ func TestNewPage(t *testing.T) {
 			totalPages:         8,
 			totalBookmarkCount: 7*bookmarksPerPage + 10,
 			want: BookmarkPage{
-				PageNumber:         7,
-				PreviousPageNumber: 6,
-				NextPageNumber:     8,
-				TotalPages:         8,
-				PagesLeft:          1,
-				Offset:             6*bookmarksPerPage + 1,
-				TotalBookmarkCount: 7*bookmarksPerPage + 10,
+				Page: paginate.Page{
+					PageNumber:         7,
+					PreviousPageNumber: 6,
+					NextPageNumber:     8,
+					TotalPages:         8,
+					PagesLeft:          1,
+					ItemOffset:         6*bookmarksPerPage + 1,
+					ItemCount:          7*bookmarksPerPage + 10,
+				},
 			},
 		},
 		{
@@ -68,13 +75,15 @@ func TestNewPage(t *testing.T) {
 			totalPages:         8,
 			totalBookmarkCount: 7*bookmarksPerPage + 10,
 			want: BookmarkPage{
-				PageNumber:         8,
-				PreviousPageNumber: 7,
-				NextPageNumber:     8,
-				TotalPages:         8,
-				PagesLeft:          0,
-				Offset:             7*bookmarksPerPage + 1,
-				TotalBookmarkCount: 7*bookmarksPerPage + 10,
+				Page: paginate.Page{
+					PageNumber:         8,
+					PreviousPageNumber: 7,
+					NextPageNumber:     8,
+					TotalPages:         8,
+					PagesLeft:          0,
+					ItemOffset:         7*bookmarksPerPage + 1,
+					ItemCount:          7*bookmarksPerPage + 10,
+				},
 			},
 		},
 	}
@@ -96,30 +105,7 @@ func TestNewPage(t *testing.T) {
 func assertBookmarkPageEquals(t *testing.T, got, want BookmarkPage) {
 	t.Helper()
 
-	if got.SearchTerms != want.SearchTerms {
-		t.Errorf("want query %q, got %q", want.SearchTerms, got.SearchTerms)
-	}
-	if got.PageNumber != want.PageNumber {
-		t.Errorf("want page number %d, got %d", want.PageNumber, got.PageNumber)
-	}
-	if got.PreviousPageNumber != want.PreviousPageNumber {
-		t.Errorf("want previous page number %d, got %d", want.PreviousPageNumber, got.PreviousPageNumber)
-	}
-	if got.NextPageNumber != want.NextPageNumber {
-		t.Errorf("want next page number %d, got %d", want.NextPageNumber, got.NextPageNumber)
-	}
-	if got.TotalPages != want.TotalPages {
-		t.Errorf("want %d total pages, got %d", want.TotalPages, got.TotalPages)
-	}
-	if got.PagesLeft != want.PagesLeft {
-		t.Errorf("want %d pages left, got %d", want.PagesLeft, got.PagesLeft)
-	}
-	if got.Offset != want.Offset {
-		t.Errorf("want offset %d, got %d", want.Offset, got.Offset)
-	}
-	if got.TotalBookmarkCount != want.TotalBookmarkCount {
-		t.Errorf("want %d total bookmarks, got %d", want.TotalBookmarkCount, got.TotalBookmarkCount)
-	}
+	paginate.AssertPageEquals(t, got.Page, want.Page)
 
 	if len(got.Bookmarks) != len(want.Bookmarks) {
 		t.Fatalf("want %d bookmarks, got %d", len(want.Bookmarks), len(got.Bookmarks))

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jaswdr/faker"
+	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -104,12 +105,14 @@ func TestService(t *testing.T) {
 				tname:      "one page, no subscription",
 				pageNumber: 1,
 				want: FeedPage{
-					PageNumber:         1,
-					PreviousPageNumber: 1,
-					NextPageNumber:     1,
-					TotalPages:         1,
-					Offset:             1,
-					PageTitle:          PageHeaderAll,
+					Page: paginate.Page{
+						PageNumber:         1,
+						PreviousPageNumber: 1,
+						NextPageNumber:     1,
+						TotalPages:         1,
+						ItemOffset:         1,
+					},
+					PageTitle: PageHeaderAll,
 				},
 			},
 			{
@@ -117,12 +120,14 @@ func TestService(t *testing.T) {
 				userUUID:   user1.UUID,
 				pageNumber: 1,
 				want: FeedPage{
-					PageNumber:         1,
-					PreviousPageNumber: 1,
-					NextPageNumber:     1,
-					TotalPages:         1,
-					Offset:             1,
-
+					Page: paginate.Page{
+						PageNumber:         1,
+						PreviousPageNumber: 1,
+						NextPageNumber:     1,
+						TotalPages:         1,
+						ItemOffset:         1,
+						ItemCount:          2,
+					},
 					PageTitle: PageHeaderAll,
 					Unread:    1,
 
@@ -141,7 +146,6 @@ func TestService(t *testing.T) {
 							},
 						},
 					},
-					TotalEntryCount: 2,
 					Entries: []SubscribedFeedEntry{
 						{
 							Entry:             feed1Entry1,
@@ -213,11 +217,13 @@ func TestService(t *testing.T) {
 				category:   user1Category2,
 				pageNumber: 1,
 				want: FeedPage{
-					PageNumber:         1,
-					PreviousPageNumber: 1,
-					NextPageNumber:     1,
-					TotalPages:         1,
-					Offset:             1,
+					Page: paginate.Page{
+						PageNumber:         1,
+						PreviousPageNumber: 1,
+						NextPageNumber:     1,
+						TotalPages:         1,
+						ItemOffset:         1,
+					},
 
 					PageTitle: "Empty Category",
 					Unread:    1,
@@ -245,11 +251,14 @@ func TestService(t *testing.T) {
 				category:   user1Category1,
 				pageNumber: 1,
 				want: FeedPage{
-					PageNumber:         1,
-					PreviousPageNumber: 1,
-					NextPageNumber:     1,
-					TotalPages:         1,
-					Offset:             1,
+					Page: paginate.Page{
+						PageNumber:         1,
+						PreviousPageNumber: 1,
+						NextPageNumber:     1,
+						TotalPages:         1,
+						ItemOffset:         1,
+						ItemCount:          2,
+					},
 
 					PageTitle: "Test Category",
 					Unread:    1,
@@ -269,7 +278,6 @@ func TestService(t *testing.T) {
 							},
 						},
 					},
-					TotalEntryCount: 2,
 					Entries: []SubscribedFeedEntry{
 						{
 							Entry:             feed1Entry1,
@@ -344,11 +352,14 @@ func TestService(t *testing.T) {
 				},
 				pageNumber: 1,
 				want: FeedPage{
-					PageNumber:         1,
-					PreviousPageNumber: 1,
-					NextPageNumber:     1,
-					TotalPages:         1,
-					Offset:             1,
+					Page: paginate.Page{
+						PageNumber:         1,
+						PreviousPageNumber: 1,
+						NextPageNumber:     1,
+						TotalPages:         1,
+						ItemOffset:         1,
+						ItemCount:          2,
+					},
 
 					PageTitle: "Local Test",
 					Unread:    1,
@@ -368,7 +379,6 @@ func TestService(t *testing.T) {
 							},
 						},
 					},
-					TotalEntryCount: 2,
 					Entries: []SubscribedFeedEntry{
 						{
 							Entry:             feed1Entry1,

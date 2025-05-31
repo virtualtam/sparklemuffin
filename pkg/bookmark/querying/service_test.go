@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -82,11 +83,13 @@ func TestServiceByPage(t *testing.T) {
 			visibility: VisibilityAll,
 			pageNumber: 1,
 			want: BookmarkPage{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				Offset:             1,
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+				},
 			},
 		},
 		{
@@ -96,12 +99,14 @@ func TestServiceByPage(t *testing.T) {
 			visibility:          VisibilityAll,
 			pageNumber:          1,
 			want: BookmarkPage{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				Offset:             1,
-				TotalBookmarkCount: 3,
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          3,
+				},
 				Bookmarks: []bookmark.Bookmark{
 					{
 						UserUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
@@ -134,12 +139,14 @@ func TestServiceByPage(t *testing.T) {
 			visibility:          VisibilityPrivate,
 			pageNumber:          1,
 			want: BookmarkPage{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				Offset:             1,
-				TotalBookmarkCount: 1,
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          1,
+				},
 				Bookmarks: []bookmark.Bookmark{
 					{
 						UserUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
@@ -158,12 +165,14 @@ func TestServiceByPage(t *testing.T) {
 			visibility:          VisibilityPublic,
 			pageNumber:          1,
 			want: BookmarkPage{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				Offset:             1,
-				TotalBookmarkCount: 2,
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          2,
+				},
 				Bookmarks: []bookmark.Bookmark{
 					{
 						UserUUID:    "5d75c769-059c-4b36-9db6-1c82619e704a",

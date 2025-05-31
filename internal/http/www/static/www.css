@@ -60,6 +60,11 @@ code {
   flex-wrap: nowrap;
 }
 
+.level-left,
+.level-item {
+  flex-shrink: unset;
+}
+
 .tag a {
   color: var(--bulma-text);
 }

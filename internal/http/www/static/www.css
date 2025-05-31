@@ -31,11 +31,6 @@
 }
 
 /* Global */
-/* :root {
-  --bg: #f5f5f0;
-  --bg-accent: #f0f0e5;
-} */
-
 html,
 body,
 button,
@@ -53,6 +48,10 @@ code {
 }
 
 /* Bulma */
+.dropdown-menu {
+  min-width: 4ch;
+}
+
 .footer .logo {
   color: var(--bulma-success-30);
 }

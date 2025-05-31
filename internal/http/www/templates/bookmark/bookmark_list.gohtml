@@ -37,15 +37,47 @@
         </div>
         <div class="level-right">
           <div class="level-item">
-            [
-            {{- if not .Private}}
-            <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">permalink</a>
-            ,
-            {{- end}}
-            <a href="/bookmarks/{{.UID}}/edit">edit</a>
-            ,
-            <a href="/bookmarks/{{.UID}}/delete">delete</a>
-            ]
+            <div class="dropdown is-hoverable is-right">
+              <div class="dropdown-trigger">
+                <button class="button is-small" aria-haspopup="true" aria-controls="dropdown-menu-{{.UID}}">
+                  <span>Actions</span>
+                  <span class="icon is-small">
+                    <ion-icon name="chevron-down-outline"></ion-icon>
+                  </span>
+                </button>
+              </div>
+              <div class="dropdown-menu" id="dropdown-menu-{{.UID}}" role="menu">
+                <div class="dropdown-content">
+                  <a href="/bookmarks/{{.UID}}/edit" class="dropdown-item px-4">
+                    <span class="icon-text">
+                      <span class="icon">
+                        <ion-icon name="create-outline"></ion-icon>
+                      </span>
+                      <span>Edit</span>
+                    </span>
+                  </a>
+                  <a href="/bookmarks/{{.UID}}/delete" class="dropdown-item px-4">
+                    <span class="icon-text">
+                      <span class="icon">
+                        <ion-icon name="trash-outline"></ion-icon>
+                      </span>
+                      <span>Delete</span>
+                    </span>
+                  </a>
+                  {{- if not .Private}}
+                  <hr class="dropdown-divider">
+                  <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}" class="dropdown-item px-4">
+                    <span class="icon-text">
+                      <span class="icon">
+                        <ion-icon name="link-outline"></ion-icon>
+                      </span>
+                      <span>Permalink</span>
+                    </span>
+                  </a>
+                  {{- end}}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -48,6 +48,10 @@ code {
 }
 
 /* Bulma */
+.content blockquote {
+  font-style: italic;
+}
+
 .dropdown-menu {
   min-width: 4ch;
 }

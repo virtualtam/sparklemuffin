@@ -84,9 +84,6 @@ func NewTag(name string, count uint) Tag {
 
 // A TagPage holds a set of paginated bookmark tags.
 type TagPage struct {
-	// Owner exposes public metadata for the User owning the bookmarks.
-	Owner Owner
-
 	PageNumber         uint
 	PreviousPageNumber uint
 	NextPageNumber     uint
@@ -101,9 +98,8 @@ type TagPage struct {
 }
 
 // NewTagPage initializes and returns a new TagPage.
-func NewTagPage(owner Owner, number uint, totalPages uint, tagCount uint, tags []Tag) TagPage {
+func NewTagPage(number uint, totalPages uint, tagCount uint, tags []Tag) TagPage {
 	page := TagPage{
-		Owner:      owner,
 		PageNumber: number,
 		TotalPages: totalPages,
 		PagesLeft:  totalPages - number,
@@ -129,8 +125,8 @@ func NewTagPage(owner Owner, number uint, totalPages uint, tagCount uint, tags [
 }
 
 // NewTagFilterResultPage initializes and returns a new bookmark Page containing filtered results.
-func NewTagFilterResultPage(owner Owner, filterTerm string, tagCount uint, number uint, totalPages uint, tags []Tag) TagPage {
-	page := NewTagPage(owner, number, totalPages, tagCount, tags)
+func NewTagFilterResultPage(filterTerm string, tagCount uint, number uint, totalPages uint, tags []Tag) TagPage {
+	page := NewTagPage(number, totalPages, tagCount, tags)
 	page.FilterTerm = filterTerm
 
 	return page

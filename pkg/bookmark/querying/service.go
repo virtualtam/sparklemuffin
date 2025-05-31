@@ -154,11 +154,6 @@ func (s *Service) TagNamesByCount(userUUID string, visibility Visibility) ([]str
 
 // TagsByPage returns a Page containing a limited and offset number of tags.
 func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uint) (TagPage, error) {
-	owner, err := s.r.OwnerGetByUUID(ownerUUID)
-	if err != nil {
-		return TagPage{}, err
-	}
-
 	if number < 1 {
 		return TagPage{}, ErrPageNumberOutOfBounds
 	}
@@ -176,7 +171,7 @@ func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uin
 
 	if tagCount == 0 {
 		// early return: nothing to display
-		return NewTagPage(owner, 1, 1, 0, []Tag{}), nil
+		return NewTagPage(1, 1, 0, []Tag{}), nil
 	}
 
 	dbOffset := (number - 1) * tagsPerPage
@@ -186,17 +181,12 @@ func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uin
 		return TagPage{}, err
 	}
 
-	return NewTagPage(owner, number, totalPages, tagCount, tags), nil
+	return NewTagPage(number, totalPages, tagCount, tags), nil
 }
 
 // TagsByFilterQueryAndPage returns a TagSearchPage containing a limited and offset
 // number of tags for a given filter term.
 func (s *Service) TagsByFilterQueryAndPage(ownerUUID string, visibility Visibility, filterTerm string, number uint) (TagPage, error) {
-	owner, err := s.r.OwnerGetByUUID(ownerUUID)
-	if err != nil {
-		return TagPage{}, err
-	}
-
 	if number < 1 {
 		return TagPage{}, ErrPageNumberOutOfBounds
 	}
@@ -214,7 +204,7 @@ func (s *Service) TagsByFilterQueryAndPage(ownerUUID string, visibility Visibili
 
 	if tagCount == 0 {
 		// early return: nothing to display
-		return NewTagFilterResultPage(owner, filterTerm, 0, 1, 1, []Tag{}), nil
+		return NewTagFilterResultPage(filterTerm, 0, 1, 1, []Tag{}), nil
 	}
 
 	dbOffset := (number - 1) * tagsPerPage
@@ -224,5 +214,5 @@ func (s *Service) TagsByFilterQueryAndPage(ownerUUID string, visibility Visibili
 		return TagPage{}, err
 	}
 
-	return NewTagFilterResultPage(owner, filterTerm, tagCount, number, totalPages, tags), nil
+	return NewTagFilterResultPage(filterTerm, tagCount, number, totalPages, tags), nil
 }

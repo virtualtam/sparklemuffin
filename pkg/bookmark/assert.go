@@ -5,6 +5,7 @@ package bookmark
 
 import "testing"
 
+// AssertBookmarkEquals asserts that two bookmarks are equal.
 func AssertBookmarkEquals(t *testing.T, got, want Bookmark) {
 	t.Helper()
 

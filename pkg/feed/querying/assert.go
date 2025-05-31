@@ -12,6 +12,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 )
 
+// AssertPageEquals asserts that two feed pages are equal.
 func AssertPageEquals(t *testing.T, got, want FeedPage) {
 	t.Helper()
 
@@ -31,6 +32,7 @@ func AssertPageEquals(t *testing.T, got, want FeedPage) {
 	AssertSubscriptionEntriesEqual(t, got.Entries, want.Entries)
 }
 
+// AssertCategoriesEqual asserts that two slices of subscribed feeds by category are equal.
 func AssertCategoriesEqual(t *testing.T, got, want []SubscribedFeedsByCategory) {
 	t.Helper()
 
@@ -61,6 +63,7 @@ func AssertCategoriesEqual(t *testing.T, got, want []SubscribedFeedsByCategory) 
 	}
 }
 
+// AssertSubscriptionEntriesEqual asserts that two slices of subscribed feed entries are equal.
 func AssertSubscriptionEntriesEqual(t *testing.T, got []SubscribedFeedEntry, want []SubscribedFeedEntry) {
 	t.Helper()
 
@@ -98,6 +101,7 @@ func AssertSubscriptionEntriesEqual(t *testing.T, got []SubscribedFeedEntry, wan
 	}
 }
 
+// AssertSubscribedFeedsEqual asserts that two slices of subscribed feeds are equal.
 func AssertSubscribedFeedsEqual(t *testing.T, categoryIndex int, got []SubscribedFeed, want []SubscribedFeed) {
 	t.Helper()
 
@@ -130,6 +134,7 @@ func AssertSubscribedFeedsEqual(t *testing.T, categoryIndex int, got []Subscribe
 	}
 }
 
+// AssertSubscribedFeedEntriesEqual asserts that two slices of subscribed feed entries are equal.
 func AssertSubscribedFeedEntriesEqual(t *testing.T, got []SubscribedFeedEntry, want []SubscribedFeedEntry) {
 	t.Helper()
 

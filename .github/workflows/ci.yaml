@@ -51,6 +51,14 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Download frontend assets
+        run: make download-assets
+
       - name: Lint SQL sources
         run: make lint-sql
 
@@ -70,6 +78,14 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Download frontend assets
+        run: make download-assets
 
       - name: Test
         run: make cover

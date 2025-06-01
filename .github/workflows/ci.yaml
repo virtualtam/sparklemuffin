@@ -26,8 +26,8 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Download frontend assets
-        run: make download-assets
+      - name: Download and build frontend assets
+        run: make assets
 
       - name: Build
         run: make build
@@ -56,8 +56,8 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Download frontend assets
-        run: make download-assets
+      - name: Download and build frontend assets
+        run: make assets
 
       - name: Lint SQL sources
         run: make lint-sql
@@ -84,8 +84,8 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Download frontend assets
-        run: make download-assets
+      - name: Download and build frontend assets
+        run: make assets
 
       - name: Test
         run: make cover

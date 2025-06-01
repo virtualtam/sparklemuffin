@@ -17,7 +17,7 @@
   </head>
 
   <body>
-    {{template "nav" .}}
+    {{template "navbar" .}}
 
     <main>
       {{if .Flash}}
@@ -27,6 +27,17 @@
     </main>
 
     {{template "footer"}}
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const navbarBurger = document.querySelector('#navbarBurger');
+        const menu = document.getElementById(navbarBurger.dataset.target);
+
+        navbarBurger.addEventListener('click', () => {
+          navbarBurger.classList.toggle('is-active');
+          menu.classList.toggle('is-active');
+        });
+      });
+    </script>
   </body>
 
 </html>

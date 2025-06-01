@@ -1,0 +1,223 @@
+{{define "navbar"}}
+<header>
+  <nav class="navbar has-shadow is-fixed-top is-light" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a role="button" class="navbar-burger" id="navbarBurger" aria-label="menu" aria-expanded="false"
+         data-target="navbarMenu">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+    <div id="navbarMenu" class="navbar-menu">
+      <div class="navbar-start">
+        {{- if .User}}
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="/bookmarks">
+            <span class="icon-text">
+              <span class="icon">
+                <i class="fa-regular fa-bookmark"></i>
+              </span>
+              <span>Bookmarks</span>
+            </span>
+          </a>
+
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="/bookmarks/add">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-solid fa-plus"></i>
+                </span>
+                <span>Add bookmark</span>
+              </span>
+            </a>
+            <a class="navbar-item" href="/bookmarks/tags">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-solid fa-tags"></i>
+                </span>
+                <span>Tags</span>
+              </span>
+            </a>
+            <hr class="navbar-divider">
+            <a class="navbar-item" href="/bookmarks/export">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-solid fa-download"></i>
+                </span>
+                <span>Export bookmarks</span>
+              </span>
+            </a>
+            <a class="navbar-item" href="/bookmarks/import">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-solid fa-upload"></i>
+                </span>
+                <span>Import bookmarks</span>
+              </span>
+            </a>
+            <hr class="navbar-divider">
+            <a class="navbar-item" href="/u/{{.User.NickName}}/bookmarks">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-solid fa-share-nodes"></i>
+                </span>
+                <span>Public bookmark URL</span>
+              </span>
+            </a>
+            <a class="navbar-item" href="/u/{{.User.NickName}}/feed/atom">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-solid fa-rss"></i>
+                </span>
+                <span>Public Atom feed</span>
+              </span>
+            </a>
+          </div>
+        </div>
+
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="/feeds">
+            <span class="icon-text">
+              <span class="icon">
+                <i class="fa-regular fa-newspaper"></i>
+              </span>
+              <span>Feeds</span>
+            </span>
+          </a>
+
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="/feeds/add">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-regular fa-plus"></i>
+                </span>
+                <span>Add subscription</span>
+              </span>
+            </a>
+            <a class="navbar-item" href="/feeds/categories/add">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-regular fa-plus"></i>
+                </span>
+                <span>Add category</span>
+              </span>
+            </a>
+            <a class="navbar-item" href="/feeds/subscriptions">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-regular fa-newspaper"></i>
+                </span>
+                <span>Manage subscriptions</span>
+              </span>
+            </a>
+            <hr class="navbar-divider">
+            <a class="navbar-item" href="/feeds/export">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-solid fa-download"></i>
+                </span>
+                <span>Export subscriptions</span>
+              </span>
+            </a>
+            <a class="navbar-item" href="/feeds/import">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-solid fa-upload"></i>
+                </span>
+                <span>Import subscriptions</span>
+              </span>
+            </a>
+          </div>
+        </div>
+        {{- end}}
+      </div>
+
+      <div class="navbar-end">
+        {{- if .User}}
+        {{- if .User.IsAdmin}}
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link">
+            <span class="icon-text">
+              <span class="icon">
+                <i class="fa-solid fa-lock"></i>
+              </span>
+              <span>Administration</span>
+            </span>
+          </a>
+
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="/admin/users/add">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-solid fa-user-plus"></i>
+                </span>
+                <span>Add user</span>
+              </span>
+            </a>
+            <a class="navbar-item" href="/admin/users">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-solid fa-users"></i>
+                </span>
+                <span>Users</span>
+              </span>
+            </a>
+          </div>
+        </div>
+        {{- end}}
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link">
+            <span class="icon-text">
+              <span class="icon">
+                <i class="fa-solid fa-user"></i>
+              </span>
+              <span>Account</span>
+            </span>
+          </a>
+
+          <div class="navbar-dropdown is-right">
+            <div class="navbar-item">
+              <p class="has-text-weight-semibold">{{.User.Email}}</p>
+            </div>
+            <hr class="navbar-divider">
+            <a class="navbar-item" href="/account/info">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-solid fa-user"></i>
+                </span>
+                <span>Information</span>
+              </span>
+            </a>
+            <a class="navbar-item" href="/account/password">
+              <span class="icon-text">
+                <span class="icon">
+                  <i class="fa-solid fa-lock"></i>
+                </span>
+                <span>Password</span>
+              </span>
+            </a>
+            <hr class="navbar-divider">
+            <div class="navbar-item">
+              <form action="/logout" method="POST">
+                <button type="submit" class="is-link">
+                  <span class="icon-text">
+                    <span class="icon">
+                      <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </span>
+                    <span>Log out</span>
+                  </span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {{- else}}
+        <a class="navbar-item" href="/login">Login</a>
+        {{- end}}
+      </div>
+    </div>
+  </nav>
+</header>
+{{- end}}

@@ -1,7 +1,14 @@
 # Copyright (c) VirtualTam
 # SPDX-License-Identifier: MIT
 
-# Step 1: Build Go binaries
+# Step 1: Build frontend assets
+FROM node:22-bookworm AS assets
+
+WORKDIR /app
+COPY internal/http/www/assets/package.json internal/http/www/assets/package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci
+
+# Step 2: Build Go binaries
 FROM golang:1.24-bookworm AS builder
 
 ARG CGO_ENABLED=1
@@ -11,9 +18,10 @@ COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 ADD . .
+COPY --from=assets /app/node_modules internal/http/www/assets/node_modules
 RUN --mount=type=cache,target=/root/.cache/go-build make build
 
-# Step 2: Build the actual image
+# Step 3: Build the final image
 FROM debian:bookworm-slim
 
 RUN --mount=type=cache,target=/var/lib/apt/lists \

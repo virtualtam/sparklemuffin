@@ -5,7 +5,7 @@ POSTGRESQL_FILES = internal/repository/postgresql/migrations
 all: lint race cover build docs
 .PHONY: all
 
-build: $(BUILD_DIR)/sparklemuffin
+build: build-assets $(BUILD_DIR)/sparklemuffin
 
 $(BUILD_DIR)/%: $(SRC_FILES)
 	go build -trimpath -o $@ ./cmd/$*
@@ -69,10 +69,18 @@ vulncheck:
 .PHONY: vulncheck
 
 # Frontend assets
-assets:
-	@echo "== Building frontend assets"
-	cd internal/http/www/assets && npm install &&go run main.go
+assets: download-assets build-assets
 .PHONY: assets
+
+download-assets:
+	@echo "== Downloading frontend assets"
+	cd internal/http/www/assets && npm ci
+.PHONY: download-assets
+
+build-assets:
+	@echo "== Building frontend assets"
+	cd internal/http/www/assets && go run main.go
+.PHONY: build-assets
 
 # Live development server
 live: assets

@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: MIT
  */
 
+@import "../node_modules/awesomplete/awesomplete.css";
+
 .awesomplete {
   display: initial;
 }

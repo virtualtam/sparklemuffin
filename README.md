@@ -29,6 +29,8 @@ See [CHANGELOG](./docs/src/changelog.md)
 ## License
 
 - **sparklemuffin** is licensed under the MIT license.
+- **favicons**: the favicons were generated using the Fira Code font, licensed under the SIL Open Font License, Version 1.1.
 - **Exo2** is licensed under the SIL Open Font License, Version 1.1.
 - **Fira Code** is licensed under the SIL Open Font License, Version 1.1.
 - **Wikipedia article extracts** used in unitary tests are licensed under the Creative Commons Attribution-Share-Alike License 4.0
+

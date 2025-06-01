@@ -15,6 +15,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Bookmarks
 - Export as a JSON document
 
+#### WWW
+- Resolve and deploy frontend assets with NPM and esbuild
+
 ### Changed
 #### WWW
 - Log pagination errors as warnings

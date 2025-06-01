@@ -49,7 +49,7 @@
               <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
               <button type="submit" class="button is-small">
                 <span class="icon">
-                  <ion-icon name="eye-off-outline"></ion-icon>
+                  <i class="fa-solid fa-eye-slash"></i>
                 </span>
                 <span>Mark all as read</span>
               </button>
@@ -71,13 +71,13 @@
             <div class="level-left">
               <div class="level-item">
                 <strong><a class="feed-title{{if .Read}} has-text-grey-light{{end}}"
-                    href="{{.URL}}">{{.Title}}</a></strong>
+                     href="{{.URL}}">{{.Title}}</a></strong>
               </div>
             </div>
             <div class="level-right">
               <div class="level-item">
                 <strong>
-                  <date>{{.PublishedAt.Format "2006-01-02"}}</date>
+                  <date class="{{if .Read}} has-text-grey-light{{end}}">{{.PublishedAt.Format "2006-01-02"}}</date>
                 </strong>
               </div>
             </div>
@@ -87,7 +87,7 @@
               <div class="level-item{{if .Read}} has-text-grey-light{{end}}">
                 <span class="icon-text">
                   <span class="icon">
-                    <ion-icon name="newspaper-outline"></ion-icon>
+                    <i class="fa-solid fa-newspaper"></i>
                   </span>
                   <span><em>{{ or .SubscriptionAlias .FeedTitle }}</em></span>
                 </span>
@@ -98,14 +98,17 @@
                 <form action="/feeds/entries/{{.UID}}/toggle-read" method="POST">
                   <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
                   <button type="submit" class="button is-small">
-                    <span class="icon">
-                      {{if .Read}}
-                      <ion-icon name="eye-outline"></ion-icon>
-                      {{else}}
-                      <ion-icon name="eye-off-outline"></ion-icon>
-                      {{end}}
+                    {{if .Read}}
+                    <span class="icon has-text-grey-light">
+                      <i class="fa-solid fa-eye-slash"></i>
                     </span>
-                    <span>Mark as {{if .Read}}unread{{else}}read{{end}}</span>
+                    <span class="has-text-grey-light">Mark as unread</span>
+                    {{else}}
+                    <span class="icon">
+                      <i class="fa-solid fa-eye"></i>
+                    </span>
+                    <span>Mark as read</span>
+                    {{end}}
                   </button>
                 </form>
               </div>
@@ -128,7 +131,7 @@
         <a href="#" class="button is-small">
           <span class="icon-text">
             <span class="icon">
-              <ion-icon name="chevron-up-outline"></ion-icon>
+              <i class="fa-solid fa-chevron-up"></i>
             </span>
             <span>Back to top</span>
           </span>
@@ -152,7 +155,7 @@
         <div class="field has-addons">
           <div class="control">
             <input class="input" type="text" id="searchTerms" name="search" placeholder="Search terms"
-              value="{{.SearchTerms}}">
+                   value="{{.SearchTerms}}">
           </div>
           <div class="control">
             <button class="button" type="submit">Search</button>

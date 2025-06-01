@@ -27,6 +27,9 @@
       <div class="level mb-1">
         <div class="level-left">
           <div class="level-item">
+            <span class="icon">
+              <i class="fa-solid fa-tags"></i>
+            </span>
             <div class="tags">
               {{- range .Tags}}
               <span class="tag">
@@ -41,7 +44,7 @@
             <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">
               <span class="icon-text">
                 <span class="icon">
-                  <ion-icon name="link-outline"></ion-icon>
+                  <i class="fa-solid fa-link"></i>
                 </span>
                 <span>Permalink</span>
               </span>
@@ -63,7 +66,7 @@
         <a href="#" class="button is-small">
           <span class="icon-text">
             <span class="icon">
-              <ion-icon name="chevron-up-outline"></ion-icon>
+              <i class="fa-solid fa-chevron-up"></i>
             </span>
             <span>Back to top</span>
           </span>
@@ -87,7 +90,7 @@
         <div class="field has-addons">
           <div class="control">
             <input class="input" type="text" id="searchTerms" name="search" placeholder="Search terms"
-              value="{{.Page.SearchTerms}}">
+                   value="{{.Page.SearchTerms}}">
           </div>
           <div class="control">
             <button type="submit" class="button">Search</button>

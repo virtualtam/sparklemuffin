@@ -21,7 +21,7 @@
       <a href="/bookmarks/tags/{{$tag.EncodedName}}/edit" title="Edit tag: {{$tag.Name}}">e</a>
       ,
       <a href="/bookmarks/tags/{{$tag.EncodedName}}/delete" title="Delete tag: {{$tag.Name}}"
-        class="has-text-danger">x</a>
+         class="has-text-danger">x</a>
       ]
       <span class="tag">
         <a href="/bookmarks?search={{$tag.Name}}" title="Bookmarks tagged {{.Name}}">{{$tag.Name}}</a>
@@ -36,7 +36,7 @@
         <a href="#" class="button is-small">
           <span class="icon-text">
             <span class="icon">
-              <ion-icon name="chevron-up-outline"></ion-icon>
+              <i class="fa-solid fa-chevron-up"></i>
             </span>
             <span>Back to top</span>
           </span>
@@ -60,7 +60,7 @@
         <div class="field has-addons">
           <div class="control">
             <input class="input" type="text" id="filterTerm" name="filter" placeholder="Filter by name"
-              value="{{.Page.SearchTerms}}">
+                   value="{{.Page.SearchTerms}}">
           </div>
           <div class="control">
             <button type="submit" class="button">Filter</button>

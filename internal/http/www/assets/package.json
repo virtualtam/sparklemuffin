@@ -1,0 +1,17 @@
+{
+    "name": "sparklemuffin",
+    "version": "0.4.3",
+    "main": "index.js",
+    "scripts": {},
+    "keywords": [],
+    "author": "VirtualTam",
+    "license": "MIT",
+    "description": "",
+    "devDependencies": {
+        "@fortawesome/fontawesome-free": "^6.7.2",
+        "awesomplete": "^1.1.7",
+        "bulma": "^1.0.4",
+        "easymde": "^2.20.0",
+        "firacode": "^6.2.0"
+    }
+}

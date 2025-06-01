@@ -1,0 +1,10 @@
+# Static assets managed via NPM and esbuild
+*.ico
+*.min.css
+*.min.js
+*.png
+*.ttf
+*.txt
+*.woff
+*.woff2
+site.webmanifest

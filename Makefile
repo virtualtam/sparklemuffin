@@ -68,8 +68,14 @@ vulncheck:
 	govulncheck -C . ./...
 .PHONY: vulncheck
 
+# Frontend assets
+assets:
+	@echo "== Building frontend assets"
+	cd internal/http/www/assets && npm install &&go run main.go
+.PHONY: assets
+
 # Live development server
-live:
+live: assets
 	@echo "== Starting database"
 	docker compose -f docker-compose.dev.yml up --remove-orphans -d
 	@echo "== Watching for changes... (hit Ctrl+C when done)"
@@ -77,7 +83,7 @@ live:
 .PHONY: live
 
 # Live development server (with race detection enabled)
-live-race:
+live-race: assets
 	@echo "== Starting database"
 	docker compose -f docker-compose.dev.yml up --remove-orphans -d
 	@echo "== Watching for changes... (hit Ctrl+C when done)"

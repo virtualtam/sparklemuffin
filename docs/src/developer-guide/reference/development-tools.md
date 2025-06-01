@@ -42,6 +42,29 @@ To install a specific version of Go, see:
 - [Installing Go from sources](https://go.dev/doc/install/source)
 - [Managing Go installations](https://go.dev/doc/manage-install)
 
+## Node.js
+SparkleMuffin uses the [Node.js runtime](https://nodejs.org/) to build its frontend assets.
+
+We recommend installing the current Long-Term Support (LTS) version of Node.js.
+
+### Linux
+The recommended way of installing Node.js is via your Linux distribution's package manager.
+
+### macOS
+The recommended way of installing Node.js is via the [Homebrew](https://brew.sh/)
+community packages:
+
+```shell
+$ brew install node
+```
+
+### Windows
+The recommended way of installing Node.js is via [winget](https://github.com/microsoft/winget-cli):
+
+```shell
+$ winget install --id=OpenJS.NodeJS
+```
+
 ## Docker
 [Docker](https://docs.docker.com/) is used to:
 

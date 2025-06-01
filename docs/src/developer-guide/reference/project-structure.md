@@ -28,6 +28,7 @@ internal
 ├── repository
 │   └── postgresql  # PostgreSQL database persistence layer (repository)
 ├── test            # Helpers for unitary and integration tests
+├── textkit         # Text processing utilities
 └── version         # Version detection utilities
 ```
 

@@ -71,7 +71,7 @@
             <div class="level-left">
               <div class="level-item">
                 <strong><a class="feed-title{{if .Read}} has-text-grey-light{{end}}"
-                     href="{{.URL}}">{{.Title}}</a></strong>
+                    href="{{.URL}}">{{.Title}}</a></strong>
               </div>
             </div>
             <div class="level-right">
@@ -117,7 +117,7 @@
 
           <div class="{{if .Read}}has-text-grey-light{{end}}">
             {{- with .Summary }}
-            <div class="content">{{. | MarkdownToHTML}}</div>
+            <div class="content">{{.}}</div>
             {{- end}}
           </div>
         </li>
@@ -155,7 +155,7 @@
         <div class="field has-addons">
           <div class="control">
             <input class="input" type="text" id="searchTerms" name="search" placeholder="Search terms"
-                   value="{{.SearchTerms}}">
+              value="{{.SearchTerms}}">
           </div>
           <div class="control">
             <button class="button" type="submit">Search</button>

@@ -53,6 +53,10 @@ code {
 }
 
 /* Bulma */
+.content {
+  word-break: break-word;
+}
+
 .content blockquote {
   font-style: italic;
 }

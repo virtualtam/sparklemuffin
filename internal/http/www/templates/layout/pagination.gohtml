@@ -36,7 +36,7 @@
       <span class="pagination-ellipsis">&hellip;</span>
     </li>
     {{end}}
-    {{if lt .NextPageNumber .TotalPages}}
+    {{if lt .PageNumber .TotalPages}}
     <li>
       <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}" class="pagination-link"
         aria-label="Goto page {{.TotalPages}}">{{.TotalPages}}</a>

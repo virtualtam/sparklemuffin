@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [v0.5.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.1) - UNRELEASED
+### Changed
+#### WWW
+- Update Web manifest
+
+### Fixed
+#### WWW
+- Prevent feed entries containing long sequences of non-whitespace characters from overflowing
+- Do not render feed entry text as Markdown
+- Fix pagination for the one but last page
+
+
 ## [v0.5.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.0) - 2025-06-01
 ### Security
 - Bump `golang.org/x/crypto` to v0.35.0:

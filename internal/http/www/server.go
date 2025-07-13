@@ -150,15 +150,23 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // handleHomeView renders the application's home page.
 func (s *Server) handleHomeView() func(w http.ResponseWriter, r *http.Request) {
-	viewData := view.Data{Title: "Home"}
+	const title = "Home"
+	defaultViewData := view.Data{
+		Title:   title,
+		Content: "You are currently logged out.",
+	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 
-		if user != nil {
-			viewData.Content = fmt.Sprintf("Welcome back, %s!", user.NickName)
-		} else {
-			viewData.Content = "You are currently logged out."
+		if user == nil {
+			s.homeView.Render(w, r, defaultViewData)
+			return
+		}
+
+		viewData := view.Data{
+			Title:   title,
+			Content: fmt.Sprintf("Welcome back, %s!", user.NickName),
 		}
 
 		s.homeView.Render(w, r, viewData)

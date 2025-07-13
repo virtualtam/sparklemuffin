@@ -1,6 +1,7 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
+// Package www serves the Web application.
 package www
 
 import (
@@ -66,11 +67,8 @@ type Server struct {
 	errorView *view.ErrorView
 }
 
-// OptionFunc represents a function that configures a set of options for a Server.
-type OptionFunc func(*Server)
-
 // NewServer initializes and returns a new Server.
-func NewServer(optionFuncs ...OptionFunc) *Server {
+func NewServer(optionFuncs ...OptionFunc) (*Server, error) {
 	s := &Server{
 		router: chi.NewRouter(),
 
@@ -79,15 +77,17 @@ func NewServer(optionFuncs ...OptionFunc) *Server {
 	}
 
 	for _, optionFunc := range optionFuncs {
-		optionFunc(s)
+		if err := optionFunc(s); err != nil {
+			return nil, err
+		}
 	}
 
 	s.registerHandlers()
 
-	return s
+	return s, nil
 }
 
-// registerHandlers registers all HTTP handlers for the Web interface.
+// registerHandlers registers all HTTP handlers for the Web application.
 func (s *Server) registerHandlers() {
 	// Global middleware
 	s.router.Use(chimiddleware.RequestID)
@@ -133,7 +133,7 @@ func (s *Server) registerHandlers() {
 		)
 	})
 
-	// Register domain handlers
+	// Domain handlers
 	controller.RegisterSessionHandlers(s.router, s.sessionService, s.userService)
 	controller.RegisterAdminHandlers(s.router, s.csrfService, s.userService)
 	controller.RegisterAccounthandlers(s.router, s.csrfService, s.userService)
@@ -191,7 +191,9 @@ Content-Usage: ai=n`)
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write(robotsTxt)
+
+		// Skip error checking as the HTTP headers have already been sent
+		_, _ = w.Write(robotsTxt) // nolint:errcheck
 	}
 }
 

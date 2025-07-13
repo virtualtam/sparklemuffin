@@ -9,8 +9,6 @@ The roadmap is based on the Now / Next / Later format to communicate current foc
 - Feed: Toggle description visibility
 - www: User preferences
 - www: Dark mode / theme switching
-- www: Improve controller usage
-- www: Ensure services are initialized before starting the server
 
 ## Next
 - Bookmark: Handle conflict with an existing bookmark (URL)

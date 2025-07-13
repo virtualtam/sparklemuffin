@@ -18,6 +18,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Update Web manifest
 - Log view rendering errors
 - Rework home view rendering
+- Ensure services are initialized before starting the server
 
 ### Fixed
 #### WWW

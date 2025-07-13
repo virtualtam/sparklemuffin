@@ -72,7 +72,7 @@ func NewRunCommand() *cobra.Command {
 				return fmt.Errorf("%s: failed to parse public HTTP address: %w", rootCmdName, err)
 			}
 
-			server := www.NewServer(
+			server, err := www.NewServer(
 				www.WithCSRFKey(csrfKey),
 				www.WithMetricsRegistry(rootCmdName, metricsRegistry),
 				www.WithPublicURL(publicURL),
@@ -91,6 +91,9 @@ func NewRunCommand() *cobra.Command {
 				www.WithSessionService(sessionService),
 				www.WithUserService(userService),
 			)
+			if err != nil {
+				return fmt.Errorf("%s: failed to create server: %w", rootCmdName, err)
+			}
 
 			httpServer := &http.Server{
 				Addr:         listenAddr,

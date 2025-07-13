@@ -71,10 +71,13 @@ func TestServerRememberUser(t *testing.T) {
 			}
 			userService := user.NewService(userRepository)
 
-			s := NewServer(
+			s, err := NewServer(
 				WithSessionService(sessionService),
 				WithUserService(userService),
 			)
+			if err != nil {
+				t.Fatalf("failed to initialize server: %s", err)
+			}
 
 			var gotContext context.Context
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

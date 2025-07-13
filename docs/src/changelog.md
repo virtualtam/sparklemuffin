@@ -7,6 +7,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [v0.5.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.1) - UNRELEASED
 ### Added
+#### Documentation
+- Add high-level roadmap using the Now / Next / Later format
+
 #### WWW
 - Add robots.txt route
 

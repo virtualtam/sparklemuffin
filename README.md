@@ -23,7 +23,7 @@ SparkleMuffin is still alpha software, and should not be considered ready for pr
 
 ## Change Log
 
-See [CHANGELOG](./docs/src/changelog.md)
+See [CHANGELOG](./docs/src/changelog.md) and [ROADMAP](./docs/src/roadmap.md).
 
 
 ## License
@@ -33,4 +33,3 @@ See [CHANGELOG](./docs/src/changelog.md)
 - **Exo2** is licensed under the SIL Open Font License, Version 1.1.
 - **Fira Code** is licensed under the SIL Open Font License, Version 1.1.
 - **Wikipedia article extracts** used in unitary tests are licensed under the Creative Commons Attribution-Share-Alike License 4.0
-

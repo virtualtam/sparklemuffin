@@ -2,6 +2,7 @@
 
 - [SparkleMuffin Overview](./introduction.md)
     - [Change Log](./changelog.md)
+    - [Roadmap](./roadmap.md)
 
 - [User Guide](./user-guide/index.md)
     - [How-to Guides](./user-guide/how-to/index.md)
@@ -31,4 +32,3 @@
         - [OPML Feed Subscription Parser](./developer-guide/reference/opml.md)
     - [Concepts](./developer-guide/concepts/index.md)
         - [Feed polling and Caching](./developer-guide/concepts/feed-polling-caching.md)
-

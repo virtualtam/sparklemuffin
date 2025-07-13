@@ -23,22 +23,13 @@ const (
 	actionAdminUserEdit   string = "admin-user-edit"
 )
 
-type adminHandlerContext struct {
-	csrfService *csrf.Service
-	userService *user.Service
-
-	adminUserAddView    *view.View
-	adminUserDeleteView *view.View
-	adminUserEditView   *view.View
-	adminUserListView   *view.View
-}
-
+// RegisterAdminHandlers registers handlers for administration operations.
 func RegisterAdminHandlers(
 	r *chi.Mux,
 	csrfService *csrf.Service,
 	userService *user.Service,
 ) {
-	hc := adminHandlerContext{
+	ac := adminController{
 		csrfService: csrfService,
 		userService: userService,
 
@@ -54,37 +45,47 @@ func RegisterAdminHandlers(
 			return middleware.AdminUser(h.ServeHTTP)
 		})
 
-		r.Get("/users", hc.handleAdminUserListView())
-		r.Get("/users/add", hc.handleAdminUserAddView())
-		r.Post("/users", hc.handleAdminUserAdd())
-		r.Get("/users/{uuid}", hc.handleAdminUserEditView())
-		r.Post("/users/{uuid}", hc.handleAdminUserEdit())
-		r.Get("/users/{uuid}/delete", hc.handleAdminUserDeleteView())
-		r.Post("/users/{uuid}/delete", hc.handleAdminUserDelete())
+		r.Get("/users", ac.handleUserListView())
+		r.Get("/users/add", ac.handleUserAddView())
+		r.Post("/users", ac.handleUserAdd())
+		r.Get("/users/{uuid}", ac.handleUserEditView())
+		r.Post("/users/{uuid}", ac.handleUserEdit())
+		r.Get("/users/{uuid}/delete", ac.handleUserDeleteView())
+		r.Post("/users/{uuid}/delete", ac.handleUserDelete())
 	})
 }
 
-// handleAdminUserListView renders the main administration page.
-func (hc *adminHandlerContext) handleAdminUserListView() func(w http.ResponseWriter, r *http.Request) {
+type adminController struct {
+	csrfService *csrf.Service
+	userService *user.Service
+
+	adminUserAddView    *view.View
+	adminUserDeleteView *view.View
+	adminUserEditView   *view.View
+	adminUserListView   *view.View
+}
+
+// handleUserListView renders the users list view.
+func (ac *adminController) handleUserListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		viewData := view.Data{Title: "Administration"}
 
-		users, err := hc.userService.All()
+		users, err := ac.userService.All()
 		if err != nil {
 			view.PutFlashError(w, err.Error())
 		} else {
 			viewData.Content = users
 		}
 
-		hc.adminUserListView.Render(w, r, viewData)
+		ac.adminUserListView.Render(w, r, viewData)
 	}
 }
 
-// handleAdminUserAddView renders the user creation form.
-func (hc *adminHandlerContext) handleAdminUserAddView() func(w http.ResponseWriter, r *http.Request) {
+// handleUserAddView renders the user creation form.
+func (ac *adminController) handleUserAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		adminUser := httpcontext.UserValue(r.Context())
-		csrfToken := hc.csrfService.Generate(adminUser.UUID, actionAdminUserAdd)
+		csrfToken := ac.csrfService.Generate(adminUser.UUID, actionAdminUserAdd)
 
 		viewData := view.Data{
 			Title: "Add user",
@@ -93,12 +94,12 @@ func (hc *adminHandlerContext) handleAdminUserAddView() func(w http.ResponseWrit
 			},
 		}
 
-		hc.adminUserAddView.Render(w, r, viewData)
+		ac.adminUserAddView.Render(w, r, viewData)
 	}
 }
 
-// handleAdminUserAdd processes view.data submitted through the user creation form.
-func (hc *adminHandlerContext) handleAdminUserAdd() func(w http.ResponseWriter, r *http.Request) {
+// handleUserAdd processes view.data submitted through the user creation form.
+func (ac *adminController) handleUserAdd() func(w http.ResponseWriter, r *http.Request) {
 	type userAddForm struct {
 		CSRFToken   string `schema:"csrf_token"`
 		Email       string `schema:"email"`
@@ -119,7 +120,7 @@ func (hc *adminHandlerContext) handleAdminUserAdd() func(w http.ResponseWriter, 
 			return
 		}
 
-		if !hc.csrfService.Validate(form.CSRFToken, adminUser.UUID, actionAdminUserAdd) {
+		if !ac.csrfService.Validate(form.CSRFToken, adminUser.UUID, actionAdminUserAdd) {
 			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -134,7 +135,7 @@ func (hc *adminHandlerContext) handleAdminUserAdd() func(w http.ResponseWriter, 
 			IsAdmin:     form.IsAdmin,
 		}
 
-		if err := hc.userService.Add(newUser); err != nil {
+		if err := ac.userService.Add(newUser); err != nil {
 			log.Error().Err(err).Msg("failed to persist user")
 			view.PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -146,15 +147,15 @@ func (hc *adminHandlerContext) handleAdminUserAdd() func(w http.ResponseWriter, 
 	}
 }
 
-// handleAdminUserDeleteView renders the user deletion form.
-func (hc *adminHandlerContext) handleAdminUserDeleteView() func(w http.ResponseWriter, r *http.Request) {
+// handleUserDeleteView renders the user deletion form.
+func (ac *adminController) handleUserDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		adminUser := httpcontext.UserValue(r.Context())
 		userUUID := chi.URLParam(r, "uuid")
 
-		csrfToken := hc.csrfService.Generate(adminUser.UUID, actionAdminUserDelete)
+		csrfToken := ac.csrfService.Generate(adminUser.UUID, actionAdminUserDelete)
 
-		user, err := hc.userService.ByUUID(userUUID)
+		user, err := ac.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
 			view.PutFlashError(w, err.Error())
@@ -170,12 +171,12 @@ func (hc *adminHandlerContext) handleAdminUserDeleteView() func(w http.ResponseW
 			},
 		}
 
-		hc.adminUserDeleteView.Render(w, r, viewData)
+		ac.adminUserDeleteView.Render(w, r, viewData)
 	}
 }
 
-// handleAdminUserDelete processes the user deletion form.
-func (hc *adminHandlerContext) handleAdminUserDelete() func(w http.ResponseWriter, r *http.Request) {
+// handleUserDelete processes the user deletion form.
+func (ac *adminController) handleUserDelete() func(w http.ResponseWriter, r *http.Request) {
 	type userDeleteForm struct {
 		CSRFToken string `schema:"csrf_token"`
 	}
@@ -192,14 +193,14 @@ func (hc *adminHandlerContext) handleAdminUserDelete() func(w http.ResponseWrite
 			return
 		}
 
-		if !hc.csrfService.Validate(form.CSRFToken, adminUser.UUID, actionAdminUserDelete) {
+		if !ac.csrfService.Validate(form.CSRFToken, adminUser.UUID, actionAdminUserDelete) {
 			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
-		user, err := hc.userService.ByUUID(userUUID)
+		user, err := ac.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
 			view.PutFlashError(w, err.Error())
@@ -207,7 +208,7 @@ func (hc *adminHandlerContext) handleAdminUserDelete() func(w http.ResponseWrite
 			return
 		}
 
-		if err := hc.userService.DeleteByUUID(userUUID); err != nil {
+		if err := ac.userService.DeleteByUUID(userUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete user")
 			view.PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -219,15 +220,15 @@ func (hc *adminHandlerContext) handleAdminUserDelete() func(w http.ResponseWrite
 	}
 }
 
-// handleAdminUserEditView renders the user edition form.
-func (hc *adminHandlerContext) handleAdminUserEditView() func(w http.ResponseWriter, r *http.Request) {
+// handleUserEditView renders the user edition form.
+func (ac *adminController) handleUserEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		adminUser := httpcontext.UserValue(r.Context())
 		userUUID := chi.URLParam(r, "uuid")
 
-		csrfToken := hc.csrfService.Generate(adminUser.UUID, actionAdminUserEdit)
+		csrfToken := ac.csrfService.Generate(adminUser.UUID, actionAdminUserEdit)
 
-		user, err := hc.userService.ByUUID(userUUID)
+		user, err := ac.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
 			view.PutFlashError(w, err.Error())
@@ -242,12 +243,12 @@ func (hc *adminHandlerContext) handleAdminUserEditView() func(w http.ResponseWri
 				Content:   user,
 			},
 		}
-		hc.adminUserEditView.Render(w, r, viewData)
+		ac.adminUserEditView.Render(w, r, viewData)
 	}
 }
 
-// handleAdminUserEdit processes the user edition form.
-func (hc *adminHandlerContext) handleAdminUserEdit() func(w http.ResponseWriter, r *http.Request) {
+// handleUserEdit processes the user edition form.
+func (ac *adminController) handleUserEdit() func(w http.ResponseWriter, r *http.Request) {
 	type userEditForm struct {
 		CSRFToken   string `schema:"csrf_token"`
 		Email       string `schema:"email"`
@@ -269,7 +270,7 @@ func (hc *adminHandlerContext) handleAdminUserEdit() func(w http.ResponseWriter,
 			return
 		}
 
-		if !hc.csrfService.Validate(form.CSRFToken, adminUser.UUID, actionAdminUserEdit) {
+		if !ac.csrfService.Validate(form.CSRFToken, adminUser.UUID, actionAdminUserEdit) {
 			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -285,7 +286,7 @@ func (hc *adminHandlerContext) handleAdminUserEdit() func(w http.ResponseWriter,
 			IsAdmin:     form.IsAdmin,
 		}
 
-		if err := hc.userService.Update(editedUser); err != nil {
+		if err := ac.userService.Update(editedUser); err != nil {
 			log.Error().Err(err).Msg("failed to update user")
 			view.PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)

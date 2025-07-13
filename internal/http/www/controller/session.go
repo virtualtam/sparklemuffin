@@ -22,19 +22,13 @@ const (
 	UserRememberTokenCookieName string = "remember_me"
 )
 
-type sessionHandlerContext struct {
-	sessionService *session.Service
-	userService    *user.Service
-
-	userLoginView *view.View
-}
-
+// RegisterSessionHandlers registers handlers for user session management..
 func RegisterSessionHandlers(
 	r *chi.Mux,
 	sessionService *session.Service,
 	userService *user.Service,
 ) {
-	hc := sessionHandlerContext{
+	sc := sessionController{
 		sessionService: sessionService,
 		userService:    userService,
 
@@ -42,13 +36,20 @@ func RegisterSessionHandlers(
 	}
 
 	// authentication
-	r.Get("/login", hc.userLoginView.Handle)
-	r.Post("/login", hc.handleUserLogin())
-	r.Post("/logout", hc.handleUserLogout())
+	r.Get("/login", sc.userLoginView.Handle)
+	r.Post("/login", sc.handleUserLogin())
+	r.Post("/logout", sc.handleUserLogout())
+}
+
+type sessionController struct {
+	sessionService *session.Service
+	userService    *user.Service
+
+	userLoginView *view.View
 }
 
 // handleUserLogin processes data submitted through the user login form.
-func (hc *sessionHandlerContext) handleUserLogin() func(w http.ResponseWriter, r *http.Request) {
+func (sc *sessionController) handleUserLogin() func(w http.ResponseWriter, r *http.Request) {
 	type loginForm struct {
 		Email    string `schema:"email"`
 		Password string `schema:"password"`
@@ -63,7 +64,7 @@ func (hc *sessionHandlerContext) handleUserLogin() func(w http.ResponseWriter, r
 			return
 		}
 
-		user, err := hc.userService.Authenticate(form.Email, form.Password)
+		user, err := sc.userService.Authenticate(form.Email, form.Password)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to authenticate user")
 			view.PutFlashError(w, "invalid email or password")
@@ -71,7 +72,7 @@ func (hc *sessionHandlerContext) handleUserLogin() func(w http.ResponseWriter, r
 			return
 		}
 
-		if err := hc.setUserRememberToken(w, user.UUID); err != nil {
+		if err := sc.setUserRememberToken(w, user.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to set remember token")
 			view.PutFlashError(w, "failed to save session cookie")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -83,7 +84,7 @@ func (hc *sessionHandlerContext) handleUserLogin() func(w http.ResponseWriter, r
 }
 
 // handleUserLogout logs a user out and clears their session data.
-func (hc *sessionHandlerContext) handleUserLogout() func(w http.ResponseWriter, r *http.Request) {
+func (sc *sessionController) handleUserLogout() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie := http.Cookie{
 			Name:     UserRememberTokenCookieName,
@@ -112,7 +113,7 @@ func (hc *sessionHandlerContext) handleUserLogout() func(w http.ResponseWriter, 
 			RememberToken: token,
 		}
 
-		err = hc.sessionService.Add(userSession)
+		err = sc.sessionService.Add(userSession)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to save user session")
 			http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -125,7 +126,7 @@ func (hc *sessionHandlerContext) handleUserLogout() func(w http.ResponseWriter, 
 
 // setUserRememberToken creates and persists a new RememberToken if needed, and
 // sets it as a session cookie.
-func (hc *sessionHandlerContext) setUserRememberToken(w http.ResponseWriter, userUUID string) error {
+func (sc *sessionController) setUserRememberToken(w http.ResponseWriter, userUUID string) error {
 	token, err := rand.RandomBase64URLString(UserRememberTokenNBytes)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate a remember token")
@@ -141,7 +142,7 @@ func (hc *sessionHandlerContext) setUserRememberToken(w http.ResponseWriter, use
 		RememberTokenExpiresAt: expiresAt,
 	}
 
-	err = hc.sessionService.Add(userSession)
+	err = sc.sessionService.Add(userSession)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update user")
 		return err

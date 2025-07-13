@@ -21,20 +21,13 @@ const (
 	actionAccountUpdate string = "account-update"
 )
 
-type accountHandlerContext struct {
-	csrfService *csrf.Service
-	userService *user.Service
-
-	accountInfoView     *view.View
-	accountPasswordView *view.View
-}
-
-func RegisterAccounthandlers(
+// RegisterAccountHandlers registers handlers for user account management..
+func RegisterAccountHandlers(
 	r *chi.Mux,
 	csrfService *csrf.Service,
 	userService *user.Service,
 ) {
-	hc := accountHandlerContext{
+	ac := accountController{
 		csrfService: csrfService,
 		userService: userService,
 
@@ -48,15 +41,23 @@ func RegisterAccounthandlers(
 			return middleware.AuthenticatedUser(h.ServeHTTP)
 		})
 
-		r.Get("/info", hc.handleAccountInfoView())
-		r.Post("/info", hc.handleAccountInfoUpdate())
-		r.Get("/password", hc.handleAccountPasswordView())
-		r.Post("/password", hc.handleAccountPasswordUpdate())
+		r.Get("/info", ac.handleInfoView())
+		r.Post("/info", ac.handleInfoUpdate())
+		r.Get("/password", ac.handlePasswordView())
+		r.Post("/password", ac.handlePasswordUpdate())
 	})
 }
 
-// handleAccountInfoUpdate processes the account information update form.
-func (hc *accountHandlerContext) handleAccountInfoUpdate() func(w http.ResponseWriter, r *http.Request) {
+type accountController struct {
+	csrfService *csrf.Service
+	userService *user.Service
+
+	accountInfoView     *view.View
+	accountPasswordView *view.View
+}
+
+// handleInfoUpdate processes the account information update form.
+func (ac *accountController) handleInfoUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type infoUpdateForm struct {
 		CSRFToken   string `schema:"csrf_token"`
 		Email       string `schema:"email"`
@@ -75,7 +76,7 @@ func (hc *accountHandlerContext) handleAccountInfoUpdate() func(w http.ResponseW
 			return
 		}
 
-		if !hc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionAccountUpdate) {
+		if !ac.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionAccountUpdate) {
 			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -89,7 +90,7 @@ func (hc *accountHandlerContext) handleAccountInfoUpdate() func(w http.ResponseW
 			DisplayName: form.DisplayName,
 		}
 
-		if err := hc.userService.UpdateInfo(userInfo); err != nil {
+		if err := ac.userService.UpdateInfo(userInfo); err != nil {
 			log.Error().Err(err).Msg("failed to update account information")
 			view.PutFlashError(w, "There was an error updating your information")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -101,11 +102,11 @@ func (hc *accountHandlerContext) handleAccountInfoUpdate() func(w http.ResponseW
 	}
 }
 
-// handleAccountInfoView renders the user account information page.
-func (hc *accountHandlerContext) handleAccountInfoView() func(w http.ResponseWriter, r *http.Request) {
+// handleInfoView renders the user account information page.
+func (ac *accountController) handleInfoView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
-		csrfToken := hc.csrfService.Generate(user.UUID, actionAccountUpdate)
+		csrfToken := ac.csrfService.Generate(user.UUID, actionAccountUpdate)
 
 		viewData := view.Data{
 			Content: view.FormContent{
@@ -115,12 +116,12 @@ func (hc *accountHandlerContext) handleAccountInfoView() func(w http.ResponseWri
 			Title: "Account Information",
 		}
 
-		hc.accountInfoView.Render(w, r, viewData)
+		ac.accountInfoView.Render(w, r, viewData)
 	}
 }
 
-// handleAccountPasswordUpdate processes the user account password update form.
-func (hc *accountHandlerContext) handleAccountPasswordUpdate() func(w http.ResponseWriter, r *http.Request) {
+// handlePasswordUpdate processes the user account password update form.
+func (ac *accountController) handlePasswordUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type passwordUpdateForm struct {
 		CSRFToken               string `schema:"csrf_token"`
 		CurrentPassword         string `schema:"current_password"`
@@ -139,7 +140,7 @@ func (hc *accountHandlerContext) handleAccountPasswordUpdate() func(w http.Respo
 			return
 		}
 
-		if !hc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionAccountUpdate) {
+		if !ac.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionAccountUpdate) {
 			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -153,7 +154,7 @@ func (hc *accountHandlerContext) handleAccountPasswordUpdate() func(w http.Respo
 			NewPasswordConfirmation: form.NewPasswordConfirmation,
 		}
 
-		if err := hc.userService.UpdatePassword(userPassword); err != nil {
+		if err := ac.userService.UpdatePassword(userPassword); err != nil {
 			log.Error().Err(err).Msg("failed to update account password")
 			view.PutFlashError(w, fmt.Sprintf("There was an error updating your password: %s", err))
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -165,11 +166,11 @@ func (hc *accountHandlerContext) handleAccountPasswordUpdate() func(w http.Respo
 	}
 }
 
-// handleAccountPasswordView renders the user account password page.
-func (hc *accountHandlerContext) handleAccountPasswordView() func(w http.ResponseWriter, r *http.Request) {
+// handlePasswordView renders the user account password page.
+func (ac *accountController) handlePasswordView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
-		csrfToken := hc.csrfService.Generate(user.UUID, actionAccountUpdate)
+		csrfToken := ac.csrfService.Generate(user.UUID, actionAccountUpdate)
 
 		viewData := view.Data{
 			Content: view.FormContent{
@@ -179,6 +180,6 @@ func (hc *accountHandlerContext) handleAccountPasswordView() func(w http.Respons
 			Title: "Account Password",
 		}
 
-		hc.accountPasswordView.Render(w, r, viewData)
+		ac.accountPasswordView.Render(w, r, viewData)
 	}
 }

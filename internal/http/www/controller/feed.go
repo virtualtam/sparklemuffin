@@ -35,7 +35,6 @@ const (
 	actionFeedSubscriptionAdd    string = "feed-subscription-add"
 	actionFeedSubscriptionDelete string = "feed-subscription-delete"
 	actionFeedSubscriptionEdit   string = "feed-subscription-edit"
-
 	actionFeedSubscriptionExport string = "feed-subscription-export"
 	actionFeedSubscriptionImport string = "feed-subscription-import"
 )
@@ -50,7 +49,7 @@ func RegisterFeedHandlers(
 	queryingService *feedquerying.Service,
 	userService *user.Service,
 ) {
-	fc := feedHandlerContext{
+	fc := feedController{
 		csrfService:      csrfService,
 		feedService:      feedService,
 		exportingService: exportingService,
@@ -117,7 +116,7 @@ func RegisterFeedHandlers(
 	})
 }
 
-type feedHandlerContext struct {
+type feedController struct {
 	csrfService      *csrf.Service
 	feedService      *feed.Service
 	exportingService *feedexporting.Service
@@ -151,7 +150,7 @@ type feedCategoryFormContent struct {
 }
 
 // handleFeedAddView renders the feed subscription form.
-func (fc *feedHandlerContext) handleFeedAddView() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedSubscriptionAdd)
@@ -177,7 +176,7 @@ func (fc *feedHandlerContext) handleFeedAddView() func(w http.ResponseWriter, r 
 }
 
 // handleFeedAdd processes the feed addition form.
-func (fc *feedHandlerContext) handleFeedAdd() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedAdd() func(w http.ResponseWriter, r *http.Request) {
 	type feedAddForm struct {
 		CSRFToken    string `schema:"csrf_token"`
 		URL          string `schema:"url"`
@@ -218,7 +217,7 @@ type (
 	feedsByQueryAndPageCallback func(r *http.Request, user *user.User, query string, pageNumber uint) (feedquerying.FeedPage, error)
 )
 
-func (fc *feedHandlerContext) handleFeedListView(
+func (fc *feedController) handleFeedListView(
 	feedsByPage feedsByPageCallback,
 	feedsByQueryAndPage feedsByQueryAndPageCallback,
 ) func(w http.ResponseWriter, r *http.Request) {
@@ -285,7 +284,7 @@ func (fc *feedHandlerContext) handleFeedListView(
 }
 
 // handleFeedListAllView renders the syndication feed for the current authenticated user.
-func (fc *feedHandlerContext) handleFeedListAllView() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedListAllView() func(w http.ResponseWriter, r *http.Request) {
 	feedsByPage := func(_ *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error) {
 		return fc.queryingService.FeedsByPage(user.UUID, pageNumber)
 	}
@@ -298,7 +297,7 @@ func (fc *feedHandlerContext) handleFeedListAllView() func(w http.ResponseWriter
 }
 
 // handleFeedListByCategoryView renders the syndication feed for the current authenticated user.
-func (fc *feedHandlerContext) handleFeedListByCategoryView() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedListByCategoryView() func(w http.ResponseWriter, r *http.Request) {
 	feedsByPage := func(r *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error) {
 		categorySlug := chi.URLParam(r, "slug")
 
@@ -327,7 +326,7 @@ func (fc *feedHandlerContext) handleFeedListByCategoryView() func(w http.Respons
 }
 
 // handleFeedListBySubscriptionView renders the syndication feed for the current authenticated user.
-func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedListBySubscriptionView() func(w http.ResponseWriter, r *http.Request) {
 	feedsByPage := func(r *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error) {
 		feedSlug := chi.URLParam(r, "slug")
 
@@ -368,7 +367,7 @@ func (fc *feedHandlerContext) handleFeedListBySubscriptionView() func(w http.Res
 }
 
 // handleFeedCategoryAddView renders the feed category addition form.
-func (fc *feedHandlerContext) handleFeedCategoryAddView() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedCategoryAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedCategoryAdd)
@@ -385,7 +384,7 @@ func (fc *feedHandlerContext) handleFeedCategoryAddView() func(w http.ResponseWr
 }
 
 // handleFeedCategoryAdd processes the feed category addition form.
-func (fc *feedHandlerContext) handleFeedCategoryAdd() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedCategoryAdd() func(w http.ResponseWriter, r *http.Request) {
 	type feedAddForm struct {
 		CSRFToken string `schema:"csrf_token"`
 		Name      string `schema:"name"`
@@ -421,7 +420,7 @@ func (fc *feedHandlerContext) handleFeedCategoryAdd() func(w http.ResponseWriter
 }
 
 // handleFeedCategoryDeleteView renders the feed category deletion form.
-func (fc *feedHandlerContext) handleFeedCategoryDeleteView() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedCategoryDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		categoryUUID := chi.URLParam(r, "uuid")
 		ctxUser := httpcontext.UserValue(r.Context())
@@ -447,7 +446,7 @@ func (fc *feedHandlerContext) handleFeedCategoryDeleteView() func(w http.Respons
 	}
 }
 
-func (fc *feedHandlerContext) handleFeedCategoryDelete() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedCategoryDelete() func(w http.ResponseWriter, r *http.Request) {
 	type feedCategoryDeleteForm struct {
 		CSRFToken string `schema:"csrf_token"`
 	}
@@ -483,7 +482,7 @@ func (fc *feedHandlerContext) handleFeedCategoryDelete() func(w http.ResponseWri
 }
 
 // handleFeedCategoryEditView renders the feed category edition form.
-func (fc *feedHandlerContext) handleFeedCategoryEditView() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedCategoryEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := httpcontext.UserValue(r.Context())
 		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedCategoryEdit)
@@ -511,7 +510,7 @@ func (fc *feedHandlerContext) handleFeedCategoryEditView() func(w http.ResponseW
 }
 
 // handleFeedCategoryEdit processes the feed category edition form.
-func (fc *feedHandlerContext) handleFeedCategoryEdit() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedCategoryEdit() func(w http.ResponseWriter, r *http.Request) {
 	type feedCategoryEditForm struct {
 		CSRFToken string `schema:"csrf_token"`
 		Name      string `schema:"name"`
@@ -553,7 +552,7 @@ func (fc *feedHandlerContext) handleFeedCategoryEdit() func(w http.ResponseWrite
 	}
 }
 
-func (fc *feedHandlerContext) handleFeedEntryToggleRead() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedEntryToggleRead() func(w http.ResponseWriter, r *http.Request) {
 	type feedEntryReadForm struct {
 		CSRFToken string `schema:"csrf_token"`
 	}
@@ -589,7 +588,7 @@ func (fc *feedHandlerContext) handleFeedEntryToggleRead() func(w http.ResponseWr
 }
 
 // handleFeedSubscriptionListView renders the feed category list view.
-func (fc *feedHandlerContext) handleFeedSubscriptionListView() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedSubscriptionListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 
@@ -611,7 +610,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionListView() func(w http.Respo
 }
 
 // handleFeedSubscriptionDeleteView renders the feed subscription deletion form.
-func (fc *feedHandlerContext) handleFeedSubscriptionDeleteView() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedSubscriptionDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionTitleFormContent struct {
 		CSRFToken    string
 		Subscription feedquerying.Subscription
@@ -642,7 +641,8 @@ func (fc *feedHandlerContext) handleFeedSubscriptionDeleteView() func(w http.Res
 	}
 }
 
-func (fc *feedHandlerContext) handleFeedSubscriptionDelete() func(w http.ResponseWriter, r *http.Request) {
+// handleFeedSubscriptionDelete processes the feed subscription deletion form.
+func (fc *feedController) handleFeedSubscriptionDelete() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionDeleteForm struct {
 		CSRFToken string `schema:"csrf_token"`
 	}
@@ -678,7 +678,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionDelete() func(w http.Respons
 }
 
 // handleFeedSubscriptionEditView renders the feed subscription edition form.
-func (fc *feedHandlerContext) handleFeedSubscriptionEditView() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionEditFormContent struct {
 		CSRFToken    string
 		Subscription feedquerying.Subscription
@@ -721,7 +721,7 @@ func (fc *feedHandlerContext) handleFeedSubscriptionEditView() func(w http.Respo
 }
 
 // handleFeedSubscriptionEdit processes the feed subscription edition form.
-func (fc *feedHandlerContext) handleFeedSubscriptionEdit() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionEditForm struct {
 		CSRFToken    string `schema:"csrf_token"`
 		Alias        string `schema:"alias"`
@@ -765,7 +765,8 @@ func (fc *feedHandlerContext) handleFeedSubscriptionEdit() func(w http.ResponseW
 	}
 }
 
-func (fc *feedHandlerContext) handleEntryMetadataMarkAllAsRead() func(w http.ResponseWriter, r *http.Request) {
+// handleEntryMetadataMarkAllAsRead handles a request to mark all feed entries as read.
+func (fc *feedController) handleEntryMetadataMarkAllAsRead() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 
@@ -795,7 +796,8 @@ func (fc *feedHandlerContext) handleEntryMetadataMarkAllAsRead() func(w http.Res
 	}
 }
 
-func (fc *feedHandlerContext) handleEntryMetadataMarkAllAsReadByCategory() func(w http.ResponseWriter, r *http.Request) {
+// handleEntryMetadataMarkAllAsReadByCategory handles a request to mark all feed entries as read for a given category.
+func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 		categorySlug := chi.URLParam(r, "slug")
@@ -834,7 +836,8 @@ func (fc *feedHandlerContext) handleEntryMetadataMarkAllAsReadByCategory() func(
 	}
 }
 
-func (fc *feedHandlerContext) handleEntryMetadataMarkAllAsReadByFeed() func(w http.ResponseWriter, r *http.Request) {
+// handleEntryMetadataMarkAllAsReadByFeed handles a request to mark all feed entries as read for a given feed.
+func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 		feedSlug := chi.URLParam(r, "slug")
@@ -882,7 +885,7 @@ func (fc *feedHandlerContext) handleEntryMetadataMarkAllAsReadByFeed() func(w ht
 }
 
 // handleFeedExportView renders the feed export page.
-func (fc *feedHandlerContext) handleFeedExportView() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedExportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := httpcontext.UserValue(r.Context())
 		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedSubscriptionExport)
@@ -900,7 +903,7 @@ func (fc *feedHandlerContext) handleFeedExportView() func(w http.ResponseWriter,
 
 // handleFeedExport processes the feed subscription export form and sends the
 // corresponding file to the client.
-func (fc *feedHandlerContext) handleFeedExport() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedExport() func(w http.ResponseWriter, r *http.Request) {
 	type exportForm struct {
 		CSRFToken string `schema:"csrf_token"`
 	}
@@ -949,7 +952,7 @@ func (fc *feedHandlerContext) handleFeedExport() func(w http.ResponseWriter, r *
 }
 
 // handleFeedExportView renders the feed subscription import page.
-func (fc *feedHandlerContext) handleFeedImportView() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedImportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := httpcontext.UserValue(r.Context())
 		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedSubscriptionImport)
@@ -966,7 +969,7 @@ func (fc *feedHandlerContext) handleFeedImportView() func(w http.ResponseWriter,
 }
 
 // handleFeedImport processes data submitted through the feed subscription import form.
-func (fc *feedHandlerContext) handleFeedImport() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleFeedImport() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		multipartReader, err := r.MultipartReader()
 		if err != nil {

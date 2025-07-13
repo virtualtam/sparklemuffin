@@ -67,10 +67,12 @@ func New(templateFiles ...string) *View {
 	}
 }
 
+// Handle renders the view with no data.
 func (v *View) Handle(w http.ResponseWriter, r *http.Request) {
 	v.Render(w, r, nil)
 }
 
+// Render renders the view with the given data.
 func (v *View) Render(w http.ResponseWriter, r *http.Request, data any) {
 	w.Header().Set("Content-Type", "text/html")
 
@@ -95,7 +97,7 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request, data any) {
 	var buf bytes.Buffer
 
 	if err := v.Template.Execute(&buf, viewData); err != nil {
-		fmt.Println(err)
+		log.Error().Err(err).Msg("failed to render view")
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
 		return
 	}

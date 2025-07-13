@@ -13,6 +13,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 #### WWW
 - Update Web manifest
+- Log view rendering errors
 
 ### Fixed
 #### WWW

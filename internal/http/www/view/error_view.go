@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 )
 
 // ErrorView represents a Web View that will be rendered by the server in response to
@@ -24,6 +26,7 @@ func NewError() *ErrorView {
 	}
 }
 
+// Render renders the view for a given HTTP status code.
 func (v *ErrorView) Render(w http.ResponseWriter, r *http.Request, statusCode int) {
 	var viewData Data
 	viewData.popFlash(w, r)
@@ -46,7 +49,7 @@ func (v *ErrorView) Render(w http.ResponseWriter, r *http.Request, statusCode in
 	var buf bytes.Buffer
 
 	if err := v.Template.Execute(&buf, viewData); err != nil {
-		fmt.Println(err)
+		log.Error().Err(err).Msg("failed to render error view")
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
 		return
 	}

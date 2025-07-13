@@ -6,6 +6,5 @@ package querying
 import "errors"
 
 var (
-	ErrPageNumberOutOfBounds = errors.New("querying: invalid page index (out of bounds)")
-	ErrOwnerNotFound         = errors.New("querying: owner not found")
+	ErrOwnerNotFound = errors.New("querying: owner not found")
 )

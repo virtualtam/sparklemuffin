@@ -168,13 +168,13 @@ func TestService(t *testing.T) {
 				tname:      "zeroth page",
 				pageNumber: 0,
 				userUUID:   user1.UUID,
-				wantErr:    ErrPageNumberOutOfBounds,
+				wantErr:    paginate.ErrPageNumberOutOfBounds,
 			},
 			{
 				tname:      "page number out of bounds",
 				pageNumber: 18,
 				userUUID:   user1.UUID,
-				wantErr:    ErrPageNumberOutOfBounds,
+				wantErr:    paginate.ErrPageNumberOutOfBounds,
 			},
 		}
 
@@ -300,13 +300,13 @@ func TestService(t *testing.T) {
 				tname:      "zeroth page",
 				pageNumber: 0,
 				userUUID:   user1.UUID,
-				wantErr:    ErrPageNumberOutOfBounds,
+				wantErr:    paginate.ErrPageNumberOutOfBounds,
 			},
 			{
 				tname:      "page number out of bounds",
 				pageNumber: 18,
 				userUUID:   user1.UUID,
-				wantErr:    ErrPageNumberOutOfBounds,
+				wantErr:    paginate.ErrPageNumberOutOfBounds,
 			},
 		}
 
@@ -405,7 +405,7 @@ func TestService(t *testing.T) {
 					UUID:     testRepository.Subscriptions[0].UUID,
 					FeedUUID: testRepository.Feeds[0].UUID,
 				},
-				wantErr: ErrPageNumberOutOfBounds,
+				wantErr: paginate.ErrPageNumberOutOfBounds,
 			},
 			{
 				tname: "page number out of bounds",
@@ -415,7 +415,7 @@ func TestService(t *testing.T) {
 				},
 				pageNumber: 18,
 				userUUID:   user1.UUID,
-				wantErr:    ErrPageNumberOutOfBounds,
+				wantErr:    paginate.ErrPageNumberOutOfBounds,
 			},
 		}
 

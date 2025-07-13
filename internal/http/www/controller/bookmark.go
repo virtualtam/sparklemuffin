@@ -388,7 +388,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkListView() func(w http.ResponseW
 				searchTermsParam,
 				pageNumber,
 			)
-			if errors.Is(err, bookmarkquerying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)
@@ -410,7 +410,7 @@ func (hc *bookmarkHandlerContext) handleBookmarkListView() func(w http.ResponseW
 				bookmarkquerying.VisibilityAll,
 				pageNumber,
 			)
-			if errors.Is(err, bookmarkquerying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)
@@ -679,7 +679,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 				searchTermsParam,
 				pageNumber,
 			)
-			if errors.Is(err, bookmarkquerying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)
@@ -700,7 +700,7 @@ func (hc *bookmarkHandlerContext) handlePublicBookmarkListView() func(w http.Res
 				owner.UUID,
 				pageNumber,
 			)
-			if errors.Is(err, bookmarkquerying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)
@@ -970,7 +970,7 @@ func (hc *bookmarkHandlerContext) handleTagListView() func(w http.ResponseWriter
 				pageNumber,
 			)
 
-			if errors.Is(err, bookmarkquerying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)
@@ -993,7 +993,7 @@ func (hc *bookmarkHandlerContext) handleTagListView() func(w http.ResponseWriter
 				pageNumber,
 			)
 
-			if errors.Is(err, bookmarkquerying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)

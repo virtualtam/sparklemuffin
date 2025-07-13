@@ -244,7 +244,7 @@ func (fc *feedHandlerContext) handleFeedListView(
 		searchQuery := r.URL.Query().Get("search")
 		if searchQuery == "" {
 			feedPage, err := feedsByPage(r, user, pageNumber)
-			if errors.Is(err, feedquerying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Warn().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)
@@ -261,7 +261,7 @@ func (fc *feedHandlerContext) handleFeedListView(
 			feedQueryingPage.FeedPage = feedPage
 		} else {
 			feedPage, err := feedsByQueryAndPage(r, user, searchQuery, pageNumber)
-			if errors.Is(err, feedquerying.ErrPageNumberOutOfBounds) {
+			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Warn().Err(err).Msg(msg)
 				view.PutFlashError(w, msg)

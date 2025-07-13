@@ -39,7 +39,7 @@ func (s *Service) feedsByPage(
 	pageDescription string,
 ) (FeedPage, error) {
 	if number < 1 {
-		return FeedPage{}, ErrPageNumberOutOfBounds
+		return FeedPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
 	entryCount, err := getCount()
@@ -50,7 +50,7 @@ func (s *Service) feedsByPage(
 	totalPages := paginate.PageCount(entryCount, entriesPerPage)
 
 	if number > totalPages {
-		return FeedPage{}, ErrPageNumberOutOfBounds
+		return FeedPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
 	categories, err := s.r.FeedSubscriptionCategoryGetAll(userUUID)
@@ -132,7 +132,7 @@ func (s *Service) feedsByQueryAndPage(
 	pageDescription string,
 ) (FeedPage, error) {
 	if number < 1 {
-		return FeedPage{}, ErrPageNumberOutOfBounds
+		return FeedPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
 	entryCount, err := getCount()
@@ -143,7 +143,7 @@ func (s *Service) feedsByQueryAndPage(
 	totalPages := paginate.PageCount(entryCount, entriesPerPage)
 
 	if number > totalPages {
-		return FeedPage{}, ErrPageNumberOutOfBounds
+		return FeedPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
 	categories, err := s.r.FeedSubscriptionCategoryGetAll(userUUID)

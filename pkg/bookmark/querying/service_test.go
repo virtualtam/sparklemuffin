@@ -203,13 +203,13 @@ func TestServiceByPage(t *testing.T) {
 			tname:      "zeroth page",
 			pageNumber: 0,
 			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
-			wantErr:    ErrPageNumberOutOfBounds,
+			wantErr:    paginate.ErrPageNumberOutOfBounds,
 		},
 		{
 			tname:      "page number out of bounds",
 			pageNumber: 18,
 			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
-			wantErr:    ErrPageNumberOutOfBounds,
+			wantErr:    paginate.ErrPageNumberOutOfBounds,
 		},
 	}
 

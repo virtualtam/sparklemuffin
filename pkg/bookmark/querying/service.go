@@ -35,7 +35,7 @@ func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, numbe
 	}
 
 	if number < 1 {
-		return BookmarkPage{}, ErrPageNumberOutOfBounds
+		return BookmarkPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
 	bookmarkCount, err := s.r.BookmarkGetCount(ownerUUID, visibility)
@@ -46,7 +46,7 @@ func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, numbe
 	totalPages := paginate.PageCount(bookmarkCount, bookmarksPerPage)
 
 	if number > totalPages {
-		return BookmarkPage{}, ErrPageNumberOutOfBounds
+		return BookmarkPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
 	if bookmarkCount == 0 {
@@ -73,7 +73,7 @@ func (s *Service) BookmarksBySearchQueryAndPage(ownerUUID string, visibility Vis
 	}
 
 	if number < 1 {
-		return BookmarkPage{}, ErrPageNumberOutOfBounds
+		return BookmarkPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
 	bookmarkCount, err := s.r.BookmarkSearchCount(ownerUUID, visibility, searchTerms)
@@ -84,7 +84,7 @@ func (s *Service) BookmarksBySearchQueryAndPage(ownerUUID string, visibility Vis
 	totalPages := paginate.PageCount(bookmarkCount, bookmarksPerPage)
 
 	if number > totalPages {
-		return BookmarkPage{}, ErrPageNumberOutOfBounds
+		return BookmarkPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
 	if bookmarkCount == 0 {
@@ -155,7 +155,7 @@ func (s *Service) TagNamesByCount(userUUID string, visibility Visibility) ([]str
 // TagsByPage returns a Page containing a limited and offset number of tags.
 func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uint) (TagPage, error) {
 	if number < 1 {
-		return TagPage{}, ErrPageNumberOutOfBounds
+		return TagPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
 	tagCount, err := s.r.BookmarkTagGetCount(ownerUUID, visibility)
@@ -166,7 +166,7 @@ func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uin
 	totalPages := paginate.PageCount(tagCount, tagsPerPage)
 
 	if number > totalPages {
-		return TagPage{}, ErrPageNumberOutOfBounds
+		return TagPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
 	if tagCount == 0 {
@@ -188,7 +188,7 @@ func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uin
 // number of tags for a given filter term.
 func (s *Service) TagsByFilterQueryAndPage(ownerUUID string, visibility Visibility, filterTerm string, number uint) (TagPage, error) {
 	if number < 1 {
-		return TagPage{}, ErrPageNumberOutOfBounds
+		return TagPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
 	tagCount, err := s.r.BookmarkTagFilterCount(ownerUUID, visibility, filterTerm)
@@ -199,7 +199,7 @@ func (s *Service) TagsByFilterQueryAndPage(ownerUUID string, visibility Visibili
 	totalPages := paginate.PageCount(tagCount, tagsPerPage)
 
 	if number > totalPages {
-		return TagPage{}, ErrPageNumberOutOfBounds
+		return TagPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
 	if tagCount == 0 {

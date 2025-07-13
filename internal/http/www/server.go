@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
@@ -116,6 +117,8 @@ func (s *Server) registerHandlers() {
 
 	// Pages
 	s.router.Get("/", s.handleHomeView())
+
+	// Static pages
 	s.router.Get("/robots.txt", s.handleRobotsTxtView())
 
 	// Static assets
@@ -208,6 +211,12 @@ func (s *Server) handleNotFound() func(w http.ResponseWriter, r *http.Request) {
 // remember token cookie is set.
 func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/robots.txt" || strings.HasPrefix(r.URL.Path, "/static") {
+			// Skip user session middleware for static pages and assets.
+			h(w, r)
+			return
+		}
+
 		cookie, err := r.Cookie(controller.UserRememberTokenCookieName)
 		if err != nil {
 			h(w, r)

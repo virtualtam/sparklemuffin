@@ -19,6 +19,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Log view rendering errors
 - Rework home view rendering
 - Ensure services are initialized before starting the server
+- Skip the user session middleware for static pages and assets
 
 ### Fixed
 #### WWW

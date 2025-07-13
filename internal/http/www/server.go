@@ -116,6 +116,7 @@ func (s *Server) registerHandlers() {
 
 	// Pages
 	s.router.Get("/", s.handleHomeView())
+	s.router.Get("/robots.txt", s.handleRobotsTxtView())
 
 	// Static assets
 	s.router.Route("/static", func(r chi.Router) {
@@ -161,6 +162,28 @@ func (s *Server) handleHomeView() func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		s.homeView.Render(w, r, viewData)
+	}
+}
+
+// handleRobotsTxtView renders the application's robots.txt file.
+//
+// As user content requires authentication, we indicate that:
+// - crawlers should not index the site;
+// - AI bots should not index the site, nor use its content for training.
+//
+// See:
+// - https://robotstxt.com/
+// - https://robotstxt.com/ai
+// - https://intoli.com/blog/analyzing-one-million-robots-txt-files/
+func (s *Server) handleRobotsTxtView() func(w http.ResponseWriter, r *http.Request) {
+	var robotsTxt = []byte(`User-agent: *
+Disallow: /
+DisallowAITraining: /
+Content-Usage: ai=n`)
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write(robotsTxt)
 	}
 }
 

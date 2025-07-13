@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [v0.5.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.1) - UNRELEASED
+### Added
+#### WWW
+- Add robots.txt route
+
 ### Changed
 #### WWW
 - Update Web manifest

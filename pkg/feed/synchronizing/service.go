@@ -10,6 +10,7 @@ import (
 	"github.com/mmcdole/gofeed"
 	"github.com/rs/zerolog/log"
 	"github.com/sourcegraph/conc/pool"
+
 	"github.com/virtualtam/sparklemuffin/internal/textkit"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
@@ -32,6 +33,7 @@ type Service struct {
 	textRankMaxTerms int
 }
 
+// NewService initializes and returns a new feed synchronization service.
 func NewService(r Repository, client *fetching.Client) *Service {
 	return &Service{
 		r:                r,
@@ -70,9 +72,9 @@ func (s *Service) Synchronize(jobID string) error {
 	// 3. For each feed:
 	for _, workerFeed := range feeds {
 		workerPool.Go(func() error {
-			// 3.1 Fetch entries
-			// 3.2 Upsert entries
-			// 3.3 Update FetchedAt date
+			// 3.1. Fetch entries
+			// 3.2. Upsert entries
+			// 3.3. Update FetchedAt date
 			return s.synchronizeFeed(workerFeed, jobID)
 		})
 	}
@@ -129,7 +131,7 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 
 	if feedStatus.StatusCode == http.StatusNotModified {
 		// The remote server responds with a '304 Not Modified' status, indicating that
-		// we already have the latest version of the feed
+		// we already have the latest version of the feed.
 
 		log.Info().
 			Str("feed_url", feed.FeedURL).

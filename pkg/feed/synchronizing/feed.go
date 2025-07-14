@@ -5,6 +5,7 @@ package synchronizing
 
 import "time"
 
+// FeedFetchMetadata represents the metadata for feed fetch information.
 type FeedFetchMetadata struct {
 	UUID string
 
@@ -15,6 +16,7 @@ type FeedFetchMetadata struct {
 	FetchedAt time.Time
 }
 
+// FeedMetadata represents the metadata for a feed and its content.
 type FeedMetadata struct {
 	UUID string
 

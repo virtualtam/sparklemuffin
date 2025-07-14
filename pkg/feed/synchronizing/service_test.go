@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/feeds"
 	"github.com/jaswdr/faker"
+
 	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"

@@ -9,6 +9,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 )
 
+// Repository provides access to feed data for synchronizing.
 type Repository interface {
 	// FeedGetNByLastSynchronizationTime returns at most n feeds that have last been synchronized before
 	// a given time.Time.

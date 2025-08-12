@@ -16,6 +16,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 #### Docker
 - Add Make targets to dump and restore the database
+- Upgrade PostgreSQL to version 17
 
 #### WWW
 - Update Web manifest

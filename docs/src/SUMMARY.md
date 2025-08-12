@@ -20,6 +20,7 @@
         - [Running Tests](./developer-guide/how-to/running-tests.md)
         - [Compiling](./developer-guide/how-to/compiling.md)
         - [Live Development Server](./developer-guide/how-to/live-development-server.md)
+        - [Upgrading the major version of the local PostgreSQL server](./developer-guide/how-to/upgrading-postgresql.md)
         - [Generating Documentation](./developer-guide/how-to/generating-documentation.md)
     - [Reference](./developer-guide/reference/index.md)
         - [Contributing](./developer-guide/reference/contributing.md)

@@ -102,7 +102,7 @@ live-race: assets
 PG_USER ?= sparklemuffin
 PG_DB ?= sparklemuffin
 PG_DUMP_DIR ?= dump
-PG_DUMP_FILE := $(PG_DUMP_DIR)/$(PG_DB).sql.tar
+PG_DUMP_FILE := $(PG_DUMP_DIR)/$(PG_DB).sql.zst
 
 psql:
 	docker compose exec postgres psql -U $(PG_USER)
@@ -110,7 +110,7 @@ psql:
 
 pgdump:
 	mkdir -p $(PG_DUMP_DIR)
-	docker compose exec postgres pg_dump -U $(PG_USER) $(PG_DB) --format tar > $(PG_DUMP_FILE)
+	docker compose exec postgres pg_dump -U $(PG_USER) $(PG_DB) --format custom --compress zstd > $(PG_DUMP_FILE)
 .PHONY: pgdump
 
 pgrestore:

@@ -25,7 +25,7 @@ $ docker compose up -d postgresql
 $ make pgdump
 
 # mkdir -p dump
-# docker compose exec postgres pg_dump -U sparklemuffin sparklemuffin --format tar > dump/sparklemuffin.sql.tar
+# docker compose exec postgres pg_dump -U sparklemuffin sparklemuffin --format custom --compress zst > dump/sparklemuffin.sql.zst
 ```
 
 ## Stop the PostgreSQL server and delete its Docker volume
@@ -62,7 +62,7 @@ $ docker compose up -d postgresql
 ```shell
 $ make pgrestore
 
-# docker compose exec -T postgres pg_restore -U sparklemuffin --dbname sparklemuffin < dump/sparklemuffin.sql.tar
+# docker compose exec -T postgres pg_restore -U sparklemuffin --dbname sparklemuffin < dump/sparklemuffin.sql.zst
 ```
 
 ## Verification
@@ -87,6 +87,7 @@ sparklemuffin=# SELECT COUNT(*) FROM bookmarks;
 - [pg_dump](https://www.postgresql.org/docs/current/app-pgdump.html) - Extract a PostgreSQL database into a script file or other archive file
 - [pg_restore](https://www.postgresql.org/docs/current/app-pgrestore.html) - Restore a PostgreSQL database from an archive file created by `pg_dump`
 - [psql](https://www.postgresql.org/docs/17/app-psql.html) - PostgreSQL interactive terminal
+- [PostgreSQL 16 Release Notes](https://www.postgresql.org/docs/release/16.0/) - PostgreSQL 16 adds LZ4 and Zstandard compression to `pg_dump`
 
 ### Sparklemuffin database
 - [Database](../reference/database.md)

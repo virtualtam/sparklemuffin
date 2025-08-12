@@ -14,6 +14,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Add robots.txt route
 
 ### Changed
+#### Docker
+- Add Make targets to dump and restore the database
+
 #### WWW
 - Update Web manifest
 - Log view rendering errors

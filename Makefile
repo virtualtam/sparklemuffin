@@ -98,10 +98,24 @@ live-race: assets
 	@watchexec --restart --exts css,go,gohtml -- go run -race ./cmd/sparklemuffin/ run
 .PHONY: live-race
 
-# Live development server - PostgreSQL console
+# Live development server - PostgreSQL database management
+PG_USER ?= sparklemuffin
+PG_DB ?= sparklemuffin
+PG_DUMP_DIR ?= dump
+PG_DUMP_FILE := $(PG_DUMP_DIR)/$(PG_DB).sql.tar
+
 psql:
-	docker compose exec postgres psql -U sparklemuffin
+	docker compose exec postgres psql -U $(PG_USER)
 .PHONY: psql
+
+pgdump:
+	mkdir -p $(PG_DUMP_DIR)
+	docker compose exec postgres pg_dump -U $(PG_USER) $(PG_DB) --format tar > $(PG_DUMP_FILE)
+.PHONY: pgdump
+
+pgrestore:
+	docker compose exec -T postgres pg_restore -U $(PG_USER) --dbname $(PG_DB) < $(PG_DUMP_FILE)
+.PHONY: pgrestore
 
 # Live development server - Database migrations
 dev-migrate:

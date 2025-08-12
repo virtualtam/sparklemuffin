@@ -1,5 +1,6 @@
 bench/
 build/
+dump/
 
 sparklemuffin.test
 

@@ -1,7 +1,7 @@
 module assets
 
-go 1.24.3
+go 1.24
 
-require github.com/evanw/esbuild v0.25.5
+require github.com/evanw/esbuild v0.25.8
 
-require golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+require golang.org/x/sys v0.35.0 // indirect

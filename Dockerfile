@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 # Step 1: Build frontend assets
-FROM node:22-bookworm AS assets
+FROM node:24-bookworm AS assets
 
 WORKDIR /app
 COPY internal/http/www/assets/package.json internal/http/www/assets/package-lock.json ./

@@ -19,6 +19,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Upgrade PostgreSQL to version 17
 
 #### WWW
+- Resolve assets with Node 24 LTS
 - Update Web manifest
 - Update FontAwesome to 7.0.0
 - Log view rendering errors

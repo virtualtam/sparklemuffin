@@ -1,7 +1,10 @@
 bench/
 build/
-docs/book
+docs/book/
 dump/
+internal/http/www/assets/node_modules/
+
+.github/
 
 sparklemuffin.test
 

@@ -9,7 +9,7 @@ COPY internal/http/www/assets/package.json internal/http/www/assets/package-lock
 RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Step 2: Build Go binaries
-FROM golang:1.24-bookworm AS builder
+FROM golang:1.25-trixie AS builder
 
 ARG CGO_ENABLED=1
 
@@ -22,7 +22,7 @@ COPY --from=assets /app/node_modules internal/http/www/assets/node_modules
 RUN --mount=type=cache,target=/root/.cache/go-build make build
 
 # Step 3: Build the final image
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 RUN --mount=type=cache,target=/var/lib/apt/lists \
     --mount=type=cache,target=/var/cache/apt \

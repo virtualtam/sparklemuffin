@@ -14,9 +14,12 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Add robots.txt route
 
 ### Changed
-#### Docker
+#### Packaging and automation
 - Add Make targets to dump and restore the database
 - Upgrade PostgreSQL to version 17
+- Build with Go 1.25
+- Update direct and transitive dependencies
+- Switch to Debian 13 Trixie for the final image
 
 #### WWW
 - Resolve assets with Node 24 LTS

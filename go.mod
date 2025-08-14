@@ -1,6 +1,6 @@
 module github.com/virtualtam/sparklemuffin
 
-go 1.24
+go 1.25
 
 require (
 	github.com/DavidBelicza/TextRank/v2 v2.1.3

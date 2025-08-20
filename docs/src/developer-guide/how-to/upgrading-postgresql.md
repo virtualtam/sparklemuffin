@@ -65,6 +65,16 @@ $ make pgrestore
 # docker compose exec -T postgres pg_restore -U sparklemuffin --dbname sparklemuffin < dump/sparklemuffin.sql.zst
 ```
 
+```shell
+$ make pgreindex
+
+# docker compose exec postgres psql -U sparklemuffin -d sparklemuffin -c "REINDEX DATABASE sparklemuffin;"
+REINDEX
+
+# docker compose exec postgres psql -U sparklemuffin -d sparklemuffin -c "ALTER DATABASE sparklemuffin REFRESH COLLATION VERSION;"
+ALTER DATABASE
+```
+
 ## Verification
 ```shell
 $ make psql

@@ -117,6 +117,11 @@ pgrestore:
 	docker compose exec -T postgres pg_restore -U $(PG_USER) --dbname $(PG_DB) < $(PG_DUMP_FILE)
 .PHONY: pgrestore
 
+pgreindex:
+	docker compose exec postgres psql -U $(PG_USER) -d $(PG_DB) -c "REINDEX DATABASE $(PG_DB);"
+	docker compose exec postgres psql -U $(PG_USER) -d $(PG_DB) -c "ALTER DATABASE $(PG_DB) REFRESH COLLATION VERSION;"
+.PHONY: pgreindex
+
 # Live development server - Database migrations
 dev-migrate:
 	go run ./cmd/sparklemuffin migrate

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+### Added
+#### Packaging and automation
+- Add Make target to reindex the development database and refresh collation version
+
 ## [v0.5.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.1) - 2025-08-16
 ### Added
 #### Documentation

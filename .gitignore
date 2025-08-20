@@ -9,4 +9,5 @@ coverage.html
 
 __debug_bin*
 
+.idea/
 .vscode/

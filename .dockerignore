@@ -11,4 +11,5 @@ sparklemuffin.test
 coverage.out
 coverage.html
 
+.idea/
 .vscode/

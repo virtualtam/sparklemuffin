@@ -11,6 +11,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Add Make target to reindex the development database and refresh collation version
 - Update .gitignore and .dockerignore to exclude JetBrains IDE configuration
 
+### Changed
+#### Feed
+- Handle cases where an entry's publication and/or update date(s) are zero, and fall back to the current date/time
+
 ### Fixed
 #### WWW
 - Fix `<time>` blocks in bookmark and feed list pages

@@ -11,37 +11,40 @@ import (
 	"github.com/jaswdr/faker"
 	"github.com/mmcdole/gofeed"
 	"github.com/segmentio/ksuid"
+
+	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 )
 
 func TestEntryNormalize(t *testing.T) {
-	cases := []struct {
-		tname           string
-		description     string
-		content         string
-		wantDescription string
-		wantContent     string
-	}{
-		{
-			tname: "empty content and description",
-		},
-		{
-			tname:           "plain text content and description",
-			description:     "A short description",
-			content:         "Some plain text content",
-			wantDescription: "A short description",
-			wantContent:     "Some plain text content",
-		},
-		{
-			tname:           "HTML content and description",
-			description:     `A <strong>short</strong> description with <a href="https://example.com">link</a>`,
-			content:         `<p>Some <em>formatted</em> content with a <a href="https://example.com">link</a></p>`,
-			wantDescription: "A short description with link",
-			wantContent:     "Some formatted content with a link",
-		},
-		{
-			tname:       "multiline HTML content",
-			description: "<p>Description</p>",
-			content: `<article>
+	t.Run("Remove HTML tags from content and description", func(t *testing.T) {
+		cases := []struct {
+			tname           string
+			description     string
+			content         string
+			wantDescription string
+			wantContent     string
+		}{
+			{
+				tname: "empty content and description",
+			},
+			{
+				tname:           "plain text content and description",
+				description:     "A short description",
+				content:         "Some plain text content",
+				wantDescription: "A short description",
+				wantContent:     "Some plain text content",
+			},
+			{
+				tname:           "HTML content and description",
+				description:     `A <strong>short</strong> description with <a href="https://example.com">link</a>`,
+				content:         `<p>Some <em>formatted</em> content with a <a href="https://example.com">link</a></p>`,
+				wantDescription: "A short description with link",
+				wantContent:     "Some formatted content with a link",
+			},
+			{
+				tname:       "multiline HTML content",
+				description: "<p>Description</p>",
+				content: `<article>
 	<h1>Title</h1>
 	<p>First paragraph</p>
 	<p>Second paragraph</p>
@@ -50,36 +53,82 @@ func TestEntryNormalize(t *testing.T) {
 		<li>Item 2</li>
 	</ul>
 </article>`,
-			wantDescription: "Description",
-			wantContent:     "Title\n\n First paragraph\n\n Second paragraph\n\n \n - Item 1 \n - Item 2",
-		},
-		{
-			tname:           "invalid HTML",
-			description:     "<p>Unclosed paragraph",
-			content:         "<div>Unclosed div",
-			wantDescription: "Unclosed paragraph",
-			wantContent:     "Unclosed div",
-		},
-	}
+				wantDescription: "Description",
+				wantContent:     "Title\n\n First paragraph\n\n Second paragraph\n\n \n - Item 1 \n - Item 2",
+			},
+			{
+				tname:           "invalid HTML",
+				description:     "<p>Unclosed paragraph",
+				content:         "<div>Unclosed div",
+				wantDescription: "Unclosed paragraph",
+				wantContent:     "Unclosed div",
+			},
+		}
 
-	for _, tc := range cases {
-		t.Run(tc.tname, func(t *testing.T) {
-			e := Entry{
-				description: tc.description,
-				content:     tc.content,
-			}
+		for _, tc := range cases {
+			t.Run(tc.tname, func(t *testing.T) {
+				e := Entry{
+					description: tc.description,
+					content:     tc.content,
+				}
 
-			e.Normalize()
+				e.Normalize()
 
-			if e.description != tc.wantDescription {
-				t.Errorf("want %q, got %q", tc.wantDescription, e.description)
-			}
+				if e.description != tc.wantDescription {
+					t.Errorf("want %q, got %q", tc.wantDescription, e.description)
+				}
 
-			if e.content != tc.wantContent {
-				t.Errorf("want %q, got %q", tc.wantContent, e.content)
-			}
-		})
-	}
+				if e.content != tc.wantContent {
+					t.Errorf("want %q, got %q", tc.wantContent, e.content)
+				}
+			})
+		}
+	})
+
+	t.Run("Replace zero values for PublishedAt and UpdatedAt", func(t *testing.T) {
+		now := time.Now()
+		lastMonth := now.AddDate(0, -1, 0)
+		tomorrow := now.AddDate(0, 0, 1)
+
+		cases := []struct {
+			tname           string
+			publishedAt     time.Time
+			updatedAt       time.Time
+			wantPublishedAt time.Time
+			wantUpdatedAt   time.Time
+		}{
+			{
+				tname:           "replace zero values",
+				wantPublishedAt: now,
+				wantUpdatedAt:   now,
+			},
+			{
+				tname:           "replace zero value for PublishedAt",
+				updatedAt:       tomorrow,
+				wantPublishedAt: now,
+				wantUpdatedAt:   tomorrow,
+			},
+			{
+				tname:           "replace zero value for UpdatedAt",
+				publishedAt:     lastMonth,
+				wantPublishedAt: lastMonth,
+				wantUpdatedAt:   lastMonth,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.tname, func(t *testing.T) {
+				e := Entry{
+					PublishedAt: tc.publishedAt,
+					UpdatedAt:   tc.updatedAt,
+				}
+				e.Normalize()
+
+				assert.TimeAlmostEquals(t, "PublishedAt", e.PublishedAt, tc.wantPublishedAt, assert.TimeComparisonDelta)
+				assert.TimeAlmostEquals(t, "UpdatedAt", e.UpdatedAt, tc.wantUpdatedAt, assert.TimeComparisonDelta)
+			})
+		}
+	})
 }
 
 func TestEntrySummarize(t *testing.T) {

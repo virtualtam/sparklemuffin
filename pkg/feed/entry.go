@@ -77,6 +77,8 @@ func (e *Entry) Normalize() {
 	e.normalizeDescription()
 	e.normalizeContent()
 	e.summarize()
+	e.normalizePublishedAt()
+	e.normalizeUpdatedAt()
 }
 
 // ExtractTextRankTerms uses TextRank to extract the top ranking phrases from the Entry content or description.
@@ -130,6 +132,18 @@ func (e *Entry) normalizeDescription() {
 
 func (e *Entry) normalizeContent() {
 	e.content = textkit.NormalizeHTMLToText(e.content)
+}
+
+func (e *Entry) normalizePublishedAt() {
+	if e.PublishedAt.IsZero() {
+		e.PublishedAt = time.Now().UTC()
+	}
+}
+
+func (e *Entry) normalizeUpdatedAt() {
+	if e.UpdatedAt.IsZero() {
+		e.UpdatedAt = e.PublishedAt
+	}
 }
 
 const (

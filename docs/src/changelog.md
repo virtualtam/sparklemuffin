@@ -11,6 +11,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Add Make target to reindex the development database and refresh collation version
 - Update .gitignore and .dockerignore to exclude JetBrains IDE configuration
 
+### Fixed
+#### WWW
+- Fix `<time>` blocks in bookmark and feed list pages
+
 ## [v0.5.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.1) - 2025-08-16
 ### Added
 #### Documentation

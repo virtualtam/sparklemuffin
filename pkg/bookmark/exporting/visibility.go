@@ -9,13 +9,13 @@ import "errors"
 type Visibility string
 
 const (
-	// Public and private bookmarks.
+	// VisibilityAll indicates public and private bookmarks will be exported.
 	VisibilityAll Visibility = "all"
 
-	// Private bookmarks only.
+	// VisibilityPrivate indicates only private bookmarks will be exported.
 	VisibilityPrivate Visibility = "private"
 
-	// Public bookmarks only.
+	// VisibilityPublic indicates only public bookmarks will be exported.
 	VisibilityPublic Visibility = "public"
 )
 

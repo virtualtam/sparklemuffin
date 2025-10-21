@@ -5,6 +5,7 @@ package importing
 
 import (
 	"github.com/virtualtam/netscape-go/v2"
+
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
@@ -27,7 +28,7 @@ func (s *Service) bulkImport(bookmarks []bookmark.Bookmark, overwriteExisting bo
 		overwriteExisting: overwriteExisting,
 	}
 
-	filteredBookmarks := []bookmark.Bookmark{}
+	var filteredBookmarks []bookmark.Bookmark
 	uniqueURLs := map[string]bool{}
 
 	for _, b := range bookmarks {
@@ -89,42 +90,42 @@ func (s *Service) ImportFromNetscapeDocument(userUUID string, document *netscape
 		return Status{}, ErrOnConflictStrategyInvalid
 	}
 
-	bookmarks := []bookmark.Bookmark{}
+	var bookmarks []bookmark.Bookmark
 
 	flattenedDocument := document.Flatten()
 
 	for _, netscapeBookmark := range flattenedDocument.Root.Bookmarks {
-		bookmark := bookmark.NewBookmark(userUUID)
+		newBookmark := bookmark.NewBookmark(userUUID)
 
-		bookmark.URL = netscapeBookmark.URL
-		bookmark.Title = netscapeBookmark.Title
-		bookmark.Description = netscapeBookmark.Description
-		bookmark.Tags = netscapeBookmark.Tags
+		newBookmark.URL = netscapeBookmark.URL
+		newBookmark.Title = netscapeBookmark.Title
+		newBookmark.Description = netscapeBookmark.Description
+		newBookmark.Tags = netscapeBookmark.Tags
 
 		switch visibility {
 		case VisibilityDefault:
-			bookmark.Private = netscapeBookmark.Private
+			newBookmark.Private = netscapeBookmark.Private
 		case VisibilityPrivate:
-			bookmark.Private = true
+			newBookmark.Private = true
 		case VisibilityPublic:
-			bookmark.Private = false
+			newBookmark.Private = false
 		default:
 			return Status{}, ErrVisibilityInvalid
 		}
 
 		if !netscapeBookmark.CreatedAt.IsZero() {
-			bookmark.CreatedAt = netscapeBookmark.CreatedAt
+			newBookmark.CreatedAt = netscapeBookmark.CreatedAt
 		}
 
 		if !netscapeBookmark.UpdatedAt.IsZero() {
-			bookmark.UpdatedAt = netscapeBookmark.UpdatedAt
+			newBookmark.UpdatedAt = netscapeBookmark.UpdatedAt
 		} else {
-			bookmark.UpdatedAt = bookmark.CreatedAt
+			newBookmark.UpdatedAt = newBookmark.CreatedAt
 		}
 
-		bookmark.Normalize()
+		newBookmark.Normalize()
 
-		bookmarks = append(bookmarks, *bookmark)
+		bookmarks = append(bookmarks, *newBookmark)
 	}
 
 	return s.bulkImport(bookmarks, overwriteExisting)

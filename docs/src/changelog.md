@@ -154,7 +154,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 ### CI
 - Lint and format SQL files with SQLFluff
-- Publish HTML documentation to Github Pages
+- Publish HTML documentation to GitHub Pages
 
 ### Documentation
 - Update documentation structure to follow the Diátaxis approach
@@ -240,7 +240,7 @@ _Initial release_
     - generate coverage reports
     - run live-reload development servers
     - build HTML documentation
-- Add Github Actions workflows:
+- Add GitHub Actions workflows:
     - CI: build the application, run linters, run tests
     - Copywrite: ensure license headers are present in source files
-    - Docker: build and publish Docker image to the Github Container Registry (GHCR)
+    - Docker: build and publish Docker image to the GitHub Container Registry (GHCR)

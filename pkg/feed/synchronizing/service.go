@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	feedsToSynchronize uint          = 20
-	minFeedAge         time.Duration = 6 * time.Hour
+	feedsToSynchronize uint = 20
+	minFeedAge              = 6 * time.Hour
 
 	nWorkers int = 5
 )

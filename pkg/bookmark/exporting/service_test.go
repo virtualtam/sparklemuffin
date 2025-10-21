@@ -63,7 +63,7 @@ func TestServiceExportAsJSONDocument(t *testing.T) {
 		userUUID   string
 		visibility Visibility
 
-		want    *jsonDocument
+		want    *JsonDocument
 		wantErr error
 	}{
 		// error cases
@@ -82,7 +82,7 @@ func TestServiceExportAsJSONDocument(t *testing.T) {
 			tname:      "export all bookmarks, user has none",
 			userUUID:   "b9e785dc-3613-4d8d-909b-31a4728b530d",
 			visibility: VisibilityAll,
-			want: &jsonDocument{
+			want: &JsonDocument{
 				Title:      "SparkleMuffin export of all bookmarks",
 				ExportedAt: now,
 			},
@@ -91,10 +91,10 @@ func TestServiceExportAsJSONDocument(t *testing.T) {
 			tname:      "export all bookmarks",
 			userUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility: VisibilityAll,
-			want: &jsonDocument{
+			want: &JsonDocument{
 				Title:      "SparkleMuffin export of all bookmarks",
 				ExportedAt: now,
-				Bookmarks: []jsonBookmark{
+				Bookmarks: []JsonBookmark{
 					{
 						Title: "Bookmark 1",
 						URL:   "https://example1.tld",
@@ -117,10 +117,10 @@ func TestServiceExportAsJSONDocument(t *testing.T) {
 			tname:      "export private bookmarks",
 			userUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility: VisibilityPrivate,
-			want: &jsonDocument{
+			want: &JsonDocument{
 				Title:      "SparkleMuffin export of private bookmarks",
 				ExportedAt: now,
-				Bookmarks: []jsonBookmark{
+				Bookmarks: []JsonBookmark{
 					{
 						Title:   "Bookmark 3 (private)",
 						URL:     "https://example3.tld",
@@ -133,10 +133,10 @@ func TestServiceExportAsJSONDocument(t *testing.T) {
 			tname:      "export public bookmarks",
 			userUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility: VisibilityPublic,
-			want: &jsonDocument{
+			want: &JsonDocument{
 				Title:      "SparkleMuffin export of public bookmarks",
 				ExportedAt: now,
-				Bookmarks: []jsonBookmark{
+				Bookmarks: []JsonBookmark{
 					{
 						Title: "Bookmark 1",
 						URL:   "https://example1.tld",

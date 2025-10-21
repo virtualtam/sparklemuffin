@@ -9,14 +9,14 @@ import "errors"
 type Visibility string
 
 const (
-	// Keep the existing value for imported bookmarks; if missing,
-	// bookmarks will be imported as public.
+	// VisibilityDefault indicates bookmarks will be imported with their existing visibility (if set),
+	// otherwise as public.
 	VisibilityDefault Visibility = "default"
 
-	// Import all bookmarks as private.
+	// VisibilityPrivate indicates all bookmarks will be imported as private.
 	VisibilityPrivate Visibility = "private"
 
-	// Import all bookmarks as public.
+	// VisibilityPublic indicates all bookmarks will be imported as public.
 	VisibilityPublic Visibility = "public"
 )
 

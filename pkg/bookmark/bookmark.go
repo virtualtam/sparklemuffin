@@ -50,8 +50,7 @@ func (b *Bookmark) Normalize() {
 	b.sortTags()
 }
 
-// ValidateForAddition ensures mandatory fields are properly set when adding an
-// new Bookmark.
+// ValidateForAddition ensures mandatory fields are properly set when adding a new Bookmark.
 func (b *Bookmark) ValidateForAddition(r ValidationRepository) error {
 	fns := []func() error{
 		b.requireUserUUID,
@@ -98,7 +97,7 @@ func (b *Bookmark) normalizeDescription() {
 }
 
 func (b *Bookmark) normalizeTags() {
-	tags := []string{}
+	var tags []string
 
 	for _, tag := range b.Tags {
 		tag := strings.TrimSpace(tag)
@@ -113,7 +112,7 @@ func (b *Bookmark) normalizeTags() {
 
 func (b *Bookmark) deduplicateTags() {
 	tagNames := map[string]bool{}
-	tags := []string{}
+	var tags []string
 
 	for _, tag := range b.Tags {
 		_, exists := tagNames[tag]

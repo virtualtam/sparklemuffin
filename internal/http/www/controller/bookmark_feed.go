@@ -17,7 +17,7 @@ import (
 
 // bookmarksToFeed initializes and returns a new feed for a list of bookmarks.
 func bookmarksToFeed(publicURL *url.URL, owner bookmarkquerying.Owner, bookmarks []bookmark.Bookmark) (*feeds.Feed, error) {
-	feedItems := []*feeds.Item{}
+	var feedItems []*feeds.Item
 
 	for _, b := range bookmarks {
 		feedItem := &feeds.Item{

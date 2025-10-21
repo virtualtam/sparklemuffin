@@ -18,10 +18,10 @@ type ValidationRepository interface {
 type Repository interface {
 	ValidationRepository
 
-	// BookmarkAdd adds a new bookmark for the logged in user.
+	// BookmarkAdd adds a new bookmark for the logged-in user.
 	BookmarkAdd(bookmark Bookmark) error
 
-	// BookmarkDelete deletes a given bookmark for the logged in user.
+	// BookmarkDelete deletes a given bookmark for the logged-in user.
 	BookmarkDelete(userUUID, uid string) error
 
 	// BookmarkGetAll returns all bookmarks for a given user UUID.
@@ -39,6 +39,6 @@ type Repository interface {
 	// BookmarkTagUpdateMany updates a tag for collection of existing bookmarks.
 	BookmarkTagUpdateMany(bookmarks []Bookmark) (int64, error)
 
-	// BookmarkUpdate updates an existing bookmark for the logged in user.
+	// BookmarkUpdate updates an existing bookmark for the logged-in user.
 	BookmarkUpdate(bookmark Bookmark) error
 }

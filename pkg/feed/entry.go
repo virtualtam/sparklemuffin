@@ -13,6 +13,7 @@ import (
 
 	"github.com/mmcdole/gofeed"
 	"github.com/segmentio/ksuid"
+
 	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 	"github.com/virtualtam/sparklemuffin/internal/textkit"
 )

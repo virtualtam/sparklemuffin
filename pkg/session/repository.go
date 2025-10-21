@@ -3,7 +3,7 @@
 
 package session
 
-// Repository provides access to the user Web Session repoository.
+// Repository provides access to users' Web Session.
 type Repository interface {
 	// SessionAdd saves a new user Session.
 	SessionAdd(Session) error

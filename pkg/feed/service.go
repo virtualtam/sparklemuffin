@@ -10,6 +10,7 @@ import (
 
 	"github.com/mmcdole/gofeed"
 	"github.com/rs/zerolog/log"
+
 	"github.com/virtualtam/sparklemuffin/internal/textkit"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
@@ -105,7 +106,7 @@ func (s *Service) DeleteCategory(userUUID string, categoryUUID string) error {
 		UUID:     categoryUUID,
 	}
 
-	if err := categoryToDelete.ValidateForDeletion(s.r); err != nil {
+	if err := categoryToDelete.ValidateForDeletion(); err != nil {
 		return err
 	}
 

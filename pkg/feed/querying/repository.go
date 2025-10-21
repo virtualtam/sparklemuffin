@@ -22,7 +22,7 @@ type Repository interface {
 	// for a giver user and subscription.
 	FeedEntryGetCountBySubscription(userUUID string, subscriptionUUID string) (uint, error)
 
-	// FeedEntryGetCount returns the count of entries corresponding to a feed subscription
+	// FeedEntryGetCountByQuery returns the count of entries corresponding to a feed subscription
 	// for a giver user, and matching a search query.
 	FeedEntryGetCountByQuery(userUUID string, searchTerms string) (uint, error)
 

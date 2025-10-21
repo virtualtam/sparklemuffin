@@ -12,7 +12,7 @@ type FakeRepository struct {
 }
 
 func (r *FakeRepository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error) {
-	bookmarks := []bookmark.Bookmark{}
+	var bookmarks []bookmark.Bookmark
 
 	for _, b := range r.Bookmarks {
 		if b.UserUUID == userUUID {
@@ -24,7 +24,7 @@ func (r *FakeRepository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, e
 }
 
 func (r *FakeRepository) BookmarkGetAllPrivate(userUUID string) ([]bookmark.Bookmark, error) {
-	bookmarks := []bookmark.Bookmark{}
+	var bookmarks []bookmark.Bookmark
 
 	for _, b := range r.Bookmarks {
 		if b.UserUUID == userUUID && b.Private {
@@ -36,7 +36,7 @@ func (r *FakeRepository) BookmarkGetAllPrivate(userUUID string) ([]bookmark.Book
 }
 
 func (r *FakeRepository) BookmarkGetAllPublic(userUUID string) ([]bookmark.Bookmark, error) {
-	bookmarks := []bookmark.Bookmark{}
+	var bookmarks []bookmark.Bookmark
 
 	for _, b := range r.Bookmarks {
 		if b.UserUUID == userUUID && !b.Private {

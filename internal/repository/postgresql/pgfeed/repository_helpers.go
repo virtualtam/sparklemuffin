@@ -11,6 +11,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
+
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 )
@@ -130,7 +131,7 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 		@title,
 		@summary,
 		@textrank_terms,
-		to_tsvector(@fulltextsearch_string),
+		TO_TSVECTOR(@fulltextsearch_string),
 		@published_at,
 		@updated_at
 	)`

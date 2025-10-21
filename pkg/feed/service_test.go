@@ -13,6 +13,7 @@ import (
 	"github.com/jaswdr/faker"
 	"github.com/mmcdole/gofeed"
 	"github.com/segmentio/ksuid"
+
 	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
@@ -788,12 +789,12 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 		// error cases
 		{
 			tname:   "empty URL",
-			wantErr: ErrFeedURLInvalid,
+			wantErr: ErrFeedURLRequired,
 		},
 		{
 			tname:   "empty URL (whitespace)",
 			feedURL: "     ",
-			wantErr: ErrFeedURLInvalid,
+			wantErr: ErrFeedURLRequired,
 		},
 		{
 			tname:   "invalid URL (no host)",

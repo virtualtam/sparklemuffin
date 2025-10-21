@@ -42,7 +42,6 @@ type Repository interface {
 	// filter term.
 	BookmarkTagFilterCount(userUUID string, visibility Visibility, filterTerm string) (uint, error)
 
-	// BookmarkSearchN returns at most n tags for a given user and filter
-	// term, starting at a given offset.
+	// BookmarkTagFilterN returns at most n tags for a given user and filter term, starting at a given offset.
 	BookmarkTagFilterN(userUUID string, visibility Visibility, filterTerm string, n uint, offset uint) ([]Tag, error)
 }

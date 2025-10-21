@@ -8,6 +8,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/opml-go"
+
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 )
 

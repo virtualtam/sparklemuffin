@@ -10,10 +10,10 @@ import "errors"
 type OnConflictStrategy string
 
 const (
-	// Overwrite existing data with imported data.
+	// OnConflictOverwrite indicates existing bookmarks will be overwritten by imported bookmarks.
 	OnConflictOverwrite OnConflictStrategy = "overwrite"
 
-	// Keep existing data and ignore new data.
+	// OnConflictKeepExisting indicates existing bookmarks will be left unchanged.
 	OnConflictKeepExisting OnConflictStrategy = "keep"
 )
 

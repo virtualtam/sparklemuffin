@@ -28,7 +28,7 @@ func (r *FakeRepository) BookmarkDelete(userUUID, uid string) error {
 }
 
 func (r *FakeRepository) BookmarkGetAll(userUUID string) ([]Bookmark, error) {
-	bookmarks := []Bookmark{}
+	var bookmarks []Bookmark
 
 	for _, b := range r.Bookmarks {
 		if b.UserUUID == userUUID {
@@ -40,7 +40,7 @@ func (r *FakeRepository) BookmarkGetAll(userUUID string) ([]Bookmark, error) {
 }
 
 func (r *FakeRepository) BookmarkGetByTag(userUUID string, tag string) ([]Bookmark, error) {
-	bookmarks := []Bookmark{}
+	var bookmarks []Bookmark
 
 	for _, b := range r.Bookmarks {
 		for _, bookmarkTag := range b.Tags {

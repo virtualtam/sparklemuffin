@@ -160,16 +160,16 @@ func (s *Server) handleHomeView() func(w http.ResponseWriter, r *http.Request) {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 
-		if user == nil {
+		if ctxUser == nil {
 			s.homeView.Render(w, r, defaultViewData)
 			return
 		}
 
 		viewData := view.Data{
 			Title:   title,
-			Content: fmt.Sprintf("Welcome back, %s!", user.NickName),
+			Content: fmt.Sprintf("Welcome back, %s!", ctxUser.NickName),
 		}
 
 		s.homeView.Render(w, r, viewData)
@@ -200,7 +200,7 @@ Content-Usage: ai=n`)
 	}
 }
 
-// handleNotFound renders a HTTP 404 Not Found error page.
+// handleNotFound renders an HTTP 404 Not Found error page.
 func (s *Server) handleNotFound() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.errorView.Render(w, r, http.StatusNotFound)
@@ -210,7 +210,7 @@ func (s *Server) handleNotFound() func(w http.ResponseWriter, r *http.Request) {
 // rememberUser enriches the request context with a user.User if a valid
 // remember token cookie is set.
 func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/robots.txt" || strings.HasPrefix(r.URL.Path, "/static") {
 			// Skip user session middleware for static pages and assets.
 			h(w, r)
@@ -223,22 +223,22 @@ func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		session, err := s.sessionService.ByRememberToken(cookie.Value)
+		userSession, err := s.sessionService.ByRememberToken(cookie.Value)
 		if err != nil {
 			h(w, r)
 			return
 		}
 
-		user, err := s.userService.ByUUID(session.UserUUID)
+		ctxUser, err := s.userService.ByUUID(userSession.UserUUID)
 		if err != nil {
 			h(w, r)
 			return
 		}
 
 		ctx := r.Context()
-		ctx = httpcontext.WithUser(ctx, user)
+		ctx = httpcontext.WithUser(ctx, ctxUser)
 		r = r.WithContext(ctx)
 
 		h(w, r)
-	})
+	}
 }

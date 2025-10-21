@@ -7,9 +7,9 @@ package exporting
 type Format string
 
 const (
-	// JSON document.
+	// FormatJSON indicates bookmarks will be exported as a JSON document.
 	FormatJSON Format = "json"
 
-	// Netscape Bookmark File.
+	// FormatNetscape indicates bookmarks will be exported as a Netscape Bookmark File.
 	FormatNetscape Format = "netscape"
 )

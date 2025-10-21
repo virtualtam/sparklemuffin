@@ -30,7 +30,7 @@ func visibilityMatches(visibility Visibility, private bool) bool {
 }
 
 func (r *fakeRepository) BookmarkGetN(userUUID string, visibility Visibility, n uint, offset uint) ([]bookmark.Bookmark, error) {
-	userBookmarks := []bookmark.Bookmark{}
+	var userBookmarks []bookmark.Bookmark
 
 	for _, b := range r.bookmarks {
 		if b.UserUUID == userUUID {

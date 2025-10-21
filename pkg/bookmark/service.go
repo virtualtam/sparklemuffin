@@ -64,7 +64,7 @@ func (s *Service) ByUID(userUUID string, uid string) (Bookmark, error) {
 	return s.r.BookmarkGetByUID(userUUID, uid)
 }
 
-// ByUID returns a bookmark for a given user and URL.
+// ByURL returns a bookmark for a given user and URL.
 func (s *Service) ByURL(userUUID string, u string) (Bookmark, error) {
 	b := &Bookmark{
 		UserUUID: userUUID,

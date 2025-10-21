@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/virtualtam/netscape-go/v2"
+
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
@@ -38,21 +39,21 @@ func (s *Service) getBookmarks(userUUID string, visibility Visibility) ([]bookma
 
 // ExportAsJSONDocument exports a given user's bookmarks matching the
 // provided Visibility as a JSON bookmark document.
-func (s *Service) ExportAsJSONDocument(userUUID string, visibility Visibility) (*jsonDocument, error) {
+func (s *Service) ExportAsJSONDocument(userUUID string, visibility Visibility) (*JsonDocument, error) {
 	bookmarks, err := s.getBookmarks(userUUID, visibility)
 	if err != nil {
-		return &jsonDocument{}, err
+		return &JsonDocument{}, err
 	}
 
 	now := time.Now().UTC()
 
-	document := &jsonDocument{
+	document := &JsonDocument{
 		Title:      fmt.Sprintf("SparkleMuffin export of %s bookmarks", visibility),
 		ExportedAt: now,
 	}
 
 	for _, b := range bookmarks {
-		jsonBookmark := jsonBookmark{
+		jsonBookmark := JsonBookmark{
 			URL:         b.URL,
 			Title:       b.Title,
 			Description: b.Description,

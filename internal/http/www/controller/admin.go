@@ -155,7 +155,7 @@ func (ac *adminController) handleUserDeleteView() func(w http.ResponseWriter, r 
 
 		csrfToken := ac.csrfService.Generate(adminUser.UUID, actionAdminUserDelete)
 
-		user, err := ac.userService.ByUUID(userUUID)
+		userToDelete, err := ac.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
 			view.PutFlashError(w, err.Error())
@@ -164,10 +164,10 @@ func (ac *adminController) handleUserDeleteView() func(w http.ResponseWriter, r 
 		}
 
 		viewData := view.Data{
-			Title: fmt.Sprintf("Delete user: %s", user.NickName),
+			Title: fmt.Sprintf("Delete user: %s", userToDelete.NickName),
 			Content: view.FormContent{
 				CSRFToken: csrfToken,
-				Content:   user,
+				Content:   userToDelete,
 			},
 		}
 
@@ -200,7 +200,7 @@ func (ac *adminController) handleUserDelete() func(w http.ResponseWriter, r *htt
 			return
 		}
 
-		user, err := ac.userService.ByUUID(userUUID)
+		userToDelete, err := ac.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
 			view.PutFlashError(w, err.Error())
@@ -215,7 +215,7 @@ func (ac *adminController) handleUserDelete() func(w http.ResponseWriter, r *htt
 			return
 		}
 
-		view.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully deleted", user.Email))
+		view.PutFlashSuccess(w, fmt.Sprintf("user %q has been successfully deleted", userToDelete.Email))
 		http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
 	}
 }
@@ -228,7 +228,7 @@ func (ac *adminController) handleUserEditView() func(w http.ResponseWriter, r *h
 
 		csrfToken := ac.csrfService.Generate(adminUser.UUID, actionAdminUserEdit)
 
-		user, err := ac.userService.ByUUID(userUUID)
+		userToEdit, err := ac.userService.ByUUID(userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
 			view.PutFlashError(w, err.Error())
@@ -237,10 +237,10 @@ func (ac *adminController) handleUserEditView() func(w http.ResponseWriter, r *h
 		}
 
 		viewData := view.Data{
-			Title: fmt.Sprintf("Edit user: %s", user.NickName),
+			Title: fmt.Sprintf("Edit user: %s", userToEdit.NickName),
 			Content: view.FormContent{
 				CSRFToken: csrfToken,
-				Content:   user,
+				Content:   userToEdit,
 			},
 		}
 		ac.adminUserEditView.Render(w, r, viewData)

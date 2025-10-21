@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jaswdr/faker"
+
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbookmark"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
@@ -41,7 +42,7 @@ func TestQueryingService(t *testing.T) {
 	nBookmarks := 100
 	nPrivateBookmarks := 0
 
-	bookmarks := []bookmark.Bookmark{}
+	var bookmarks []bookmark.Bookmark
 
 	for i := range nBookmarks {
 		private := false
@@ -105,7 +106,7 @@ func TestQueryingService(t *testing.T) {
 			}
 		}
 
-		tags := []bookmarkquerying.Tag{}
+		var tags []bookmarkquerying.Tag
 		for name, count := range tagMap {
 			tag := bookmarkquerying.NewTag(name, count)
 			tags = append(tags, tag)

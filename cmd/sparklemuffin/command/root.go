@@ -58,7 +58,7 @@ const (
 )
 
 var (
-	defaultLogLevelValue string = zerolog.LevelInfoValue
+	defaultLogLevelValue = zerolog.LevelInfoValue
 	logLevelValue        string
 	logFormat            string
 
@@ -119,7 +119,7 @@ func NewRootCommand() *cobra.Command {
 			// This is required to let Viper load environment variables and
 			// configuration entries before invoking nested commands.
 			v := viper.New()
-			if err := venom.InjectTo(v, cmd, config.EnvPrefix, configPaths, config.ConfigName, false); err != nil {
+			if err := venom.InjectTo(v, cmd, config.EnvPrefix, configPaths, config.Filename, false); err != nil {
 				return err
 			}
 

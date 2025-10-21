@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jaswdr/faker"
+
 	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"

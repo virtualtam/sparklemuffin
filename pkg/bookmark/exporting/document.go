@@ -5,14 +5,14 @@ package exporting
 
 import "time"
 
-type jsonDocument struct {
+type JsonDocument struct {
 	Title      string    `json:"title"`
 	ExportedAt time.Time `json:"exported_at"`
 
-	Bookmarks []jsonBookmark `json:"bookmarks"`
+	Bookmarks []JsonBookmark `json:"bookmarks"`
 }
 
-type jsonBookmark struct {
+type JsonBookmark struct {
 	URL         string `json:"url"`
 	Title       string `json:"title"`
 	Description string `json:"description,omitempty"`

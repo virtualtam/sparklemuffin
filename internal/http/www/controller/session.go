@@ -64,7 +64,7 @@ func (sc *sessionController) handleUserLogin() func(w http.ResponseWriter, r *ht
 			return
 		}
 
-		user, err := sc.userService.Authenticate(form.Email, form.Password)
+		authenticatedUser, err := sc.userService.Authenticate(form.Email, form.Password)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to authenticate user")
 			view.PutFlashError(w, "invalid email or password")
@@ -72,7 +72,7 @@ func (sc *sessionController) handleUserLogin() func(w http.ResponseWriter, r *ht
 			return
 		}
 
-		if err := sc.setUserRememberToken(w, user.UUID); err != nil {
+		if err := sc.setUserRememberToken(w, authenticatedUser.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to set remember token")
 			view.PutFlashError(w, "failed to save session cookie")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -95,8 +95,8 @@ func (sc *sessionController) handleUserLogout() func(w http.ResponseWriter, r *h
 		}
 		http.SetCookie(w, &cookie)
 
-		user := httpcontext.UserValue(r.Context())
-		if user == nil {
+		ctxUser := httpcontext.UserValue(r.Context())
+		if ctxUser == nil {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
@@ -109,7 +109,7 @@ func (sc *sessionController) handleUserLogout() func(w http.ResponseWriter, r *h
 		}
 
 		userSession := session.Session{
-			UserUUID:      user.UUID,
+			UserUUID:      ctxUser.UUID,
 			RememberToken: token,
 		}
 

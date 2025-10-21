@@ -10,6 +10,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
+
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 )
@@ -51,13 +52,13 @@ func (r *Repository) bookmarkGetManyQuery(query string, queryParams ...any) ([]b
 	}
 	defer rows.Close()
 
-	dbBookmarks := []DBBookmark{}
+	var dbBookmarks []DBBookmark
 
 	if err := pgxscan.ScanAll(&dbBookmarks, rows); err != nil {
 		return []bookmark.Bookmark{}, err
 	}
 
-	bookmarks := []bookmark.Bookmark{}
+	var bookmarks []bookmark.Bookmark
 
 	for _, dbBookmark := range dbBookmarks {
 		bookmark := bookmark.Bookmark{
@@ -100,7 +101,7 @@ func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookm
 		@description,
 		@private,
 		@tags,
-		to_tsvector(@fulltextsearch_string),
+		TO_TSVECTOR(@fulltextsearch_string),
 		@created_at,
 		@updated_at
 	)`

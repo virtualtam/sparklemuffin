@@ -9,7 +9,7 @@ type ValidationRepository interface {
 	// a Category with the same name or slug.
 	FeedCategoryNameAndSlugAreRegistered(userUUID string, name string, slug string) (bool, error)
 
-	// FeedCategoryNameAndSlugAreRegistered returns whether a user has already registered
+	// FeedCategoryNameAndSlugAreRegisteredToAnotherCategory returns whether a user has already registered
 	// another Category with the same name or slug.
 	FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(userUUID string, categoryUUID string, name string, slug string) (bool, error)
 

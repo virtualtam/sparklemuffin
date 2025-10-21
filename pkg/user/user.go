@@ -44,7 +44,7 @@ type InfoUpdate struct {
 	UpdatedAt   time.Time
 }
 
-// PasswordHashUpdate represents a password change for an authenticated user.
+// PasswordUpdate represents a password change for an authenticated user.
 type PasswordUpdate struct {
 	UUID                    string
 	CurrentPassword         string

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/virtualtam/netscape-go/v2"
+
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 

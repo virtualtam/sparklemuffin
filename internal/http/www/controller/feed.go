@@ -13,8 +13,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
-
 	"github.com/virtualtam/opml-go"
+
 	"github.com/virtualtam/sparklemuffin/internal/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
@@ -152,12 +152,12 @@ type feedCategoryFormContent struct {
 // handleFeedAddView renders the feed subscription form.
 func (fc *feedController) handleFeedAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
-		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedSubscriptionAdd)
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedSubscriptionAdd)
 
-		categories, err := fc.feedService.Categories(user.UUID)
+		categories, err := fc.feedService.Categories(ctxUser.UUID)
 		if err != nil {
-			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve feed categories")
+			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve feed categories")
 			view.PutFlashError(w, "failed to retrieve existing feed categories")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
@@ -222,9 +222,9 @@ func (fc *feedController) handleFeedListView(
 	feedsByQueryAndPage feedsByQueryAndPageCallback,
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 
-		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedEntryMetadataEdit)
+		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedEntryMetadataEdit)
 
 		var viewData view.Data
 		feedQueryingPage := feedQueryingPage{
@@ -242,7 +242,7 @@ func (fc *feedController) handleFeedListView(
 
 		searchQuery := r.URL.Query().Get("search")
 		if searchQuery == "" {
-			feedPage, err := feedsByPage(r, user, pageNumber)
+			feedPage, err := feedsByPage(r, ctxUser, pageNumber)
 			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Warn().Err(err).Msg(msg)
@@ -259,7 +259,7 @@ func (fc *feedController) handleFeedListView(
 			viewData.Title = fmt.Sprintf("Feeds: %s", feedPage.PageTitle)
 			feedQueryingPage.FeedPage = feedPage
 		} else {
-			feedPage, err := feedsByQueryAndPage(r, user, searchQuery, pageNumber)
+			feedPage, err := feedsByQueryAndPage(r, ctxUser, searchQuery, pageNumber)
 			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Warn().Err(err).Msg(msg)
@@ -330,13 +330,13 @@ func (fc *feedController) handleFeedListBySubscriptionView() func(w http.Respons
 	feedsByPage := func(r *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error) {
 		feedSlug := chi.URLParam(r, "slug")
 
-		feed, err := fc.feedService.FeedBySlug(feedSlug)
+		f, err := fc.feedService.FeedBySlug(feedSlug)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed")
 			return feedquerying.FeedPage{}, err
 		}
 
-		subscription, err := fc.feedService.SubscriptionByFeed(user.UUID, feed.UUID)
+		subscription, err := fc.feedService.SubscriptionByFeed(user.UUID, f.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
 			return feedquerying.FeedPage{}, err
@@ -348,13 +348,13 @@ func (fc *feedController) handleFeedListBySubscriptionView() func(w http.Respons
 	feedsByQueryAndPage := func(r *http.Request, user *user.User, query string, pageNumber uint) (feedquerying.FeedPage, error) {
 		feedSlug := chi.URLParam(r, "slug")
 
-		feed, err := fc.feedService.FeedBySlug(feedSlug)
+		f, err := fc.feedService.FeedBySlug(feedSlug)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed")
 			return feedquerying.FeedPage{}, err
 		}
 
-		subscription, err := fc.feedService.SubscriptionByFeed(user.UUID, feed.UUID)
+		subscription, err := fc.feedService.SubscriptionByFeed(user.UUID, f.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
 			return feedquerying.FeedPage{}, err
@@ -369,8 +369,8 @@ func (fc *feedController) handleFeedListBySubscriptionView() func(w http.Respons
 // handleFeedCategoryAddView renders the feed category addition form.
 func (fc *feedController) handleFeedCategoryAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
-		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedCategoryAdd)
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedCategoryAdd)
 
 		viewData := view.Data{
 			Content: feedFormContent{
@@ -590,11 +590,11 @@ func (fc *feedController) handleFeedEntryToggleRead() func(w http.ResponseWriter
 // handleFeedSubscriptionListView renders the feed category list view.
 func (fc *feedController) handleFeedSubscriptionListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 
-		subscriptionsByCategory, err := fc.queryingService.SubscriptionsByCategory(user.UUID)
+		subscriptionsByCategory, err := fc.queryingService.SubscriptionsByCategory(ctxUser.UUID)
 		if err != nil {
-			log.Error().Err(err).Str("user_uuid", user.UUID).Msg("failed to retrieve feed subscriptions")
+			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve feed subscriptions")
 			view.PutFlashError(w, "failed to retrieve feed subscriptions")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return
@@ -618,10 +618,10 @@ func (fc *feedController) handleFeedSubscriptionDeleteView() func(w http.Respons
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		subscriptionUUID := chi.URLParam(r, "uuid")
-		user := httpcontext.UserValue(r.Context())
-		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedSubscriptionDelete)
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedSubscriptionDelete)
 
-		subscription, err := fc.queryingService.SubscriptionByUUID(user.UUID, subscriptionUUID)
+		subscription, err := fc.queryingService.SubscriptionByUUID(ctxUser.UUID, subscriptionUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
 			view.PutFlashError(w, "failed to retrieve feed subscription")
@@ -649,7 +649,7 @@ func (fc *feedController) handleFeedSubscriptionDelete() func(w http.ResponseWri
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		subscriptionUUID := chi.URLParam(r, "uuid")
-		user := httpcontext.UserValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 
 		var form feedSubscriptionDeleteForm
 		if err := decodeForm(r, &form); err != nil {
@@ -659,14 +659,14 @@ func (fc *feedController) handleFeedSubscriptionDelete() func(w http.ResponseWri
 			return
 		}
 
-		if !fc.csrfService.Validate(form.CSRFToken, user.UUID, actionFeedSubscriptionDelete) {
+		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedSubscriptionDelete) {
 			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
-		if err := fc.feedService.DeleteSubscription(user.UUID, subscriptionUUID); err != nil {
+		if err := fc.feedService.DeleteSubscription(ctxUser.UUID, subscriptionUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete feed subscription")
 			view.PutFlashError(w, "failed to delete feed subscription")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -686,12 +686,12 @@ func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseW
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 		subscriptionUUID := chi.URLParam(r, "uuid")
 
-		csrfToken := fc.csrfService.Generate(user.UUID, actionFeedSubscriptionEdit)
+		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedSubscriptionEdit)
 
-		subscription, err := fc.queryingService.SubscriptionByUUID(user.UUID, subscriptionUUID)
+		subscription, err := fc.queryingService.SubscriptionByUUID(ctxUser.UUID, subscriptionUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
 			view.PutFlashError(w, "failed to retrieve feed subscription")
@@ -699,7 +699,7 @@ func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseW
 			return
 		}
 
-		categories, err := fc.feedService.Categories(user.UUID)
+		categories, err := fc.feedService.Categories(ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed categories")
 			view.PutFlashError(w, "failed to retrieve feed categories")
@@ -729,7 +729,7 @@ func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWrite
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 		subscriptionUUID := chi.URLParam(r, "uuid")
 
 		var form feedSubscriptionEditForm
@@ -740,7 +740,7 @@ func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWrite
 			return
 		}
 
-		if !fc.csrfService.Validate(form.CSRFToken, user.UUID, actionFeedSubscriptionEdit) {
+		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedSubscriptionEdit) {
 			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -748,7 +748,7 @@ func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWrite
 		}
 
 		updatedSubscription := feed.Subscription{
-			UserUUID:     user.UUID,
+			UserUUID:     ctxUser.UUID,
 			UUID:         subscriptionUUID,
 			Alias:        form.Alias,
 			CategoryUUID: form.CategoryUUID,
@@ -768,7 +768,7 @@ func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWrite
 // handleEntryMetadataMarkAllAsRead handles a request to mark all feed entries as read.
 func (fc *feedController) handleEntryMetadataMarkAllAsRead() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 
 		var form feedEntryMetadataMarkReadForm
 		if err := decodeForm(r, &form); err != nil {
@@ -778,14 +778,14 @@ func (fc *feedController) handleEntryMetadataMarkAllAsRead() func(w http.Respons
 			return
 		}
 
-		if !fc.csrfService.Validate(form.CSRFToken, user.UUID, actionFeedEntryMetadataEdit) {
+		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
 			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
-		if err := fc.feedService.MarkAllEntriesAsRead(user.UUID); err != nil {
+		if err := fc.feedService.MarkAllEntriesAsRead(ctxUser.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to mark feed entries as read")
 			view.PutFlashError(w, "failed to mark feed entries as read")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -799,7 +799,7 @@ func (fc *feedController) handleEntryMetadataMarkAllAsRead() func(w http.Respons
 // handleEntryMetadataMarkAllAsReadByCategory handles a request to mark all feed entries as read for a given category.
 func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 		categorySlug := chi.URLParam(r, "slug")
 
 		var form feedEntryMetadataMarkReadForm
@@ -810,14 +810,14 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w ht
 			return
 		}
 
-		if !fc.csrfService.Validate(form.CSRFToken, user.UUID, actionFeedEntryMetadataEdit) {
+		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
 			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
-		category, err := fc.feedService.CategoryBySlug(user.UUID, categorySlug)
+		category, err := fc.feedService.CategoryBySlug(ctxUser.UUID, categorySlug)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed category")
 			view.PutFlashError(w, "failed to retrieve feed category")
@@ -825,7 +825,7 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w ht
 			return
 		}
 
-		if err := fc.feedService.MarkAllEntriesAsReadByCategory(user.UUID, category.UUID); err != nil {
+		if err := fc.feedService.MarkAllEntriesAsReadByCategory(ctxUser.UUID, category.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to mark feed entries as read")
 			view.PutFlashError(w, "failed to mark feed entries as read")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -839,7 +839,7 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w ht
 // handleEntryMetadataMarkAllAsReadByFeed handles a request to mark all feed entries as read for a given feed.
 func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
+		ctxUser := httpcontext.UserValue(r.Context())
 		feedSlug := chi.URLParam(r, "slug")
 
 		var form feedEntryMetadataMarkReadForm
@@ -850,14 +850,14 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.R
 			return
 		}
 
-		if !fc.csrfService.Validate(form.CSRFToken, user.UUID, actionFeedEntryMetadataEdit) {
+		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
 			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
-		feed, err := fc.feedService.FeedBySlug(feedSlug)
+		f, err := fc.feedService.FeedBySlug(feedSlug)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed")
 			view.PutFlashError(w, "failed to retrieve feed")
@@ -865,7 +865,7 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.R
 			return
 		}
 
-		subscription, err := fc.feedService.SubscriptionByFeed(user.UUID, feed.UUID)
+		subscription, err := fc.feedService.SubscriptionByFeed(ctxUser.UUID, f.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
 			view.PutFlashError(w, "failed to retrieve feed subscription")
@@ -873,7 +873,7 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.R
 			return
 		}
 
-		if err := fc.feedService.MarkAllEntriesAsReadBySubscription(user.UUID, subscription.UUID); err != nil {
+		if err := fc.feedService.MarkAllEntriesAsReadBySubscription(ctxUser.UUID, subscription.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to mark feed entries as read")
 			view.PutFlashError(w, "failed to mark feed entries as read")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)

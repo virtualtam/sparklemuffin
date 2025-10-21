@@ -73,7 +73,7 @@ func (r *FakeRepository) FeedCategoryDelete(userUUID string, categoryUUID string
 		return c.UserUUID == userUUID && c.UUID == categoryUUID
 	})
 
-	subscriptionUUIDs := []string{}
+	var subscriptionUUIDs []string
 	for _, subscription := range r.Subscriptions {
 		if subscription.UserUUID == userUUID && subscription.CategoryUUID == categoryUUID {
 			subscriptionUUIDs = append(subscriptionUUIDs, subscription.UUID)
@@ -262,7 +262,7 @@ func (r *FakeRepository) FeedSubscriptionDelete(userUUID string, subscriptionUUI
 	})
 
 	// 2. Propagate the deletion to feeds that are not referenced anymore
-	deletedFeedUUIDs := []string{}
+	var deletedFeedUUIDs []string
 	r.Feeds = slices.DeleteFunc(r.Feeds, func(f Feed) bool {
 		for _, s := range r.Subscriptions {
 			if s.FeedUUID == f.UUID {
@@ -276,7 +276,7 @@ func (r *FakeRepository) FeedSubscriptionDelete(userUUID string, subscriptionUUI
 		return true
 	})
 
-	deletedEntryUIDs := []string{}
+	var deletedEntryUIDs []string
 	r.Entries = slices.DeleteFunc(r.Entries, func(e Entry) bool {
 		if slices.Contains(deletedFeedUUIDs, e.FeedUUID) {
 			deletedEntryUIDs = append(deletedEntryUIDs, e.UID)

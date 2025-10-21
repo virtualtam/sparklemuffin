@@ -9,6 +9,7 @@ import (
 
 	"github.com/cespare/xxhash/v2"
 	"github.com/jaswdr/faker"
+
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -26,8 +27,8 @@ type fakeData struct {
 func (fd *fakeData) insert(t *testing.T, r *pgfeed.Repository) {
 	t.Helper()
 
-	for _, feed := range fd.feeds {
-		if err := r.FeedCreate(feed); err != nil {
+	for _, f := range fd.feeds {
+		if err := r.FeedCreate(f); err != nil {
 			t.Fatalf("failed to create feed: %q", err)
 		}
 	}

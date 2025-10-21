@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jaswdr/faker"
+
 	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/user"

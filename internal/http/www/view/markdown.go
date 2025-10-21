@@ -58,7 +58,7 @@ func MarkdownToHTMLFunc() func(str string) template.HTML {
 		var buf strings.Builder
 		if err := markdown.Convert([]byte(str), &buf); err != nil {
 			log.Error().Err(err).Msg("failed to render Markdown as HTML")
-			return template.HTML("")
+			return ""
 		}
 
 		return template.HTML(buf.String())

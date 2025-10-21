@@ -105,13 +105,13 @@ func (ac *accountController) handleInfoUpdate() func(w http.ResponseWriter, r *h
 // handleInfoView renders the user account information page.
 func (ac *accountController) handleInfoView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
-		csrfToken := ac.csrfService.Generate(user.UUID, actionAccountUpdate)
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := ac.csrfService.Generate(ctxUser.UUID, actionAccountUpdate)
 
 		viewData := view.Data{
 			Content: view.FormContent{
 				CSRFToken: csrfToken,
-				Content:   user,
+				Content:   ctxUser,
 			},
 			Title: "Account Information",
 		}
@@ -169,13 +169,13 @@ func (ac *accountController) handlePasswordUpdate() func(w http.ResponseWriter, 
 // handlePasswordView renders the user account password page.
 func (ac *accountController) handlePasswordView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user := httpcontext.UserValue(r.Context())
-		csrfToken := ac.csrfService.Generate(user.UUID, actionAccountUpdate)
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := ac.csrfService.Generate(ctxUser.UUID, actionAccountUpdate)
 
 		viewData := view.Data{
 			Content: view.FormContent{
 				CSRFToken: csrfToken,
-				Content:   user,
+				Content:   ctxUser,
 			},
 			Title: "Account Password",
 		}

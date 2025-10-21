@@ -11,7 +11,7 @@ import (
 	"github.com/gosimple/slug"
 )
 
-// Categories allow users to group feed subscriptions.
+// Category allows users to group feed subscriptions.
 type Category struct {
 	UUID     string
 	UserUUID string
@@ -23,7 +23,7 @@ type Category struct {
 	UpdatedAt time.Time
 }
 
-// NewCategory initializes and returns a new feed category.
+// NewCategory initializes and returns a new feed Category.
 func NewCategory(userUUID string, name string) (Category, error) {
 	now := time.Now().UTC()
 
@@ -69,7 +69,7 @@ func (c *Category) ValidateForAddition(v ValidationRepository) error {
 }
 
 // ValidateForDeletion ensures mandatory fields are properly set when deleting a Category.
-func (c *Category) ValidateForDeletion(v ValidationRepository) error {
+func (c *Category) ValidateForDeletion() error {
 	fns := []func() error{
 		c.requireUUID,
 		c.validateUUID,

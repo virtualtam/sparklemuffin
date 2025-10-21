@@ -10,6 +10,7 @@ import (
 
 	"github.com/jaswdr/faker"
 	"github.com/virtualtam/opml-go"
+
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"

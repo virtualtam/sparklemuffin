@@ -34,7 +34,7 @@ func generateFakeBookmark(fake *faker.Faker, userUUID string, private bool) book
 }
 
 func generateUniqueSortedTags(fake *faker.Faker, nTags int) []string {
-	tags := []string{}
+	var tags []string
 	tagMap := map[string]bool{}
 
 	for len(tags) < nTags {

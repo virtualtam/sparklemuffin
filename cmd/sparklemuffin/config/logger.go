@@ -13,15 +13,15 @@ import (
 )
 
 const (
-	// Format log messages as pretty-printed key-value pairs.
+	// LogFormatConsole indicates log messages are formatted as pretty-printed key-value pairs.
 	LogFormatConsole = "console"
 
-	// Format log messages as JSON documents.
+	// LogFormatJSON indicates log messages are formatted as JSON documents.
 	LogFormatJSON = "json"
 )
 
 var (
-	// Available logger levels.
+	// LogLevelValues lists available logging levels.
 	LogLevelValues = []string{
 		zerolog.LevelTraceValue,
 		zerolog.LevelDebugValue,

@@ -100,7 +100,7 @@ func createTestDatabase(t *testing.T) (string, *sql.DB) {
 	}
 
 	t.Cleanup(func() {
-		//nolint: usetesting
+		// nolint: usetesting
 		// t.Context() has already been canceled, create a new context to terminate the container.
 		if err := pgContainer.Terminate(context.Background()); err != nil {
 			t.Fatalf("failed to terminate postgres container: %q", err)

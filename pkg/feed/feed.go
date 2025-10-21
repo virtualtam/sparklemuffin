@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
+
 	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 )
 
@@ -127,7 +128,7 @@ func (f *Feed) ValidateURL() error {
 
 func (f *Feed) requireURL() error {
 	if f.FeedURL == "" {
-		return ErrFeedURLInvalid
+		return ErrFeedURLRequired
 	}
 
 	return nil

@@ -7,12 +7,12 @@ package querying
 type Visibility string
 
 const (
-	// Public and private bookmarks.
+	// VisibilityAll indicates public and private bookmarks will be returned.
 	VisibilityAll Visibility = "all"
 
-	// Private bookmarks only.
+	// VisibilityPrivate indicates only private bookmarks will be returned.
 	VisibilityPrivate Visibility = "private"
 
-	// Public bookmarks only.
+	// VisibilityPublic indicates only public bookmarks will be returned.
 	VisibilityPublic Visibility = "public"
 )

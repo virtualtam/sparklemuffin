@@ -9,12 +9,13 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/hlog"
+
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 )
 
 var (
-	errorView *view.ErrorView = view.NewError()
+	errorView = view.NewError()
 )
 
 // AccessLogger logs information about incoming HTTP requests.
@@ -37,7 +38,7 @@ func AccessLogger(r *http.Request, status, size int, dur time.Duration) {
 // AdminUser requires the user to have administration privileges to
 // access content.
 func AdminUser(h http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 
 		if user == nil {
@@ -51,12 +52,12 @@ func AdminUser(h http.HandlerFunc) http.HandlerFunc {
 		}
 
 		h(w, r)
-	})
+	}
 }
 
 // AuthenticatedUser requires the user to be authenticated.
 func AuthenticatedUser(h http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		user := httpcontext.UserValue(r.Context())
 
 		if user == nil {
@@ -65,13 +66,13 @@ func AuthenticatedUser(h http.HandlerFunc) http.HandlerFunc {
 		}
 
 		h(w, r)
-	})
+	}
 }
 
 // StaticCacheControl sets the Cache-Control header for static assets.
 func StaticCacheControl(h http.Handler) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "max-age=2592000") // 30 days
 		h.ServeHTTP(w, r)
-	})
+	}
 }

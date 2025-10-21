@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	categoryDateComparisonDelta time.Duration = 1 * time.Second
+	categoryDateComparisonDelta = 1 * time.Second
 )
 
 func assertCategoryEquals(t *testing.T, got, want Category) {

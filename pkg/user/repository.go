@@ -8,7 +8,7 @@ type Repository interface {
 	// UserAdd saves a new user.
 	UserAdd(User) error
 
-	// UserDelete deletes an existing user and all related data.
+	// UserDeleteByUUID deletes an existing user and all related data.
 	UserDeleteByUUID(uuid string) error
 
 	// UserGetAll returns a list of all User accounts.

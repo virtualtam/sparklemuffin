@@ -11,7 +11,6 @@ var (
 	ErrFeedSlugInvalid          = errors.New("feed: invalid slug")
 	ErrFeedSlugRequired         = errors.New("feed: slug required")
 	ErrFeedTitleRequired        = errors.New("feed: title required")
-	ErrFeedUUIDInvalid          = errors.New("feed: invalid UUID")
 	ErrFeedUUIDRequired         = errors.New("feed: UUID required")
 	ErrFeedURLInvalid           = errors.New("feed: invalid URL")
 	ErrFeedURLNoScheme          = errors.New("feed: missing URL scheme")

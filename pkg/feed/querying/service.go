@@ -13,7 +13,7 @@ const (
 	PageHeaderAll  string = "All"
 )
 
-// Service handles oprtaions related to displaying and paginating feeds.
+// Service handles operations related to displaying and paginating feeds.
 type Service struct {
 	r Repository
 }
@@ -109,17 +109,17 @@ func (s *Service) FeedsBySubscriptionAndPage(userUUID string, subscription feed.
 		return s.r.FeedSubscriptionEntryGetNBySubscription(userUUID, subscription.UUID, entriesPerPage, offset)
 	}
 
-	feed, err := s.r.FeedGetByUUID(subscription.FeedUUID)
+	f, err := s.r.FeedGetByUUID(subscription.FeedUUID)
 	if err != nil {
 		return FeedPage{}, err
 	}
 
-	pageTitle := feed.Title
+	pageTitle := f.Title
 	if subscription.Alias != "" {
 		pageTitle = subscription.Alias
 	}
 
-	return s.feedsByPage(userUUID, number, getCountFn, subscriptionEntryGetNFn, pageTitle, feed.Description)
+	return s.feedsByPage(userUUID, number, getCountFn, subscriptionEntryGetNFn, pageTitle, f.Description)
 }
 
 func (s *Service) feedsByQueryAndPage(
@@ -198,17 +198,17 @@ func (s *Service) FeedsBySubscriptionAndQueryAndPage(userUUID string, subscripti
 		return s.r.FeedSubscriptionEntryGetNBySubscriptionAndQuery(userUUID, subscription.UUID, query, entriesPerPage, offset)
 	}
 
-	feed, err := s.r.FeedGetByUUID(subscription.FeedUUID)
+	f, err := s.r.FeedGetByUUID(subscription.FeedUUID)
 	if err != nil {
 		return FeedPage{}, err
 	}
 
-	pageTitle := feed.Title
+	pageTitle := f.Title
 	if subscription.Alias != "" {
 		pageTitle = subscription.Alias
 	}
 
-	return s.feedsByQueryAndPage(userUUID, query, number, getCountFn, subscriptionEntryGetNFn, pageTitle, feed.Description)
+	return s.feedsByQueryAndPage(userUUID, query, number, getCountFn, subscriptionEntryGetNFn, pageTitle, f.Description)
 }
 
 func (s *Service) SubscriptionByUUID(userUUID string, subscriptionUUID string) (Subscription, error) {

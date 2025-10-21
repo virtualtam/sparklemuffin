@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	defaultSynchronizationInterval time.Duration = 1 * time.Hour
+	defaultSynchronizationInterval = 1 * time.Hour
 )
 
 // A Scheduler periodically synchronizes all syndication feeds.

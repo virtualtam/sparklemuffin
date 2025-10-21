@@ -11,6 +11,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedexporting "github.com/virtualtam/sparklemuffin/pkg/feed/exporting"
@@ -55,7 +56,7 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 		@title,
 		@description,
 		@slug,
-		to_tsvector(@fulltextsearch_string),
+		TO_TSVECTOR(@fulltextsearch_string),
 		@etag,
 		@hash_xxhash64,
 		@last_modified,
@@ -151,7 +152,7 @@ func (r *Repository) FeedUpdateMetadata(feedMetadata feedsynchronizing.FeedMetad
 		title=@title,
 		description=@description,
 		hash_xxhash64=@hash_xxhash64,
-		fulltextsearch_tsv=to_tsvector(@fulltextsearch_string),
+		fulltextsearch_tsv=TO_TSVECTOR(@fulltextsearch_string),
 		updated_at=@updated_at
 	WHERE uuid=@uuid`
 

@@ -17,7 +17,7 @@ type fakeRepository struct {
 }
 
 func (r *fakeRepository) FeedGetNByLastSynchronizationTime(n uint, lastSyncBefore time.Time) ([]feed.Feed, error) {
-	feedsToSync := []feed.Feed{}
+	var feedsToSync []feed.Feed
 
 	for _, f := range r.Feeds {
 		if f.FetchedAt.After(lastSyncBefore) {

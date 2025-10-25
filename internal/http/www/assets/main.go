@@ -63,13 +63,21 @@ func copyFile(src, dest string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open %s: %w", src, err)
 	}
-	defer srcFile.Close()
+	defer func() {
+		if err := srcFile.Close(); err != nil {
+			log.Fatalf("failed to close %s: %s", src, err)
+		}
+	}()
 
 	destFile, err := os.Create(dest)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", dest, err)
 	}
-	defer destFile.Close()
+	defer func() {
+		if err := destFile.Close(); err != nil {
+			log.Fatalf("failed to close %s: %s", dest, err)
+		}
+	}()
 
 	_, err = io.Copy(destFile, srcFile)
 	if err != nil {

@@ -13,7 +13,6 @@ indent_style = tab
 tab_width = 4
 
 [*.{css,gohtml,hcl,html,xml,yaml,yml}]
-indent_style = space
 indent_size = 2
 
 [Makefile]

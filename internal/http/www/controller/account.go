@@ -14,25 +14,30 @@ import (
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
+	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 const (
-	actionAccountUpdate string = "account-update"
+	actionAccountUpdate            string = "account-update"
+	actionAccountPreferencesUpdate string = "account-preferences-update"
 )
 
 // RegisterAccountHandlers registers handlers for user account management..
 func RegisterAccountHandlers(
 	r *chi.Mux,
 	csrfService *csrf.Service,
+	feedService *feed.Service,
 	userService *user.Service,
 ) {
 	ac := accountController{
 		csrfService: csrfService,
+		feedService: feedService,
 		userService: userService,
 
-		accountInfoView:     view.New("account/info.gohtml"),
-		accountPasswordView: view.New("account/password.gohtml"),
+		accountInfoView:        view.New("account/info.gohtml"),
+		accountPasswordView:    view.New("account/password.gohtml"),
+		accountPreferencesView: view.New("account/preferences.gohtml"),
 	}
 
 	// user account
@@ -45,15 +50,19 @@ func RegisterAccountHandlers(
 		r.Post("/info", ac.handleInfoUpdate())
 		r.Get("/password", ac.handlePasswordView())
 		r.Post("/password", ac.handlePasswordUpdate())
+		r.Get("/preferences", ac.handlePreferencesView())
+		r.Post("/preferences", ac.handlePreferencesUpdate())
 	})
 }
 
 type accountController struct {
 	csrfService *csrf.Service
+	feedService *feed.Service
 	userService *user.Service
 
-	accountInfoView     *view.View
-	accountPasswordView *view.View
+	accountInfoView        *view.View
+	accountPasswordView    *view.View
+	accountPreferencesView *view.View
 }
 
 // handleInfoUpdate processes the account information update form.
@@ -181,5 +190,70 @@ func (ac *accountController) handlePasswordView() func(w http.ResponseWriter, r 
 		}
 
 		ac.accountPasswordView.Render(w, r, viewData)
+	}
+}
+func (ac *accountController) handlePreferencesUpdate() func(w http.ResponseWriter, r *http.Request) {
+	type preferencesUpdateForm struct {
+		CSRFToken   string `schema:"csrf_token"`
+		ShowEntries string `schema:"feed_show_entries"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+
+		var form preferencesUpdateForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse account preferences update form")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if !ac.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionAccountPreferencesUpdate) {
+			log.Warn().Msg("failed to validate CSRF token")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		feedPreferences := feed.Preferences{
+			UserUUID:    ctxUser.UUID,
+			ShowEntries: feed.EntryVisibility(form.ShowEntries),
+		}
+
+		if err := ac.feedService.UpdatePreferences(feedPreferences); err != nil {
+			log.Error().Err(err).Msg("failed to update account preferences")
+			view.PutFlashError(w, fmt.Sprintf("There was an error updating your preferences: %s", err))
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		view.PutFlashSuccess(w, "Your feed preferences have been successfully updated")
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+	}
+}
+
+func (ac *accountController) handlePreferencesView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+		csrfToken := ac.csrfService.Generate(ctxUser.UUID, actionAccountPreferencesUpdate)
+
+		preferences, err := ac.feedService.PreferencesByUserUUID(ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve account preferences")
+			view.PutFlashError(w, "There was an error retrieving your preferences")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		viewData := view.Data{
+			Content: view.FormContent{
+				CSRFToken: csrfToken,
+				Content:   preferences,
+			},
+			Title: "Preferences",
+		}
+
+		ac.accountPreferencesView.Render(w, r, viewData)
 	}
 }

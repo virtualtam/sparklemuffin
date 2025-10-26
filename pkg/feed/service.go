@@ -210,6 +210,16 @@ func (s *Service) ToggleEntryRead(userUUID string, entryUID string) error {
 	return nil
 }
 
+// PreferencesByUserUUID returns the feed Preferences for a given user.
+func (s *Service) PreferencesByUserUUID(userUUID string) (Preferences, error) {
+	return s.r.FeedPreferencesByUserUUID(userUUID)
+}
+
+func (s *Service) UpdatePreferences(preferences Preferences) error {
+	preferences.UpdatedAt = time.Now().UTC()
+	return s.r.FeedPreferencesUpdate(preferences)
+}
+
 func (s *Service) DeleteSubscription(userUUID string, subscriptionUUID string) error {
 	subscription, err := s.r.FeedSubscriptionGetByUUID(userUUID, subscriptionUUID)
 	if err != nil {

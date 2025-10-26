@@ -69,6 +69,23 @@ func (r *Repository) RowExistsByQuery(query string, queryParams ...any) (bool, e
 	return true, nil
 }
 
+func (r *Repository) BatchTx(domain string, operation string, batch *pgx.Batch) error {
+	ctx := context.Background()
+
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.Rollback(ctx, tx, domain, operation)
+
+	if err := tx.SendBatch(ctx, batch).Close(); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
 func (r *Repository) QueryTx(domain string, operation string, query string, args pgx.NamedArgs) error {
 	ctx := context.Background()
 

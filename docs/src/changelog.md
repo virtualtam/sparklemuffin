@@ -7,6 +7,12 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 ### Added
+#### Feed
+- Add display preferences
+
+#### WWW
+- Add user preferences page
+
 #### Packaging and automation
 - Add Make target to reindex the development database and refresh collation version
 - Update .gitignore and .dockerignore to exclude JetBrains IDE configuration

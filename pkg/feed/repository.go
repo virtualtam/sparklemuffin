@@ -73,6 +73,12 @@ type Repository interface {
 	// FeedEntryMetadataUpdate updates an existing EntryStatus.
 	FeedEntryMetadataUpdate(entryMetadata EntryMetadata) error
 
+	// FeedPreferencesByUserUUID returns a user's feed Preferences.
+	FeedPreferencesByUserUUID(userUUID string) (Preferences, error)
+
+	// FeedPreferencesUpdate updates a user's feed Preferences.
+	FeedPreferencesUpdate(preferences Preferences) error
+
 	// FeedSubscriptionCreate creates a new Feed subscription for a given user.
 	FeedSubscriptionCreate(subscription Subscription) (Subscription, error)
 

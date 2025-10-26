@@ -8,8 +8,11 @@ import (
 	"testing"
 
 	"github.com/jaswdr/faker"
+
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
+	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -19,15 +22,20 @@ func TestUserService(t *testing.T) {
 
 	s := user.NewService(r)
 
+	fr := pgfeed.NewRepository(pool)
+	fs := feed.NewService(fr, nil)
+
 	fake := faker.New()
 
 	t.Run("create, retrieve and delete user", func(t *testing.T) {
 		u := pgbase.GenerateFakeUser(t, &fake)
 
+		// 1. Create user
 		if err := s.Add(u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
 		}
 
+		// 2. Retrieve user
 		gotUser, err := s.ByNickName(u.NickName)
 		if err != nil {
 			t.Fatalf("failed to retrieve user: %q", err)
@@ -43,6 +51,17 @@ func TestUserService(t *testing.T) {
 			t.Error("want UUID to be set")
 		}
 
+		// 3. Retrieve feed preferences
+		gotPreferences, err := fs.PreferencesByUserUUID(gotUser.UUID)
+		if err != nil {
+			t.Fatalf("failed to retrieve feed preferences: %q", err)
+		}
+
+		if gotPreferences.ShowEntries != feed.EntryVisibilityAll {
+			t.Errorf("want feed preference %q, got %q", feed.EntryVisibilityAll, gotPreferences.ShowEntries)
+		}
+
+		// 4. Delete user
 		if err := s.DeleteByUUID(gotUser.UUID); err != nil {
 			t.Fatalf("failed to delete user by UUID: %q", err)
 		}

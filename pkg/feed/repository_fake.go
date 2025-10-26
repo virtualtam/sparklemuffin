@@ -6,6 +6,8 @@ package feed
 import (
 	"errors"
 	"slices"
+
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 var _ Repository = &FakeRepository{}
@@ -15,6 +17,7 @@ type FakeRepository struct {
 	Entries         []Entry
 	EntriesMetadata []EntryMetadata
 	Feeds           []Feed
+	Preferences     map[string]Preferences
 	Subscriptions   []Subscription
 }
 
@@ -223,6 +226,26 @@ func (r *FakeRepository) FeedEntryMetadataUpdate(updatedEntryMetadata EntryMetad
 	}
 
 	return ErrEntryMetadataNotFound
+}
+
+func (r *FakeRepository) FeedPreferencesByUserUUID(userUUID string) (Preferences, error) {
+	preferences, ok := r.Preferences[userUUID]
+	if !ok {
+		return Preferences{}, user.ErrNotFound
+	}
+
+	return preferences, nil
+}
+
+func (r *FakeRepository) FeedPreferencesUpdate(preferences Preferences) error {
+	_, ok := r.Preferences[preferences.UserUUID]
+	if !ok {
+		return user.ErrNotFound
+	}
+
+	r.Preferences[preferences.UserUUID] = preferences
+
+	return nil
 }
 
 func (r *FakeRepository) FeedSubscriptionCountByFeed(feedUUID string) (uint, error) {

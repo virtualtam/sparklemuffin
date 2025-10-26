@@ -139,7 +139,7 @@ func (s *Server) registerHandlers() {
 	// Domain handlers
 	controller.RegisterSessionHandlers(s.router, s.sessionService, s.userService)
 	controller.RegisterAdminHandlers(s.router, s.csrfService, s.userService)
-	controller.RegisterAccountHandlers(s.router, s.csrfService, s.userService)
+	controller.RegisterAccountHandlers(s.router, s.csrfService, s.feedService, s.userService)
 	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.bookmarkExportingService, s.bookmarkImportingService, s.bookmarkQueryingService, s.userService)
 	controller.RegisterFeedHandlers(s.router, s.csrfService, s.feedService, s.feedExportingService, s.feedImportingService, s.feedQueryingService, s.userService)
 

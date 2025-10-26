@@ -27,29 +27,35 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 }
 
 func (r *Repository) UserAdd(u user.User) error {
-	query := `
-	INSERT INTO users(
-		uuid,
-		email,
-		nick_name,
-		display_name,
-		password_hash,
-		is_admin,
-		created_at,
-		updated_at
-	)
-	VALUES(
-		@uuid,
-		@email,
-		@nick_name,
-		@display_name,
-		@password_hash,
-		@is_admin,
-		@created_at,
-		@updated_at
-	)`
+	const (
+		userAddQuery = `
+			INSERT INTO users(
+				uuid,
+				email,
+				nick_name,
+				display_name,
+				password_hash,
+				is_admin,
+				created_at,
+				updated_at
+			)
+			VALUES(
+				@uuid,
+				@email,
+				@nick_name,
+				@display_name,
+				@password_hash,
+				@is_admin,
+				@created_at,
+				@updated_at
+			)`
 
-	args := pgx.NamedArgs{
+		feedPreferencesAddQuery = `
+			INSERT INTO feed_preferences(user_uuid, updated_at )
+			VALUES(@user_uuid, @updated_at)`
+	)
+
+	userAddArgs := pgx.NamedArgs{
 		"uuid":          u.UUID,
 		"email":         u.Email,
 		"nick_name":     u.NickName,
@@ -59,8 +65,16 @@ func (r *Repository) UserAdd(u user.User) error {
 		"created_at":    u.CreatedAt,
 		"updated_at":    u.UpdatedAt,
 	}
+	feedPreferencesAddArgs := pgx.NamedArgs{
+		"user_uuid":  u.UUID,
+		"updated_at": u.UpdatedAt,
+	}
 
-	return r.QueryTx("users", "UserAdd", query, args)
+	batch := &pgx.Batch{}
+	batch.Queue(userAddQuery, userAddArgs)
+	batch.Queue(feedPreferencesAddQuery, feedPreferencesAddArgs)
+
+	return r.BatchTx("users", "UserAdd", batch)
 }
 
 func (r *Repository) UserDeleteByUUID(userUUID string) error {

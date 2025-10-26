@@ -27,3 +27,7 @@ align_scope = file
 spacing_before = align
 align_within = statement
 align_scope = file
+
+[sqlfluff:rules:capitalisation.types]
+# Temporary workaround for CP05 limitations.
+ignore_words_regex = ^feed_

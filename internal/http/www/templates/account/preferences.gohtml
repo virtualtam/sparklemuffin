@@ -1,0 +1,46 @@
+{{define "content"}}
+  <section class="section pt-3">
+    <nav class="breadcrumb" aria-label="breadcrumbs">
+      <ul>
+        <li><a href="/account">Account</a></li>
+        <li class="is-active"><a href="#" aria-current="page">Preferences</a></li>
+      </ul>
+    </nav>
+
+    <form action="/account/preferences" method="POST">
+      <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+
+      <h3 class="title is-3">Feeds</h3>
+      <div class="field is-horizontal">
+        <div class="field-label">
+          <label for="feed_show_entries" class="label">Show entries:</label>
+        </div>
+        <div class="field-body">
+          <div class="field">
+            <div class="control">
+                <input type="radio" name="feed_show_entries" id="all" value="ALL"{{ if eq .Content.ShowEntries "ALL" }} checked{{ end }}>
+                <label for="all">All</label>
+                <br>
+                <input type="radio" name="feed_show_entries" id="read" value="READ"{{ if eq .Content.ShowEntries "READ" }} checked{{ end }}>
+                <label for="private">Read</label>
+                <br>
+                <input type="radio" name="feed_show_entries" id="unread" value="UNREAD"{{ if eq .Content.ShowEntries "UNREAD" }} checked{{ end }}>
+                <label for="public">Unread</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field is-horizontal">
+        <div class="field-label"></div>
+        <div class="field-body">
+          <div class="field">
+            <div class="control">
+              <button type="submit" class="button is-primary">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </section>
+{{- end}}

@@ -17,6 +17,7 @@ import (
 	feedexporting "github.com/virtualtam/sparklemuffin/pkg/feed/exporting"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	feedsynchronizing "github.com/virtualtam/sparklemuffin/pkg/feed/synchronizing"
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 var _ feed.Repository = &Repository{}
@@ -650,6 +651,55 @@ func (r *Repository) FeedEntryMetadataUpdate(entryMetadata feed.EntryMetadata) e
 	}
 
 	return r.QueryTx("feeds", "FeedEntryMetadataUpdate", query, args)
+}
+
+func (r *Repository) FeedPreferencesByUserUUID(userUUID string) (feed.Preferences, error) {
+	const (
+		query = `
+		SELECT user_uuid, show_entries, updated_at
+		FROM feed_preferences
+		WHERE user_uuid=$1`
+	)
+
+	rows, err := r.Pool.Query(context.Background(), query, userUUID)
+	if err != nil {
+		return feed.Preferences{}, err
+	}
+	defer rows.Close()
+
+	dbPreferences := DBPreferences{}
+	err = pgxscan.ScanOne(&dbPreferences, rows)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return feed.Preferences{}, user.ErrNotFound
+	}
+	if err != nil {
+		return feed.Preferences{}, err
+	}
+
+	return feed.Preferences{
+		UserUUID:    dbPreferences.UserUUID,
+		ShowEntries: feed.EntryVisibility(dbPreferences.ShowEntries),
+		UpdatedAt:   dbPreferences.UpdatedAt,
+	}, nil
+}
+
+func (r *Repository) FeedPreferencesUpdate(preferences feed.Preferences) error {
+	const (
+		query = `
+		UPDATE feed_preferences
+		SET
+			show_entries=@show_entries,
+			updated_at=@updated_at
+		WHERE user_uuid=@user_uuid`
+	)
+
+	args := pgx.NamedArgs{
+		"user_uuid":    preferences.UserUUID,
+		"show_entries": preferences.ShowEntries,
+		"updated_at":   preferences.UpdatedAt,
+	}
+
+	return r.QueryTx("feeds", "FeedPreferencesUpdate", query, args)
 }
 
 func (r *Repository) FeedCategorySubscriptionsGetAll(userUUID string) ([]feedexporting.CategorySubscriptions, error) {

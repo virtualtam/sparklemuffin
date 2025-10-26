@@ -15,6 +15,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
+	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
@@ -248,5 +249,28 @@ func TestFeedService(t *testing.T) {
 		if err := fs.DeleteCategory(testUser.UUID, category.UUID); err != nil {
 			t.Fatalf("failed to delete category: %q", err)
 		}
+	})
+
+	t.Run("update preferences", func(t *testing.T) {
+		preferences := feed.Preferences{
+			UserUUID:    testUser.UUID,
+			ShowEntries: feed.EntryVisibilityRead,
+		}
+
+		if err := fs.UpdatePreferences(preferences); err != nil {
+			t.Fatalf("failed to update preferences: %q", err)
+		}
+
+		gotPreferences, err := fs.PreferencesByUserUUID(testUser.UUID)
+		if err != nil {
+			t.Fatalf("failed to retrieve preferences: %q", err)
+		}
+
+		if gotPreferences.ShowEntries != preferences.ShowEntries {
+			t.Errorf("want ShowEntries %q, got %q", preferences.ShowEntries, gotPreferences.ShowEntries)
+		}
+
+		now := time.Now().UTC()
+		assert.TimeAlmostEquals(t, "UpdatedAt", gotPreferences.UpdatedAt, now, assert.TimeComparisonDelta)
 	})
 }

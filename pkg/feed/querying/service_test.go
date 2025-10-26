@@ -71,6 +71,10 @@ func TestService(t *testing.T) {
 		Read:     true,
 	}
 
+	preferences := feed.Preferences{
+		ShowEntries: feed.EntryVisibilityAll,
+	}
+
 	testRepository := fakeRepository{
 		Categories: []feed.Category{
 			user1Category1,
@@ -181,7 +185,7 @@ func TestService(t *testing.T) {
 
 		for _, tc := range cases {
 			t.Run(tc.tname, func(t *testing.T) {
-				got, err := testService.FeedsByPage(tc.userUUID, tc.pageNumber)
+				got, err := testService.FeedsByPage(tc.userUUID, preferences, tc.pageNumber)
 
 				if tc.wantErr != nil {
 					if errors.Is(err, tc.wantErr) {
@@ -313,7 +317,7 @@ func TestService(t *testing.T) {
 
 		for _, tc := range cases {
 			t.Run(tc.tname, func(t *testing.T) {
-				got, err := testService.FeedsByCategoryAndPage(tc.userUUID, tc.category, tc.pageNumber)
+				got, err := testService.FeedsByCategoryAndPage(tc.userUUID, preferences, tc.category, tc.pageNumber)
 
 				if tc.wantErr != nil {
 					if errors.Is(err, tc.wantErr) {
@@ -422,7 +426,7 @@ func TestService(t *testing.T) {
 
 		for _, tc := range cases {
 			t.Run(tc.tname, func(t *testing.T) {
-				got, err := testService.FeedsBySubscriptionAndPage(tc.userUUID, tc.subscription, tc.pageNumber)
+				got, err := testService.FeedsBySubscriptionAndPage(tc.userUUID, preferences, tc.subscription, tc.pageNumber)
 
 				if tc.wantErr != nil {
 					if errors.Is(err, tc.wantErr) {

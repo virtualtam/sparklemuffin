@@ -213,8 +213,8 @@ func (fc *feedController) handleFeedAdd() func(w http.ResponseWriter, r *http.Re
 }
 
 type (
-	feedsByPageCallback         func(r *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error)
-	feedsByQueryAndPageCallback func(r *http.Request, user *user.User, query string, pageNumber uint) (feedquerying.FeedPage, error)
+	feedsByPageCallback         func(r *http.Request, user *user.User, preferences feed.Preferences, pageNumber uint) (feedquerying.FeedPage, error)
+	feedsByQueryAndPageCallback func(r *http.Request, user *user.User, preferences feed.Preferences, query string, pageNumber uint) (feedquerying.FeedPage, error)
 )
 
 func (fc *feedController) handleFeedListView(
@@ -223,6 +223,15 @@ func (fc *feedController) handleFeedListView(
 ) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := httpcontext.UserValue(r.Context())
+
+		// TODO: cache user preferences to avoid unnecessary SQL queries
+		preferences, err := fc.feedService.PreferencesByUserUUID(ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve account preferences")
+			view.PutFlashError(w, "There was an error retrieving your preferences")
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
 
 		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedEntryMetadataEdit)
 
@@ -242,7 +251,7 @@ func (fc *feedController) handleFeedListView(
 
 		searchQuery := r.URL.Query().Get("search")
 		if searchQuery == "" {
-			feedPage, err := feedsByPage(r, ctxUser, pageNumber)
+			feedPage, err := feedsByPage(r, ctxUser, preferences, pageNumber)
 			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Warn().Err(err).Msg(msg)
@@ -259,7 +268,7 @@ func (fc *feedController) handleFeedListView(
 			viewData.Title = fmt.Sprintf("Feeds: %s", feedPage.PageTitle)
 			feedQueryingPage.FeedPage = feedPage
 		} else {
-			feedPage, err := feedsByQueryAndPage(r, ctxUser, searchQuery, pageNumber)
+			feedPage, err := feedsByQueryAndPage(r, ctxUser, preferences, searchQuery, pageNumber)
 			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Warn().Err(err).Msg(msg)
@@ -285,12 +294,12 @@ func (fc *feedController) handleFeedListView(
 
 // handleFeedListAllView renders the syndication feed for the current authenticated user.
 func (fc *feedController) handleFeedListAllView() func(w http.ResponseWriter, r *http.Request) {
-	feedsByPage := func(_ *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error) {
-		return fc.queryingService.FeedsByPage(user.UUID, pageNumber)
+	feedsByPage := func(_ *http.Request, user *user.User, preferences feed.Preferences, pageNumber uint) (feedquerying.FeedPage, error) {
+		return fc.queryingService.FeedsByPage(user.UUID, preferences, pageNumber)
 	}
 
-	feedsByQueryAndPage := func(_ *http.Request, user *user.User, query string, pageNumber uint) (feedquerying.FeedPage, error) {
-		return fc.queryingService.FeedsByQueryAndPage(user.UUID, query, pageNumber)
+	feedsByQueryAndPage := func(_ *http.Request, user *user.User, preferences feed.Preferences, query string, pageNumber uint) (feedquerying.FeedPage, error) {
+		return fc.queryingService.FeedsByQueryAndPage(user.UUID, preferences, query, pageNumber)
 	}
 
 	return fc.handleFeedListView(feedsByPage, feedsByQueryAndPage)
@@ -298,7 +307,7 @@ func (fc *feedController) handleFeedListAllView() func(w http.ResponseWriter, r 
 
 // handleFeedListByCategoryView renders the syndication feed for the current authenticated user.
 func (fc *feedController) handleFeedListByCategoryView() func(w http.ResponseWriter, r *http.Request) {
-	feedsByPage := func(r *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error) {
+	feedsByPage := func(r *http.Request, user *user.User, preferences feed.Preferences, pageNumber uint) (feedquerying.FeedPage, error) {
 		categorySlug := chi.URLParam(r, "slug")
 
 		category, err := fc.feedService.CategoryBySlug(user.UUID, categorySlug)
@@ -307,10 +316,10 @@ func (fc *feedController) handleFeedListByCategoryView() func(w http.ResponseWri
 			return feedquerying.FeedPage{}, err
 		}
 
-		return fc.queryingService.FeedsByCategoryAndPage(user.UUID, category, pageNumber)
+		return fc.queryingService.FeedsByCategoryAndPage(user.UUID, preferences, category, pageNumber)
 	}
 
-	feedsByQueryAndPage := func(r *http.Request, user *user.User, query string, pageNumber uint) (feedquerying.FeedPage, error) {
+	feedsByQueryAndPage := func(r *http.Request, user *user.User, preferences feed.Preferences, query string, pageNumber uint) (feedquerying.FeedPage, error) {
 		categorySlug := chi.URLParam(r, "slug")
 
 		category, err := fc.feedService.CategoryBySlug(user.UUID, categorySlug)
@@ -319,7 +328,7 @@ func (fc *feedController) handleFeedListByCategoryView() func(w http.ResponseWri
 			return feedquerying.FeedPage{}, err
 		}
 
-		return fc.queryingService.FeedsByCategoryAndQueryAndPage(user.UUID, category, query, pageNumber)
+		return fc.queryingService.FeedsByCategoryAndQueryAndPage(user.UUID, preferences, category, query, pageNumber)
 	}
 
 	return fc.handleFeedListView(feedsByPage, feedsByQueryAndPage)
@@ -327,7 +336,7 @@ func (fc *feedController) handleFeedListByCategoryView() func(w http.ResponseWri
 
 // handleFeedListBySubscriptionView renders the syndication feed for the current authenticated user.
 func (fc *feedController) handleFeedListBySubscriptionView() func(w http.ResponseWriter, r *http.Request) {
-	feedsByPage := func(r *http.Request, user *user.User, pageNumber uint) (feedquerying.FeedPage, error) {
+	feedsByPage := func(r *http.Request, user *user.User, preferences feed.Preferences, pageNumber uint) (feedquerying.FeedPage, error) {
 		feedSlug := chi.URLParam(r, "slug")
 
 		f, err := fc.feedService.FeedBySlug(feedSlug)
@@ -342,10 +351,10 @@ func (fc *feedController) handleFeedListBySubscriptionView() func(w http.Respons
 			return feedquerying.FeedPage{}, err
 		}
 
-		return fc.queryingService.FeedsBySubscriptionAndPage(user.UUID, subscription, pageNumber)
+		return fc.queryingService.FeedsBySubscriptionAndPage(user.UUID, preferences, subscription, pageNumber)
 	}
 
-	feedsByQueryAndPage := func(r *http.Request, user *user.User, query string, pageNumber uint) (feedquerying.FeedPage, error) {
+	feedsByQueryAndPage := func(r *http.Request, user *user.User, preferences feed.Preferences, query string, pageNumber uint) (feedquerying.FeedPage, error) {
 		feedSlug := chi.URLParam(r, "slug")
 
 		f, err := fc.feedService.FeedBySlug(feedSlug)
@@ -360,7 +369,7 @@ func (fc *feedController) handleFeedListBySubscriptionView() func(w http.Respons
 			return feedquerying.FeedPage{}, err
 		}
 
-		return fc.queryingService.FeedsBySubscriptionAndQueryAndPage(user.UUID, subscription, query, pageNumber)
+		return fc.queryingService.FeedsBySubscriptionAndQueryAndPage(user.UUID, preferences, subscription, query, pageNumber)
 	}
 
 	return fc.handleFeedListView(feedsByPage, feedsByQueryAndPage)

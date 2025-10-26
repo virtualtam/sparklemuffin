@@ -9,6 +9,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 #### Feed
 - Add display preferences
+- Filter displayed entries by reading status (all / read / unread)
 
 #### WWW
 - Add user preferences page

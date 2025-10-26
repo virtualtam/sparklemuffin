@@ -185,14 +185,47 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 	return rowsAffected, nil
 }
 
-func (r *Repository) feedSubscriptionEntryGetN(query string, queryParams ...any) ([]feedquerying.SubscribedFeedEntry, error) {
-	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
+func (r *Repository) feedEntryGetCount(query string, showEntries feed.EntryVisibility, args pgx.NamedArgs) (uint, error) {
+	switch showEntries {
+	case feed.EntryVisibilityRead:
+		query += " AND fem.read = TRUE"
+	case feed.EntryVisibilityUnread:
+		query += " AND COALESCE(fem.read, FALSE) = FALSE"
+	}
+
+	var count uint
+
+	err := r.Pool.QueryRow(
+		context.Background(),
+		query,
+		args,
+	).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *Repository) feedSubscriptionEntryGetN(query string, showEntries feed.EntryVisibility, args pgx.NamedArgs) ([]feedquerying.SubscribedFeedEntry, error) {
+	switch showEntries {
+	case feed.EntryVisibilityRead:
+		query += " AND read = TRUE"
+	case feed.EntryVisibilityUnread:
+		query += " AND COALESCE(fem.read, FALSE) = FALSE"
+	}
+
+	query += `
+	ORDER BY fe.published_at DESC
+	LIMIT @limit OFFSET @offset`
+
+	rows, err := r.Pool.Query(context.Background(), query, args)
 	if err != nil {
 		return []feedquerying.SubscribedFeedEntry{}, err
 	}
 	defer rows.Close()
 
-	dbQueryingEntries := []DBQueryingSubscribedFeedEntry{}
+	var dbQueryingEntries []DBQueryingSubscribedFeedEntry
 
 	if err := pgxscan.ScanAll(&dbQueryingEntries, rows); err != nil {
 		return []feedquerying.SubscribedFeedEntry{}, err

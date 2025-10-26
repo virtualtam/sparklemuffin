@@ -5,7 +5,6 @@ All high-level goals and planned work for this project will be documented in thi
 The roadmap is based on the Now / Next / Later format to communicate current focus, upcoming work and longer-term ideas.
 
 ## Now
-- Feed: Toggle displayed entries (all / read / unread)
 - Feed: Toggle description visibility (show / hide)
 - www: Dark mode / theme switching
 

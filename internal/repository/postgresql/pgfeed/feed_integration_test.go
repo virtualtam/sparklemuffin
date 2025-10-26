@@ -221,7 +221,7 @@ func TestFeedService(t *testing.T) {
 		}
 		wantNEntries := uint(len(wantEntries))
 
-		entryCount, err := r.FeedEntryGetCount(testUser.UUID)
+		entryCount, err := r.FeedEntryGetCount(testUser.UUID, feed.EntryVisibilityAll)
 		if err != nil {
 			t.Fatalf("failed to retrieve entry count: %q", err)
 		}
@@ -230,7 +230,12 @@ func TestFeedService(t *testing.T) {
 			t.Errorf("want %d entries, got %d", len(wantEntries), entryCount)
 		}
 
-		gotEntries, err := r.FeedSubscriptionEntryGetN(testUser.UUID, wantNEntries, 0)
+		preferences, err := r.FeedPreferencesGetByUserUUID(testUser.UUID)
+		if err != nil {
+			t.Fatalf("failed to retrieve preferences: %q", err)
+		}
+
+		gotEntries, err := r.FeedSubscriptionEntryGetN(testUser.UUID, preferences, wantNEntries, 0)
 		if err != nil {
 			t.Fatalf("failed to retrieve entries: %q", err)
 		}

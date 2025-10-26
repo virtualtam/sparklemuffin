@@ -367,150 +367,123 @@ func (r *Repository) FeedEntryUpsertMany(entries []feed.Entry) (int64, error) {
 	)
 }
 
-func (r *Repository) FeedEntryGetCount(userUUID string) (uint, error) {
-	query := `
-	SELECT COUNT(*)
-	FROM feed_entries fe
-	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-	WHERE fs.user_uuid=$1`
+func (r *Repository) FeedEntryGetCount(userUUID string, showEntries feed.EntryVisibility) (uint, error) {
+	const (
+		query = `
+		SELECT COUNT(*)
+		FROM feed_entries fe
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		WHERE fs.user_uuid=@user_uuid`
+	)
 
-	var count uint
-
-	err := r.Pool.QueryRow(
-		context.Background(),
-		query,
-		userUUID,
-	).Scan(&count)
-	if err != nil {
-		return 0, err
+	args := pgx.NamedArgs{
+		"user_uuid": userUUID,
 	}
 
-	return count, nil
+	return r.feedEntryGetCount(query, showEntries, args)
 }
 
-func (r *Repository) FeedEntryGetCountByCategory(userUUID string, categoryUUID string) (uint, error) {
-	query := `
-	SELECT COUNT(*)
-	FROM feed_entries fe
-	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-	WHERE fs.user_uuid=$1
-	AND   fs.category_uuid=$2`
+func (r *Repository) FeedEntryGetCountByCategory(userUUID string, showEntries feed.EntryVisibility, categoryUUID string) (uint, error) {
+	const (
+		query = `
+		SELECT COUNT(*)
+		FROM feed_entries fe
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		WHERE fs.user_uuid=@user_uuid
+		AND   fs.category_uuid=@category_uuid`
+	)
 
-	var count uint
-
-	err := r.Pool.QueryRow(
-		context.Background(),
-		query,
-		userUUID,
-		categoryUUID,
-	).Scan(&count)
-	if err != nil {
-		return 0, err
+	args := pgx.NamedArgs{
+		"user_uuid":     userUUID,
+		"category_uuid": categoryUUID,
 	}
 
-	return count, nil
+	return r.feedEntryGetCount(query, showEntries, args)
 }
 
-func (r *Repository) FeedEntryGetCountBySubscription(userUUID string, subscriptionUUID string) (uint, error) {
-	query := `
-	SELECT COUNT(*)
-	FROM feed_entries fe
-	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-	WHERE user_uuid=$1
-	AND   fs.uuid=$2`
+func (r *Repository) FeedEntryGetCountBySubscription(userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string) (uint, error) {
+	const (
+		query = `
+		SELECT COUNT(*)
+		FROM feed_entries fe
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		WHERE fs.user_uuid=@user_uuid
+		AND   fs.uuid=@subscription_uuid`
+	)
 
-	var count uint
-
-	err := r.Pool.QueryRow(
-		context.Background(),
-		query,
-		userUUID,
-		subscriptionUUID,
-	).Scan(&count)
-	if err != nil {
-		return 0, err
+	args := pgx.NamedArgs{
+		"user_uuid":         userUUID,
+		"subscription_uuid": subscriptionUUID,
 	}
 
-	return count, nil
+	return r.feedEntryGetCount(query, showEntries, args)
 }
 
-func (r *Repository) FeedEntryGetCountByQuery(userUUID string, searchTerms string) (uint, error) {
-	query := `
-	SELECT COUNT(*)
-	FROM feed_entries fe
-	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
-	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-	WHERE fs.user_uuid=$1
-	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($2)`
+func (r *Repository) FeedEntryGetCountByQuery(userUUID string, showEntries feed.EntryVisibility, searchTerms string) (uint, error) {
+	const (
+		query = `
+		SELECT COUNT(*)
+		FROM feed_entries fe
+		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		WHERE fs.user_uuid=@user_uuid
+		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+	)
 
-	var count uint
-	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
-
-	err := r.Pool.QueryRow(
-		context.Background(),
-		query,
-		userUUID,
-		fullTextSearchTerms,
-	).Scan(&count)
-	if err != nil {
-		return 0, err
+	args := pgx.NamedArgs{
+		"user_uuid":    userUUID,
+		"search_terms": pgbase.FullTextSearchReplacer.Replace(searchTerms),
 	}
 
-	return count, nil
+	return r.feedEntryGetCount(query, showEntries, args)
 }
 
-func (r *Repository) FeedEntryGetCountByCategoryAndQuery(userUUID string, categoryUUID string, searchTerms string) (uint, error) {
-	query := `
-	SELECT COUNT(*)
-	FROM feed_entries fe
-	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
-	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-	WHERE fs.user_uuid=$1
-	AND   fs.category_uuid=$2
-	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($3)`
+func (r *Repository) FeedEntryGetCountByCategoryAndQuery(userUUID string, showEntries feed.EntryVisibility, categoryUUID string, searchTerms string) (uint, error) {
+	const (
+		query = `
+		SELECT COUNT(*)
+		FROM feed_entries fe
+		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		WHERE fs.user_uuid=@user_uuid
+		AND   fs.category_uuid=@category_uuid
+		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+	)
 
-	var count uint
-	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
-
-	err := r.Pool.QueryRow(
-		context.Background(),
-		query,
-		userUUID,
-		categoryUUID,
-		fullTextSearchTerms,
-	).Scan(&count)
-	if err != nil {
-		return 0, err
+	args := pgx.NamedArgs{
+		"user_uuid":     userUUID,
+		"category_uuid": categoryUUID,
+		"search_terms":  pgbase.FullTextSearchReplacer.Replace(searchTerms),
 	}
 
-	return count, nil
+	return r.feedEntryGetCount(query, showEntries, args)
 }
 
-func (r *Repository) FeedEntryGetCountBySubscriptionAndQuery(userUUID string, subscriptionUUID string, searchTerms string) (uint, error) {
-	query := `
-	SELECT COUNT(*)
-	FROM feed_entries fe
-	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
-	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-	WHERE user_uuid=$1
-	AND   fs.uuid=$2
-	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($3)`
+func (r *Repository) FeedEntryGetCountBySubscriptionAndQuery(userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string, searchTerms string) (uint, error) {
+	const (
+		query = `
+		SELECT COUNT(*)
+		FROM feed_entries fe
+		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		WHERE fs.user_uuid=@user_uuid
+		AND   fs.uuid=@subscription_uuid
+		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+	)
 
-	var count uint
-	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
-
-	err := r.Pool.QueryRow(
-		context.Background(),
-		query,
-		userUUID,
-		subscriptionUUID,
-		fullTextSearchTerms,
-	).Scan(&count)
-	if err != nil {
-		return 0, err
+	args := pgx.NamedArgs{
+		"user_uuid":         userUUID,
+		"subscription_uuid": subscriptionUUID,
+		"search_terms":      pgbase.FullTextSearchReplacer.Replace(searchTerms),
 	}
 
-	return count, nil
+	return r.feedEntryGetCount(query, showEntries, args)
 }
 
 func (r *Repository) FeedEntryMarkAllAsRead(userUUID string) error {
@@ -653,7 +626,7 @@ func (r *Repository) FeedEntryMetadataUpdate(entryMetadata feed.EntryMetadata) e
 	return r.QueryTx("feeds", "FeedEntryMetadataUpdate", query, args)
 }
 
-func (r *Repository) FeedPreferencesByUserUUID(userUUID string) (feed.Preferences, error) {
+func (r *Repository) FeedPreferencesGetByUserUUID(userUUID string) (feed.Preferences, error) {
 	const (
 		query = `
 		SELECT user_uuid, show_entries, updated_at
@@ -766,101 +739,137 @@ func (r *Repository) FeedSubscriptionCategoryGetAll(userUUID string) ([]feedquer
 	return categories, nil
 }
 
-func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
-	query := `
-	SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
-	FROM feed_entries fe
-	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
-	WHERE fs.user_uuid=$1
-	ORDER BY fe.published_at DESC
-	LIMIT $2 OFFSET $3`
+func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, preferences feed.Preferences, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+	const (
+		query = `
+		SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+		FROM feed_entries fe
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		WHERE fs.user_uuid=@user_uuid`
+	)
 
-	return r.feedSubscriptionEntryGetN(query, userUUID, n, offset)
+	args := pgx.NamedArgs{
+		"user_uuid": userUUID,
+		"limit":     n,
+		"offset":    offset,
+	}
+
+	return r.feedSubscriptionEntryGetN(query, preferences.ShowEntries, args)
 }
 
-func (r *Repository) FeedSubscriptionEntryGetNByCategory(userUUID string, categoryUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
-	query := `
-	SELECT  fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
-	FROM feed_entries fe
-	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
-	WHERE fs.user_uuid=$1
-	AND   fs.category_uuid=$2
-	ORDER BY fe.published_at DESC
-	LIMIT $3 OFFSET $4`
+func (r *Repository) FeedSubscriptionEntryGetNByCategory(userUUID string, preferences feed.Preferences, categoryUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+	const (
+		query = `
+		SELECT  fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+		FROM feed_entries fe
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		WHERE fs.user_uuid=@user_uuid
+		AND   fs.category_uuid=@category_uuid`
+	)
 
-	return r.feedSubscriptionEntryGetN(query, userUUID, categoryUUID, n, offset)
+	args := pgx.NamedArgs{
+		"user_uuid":     userUUID,
+		"category_uuid": categoryUUID,
+		"limit":         n,
+		"offset":        offset,
+	}
+
+	return r.feedSubscriptionEntryGetN(query, preferences.ShowEntries, args)
 }
 
-func (r *Repository) FeedSubscriptionEntryGetNBySubscription(userUUID string, subscriptionUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
-	query := `
-	SELECT  fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
-	FROM feed_entries fe
-	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
-	WHERE fs.user_uuid=$1
-	AND   fs.uuid=$2
-	ORDER BY fe.published_at DESC
-	LIMIT $3 OFFSET $4`
+func (r *Repository) FeedSubscriptionEntryGetNBySubscription(userUUID string, preferences feed.Preferences, subscriptionUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+	const (
+		query = `
+		SELECT  fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+		FROM feed_entries fe
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		WHERE fs.user_uuid=@user_uuid
+		AND   fs.uuid=@subscription_uuid`
+	)
 
-	return r.feedSubscriptionEntryGetN(query, userUUID, subscriptionUUID, n, offset)
+	args := pgx.NamedArgs{
+		"user_uuid":         userUUID,
+		"subscription_uuid": subscriptionUUID,
+		"limit":             n,
+		"offset":            offset,
+	}
+
+	return r.feedSubscriptionEntryGetN(query, preferences.ShowEntries, args)
 }
 
-func (r *Repository) FeedSubscriptionEntryGetNByQuery(userUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
-	query := `
-	SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
-	FROM feed_entries fe
-	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
-	WHERE fs.user_uuid=$1
-	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($2)
-	ORDER BY fe.published_at DESC
-	LIMIT $3 OFFSET $4`
+func (r *Repository) FeedSubscriptionEntryGetNByQuery(userUUID string, preferences feed.Preferences, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+	const (
+		query = `
+		SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+		FROM feed_entries fe
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		WHERE fs.user_uuid=@user_uuid
+		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+	)
 
-	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
+	args := pgx.NamedArgs{
+		"user_uuid":    userUUID,
+		"search_terms": pgbase.FullTextSearchReplacer.Replace(searchTerms),
+		"limit":        n,
+		"offset":       offset,
+	}
 
-	return r.feedSubscriptionEntryGetN(query, userUUID, fullTextSearchTerms, n, offset)
+	return r.feedSubscriptionEntryGetN(query, preferences.ShowEntries, args)
 }
 
-func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(userUUID string, categoryUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
-	query := `
-	SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
-	FROM feed_entries fe
-	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
-	WHERE fs.user_uuid=$1
-	AND   fs.category_uuid=$2
-	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($3)
-	ORDER BY fe.published_at DESC
-	LIMIT $4 OFFSET $5`
+func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(userUUID string, preferences feed.Preferences, categoryUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+	const (
+		query = `
+		SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+		FROM feed_entries fe
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		WHERE fs.user_uuid=@user_uuid
+		AND   fs.category_uuid=@category_uuid
+		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+	)
 
-	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
+	args := pgx.NamedArgs{
+		"user_uuid":     userUUID,
+		"category_uuid": categoryUUID,
+		"search_terms":  pgbase.FullTextSearchReplacer.Replace(searchTerms),
+		"limit":         n,
+		"offset":        offset,
+	}
 
-	return r.feedSubscriptionEntryGetN(query, userUUID, categoryUUID, fullTextSearchTerms, n, offset)
+	return r.feedSubscriptionEntryGetN(query, preferences.ShowEntries, args)
 }
 
-func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(userUUID string, subscriptionUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
-	query := `
-	SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
-	FROM feed_entries fe
-	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
-	WHERE fs.user_uuid=$1
-	AND   fs.uuid=$2
-	AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery($3)
-	ORDER BY fe.published_at DESC
-	LIMIT $4 OFFSET $5`
+func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(userUUID string, preferences feed.Preferences, subscriptionUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+	const (
+		query = `
+		SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
+		FROM feed_entries fe
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		WHERE fs.user_uuid=@user_uuid
+		AND   fs.uuid=@subscription_uuid
+		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+	)
 
-	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
-
-	return r.feedSubscriptionEntryGetN(query, userUUID, subscriptionUUID, fullTextSearchTerms, n, offset)
+	args := pgx.NamedArgs{
+		"user_uuid":         userUUID,
+		"subscription_uuid": subscriptionUUID,
+		"search_terms":      pgbase.FullTextSearchReplacer.Replace(searchTerms),
+		"limit":             n,
+		"offset":            offset,
+	}
+	return r.feedSubscriptionEntryGetN(query, preferences.ShowEntries, args)
 }
 
 func (r *Repository) FeedSubscriptionIsRegistered(userUUID string, feedUUID string) (bool, error) {

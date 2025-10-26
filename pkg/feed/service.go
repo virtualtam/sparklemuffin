@@ -212,7 +212,7 @@ func (s *Service) ToggleEntryRead(userUUID string, entryUID string) error {
 
 // PreferencesByUserUUID returns the feed Preferences for a given user.
 func (s *Service) PreferencesByUserUUID(userUUID string) (Preferences, error) {
-	return s.r.FeedPreferencesByUserUUID(userUUID)
+	return s.r.FeedPreferencesGetByUserUUID(userUUID)
 }
 
 func (s *Service) UpdatePreferences(preferences Preferences) error {

@@ -228,7 +228,7 @@ func (r *FakeRepository) FeedEntryMetadataUpdate(updatedEntryMetadata EntryMetad
 	return ErrEntryMetadataNotFound
 }
 
-func (r *FakeRepository) FeedPreferencesByUserUUID(userUUID string) (Preferences, error) {
+func (r *FakeRepository) FeedPreferencesGetByUserUUID(userUUID string) (Preferences, error) {
 	preferences, ok := r.Preferences[userUUID]
 	if !ok {
 		return Preferences{}, user.ErrNotFound

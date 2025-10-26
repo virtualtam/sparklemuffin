@@ -13,6 +13,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
+	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -39,6 +40,21 @@ func TestFeedQueryingService(t *testing.T) {
 		t.Fatalf("failed to retrieve user: %q", err)
 	}
 
+	preferences, err := r.FeedPreferencesGetByUserUUID(testUser.UUID)
+	if err != nil {
+		t.Fatalf("failed to retrieve preferences: %q", err)
+	}
+
+	preferencesRead := feed.Preferences{
+		UserUUID:    preferences.UserUUID,
+		ShowEntries: feed.EntryVisibilityRead,
+	}
+
+	preferencesUnread := feed.Preferences{
+		UserUUID:    preferences.UserUUID,
+		ShowEntries: feed.EntryVisibilityUnread,
+	}
+
 	now := time.Now().UTC()
 	fakeData := generateFakeData(t, &fake, now, testUser)
 	fakeData.insert(t, r)
@@ -60,7 +76,7 @@ func TestFeedQueryingService(t *testing.T) {
 		},
 	}
 
-	t.Run("FeedsByPage", func(t *testing.T) {
+	t.Run("FeedsByPage - All", func(t *testing.T) {
 		wantPage := querying.FeedPage{
 			Page: paginate.Page{
 				PageNumber:         1,
@@ -101,7 +117,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByPage(testUser.UUID, 1)
+		gotPage, err := qs.FeedsByPage(testUser.UUID, preferences, 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by page: %q", err)
 		}
@@ -109,7 +125,83 @@ func TestFeedQueryingService(t *testing.T) {
 		querying.AssertPageEquals(t, gotPage, wantPage)
 	})
 
-	t.Run("FeedsByCategoryAndPage", func(t *testing.T) {
+	t.Run("FeedsByPage - Read", func(t *testing.T) {
+		wantPage := querying.FeedPage{
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          2,
+			},
+
+			PageTitle:   querying.PageHeaderAll,
+			Description: "",
+			Unread:      3,
+			Categories:  wantCategories,
+			Entries: []querying.SubscribedFeedEntry{
+				{
+					Entry:     fakeData.entries[0],
+					FeedTitle: fakeData.feeds[0].Title,
+					Read:      true,
+				},
+				{
+					Entry:     fakeData.entries[3],
+					FeedTitle: fakeData.feeds[1].Title,
+					Read:      true,
+				},
+			},
+		}
+
+		gotPage, err := qs.FeedsByPage(testUser.UUID, preferencesRead, 1)
+		if err != nil {
+			t.Fatalf("failed to retrieve feeds by page: %q", err)
+		}
+
+		querying.AssertPageEquals(t, gotPage, wantPage)
+	})
+
+	t.Run("FeedsByPage - Unread", func(t *testing.T) {
+		wantPage := querying.FeedPage{
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          3,
+			},
+
+			PageTitle:   querying.PageHeaderAll,
+			Description: "",
+			Unread:      3,
+			Categories:  wantCategories,
+			Entries: []querying.SubscribedFeedEntry{
+				{
+					Entry:     fakeData.entries[1],
+					FeedTitle: fakeData.feeds[0].Title,
+				},
+				{
+					Entry:     fakeData.entries[4],
+					FeedTitle: fakeData.feeds[1].Title,
+				},
+				{
+					Entry:     fakeData.entries[2],
+					FeedTitle: fakeData.feeds[0].Title,
+				},
+			},
+		}
+
+		gotPage, err := qs.FeedsByPage(testUser.UUID, preferencesUnread, 1)
+		if err != nil {
+			t.Fatalf("failed to retrieve feeds by page: %q", err)
+		}
+
+		querying.AssertPageEquals(t, gotPage, wantPage)
+	})
+
+	t.Run("FeedsByCategoryAndPage - All", func(t *testing.T) {
 		wantPage := querying.FeedPage{
 			Page: paginate.Page{
 				PageNumber:         1,
@@ -150,7 +242,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByCategoryAndPage(testUser.UUID, fakeData.categories[0], 1)
+		gotPage, err := qs.FeedsByCategoryAndPage(testUser.UUID, preferences, fakeData.categories[0], 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by category and page: %q", err)
 		}
@@ -158,7 +250,83 @@ func TestFeedQueryingService(t *testing.T) {
 		querying.AssertPageEquals(t, gotPage, wantPage)
 	})
 
-	t.Run("FeedsBySubscriptionAndPage", func(t *testing.T) {
+	t.Run("FeedsByCategoryAndPage - Read", func(t *testing.T) {
+		wantPage := querying.FeedPage{
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          2,
+			},
+
+			PageTitle:   fakeData.categories[0].Name,
+			Description: "",
+			Unread:      3,
+			Categories:  wantCategories,
+			Entries: []querying.SubscribedFeedEntry{
+				{
+					Entry:     fakeData.entries[0],
+					FeedTitle: fakeData.feeds[0].Title,
+					Read:      true,
+				},
+				{
+					Entry:     fakeData.entries[3],
+					FeedTitle: fakeData.feeds[1].Title,
+					Read:      true,
+				},
+			},
+		}
+
+		gotPage, err := qs.FeedsByCategoryAndPage(testUser.UUID, preferencesRead, fakeData.categories[0], 1)
+		if err != nil {
+			t.Fatalf("failed to retrieve feeds by category and page: %q", err)
+		}
+
+		querying.AssertPageEquals(t, gotPage, wantPage)
+	})
+
+	t.Run("FeedsByCategoryAndPage - Unread", func(t *testing.T) {
+		wantPage := querying.FeedPage{
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          3,
+			},
+
+			PageTitle:   fakeData.categories[0].Name,
+			Description: "",
+			Unread:      3,
+			Categories:  wantCategories,
+			Entries: []querying.SubscribedFeedEntry{
+				{
+					Entry:     fakeData.entries[1],
+					FeedTitle: fakeData.feeds[0].Title,
+				},
+				{
+					Entry:     fakeData.entries[4],
+					FeedTitle: fakeData.feeds[1].Title,
+				},
+				{
+					Entry:     fakeData.entries[2],
+					FeedTitle: fakeData.feeds[0].Title,
+				},
+			},
+		}
+
+		gotPage, err := qs.FeedsByCategoryAndPage(testUser.UUID, preferencesUnread, fakeData.categories[0], 1)
+		if err != nil {
+			t.Fatalf("failed to retrieve feeds by category and page: %q", err)
+		}
+
+		querying.AssertPageEquals(t, gotPage, wantPage)
+	})
+
+	t.Run("FeedsBySubscriptionAndPage - All", func(t *testing.T) {
 		wantPage := querying.FeedPage{
 			Page: paginate.Page{
 				PageNumber:         1,
@@ -186,7 +354,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsBySubscriptionAndPage(testUser.UUID, fakeData.subscriptions[1], 1)
+		gotPage, err := qs.FeedsBySubscriptionAndPage(testUser.UUID, preferences, fakeData.subscriptions[1], 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by subscription and page: %q", err)
 		}
@@ -194,7 +362,70 @@ func TestFeedQueryingService(t *testing.T) {
 		querying.AssertPageEquals(t, gotPage, wantPage)
 	})
 
-	t.Run("FeedsByQueryAndPage", func(t *testing.T) {
+	t.Run("FeedsBySubscriptionAndPage - Read", func(t *testing.T) {
+		wantPage := querying.FeedPage{
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          1,
+			},
+
+			PageTitle:   fakeData.feeds[1].Title,
+			Description: fakeData.feeds[1].Description,
+			Unread:      3,
+			Categories:  wantCategories,
+			Entries: []querying.SubscribedFeedEntry{
+				{
+					Entry:     fakeData.entries[3],
+					FeedTitle: fakeData.feeds[1].Title,
+					Read:      true,
+				},
+			},
+		}
+
+		gotPage, err := qs.FeedsBySubscriptionAndPage(testUser.UUID, preferencesRead, fakeData.subscriptions[1], 1)
+		if err != nil {
+			t.Fatalf("failed to retrieve feeds by subscription and page: %q", err)
+		}
+
+		querying.AssertPageEquals(t, gotPage, wantPage)
+	})
+
+	t.Run("FeedsBySubscriptionAndPage - Unread", func(t *testing.T) {
+		wantPage := querying.FeedPage{
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          1,
+			},
+
+			PageTitle:   fakeData.feeds[1].Title,
+			Description: fakeData.feeds[1].Description,
+			Unread:      3,
+			Categories:  wantCategories,
+			Entries: []querying.SubscribedFeedEntry{
+				{
+					Entry:     fakeData.entries[4],
+					FeedTitle: fakeData.feeds[1].Title,
+				},
+			},
+		}
+
+		gotPage, err := qs.FeedsBySubscriptionAndPage(testUser.UUID, preferencesUnread, fakeData.subscriptions[1], 1)
+		if err != nil {
+			t.Fatalf("failed to retrieve feeds by subscription and page: %q", err)
+		}
+
+		querying.AssertPageEquals(t, gotPage, wantPage)
+	})
+
+	t.Run("FeedsByQueryAndPage - All", func(t *testing.T) {
 		wantPage := querying.FeedPage{
 			Page: paginate.Page{
 				PageNumber:         1,
@@ -222,7 +453,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByQueryAndPage(testUser.UUID, "authentic production", 1)
+		gotPage, err := qs.FeedsByQueryAndPage(testUser.UUID, preferences, "authentic production", 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by query and page: %q", err)
 		}
@@ -230,7 +461,70 @@ func TestFeedQueryingService(t *testing.T) {
 		querying.AssertPageEquals(t, gotPage, wantPage)
 	})
 
-	t.Run("FeedsByCategoryAndQueryAndPage", func(t *testing.T) {
+	t.Run("FeedsByQueryAndPage - Read", func(t *testing.T) {
+		wantPage := querying.FeedPage{
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          1,
+				SearchTerms:        "authentic production",
+			},
+
+			PageTitle:  querying.PageHeaderAll,
+			Unread:     3,
+			Categories: wantCategories,
+			Entries: []querying.SubscribedFeedEntry{
+				{
+					Entry:     fakeData.entries[3],
+					FeedTitle: fakeData.feeds[1].Title,
+					Read:      true,
+				},
+			},
+		}
+
+		gotPage, err := qs.FeedsByQueryAndPage(testUser.UUID, preferencesRead, "authentic production", 1)
+		if err != nil {
+			t.Fatalf("failed to retrieve feeds by query and page: %q", err)
+		}
+
+		querying.AssertPageEquals(t, gotPage, wantPage)
+	})
+
+	t.Run("FeedsByQueryAndPage - Unread", func(t *testing.T) {
+		wantPage := querying.FeedPage{
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          1,
+				SearchTerms:        "authentic production",
+			},
+
+			PageTitle:  querying.PageHeaderAll,
+			Unread:     3,
+			Categories: wantCategories,
+			Entries: []querying.SubscribedFeedEntry{
+				{
+					Entry:     fakeData.entries[4],
+					FeedTitle: fakeData.feeds[1].Title,
+				},
+			},
+		}
+
+		gotPage, err := qs.FeedsByQueryAndPage(testUser.UUID, preferencesUnread, "authentic production", 1)
+		if err != nil {
+			t.Fatalf("failed to retrieve feeds by query and page: %q", err)
+		}
+
+		querying.AssertPageEquals(t, gotPage, wantPage)
+	})
+
+	t.Run("FeedsByCategoryAndQueryAndPage - All", func(t *testing.T) {
 		wantPage := querying.FeedPage{
 			Page: paginate.Page{
 				PageNumber:         1,
@@ -259,7 +553,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByCategoryAndQueryAndPage(testUser.UUID, fakeData.categories[0], "authentic production", 1)
+		gotPage, err := qs.FeedsByCategoryAndQueryAndPage(testUser.UUID, preferences, fakeData.categories[0], "authentic production", 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by category and query and page: %q", err)
 		}
@@ -267,7 +561,72 @@ func TestFeedQueryingService(t *testing.T) {
 		querying.AssertPageEquals(t, gotPage, wantPage)
 	})
 
-	t.Run("FeedsBySubscriptionAndQueryAndPage", func(t *testing.T) {
+	t.Run("FeedsByCategoryAndQueryAndPage - Read", func(t *testing.T) {
+		wantPage := querying.FeedPage{
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          1,
+				SearchTerms:        "authentic production",
+			},
+
+			PageTitle:   fakeData.categories[0].Name,
+			Description: "",
+			Unread:      3,
+			Categories:  wantCategories,
+			Entries: []querying.SubscribedFeedEntry{
+				{
+					Entry:     fakeData.entries[3],
+					FeedTitle: fakeData.feeds[1].Title,
+					Read:      true,
+				},
+			},
+		}
+
+		gotPage, err := qs.FeedsByCategoryAndQueryAndPage(testUser.UUID, preferencesRead, fakeData.categories[0], "authentic production", 1)
+		if err != nil {
+			t.Fatalf("failed to retrieve feeds by category and query and page: %q", err)
+		}
+
+		querying.AssertPageEquals(t, gotPage, wantPage)
+	})
+
+	t.Run("FeedsByCategoryAndQueryAndPage - Unread", func(t *testing.T) {
+		wantPage := querying.FeedPage{
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          1,
+				SearchTerms:        "authentic production",
+			},
+
+			PageTitle:   fakeData.categories[0].Name,
+			Description: "",
+			Unread:      3,
+			Categories:  wantCategories,
+			Entries: []querying.SubscribedFeedEntry{
+				{
+					Entry:     fakeData.entries[4],
+					FeedTitle: fakeData.feeds[1].Title,
+				},
+			},
+		}
+
+		gotPage, err := qs.FeedsByCategoryAndQueryAndPage(testUser.UUID, preferencesUnread, fakeData.categories[0], "authentic production", 1)
+		if err != nil {
+			t.Fatalf("failed to retrieve feeds by category and query and page: %q", err)
+		}
+
+		querying.AssertPageEquals(t, gotPage, wantPage)
+	})
+
+	t.Run("FeedsBySubscriptionAndQueryAndPage - All", func(t *testing.T) {
 		wantPage := querying.FeedPage{
 			Page: paginate.Page{
 				PageNumber:         1,
@@ -296,7 +655,72 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsBySubscriptionAndQueryAndPage(testUser.UUID, fakeData.subscriptions[1], "authentic production", 1)
+		gotPage, err := qs.FeedsBySubscriptionAndQueryAndPage(testUser.UUID, preferences, fakeData.subscriptions[1], "authentic production", 1)
+		if err != nil {
+			t.Fatalf("failed to retrieve feeds by subscription and query and page: %q", err)
+		}
+
+		querying.AssertPageEquals(t, gotPage, wantPage)
+	})
+
+	t.Run("FeedsBySubscriptionAndQueryAndPage - Read", func(t *testing.T) {
+		wantPage := querying.FeedPage{
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          1,
+				SearchTerms:        "authentic production",
+			},
+
+			PageTitle:   fakeData.feeds[1].Title,
+			Description: fakeData.feeds[1].Description,
+			Unread:      3,
+			Categories:  wantCategories,
+			Entries: []querying.SubscribedFeedEntry{
+				{
+					Entry:     fakeData.entries[3],
+					FeedTitle: fakeData.feeds[1].Title,
+					Read:      true,
+				},
+			},
+		}
+
+		gotPage, err := qs.FeedsBySubscriptionAndQueryAndPage(testUser.UUID, preferencesRead, fakeData.subscriptions[1], "authentic production", 1)
+		if err != nil {
+			t.Fatalf("failed to retrieve feeds by subscription and query and page: %q", err)
+		}
+
+		querying.AssertPageEquals(t, gotPage, wantPage)
+	})
+
+	t.Run("FeedsBySubscriptionAndQueryAndPage - Unread", func(t *testing.T) {
+		wantPage := querying.FeedPage{
+			Page: paginate.Page{
+				PageNumber:         1,
+				PreviousPageNumber: 1,
+				NextPageNumber:     1,
+				TotalPages:         1,
+				ItemOffset:         1,
+				ItemCount:          1,
+				SearchTerms:        "authentic production",
+			},
+
+			PageTitle:   fakeData.feeds[1].Title,
+			Description: fakeData.feeds[1].Description,
+			Unread:      3,
+			Categories:  wantCategories,
+			Entries: []querying.SubscribedFeedEntry{
+				{
+					Entry:     fakeData.entries[4],
+					FeedTitle: fakeData.feeds[1].Title,
+				},
+			},
+		}
+
+		gotPage, err := qs.FeedsBySubscriptionAndQueryAndPage(testUser.UUID, preferencesUnread, fakeData.subscriptions[1], "authentic production", 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by subscription and query and page: %q", err)
 		}

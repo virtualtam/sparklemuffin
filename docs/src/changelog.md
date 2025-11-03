@@ -25,6 +25,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 #### WWW
 - Fix `<time>` blocks in bookmark and feed list pages
+- Use the same `plus` sign icon for bookmark and feed navbar menu items
 
 ## [v0.5.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.1) - 2025-08-16
 ### Added

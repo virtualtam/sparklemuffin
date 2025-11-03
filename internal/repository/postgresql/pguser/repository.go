@@ -10,6 +10,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -125,7 +126,7 @@ func (r *Repository) UserGetAll() ([]user.User, error) {
 	var users []user.User
 
 	for _, dbUser := range dbUsers {
-		user := user.User{
+		u := user.User{
 			UUID:        dbUser.UUID,
 			Email:       dbUser.Email,
 			NickName:    dbUser.NickName,
@@ -135,7 +136,7 @@ func (r *Repository) UserGetAll() ([]user.User, error) {
 			UpdatedAt:   dbUser.UpdatedAt,
 		}
 
-		users = append(users, user)
+		users = append(users, u)
 	}
 
 	return users, nil

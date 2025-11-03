@@ -61,12 +61,12 @@ func (s *Service) hashRememberToken(session *Session) error {
 		return nil
 	}
 
-	hash, err := s.hmac.Hash(session.RememberToken)
+	h, err := s.hmac.Hash(session.RememberToken)
 	if err != nil {
 		return err
 	}
 
-	session.RememberTokenHash = hash
+	session.RememberTokenHash = h
 
 	return nil
 }

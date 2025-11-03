@@ -335,9 +335,9 @@ func TestServiceDeleteCategory(t *testing.T) {
 		}
 		categories := []Category{category}
 
-		feeds := []Feed{}
-		entries := []Entry{}
-		subscriptions := []Subscription{}
+		var feeds []Feed
+		var entries []Entry
+		var subscriptions []Subscription
 
 		for range 5 {
 			feed := Feed{
@@ -798,7 +798,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 		},
 		{
 			tname:   "invalid URL (no host)",
-			feedURL: "http://",
+			feedURL: "https://",
 			wantErr: ErrFeedURLNoHost,
 		},
 		{
@@ -1048,7 +1048,7 @@ func TestServiceDeleteSubscription(t *testing.T) {
 			UUID: fake.UUID().V4(),
 		}
 
-		entries := []Entry{}
+		var entries []Entry
 
 		feed := Feed{
 			UUID:    fake.UUID().V4(),

@@ -61,7 +61,7 @@ func (r *Repository) bookmarkGetManyQuery(query string, queryParams ...any) ([]b
 	var bookmarks []bookmark.Bookmark
 
 	for _, dbBookmark := range dbBookmarks {
-		bookmark := bookmark.Bookmark{
+		b := bookmark.Bookmark{
 			UserUUID:    dbBookmark.UserUUID,
 			UID:         dbBookmark.UID,
 			URL:         dbBookmark.URL,
@@ -73,7 +73,7 @@ func (r *Repository) bookmarkGetManyQuery(query string, queryParams ...any) ([]b
 			UpdatedAt:   dbBookmark.UpdatedAt,
 		}
 
-		bookmarks = append(bookmarks, bookmark)
+		bookmarks = append(bookmarks, b)
 	}
 
 	return bookmarks, nil

@@ -43,7 +43,7 @@ func (r *Repository) feedGetManyQuery(query string, queryParams ...any) ([]feed.
 	}
 	defer rows.Close()
 
-	dbFeeds := []DBFeed{}
+	var dbFeeds []DBFeed
 
 	if err := pgxscan.ScanAll(&dbFeeds, rows); err != nil {
 		return []feed.Feed{}, err
@@ -271,7 +271,7 @@ ORDER BY
 	}
 	defer rows.Close()
 
-	dbFeeds := []DBSubscribedFeed{}
+	var dbFeeds []DBSubscribedFeed
 
 	if err := pgxscan.ScanAll(&dbFeeds, rows); err != nil {
 		return []DBSubscribedFeed{}, err
@@ -344,7 +344,7 @@ ORDER BY
 	}
 	defer rows.Close()
 
-	dbSubscriptionTitles := []DBQueryingSubscription{}
+	var dbSubscriptionTitles []DBQueryingSubscription
 
 	if err := pgxscan.ScanAll(&dbSubscriptionTitles, rows); err != nil {
 		return []DBQueryingSubscription{}, err

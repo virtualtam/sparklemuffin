@@ -1,24 +1,24 @@
 {{define "awesomplete"}}
-<script src="/static/awesomplete.min.js"></script>
+  <script src="/static/awesomplete.min.js"></script>
 
-<script type="text/javascript">
-  var tags = document.getElementById("tags");
-  new Awesomplete(tags, {
-    autoFirst: true,
-    sort: false,
+  <script type="text/javascript">
+    const tags = document.getElementById("tags");
+    new Awesomplete(tags, {
+      autoFirst: true,
+      sort: false,
 
-    filter: function (text, input) {
-      return Awesomplete.FILTER_CONTAINS(text, input.match(/[^ ]*$/)[0]);
-    },
+      filter: function (text, input) {
+        return Awesomplete.FILTER_CONTAINS(text, input.match(/[^ ]*$/)[0]);
+      },
 
-    item: function (text, input) {
-      return Awesomplete.ITEM(text, input.match(/[^ ]*$/)[0]);
-    },
+      item: function (text, input) {
+        return Awesomplete.ITEM(text, input.match(/[^ ]*$/)[0]);
+      },
 
-    replace: function (text) {
-      var before = this.input.value.match(/^.+\s+|/)[0];
-      this.input.value = before + text + " ";
-    }
-  });
-</script>
+      replace: function (text) {
+        const before = this.input.value.match(/^.+\s+|/)[0];
+        this.input.value = before + text + " ";
+      }
+    });
+  </script>
 {{end}}

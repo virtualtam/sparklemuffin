@@ -28,7 +28,7 @@ It has a permissive specification, and each feed aggregator or reader may:
     </head>
     <body>
         <outline text="Programming" title="Programming">
-            <outline type="rss" text="Elixir Lang" title="Elixir Lang" xmlUrl="https://feeds.feedburner.com/ElixirLang" htmlUrl="http://elixir-lang.org"/>
+            <outline type="rss" text="Elixir Lang" title="Elixir Lang" xmlUrl="https://feeds.feedburner.com/ElixirLang" htmlUrl="https://elixir-lang.org"/>
             <outline type="rss" text="Python Insider" title="Python Insider" xmlUrl="https://feeds.feedburner.com/PythonInsider" htmlUrl="https://pythoninsider.blogspot.com/"/>
         </outline>
         <outline text="Games" title="Games">

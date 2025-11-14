@@ -45,6 +45,39 @@
         </div>
         <div class="level-right">
           <div class="level-item">
+            <div class="buttons has-addons">
+              <button
+                class="button is-small{{if eq .ShowEntries "ALL"}} is-active{{end}}"
+                hx-post="/feeds/preferences/show-entries"
+                hx-vals='{"show": "ALL"}'
+                hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
+              >
+                <span class="icon"><i class="fas fa-globe"></i></span>
+                <span>All</span>
+              </button>
+
+              <button
+                class="button is-small{{if eq .ShowEntries "READ"}} is-active{{end}}"
+                hx-post="/feeds/preferences/show-entries"
+                hx-vals='{"show": "READ"}'
+                hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
+              >
+                <span class="icon"><i class="fas fa-check-circle"></i></span>
+                <span>Read</span>
+              </button>
+
+              <button
+                class="button is-small{{if eq .ShowEntries "UNREAD"}} is-active{{end}}"
+                hx-post="/feeds/preferences/show-entries"
+                hx-vals='{"show": "UNREAD"}'
+                hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
+              >
+                <span class="icon"><i class="fas fa-envelope"></i></span>
+                <span>Unread</span>
+              </button>
+          </div>
+          </div>
+          <div class="level-item">
             <form action="{{$.URLPath}}/entries/mark-all-read" method="POST">
               <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
               <button type="submit" class="button is-small">
@@ -145,6 +178,7 @@
     </div>
   </nav>
 </section>
+{{template "htmx"}}
 {{end}}
 
 {{define "feedSearchForm"}}

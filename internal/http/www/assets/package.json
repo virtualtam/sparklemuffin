@@ -1,6 +1,6 @@
 {
     "name": "sparklemuffin",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "main": "index.js",
     "scripts": {},
     "keywords": [],
@@ -12,6 +12,7 @@
         "awesomplete": "^1.1.7",
         "bulma": "^1.0.4",
         "easymde": "^2.20.0",
-        "firacode": "^6.2.0"
+        "firacode": "^6.2.0",
+        "htmx.org": "^2.0.8"
     }
 }

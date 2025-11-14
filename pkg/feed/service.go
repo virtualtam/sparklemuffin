@@ -217,6 +217,11 @@ func (s *Service) PreferencesByUserUUID(userUUID string) (Preferences, error) {
 
 func (s *Service) UpdatePreferences(preferences Preferences) error {
 	preferences.UpdatedAt = time.Now().UTC()
+
+	if err := preferences.ValidateForUpdate(); err != nil {
+		return err
+	}
+
 	return s.r.FeedPreferencesUpdate(preferences)
 }
 

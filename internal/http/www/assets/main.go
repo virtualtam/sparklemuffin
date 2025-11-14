@@ -48,6 +48,9 @@ func main() {
 	if err := copyFile("node_modules/easymde/dist/easymde.min.js", "../static/easymde.min.js"); err != nil {
 		log.Fatal(err)
 	}
+	if err := copyFile("node_modules/htmx.org/dist/htmx.min.js", "../static/htmx.min.js"); err != nil {
+		log.Fatal(err)
+	}
 	if err := copyFiles("favicons", "../static"); err != nil {
 		log.Fatal(err)
 	}

@@ -4,6 +4,7 @@
 package feed
 
 import (
+	"slices"
 	"time"
 )
 
@@ -20,10 +21,23 @@ const (
 	EntryVisibilityUnread EntryVisibility = "UNREAD"
 )
 
+var (
+	allEntryVisibilities = []EntryVisibility{EntryVisibilityAll, EntryVisibilityRead, EntryVisibilityUnread}
+)
+
 // Preferences represents a user's preferences.
 type Preferences struct {
 	UserUUID    string
 	ShowEntries EntryVisibility
 
 	UpdatedAt time.Time
+}
+
+// ValidateForUpdate ensures mandatory fields are properly set when updating existing Preferences.
+func (p *Preferences) ValidateForUpdate() error {
+	if !slices.Contains(allEntryVisibilities, p.ShowEntries) {
+		return ErrPreferencesEntryVisibilityUnknown
+	}
+
+	return nil
 }

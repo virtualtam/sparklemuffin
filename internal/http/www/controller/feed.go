@@ -16,6 +16,7 @@ import (
 	"github.com/virtualtam/opml-go"
 
 	"github.com/virtualtam/sparklemuffin/internal/http/www/csrf"
+	"github.com/virtualtam/sparklemuffin/internal/http/www/htmx"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
@@ -101,6 +102,10 @@ func RegisterFeedHandlers(
 		r.Route("/entries", func(sr chi.Router) {
 			sr.Post("/mark-all-read", fc.handleEntryMetadataMarkAllAsRead())
 			sr.Post("/{uid}/toggle-read", fc.handleFeedEntryToggleRead())
+		})
+
+		r.Route("/preferences", func(sr chi.Router) {
+			sr.Post("/show-entries", fc.handlePreferencesFeedShowEntriesUpdate())
 		})
 
 		r.Route("/subscriptions", func(sr chi.Router) {
@@ -237,8 +242,9 @@ func (fc *feedController) handleFeedListView(
 
 		var viewData view.Data
 		feedQueryingPage := feedQueryingPage{
-			CSRFToken: csrfToken,
-			URLPath:   r.URL.Path,
+			CSRFToken:   csrfToken,
+			URLPath:     r.URL.Path,
+			ShowEntries: preferences.ShowEntries,
 		}
 
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
@@ -1054,5 +1060,48 @@ func (fc *feedController) handleFeedImport() func(w http.ResponseWriter, r *http
 
 		view.PutFlashSuccess(w, fmt.Sprintf("Import status: %s", importStatus.UserSummary()))
 		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+	}
+}
+
+func (fc *feedController) handlePreferencesFeedShowEntriesUpdate() func(w http.ResponseWriter, r *http.Request) {
+	type feedShowEntriesForm struct {
+		ShowEntries string `schema:"show"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctxUser := httpcontext.UserValue(r.Context())
+
+		var form feedShowEntriesForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed preferences update form")
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		csrfToken := r.Header.Get("X-CSRFToken")
+
+		if !fc.csrfService.Validate(csrfToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
+			log.Warn().Msg("failed to validate CSRF token")
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		feedPreferences := feed.Preferences{
+			UserUUID:    ctxUser.UUID,
+			ShowEntries: feed.EntryVisibility(form.ShowEntries),
+		}
+
+		if err := fc.feedService.UpdatePreferences(feedPreferences); err != nil {
+			log.Error().Err(err).Msg("failed to update account preferences")
+			view.PutFlashError(w, fmt.Sprintf("There was an error updating your preferences: %s", err))
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		w.Header().Set(htmx.HeaderRefresh, "true")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte("OK")); err != nil {
+			log.Error().Err(err).Msg("failed to write response")
+		}
 	}
 }

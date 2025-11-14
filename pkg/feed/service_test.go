@@ -16,6 +16,7 @@ import (
 
 	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
+	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 func TestServiceAddCategory(t *testing.T) {
@@ -956,6 +957,86 @@ func TestServiceToggleEntryRead(t *testing.T) {
 			}
 
 			assertEntriesMetadataEqual(t, r.EntriesMetadata, tc.want)
+		})
+	}
+}
+
+func TestServiceUpdatePreferences(t *testing.T) {
+	fake := faker.New()
+	userUUID := fake.UUID().V4()
+
+	cases := []struct {
+		tname                 string
+		repositoryPreferences map[string]Preferences
+		preferences           Preferences
+		wantErr               error
+	}{
+		// Nominal cases.
+		{
+			tname: "update preferences",
+			repositoryPreferences: map[string]Preferences{
+				userUUID: {
+					UserUUID:    userUUID,
+					ShowEntries: EntryVisibilityAll,
+				},
+			},
+			preferences: Preferences{
+				UserUUID:    userUUID,
+				ShowEntries: EntryVisibilityUnread,
+			},
+		},
+
+		// Error cases.
+		{
+			tname: "unknown user",
+			preferences: Preferences{
+				UserUUID:    fake.UUID().V4(),
+				ShowEntries: EntryVisibilityAll,
+			},
+			wantErr: user.ErrNotFound,
+		},
+		{
+			tname: "unknown visibility",
+			repositoryPreferences: map[string]Preferences{
+				userUUID: {
+					UserUUID: userUUID,
+				},
+			},
+			preferences: Preferences{
+				UserUUID:    userUUID,
+				ShowEntries: EntryVisibility("UNKNOWN"),
+			},
+			wantErr: ErrPreferencesEntryVisibilityUnknown,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Preferences: tc.repositoryPreferences,
+			}
+			s := NewService(r, nil)
+
+			err := s.UpdatePreferences(tc.preferences)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			got := r.Preferences[tc.preferences.UserUUID]
+			if got.ShowEntries != tc.preferences.ShowEntries {
+				t.Errorf("want ShowEntries %q, got %q", tc.preferences.ShowEntries, got.ShowEntries)
+			}
 		})
 	}
 }

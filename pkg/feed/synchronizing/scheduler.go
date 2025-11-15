@@ -14,21 +14,24 @@ import (
 
 const (
 	defaultSynchronizationInterval = 1 * time.Hour
+	defaultTaskTimeout             = 5 * time.Minute
 )
 
 // A Scheduler periodically synchronizes all syndication feeds.
 type Scheduler struct {
-	s        *Service
-	locker   sync.Locker
-	interval time.Duration
+	s           *Service
+	locker      sync.Locker
+	interval    time.Duration
+	taskTimeout time.Duration
 }
 
 // NewScheduler initializes and returns a Scheduler.
 func NewScheduler(service *Service, locker sync.Locker) *Scheduler {
 	return &Scheduler{
-		s:        service,
-		locker:   locker,
-		interval: defaultSynchronizationInterval,
+		s:           service,
+		locker:      locker,
+		interval:    defaultSynchronizationInterval,
+		taskTimeout: defaultTaskTimeout,
 	}
 }
 
@@ -46,7 +49,10 @@ func (sc *Scheduler) Run(ctx context.Context) {
 			sc.locker.Lock()
 			defer sc.locker.Unlock()
 
-			if err := sc.s.Synchronize(ctx, jobID); err != nil {
+			taskCtx, cancel := context.WithTimeout(ctx, sc.taskTimeout)
+			defer cancel()
+
+			if err := sc.s.Synchronize(taskCtx, jobID); err != nil {
 				log.
 					Error().
 					Err(err).

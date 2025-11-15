@@ -3,7 +3,11 @@
 
 package exporting
 
-import "github.com/virtualtam/sparklemuffin/pkg/bookmark"
+import (
+	"context"
+
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+)
 
 var _ Repository = &FakeRepository{}
 
@@ -11,7 +15,7 @@ type FakeRepository struct {
 	Bookmarks []bookmark.Bookmark
 }
 
-func (r *FakeRepository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error) {
+func (r *FakeRepository) BookmarkGetAll(_ context.Context, userUUID string) ([]bookmark.Bookmark, error) {
 	var bookmarks []bookmark.Bookmark
 
 	for _, b := range r.Bookmarks {
@@ -23,7 +27,7 @@ func (r *FakeRepository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, e
 	return bookmarks, nil
 }
 
-func (r *FakeRepository) BookmarkGetAllPrivate(userUUID string) ([]bookmark.Bookmark, error) {
+func (r *FakeRepository) BookmarkGetAllPrivate(_ context.Context, userUUID string) ([]bookmark.Bookmark, error) {
 	var bookmarks []bookmark.Bookmark
 
 	for _, b := range r.Bookmarks {
@@ -35,7 +39,7 @@ func (r *FakeRepository) BookmarkGetAllPrivate(userUUID string) ([]bookmark.Book
 	return bookmarks, nil
 }
 
-func (r *FakeRepository) BookmarkGetAllPublic(userUUID string) ([]bookmark.Bookmark, error) {
+func (r *FakeRepository) BookmarkGetAllPublic(_ context.Context, userUUID string) ([]bookmark.Bookmark, error) {
 	var bookmarks []bookmark.Bookmark
 
 	for _, b := range r.Bookmarks {

@@ -98,7 +98,7 @@ func TestServiceExportAsOPMLDocument(t *testing.T) {
 			}
 			s := NewService(r)
 
-			got, err := s.ExportAsOPMLDocument(testUser)
+			got, err := s.ExportAsOPMLDocument(t.Context(), testUser)
 
 			if err != nil {
 				t.Fatalf("want no error, got %q", err)

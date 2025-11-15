@@ -27,7 +27,7 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	}
 }
 
-func (r *Repository) UserAdd(u user.User) error {
+func (r *Repository) UserAdd(ctx context.Context, u user.User) error {
 	const (
 		userAddQuery = `
 			INSERT INTO users(
@@ -75,12 +75,10 @@ func (r *Repository) UserAdd(u user.User) error {
 	batch.Queue(userAddQuery, userAddArgs)
 	batch.Queue(feedPreferencesAddQuery, feedPreferencesAddArgs)
 
-	return r.BatchTx("users", "UserAdd", batch)
+	return r.BatchTx(ctx, "users", "UserAdd", batch)
 }
 
-func (r *Repository) UserDeleteByUUID(userUUID string) error {
-	ctx := context.Background()
-
+func (r *Repository) UserDeleteByUUID(ctx context.Context, userUUID string) error {
 	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -89,7 +87,7 @@ func (r *Repository) UserDeleteByUUID(userUUID string) error {
 	defer r.Rollback(ctx, tx, "users", "delete")
 
 	commandTag, err := tx.Exec(
-		context.Background(),
+		ctx,
 		"DELETE FROM users WHERE uuid=$1",
 		userUUID,
 	)
@@ -106,12 +104,12 @@ func (r *Repository) UserDeleteByUUID(userUUID string) error {
 	return tx.Commit(ctx)
 }
 
-func (r *Repository) UserGetAll() ([]user.User, error) {
+func (r *Repository) UserGetAll(ctx context.Context) ([]user.User, error) {
 	query := `
 	SELECT uuid, email, nick_name, display_name, is_admin, created_at, updated_at
 	FROM users`
 
-	rows, err := r.Pool.Query(context.Background(), query)
+	rows, err := r.Pool.Query(ctx, query)
 	if err != nil {
 		return []user.User{}, err
 	}
@@ -142,12 +140,8 @@ func (r *Repository) UserGetAll() ([]user.User, error) {
 	return users, nil
 }
 
-func (r *Repository) userGetByQuery(query string, queryParams ...any) (user.User, error) {
-	rows, err := r.Pool.Query(
-		context.Background(),
-		query,
-		queryParams...,
-	)
+func (r *Repository) userGetByQuery(ctx context.Context, query string, queryParams ...any) (user.User, error) {
+	rows, err := r.Pool.Query(ctx, query, queryParams...)
 	if err != nil {
 		return user.User{}, err
 	}
@@ -176,48 +170,50 @@ func (r *Repository) userGetByQuery(query string, queryParams ...any) (user.User
 	}, nil
 }
 
-func (r *Repository) UserGetByEmail(email string) (user.User, error) {
+func (r *Repository) UserGetByEmail(ctx context.Context, email string) (user.User, error) {
 	query := `
 	SELECT uuid, email, nick_name, display_name, password_hash, is_admin, created_at, updated_at
 	FROM users
 	WHERE email=$1`
 
-	return r.userGetByQuery(query, email)
+	return r.userGetByQuery(ctx, query, email)
 }
 
-func (r *Repository) UserGetByNickName(nick string) (user.User, error) {
+func (r *Repository) UserGetByNickName(ctx context.Context, nick string) (user.User, error) {
 	query := `
 	SELECT uuid, email, nick_name, display_name, password_hash, is_admin, created_at, updated_at
 	FROM users
 	WHERE nick_name=$1`
 
-	return r.userGetByQuery(query, nick)
+	return r.userGetByQuery(ctx, query, nick)
 }
 
-func (r *Repository) UserGetByUUID(userUUID string) (user.User, error) {
+func (r *Repository) UserGetByUUID(ctx context.Context, userUUID string) (user.User, error) {
 	query := `
 	SELECT uuid, email, nick_name, display_name, password_hash, is_admin, created_at, updated_at
 	FROM users
 	WHERE uuid=$1`
 
-	return r.userGetByQuery(query, userUUID)
+	return r.userGetByQuery(ctx, query, userUUID)
 }
 
-func (r *Repository) UserIsEmailRegistered(email string) (bool, error) {
+func (r *Repository) UserIsEmailRegistered(ctx context.Context, email string) (bool, error) {
 	return r.RowExistsByQuery(
+		ctx,
 		"SELECT 1 FROM users WHERE email=$1",
 		email,
 	)
 }
 
-func (r *Repository) UserIsNickNameRegistered(nick string) (bool, error) {
+func (r *Repository) UserIsNickNameRegistered(ctx context.Context, nick string) (bool, error) {
 	return r.RowExistsByQuery(
+		ctx,
 		"SELECT 1 FROM users WHERE nick_name=$1",
 		nick,
 	)
 }
 
-func (r *Repository) UserUpdate(u user.User) error {
+func (r *Repository) UserUpdate(ctx context.Context, u user.User) error {
 	query := `
 	UPDATE users
 	SET
@@ -239,10 +235,10 @@ func (r *Repository) UserUpdate(u user.User) error {
 		"updated_at":    u.UpdatedAt,
 	}
 
-	return r.QueryTx("users", "UserUpdate", query, args)
+	return r.QueryTx(ctx, "users", "UserUpdate", query, args)
 }
 
-func (r *Repository) UserUpdateInfo(info user.InfoUpdate) error {
+func (r *Repository) UserUpdateInfo(ctx context.Context, info user.InfoUpdate) error {
 	query := `
 	UPDATE users
 	SET
@@ -260,10 +256,10 @@ func (r *Repository) UserUpdateInfo(info user.InfoUpdate) error {
 		"updated_at":   info.UpdatedAt,
 	}
 
-	return r.QueryTx("users", "UserUpdateInfo", query, args)
+	return r.QueryTx(ctx, "users", "UserUpdateInfo", query, args)
 }
 
-func (r *Repository) UserUpdatePasswordHash(passwordHash user.PasswordHashUpdate) error {
+func (r *Repository) UserUpdatePasswordHash(ctx context.Context, passwordHash user.PasswordHashUpdate) error {
 	query := `
 	UPDATE users
 	SET
@@ -277,5 +273,5 @@ func (r *Repository) UserUpdatePasswordHash(passwordHash user.PasswordHashUpdate
 		"updated_at":    passwordHash.UpdatedAt,
 	}
 
-	return r.QueryTx("users", "UserUpdatePasswordHash", query, args)
+	return r.QueryTx(ctx, "users", "UserUpdatePasswordHash", query, args)
 }

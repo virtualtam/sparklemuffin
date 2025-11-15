@@ -4,6 +4,7 @@
 package importing
 
 import (
+	"context"
 	"errors"
 
 	"github.com/rs/zerolog/log"
@@ -25,14 +26,14 @@ func NewService(feedService *feed.Service) *Service {
 }
 
 // ImportFromOPMLDocument imports feed subscriptions and categories from an OPML document.
-func (s *Service) ImportFromOPMLDocument(userUUID string, document *opml.Document) (Status, error) {
+func (s *Service) ImportFromOPMLDocument(ctx context.Context, userUUID string, document *opml.Document) (Status, error) {
 	var status Status
 	var errs []error
 
 	categoriesFeeds := opmlToCategoriesFeeds(document.Body.Outlines)
 
 	for categoryName, feedURLs := range categoriesFeeds {
-		category, created, err := s.GetOrCreateCategory(userUUID, categoryName)
+		category, created, err := s.GetOrCreateCategory(ctx, userUUID, categoryName)
 		if err != nil {
 			return Status{}, err
 		}
@@ -40,7 +41,7 @@ func (s *Service) ImportFromOPMLDocument(userUUID string, document *opml.Documen
 		status.Categories.Inc(created)
 
 		for _, feedURL := range feedURLs {
-			newFeed, created, err := s.GetOrCreateFeedAndEntries(feedURL)
+			newFeed, created, err := s.GetOrCreateFeedAndEntries(ctx, feedURL)
 			if err != nil {
 				log.
 					Error().
@@ -61,7 +62,7 @@ func (s *Service) ImportFromOPMLDocument(userUUID string, document *opml.Documen
 				FeedUUID:     newFeed.UUID,
 			}
 
-			_, created, err = s.GetOrCreateSubscription(newSubscription)
+			_, created, err = s.GetOrCreateSubscription(ctx, newSubscription)
 			if err != nil {
 				return Status{}, err
 			}

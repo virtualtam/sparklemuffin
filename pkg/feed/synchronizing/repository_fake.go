@@ -4,6 +4,7 @@
 package synchronizing
 
 import (
+	"context"
 	"time"
 
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
@@ -16,7 +17,7 @@ type fakeRepository struct {
 	Entries []feed.Entry
 }
 
-func (r *fakeRepository) FeedGetNByLastSynchronizationTime(n uint, lastSyncBefore time.Time) ([]feed.Feed, error) {
+func (r *fakeRepository) FeedGetNByLastSynchronizationTime(_ context.Context, n uint, lastSyncBefore time.Time) ([]feed.Feed, error) {
 	var feedsToSync []feed.Feed
 
 	for _, f := range r.Feeds {
@@ -30,7 +31,7 @@ func (r *fakeRepository) FeedGetNByLastSynchronizationTime(n uint, lastSyncBefor
 	return feedsToSync, nil
 }
 
-func (r *fakeRepository) FeedUpdateFetchMetadata(feedFetchMetadata FeedFetchMetadata) error {
+func (r *fakeRepository) FeedUpdateFetchMetadata(_ context.Context, feedFetchMetadata FeedFetchMetadata) error {
 	for index, f := range r.Feeds {
 		if f.UUID == feedFetchMetadata.UUID {
 			r.Feeds[index].ETag = feedFetchMetadata.ETag
@@ -45,7 +46,7 @@ func (r *fakeRepository) FeedUpdateFetchMetadata(feedFetchMetadata FeedFetchMeta
 	return feed.ErrFeedNotFound
 }
 
-func (r *fakeRepository) FeedUpdateMetadata(feedMetadata FeedMetadata) error {
+func (r *fakeRepository) FeedUpdateMetadata(_ context.Context, feedMetadata FeedMetadata) error {
 	for index, f := range r.Feeds {
 		if f.UUID == feedMetadata.UUID {
 			r.Feeds[index].Title = feedMetadata.Title
@@ -59,7 +60,7 @@ func (r *fakeRepository) FeedUpdateMetadata(feedMetadata FeedMetadata) error {
 	return feed.ErrFeedNotFound
 }
 
-func (r *fakeRepository) FeedEntryUpsertMany(newEntries []feed.Entry) (int64, error) {
+func (r *fakeRepository) FeedEntryUpsertMany(_ context.Context, newEntries []feed.Entry) (int64, error) {
 	uniqueURLs := map[string]int{}
 	for index, entry := range r.Entries {
 		uniqueURLs[entry.URL] = index

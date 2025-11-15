@@ -4,6 +4,7 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -54,7 +55,7 @@ func NewRunCommand() *cobra.Command {
 				feedSynchronizingService,
 				&feedSynchronizingLocker,
 			)
-			go feedSynchronizingScheduler.Run()
+			go feedSynchronizingScheduler.Run(context.Background())
 
 			// HTTP - Metrics server
 			metricsServer, metricsRegistry := metrics.NewServer(rootCmdName, metricsListenAddr, versionDetails)

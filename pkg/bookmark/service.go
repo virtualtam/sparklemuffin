@@ -4,6 +4,7 @@
 package bookmark
 
 import (
+	"context"
 	"slices"
 	"time"
 )
@@ -21,7 +22,7 @@ func NewService(r Repository) *Service {
 }
 
 // Add creates a new bookmark.
-func (s *Service) Add(bookmark Bookmark) error {
+func (s *Service) Add(ctx context.Context, bookmark Bookmark) error {
 	now := time.Now().UTC()
 
 	bookmark.generateUID()
@@ -30,20 +31,20 @@ func (s *Service) Add(bookmark Bookmark) error {
 
 	bookmark.Normalize()
 
-	if err := bookmark.ValidateForAddition(s.r); err != nil {
+	if err := bookmark.ValidateForAddition(ctx, s.r); err != nil {
 		return err
 	}
 
-	return s.r.BookmarkAdd(bookmark)
+	return s.r.BookmarkAdd(ctx, bookmark)
 }
 
 // All returns all bookmarks for a given user.
-func (s *Service) All(userUUID string) ([]Bookmark, error) {
-	return s.r.BookmarkGetAll(userUUID)
+func (s *Service) All(ctx context.Context, userUUID string) ([]Bookmark, error) {
+	return s.r.BookmarkGetAll(ctx, userUUID)
 }
 
 // ByUID returns a bookmark for a given user and UID.
-func (s *Service) ByUID(userUUID string, uid string) (Bookmark, error) {
+func (s *Service) ByUID(ctx context.Context, userUUID string, uid string) (Bookmark, error) {
 	b := &Bookmark{
 		UserUUID: userUUID,
 		UID:      uid,
@@ -61,11 +62,11 @@ func (s *Service) ByUID(userUUID string, uid string) (Bookmark, error) {
 		}
 	}
 
-	return s.r.BookmarkGetByUID(userUUID, uid)
+	return s.r.BookmarkGetByUID(ctx, userUUID, uid)
 }
 
 // ByURL returns a bookmark for a given user and URL.
-func (s *Service) ByURL(userUUID string, u string) (Bookmark, error) {
+func (s *Service) ByURL(ctx context.Context, userUUID string, u string) (Bookmark, error) {
 	b := &Bookmark{
 		UserUUID: userUUID,
 		URL:      u,
@@ -84,11 +85,11 @@ func (s *Service) ByURL(userUUID string, u string) (Bookmark, error) {
 		}
 	}
 
-	return s.r.BookmarkGetByURL(userUUID, b.URL)
+	return s.r.BookmarkGetByURL(ctx, userUUID, b.URL)
 }
 
 // Delete permanently deletes a bookmark.
-func (s *Service) Delete(userUUID, uid string) error {
+func (s *Service) Delete(ctx context.Context, userUUID, uid string) error {
 	b := Bookmark{
 		UserUUID: userUUID,
 		UID:      uid,
@@ -106,25 +107,25 @@ func (s *Service) Delete(userUUID, uid string) error {
 		}
 	}
 
-	return s.r.BookmarkDelete(userUUID, uid)
+	return s.r.BookmarkDelete(ctx, userUUID, uid)
 }
 
 // Update updates all data for an existing bookmark.
-func (s *Service) Update(bookmark Bookmark) error {
+func (s *Service) Update(ctx context.Context, bookmark Bookmark) error {
 	now := time.Now().UTC()
 	bookmark.UpdatedAt = now
 
 	bookmark.Normalize()
 
-	if err := bookmark.ValidateForUpdate(s.r); err != nil {
+	if err := bookmark.ValidateForUpdate(ctx, s.r); err != nil {
 		return err
 	}
 
-	return s.r.BookmarkUpdate(bookmark)
+	return s.r.BookmarkUpdate(ctx, bookmark)
 }
 
 // DeleteTag deletes a given tag from all bookmarks for a given user.
-func (s *Service) DeleteTag(dq TagDeleteQuery) (int64, error) {
+func (s *Service) DeleteTag(ctx context.Context, dq TagDeleteQuery) (int64, error) {
 	now := time.Now().UTC()
 
 	dq.normalize()
@@ -141,7 +142,7 @@ func (s *Service) DeleteTag(dq TagDeleteQuery) (int64, error) {
 		}
 	}
 
-	bookmarks, err := s.r.BookmarkGetByTag(dq.UserUUID, dq.Name)
+	bookmarks, err := s.r.BookmarkGetByTag(ctx, dq.UserUUID, dq.Name)
 	if err != nil {
 		return 0, err
 	}
@@ -159,11 +160,11 @@ func (s *Service) DeleteTag(dq TagDeleteQuery) (int64, error) {
 		bookmarks[i] = bookmark
 	}
 
-	return s.r.BookmarkTagUpdateMany(bookmarks)
+	return s.r.BookmarkTagUpdateMany(ctx, bookmarks)
 }
 
 // UpdateTag updates a given tag for all bookmarks for a given user.
-func (s *Service) UpdateTag(uq TagUpdateQuery) (int64, error) {
+func (s *Service) UpdateTag(ctx context.Context, uq TagUpdateQuery) (int64, error) {
 	now := time.Now().UTC()
 
 	uq.normalize()
@@ -183,7 +184,7 @@ func (s *Service) UpdateTag(uq TagUpdateQuery) (int64, error) {
 		}
 	}
 
-	bookmarks, err := s.r.BookmarkGetByTag(uq.UserUUID, uq.CurrentName)
+	bookmarks, err := s.r.BookmarkGetByTag(ctx, uq.UserUUID, uq.CurrentName)
 	if err != nil {
 		return 0, err
 	}
@@ -202,5 +203,5 @@ func (s *Service) UpdateTag(uq TagUpdateQuery) (int64, error) {
 		bookmarks[i] = bookmark
 	}
 
-	return s.r.BookmarkTagUpdateMany(bookmarks)
+	return s.r.BookmarkTagUpdateMany(ctx, bookmarks)
 }

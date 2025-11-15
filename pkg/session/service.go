@@ -4,6 +4,8 @@
 package session
 
 import (
+	"context"
+
 	"github.com/virtualtam/sparklemuffin/internal/hash"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -14,7 +16,7 @@ type Service struct {
 	hmac *hash.HMAC
 }
 
-// NewServices initializes and returns a Session Service.
+// NewService initializes and returns a Session Service.
 func NewService(r Repository, hmacKey string) *Service {
 	hmac := hash.NewHMAC(hmacKey)
 	return &Service{
@@ -24,7 +26,7 @@ func NewService(r Repository, hmacKey string) *Service {
 }
 
 // Add saves a new Session.
-func (s *Service) Add(session Session) error {
+func (s *Service) Add(ctx context.Context, session Session) error {
 	err := s.runValidationFuncs(
 		&session,
 		s.requireUserUUID,
@@ -36,11 +38,11 @@ func (s *Service) Add(session Session) error {
 		return err
 	}
 
-	return s.r.SessionAdd(session)
+	return s.r.SessionAdd(ctx, session)
 }
 
 // ByRememberToken returns the user Session corresponding to a given RememberToken.
-func (s *Service) ByRememberToken(rememberToken string) (Session, error) {
+func (s *Service) ByRememberToken(ctx context.Context, rememberToken string) (Session, error) {
 	session := Session{RememberToken: rememberToken}
 
 	err := s.runValidationFuncs(
@@ -53,7 +55,7 @@ func (s *Service) ByRememberToken(rememberToken string) (Session, error) {
 		return Session{}, err
 	}
 
-	return s.r.SessionGetByRememberTokenHash(session.RememberTokenHash)
+	return s.r.SessionGetByRememberTokenHash(ctx, session.RememberTokenHash)
 }
 
 func (s *Service) hashRememberToken(session *Session) error {

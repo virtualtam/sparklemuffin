@@ -4,6 +4,7 @@
 package querying
 
 import (
+	"context"
 	"errors"
 
 	"github.com/virtualtam/sparklemuffin/internal/paginate"
@@ -28,8 +29,8 @@ func NewService(r Repository) *Service {
 }
 
 // BookmarksByPage returns a Page containing a limited and offset number of bookmarks.
-func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, number uint) (BookmarkPage, error) {
-	owner, err := s.r.OwnerGetByUUID(ownerUUID)
+func (s *Service) BookmarksByPage(ctx context.Context, ownerUUID string, visibility Visibility, number uint) (BookmarkPage, error) {
+	owner, err := s.r.OwnerGetByUUID(ctx, ownerUUID)
 	if err != nil {
 		return BookmarkPage{}, err
 	}
@@ -38,7 +39,7 @@ func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, numbe
 		return BookmarkPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
-	bookmarkCount, err := s.r.BookmarkGetCount(ownerUUID, visibility)
+	bookmarkCount, err := s.r.BookmarkGetCount(ctx, ownerUUID, visibility)
 	if err != nil {
 		return BookmarkPage{}, err
 	}
@@ -56,7 +57,7 @@ func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, numbe
 
 	dbOffset := (number - 1) * bookmarksPerPage
 
-	bookmarks, err := s.r.BookmarkGetN(ownerUUID, visibility, bookmarksPerPage, dbOffset)
+	bookmarks, err := s.r.BookmarkGetN(ctx, ownerUUID, visibility, bookmarksPerPage, dbOffset)
 	if err != nil {
 		return BookmarkPage{}, err
 	}
@@ -66,8 +67,8 @@ func (s *Service) BookmarksByPage(ownerUUID string, visibility Visibility, numbe
 
 // BookmarksBySearchQueryAndPage returns a SearchPage containing a limited and offset
 // number of bookmarks for a given set of search terms.
-func (s *Service) BookmarksBySearchQueryAndPage(ownerUUID string, visibility Visibility, searchTerms string, number uint) (BookmarkPage, error) {
-	owner, err := s.r.OwnerGetByUUID(ownerUUID)
+func (s *Service) BookmarksBySearchQueryAndPage(ctx context.Context, ownerUUID string, visibility Visibility, searchTerms string, number uint) (BookmarkPage, error) {
+	owner, err := s.r.OwnerGetByUUID(ctx, ownerUUID)
 	if err != nil {
 		return BookmarkPage{}, err
 	}
@@ -76,7 +77,7 @@ func (s *Service) BookmarksBySearchQueryAndPage(ownerUUID string, visibility Vis
 		return BookmarkPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
-	bookmarkCount, err := s.r.BookmarkSearchCount(ownerUUID, visibility, searchTerms)
+	bookmarkCount, err := s.r.BookmarkSearchCount(ctx, ownerUUID, visibility, searchTerms)
 	if err != nil {
 		return BookmarkPage{}, err
 	}
@@ -94,7 +95,7 @@ func (s *Service) BookmarksBySearchQueryAndPage(ownerUUID string, visibility Vis
 
 	dbOffset := (number - 1) * bookmarksPerPage
 
-	bookmarks, err := s.r.BookmarkSearchN(ownerUUID, visibility, searchTerms, bookmarksPerPage, dbOffset)
+	bookmarks, err := s.r.BookmarkSearchN(ctx, ownerUUID, visibility, searchTerms, bookmarksPerPage, dbOffset)
 	if err != nil {
 		return BookmarkPage{}, err
 	}
@@ -103,13 +104,13 @@ func (s *Service) BookmarksBySearchQueryAndPage(ownerUUID string, visibility Vis
 }
 
 // PublicBookmarkByUID returns a Page containing a single public bookmark.
-func (s *Service) PublicBookmarkByUID(ownerUUID string, uid string) (BookmarkPage, error) {
-	owner, err := s.r.OwnerGetByUUID(ownerUUID)
+func (s *Service) PublicBookmarkByUID(ctx context.Context, ownerUUID string, uid string) (BookmarkPage, error) {
+	owner, err := s.r.OwnerGetByUUID(ctx, ownerUUID)
 	if err != nil {
 		return BookmarkPage{}, err
 	}
 
-	b, err := s.r.BookmarkGetPublicByUID(owner.UUID, uid)
+	b, err := s.r.BookmarkGetPublicByUID(ctx, owner.UUID, uid)
 	if errors.Is(err, bookmark.ErrNotFound) {
 		return NewBookmarkPage(owner, 1, 1, 0, []bookmark.Bookmark{}), nil
 	} else if err != nil {
@@ -120,25 +121,25 @@ func (s *Service) PublicBookmarkByUID(ownerUUID string, uid string) (BookmarkPag
 }
 
 // PublicBookmarksByPage returns a Page containing a limited and offset number of public bookmarks.
-func (s *Service) PublicBookmarksByPage(ownerUUID string, number uint) (BookmarkPage, error) {
-	return s.BookmarksByPage(ownerUUID, VisibilityPublic, number)
+func (s *Service) PublicBookmarksByPage(ctx context.Context, ownerUUID string, number uint) (BookmarkPage, error) {
+	return s.BookmarksByPage(ctx, ownerUUID, VisibilityPublic, number)
 }
 
 // PublicBookmarksBySearchQueryAndPage returns a SearchPage containing a limited and offset
 // number of bookmarks for a given set of search terms.
-func (s *Service) PublicBookmarksBySearchQueryAndPage(ownerUUID string, searchTerms string, number uint) (BookmarkPage, error) {
-	return s.BookmarksBySearchQueryAndPage(ownerUUID, VisibilityPublic, searchTerms, number)
+func (s *Service) PublicBookmarksBySearchQueryAndPage(ctx context.Context, ownerUUID string, searchTerms string, number uint) (BookmarkPage, error) {
+	return s.BookmarksBySearchQueryAndPage(ctx, ownerUUID, VisibilityPublic, searchTerms, number)
 }
 
 // Tags return all tags for a given user.
-func (s *Service) Tags(userUUID string, visibility Visibility) ([]Tag, error) {
-	return s.r.BookmarkTagGetAll(userUUID, visibility)
+func (s *Service) Tags(ctx context.Context, userUUID string, visibility Visibility) ([]Tag, error) {
+	return s.r.BookmarkTagGetAll(ctx, userUUID, visibility)
 }
 
 // TagNamesByCount returns all tag names for a given user,
 // sorted by count in descending order.
-func (s *Service) TagNamesByCount(userUUID string, visibility Visibility) ([]string, error) {
-	tags, err := s.r.BookmarkTagGetAll(userUUID, visibility)
+func (s *Service) TagNamesByCount(ctx context.Context, userUUID string, visibility Visibility) ([]string, error) {
+	tags, err := s.r.BookmarkTagGetAll(ctx, userUUID, visibility)
 	if err != nil {
 		return []string{}, err
 	}
@@ -153,12 +154,12 @@ func (s *Service) TagNamesByCount(userUUID string, visibility Visibility) ([]str
 }
 
 // TagsByPage returns a Page containing a limited and offset number of tags.
-func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uint) (TagPage, error) {
+func (s *Service) TagsByPage(ctx context.Context, ownerUUID string, visibility Visibility, number uint) (TagPage, error) {
 	if number < 1 {
 		return TagPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
-	tagCount, err := s.r.BookmarkTagGetCount(ownerUUID, visibility)
+	tagCount, err := s.r.BookmarkTagGetCount(ctx, ownerUUID, visibility)
 	if err != nil {
 		return TagPage{}, err
 	}
@@ -176,7 +177,7 @@ func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uin
 
 	dbOffset := (number - 1) * tagsPerPage
 
-	tags, err := s.r.BookmarkTagGetN(ownerUUID, visibility, tagsPerPage, dbOffset)
+	tags, err := s.r.BookmarkTagGetN(ctx, ownerUUID, visibility, tagsPerPage, dbOffset)
 	if err != nil {
 		return TagPage{}, err
 	}
@@ -186,12 +187,12 @@ func (s *Service) TagsByPage(ownerUUID string, visibility Visibility, number uin
 
 // TagsByFilterQueryAndPage returns a TagSearchPage containing a limited and offset
 // number of tags for a given filter term.
-func (s *Service) TagsByFilterQueryAndPage(ownerUUID string, visibility Visibility, filterTerm string, number uint) (TagPage, error) {
+func (s *Service) TagsByFilterQueryAndPage(ctx context.Context, ownerUUID string, visibility Visibility, filterTerm string, number uint) (TagPage, error) {
 	if number < 1 {
 		return TagPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
-	tagCount, err := s.r.BookmarkTagFilterCount(ownerUUID, visibility, filterTerm)
+	tagCount, err := s.r.BookmarkTagFilterCount(ctx, ownerUUID, visibility, filterTerm)
 	if err != nil {
 		return TagPage{}, err
 	}
@@ -209,7 +210,7 @@ func (s *Service) TagsByFilterQueryAndPage(ownerUUID string, visibility Visibili
 
 	dbOffset := (number - 1) * tagsPerPage
 
-	tags, err := s.r.BookmarkTagFilterN(ownerUUID, visibility, filterTerm, tagsPerPage, dbOffset)
+	tags, err := s.r.BookmarkTagFilterN(ctx, ownerUUID, visibility, filterTerm, tagsPerPage, dbOffset)
 	if err != nil {
 		return TagPage{}, err
 	}

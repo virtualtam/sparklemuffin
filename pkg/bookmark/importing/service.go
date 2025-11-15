@@ -4,6 +4,8 @@
 package importing
 
 import (
+	"context"
+
 	"github.com/virtualtam/netscape-go/v2"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
@@ -23,7 +25,7 @@ func NewService(r Repository) *Service {
 	}
 }
 
-func (s *Service) bulkImport(bookmarks []bookmark.Bookmark, overwriteExisting bool) (Status, error) {
+func (s *Service) bulkImport(ctx context.Context, bookmarks []bookmark.Bookmark, overwriteExisting bool) (Status, error) {
 	status := Status{
 		overwriteExisting: overwriteExisting,
 	}
@@ -32,7 +34,7 @@ func (s *Service) bulkImport(bookmarks []bookmark.Bookmark, overwriteExisting bo
 	uniqueURLs := map[string]bool{}
 
 	for _, b := range bookmarks {
-		if err := b.ValidateForAddition(s.vr); err != nil {
+		if err := b.ValidateForAddition(ctx, s.vr); err != nil {
 			status.Invalid++
 			continue
 		}
@@ -59,9 +61,9 @@ func (s *Service) bulkImport(bookmarks []bookmark.Bookmark, overwriteExisting bo
 	var err error
 
 	if overwriteExisting {
-		rowsAffected, err = s.r.BookmarkUpsertMany(filteredBookmarks)
+		rowsAffected, err = s.r.BookmarkUpsertMany(ctx, filteredBookmarks)
 	} else {
-		rowsAffected, err = s.r.BookmarkAddMany(filteredBookmarks)
+		rowsAffected, err = s.r.BookmarkAddMany(ctx, filteredBookmarks)
 	}
 
 	if err != nil {
@@ -79,7 +81,7 @@ func (s *Service) bulkImport(bookmarks []bookmark.Bookmark, overwriteExisting bo
 // The import will ignore:
 // - duplicate bookmarks for a given URL; only the first entry will be imported;
 // - bookmarks with missing or invalid values for required fields, such as the Title and URL.
-func (s *Service) ImportFromNetscapeDocument(userUUID string, document *netscape.Document, visibility Visibility, overwrite OnConflictStrategy) (Status, error) {
+func (s *Service) ImportFromNetscapeDocument(ctx context.Context, userUUID string, document *netscape.Document, visibility Visibility, overwrite OnConflictStrategy) (Status, error) {
 	var overwriteExisting bool
 
 	switch overwrite {
@@ -128,5 +130,5 @@ func (s *Service) ImportFromNetscapeDocument(userUUID string, document *netscape
 		bookmarks = append(bookmarks, *newBookmark)
 	}
 
-	return s.bulkImport(bookmarks, overwriteExisting)
+	return s.bulkImport(ctx, bookmarks, overwriteExisting)
 }

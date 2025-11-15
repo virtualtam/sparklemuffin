@@ -104,7 +104,7 @@ func TestServiceAddCategory(t *testing.T) {
 			}
 			s := NewService(r, nil)
 
-			got, err := s.CreateCategory(userUUID, tc.name)
+			got, err := s.CreateCategory(t.Context(), userUUID, tc.name)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -194,7 +194,7 @@ func TestServiceCategoryBySlug(t *testing.T) {
 			}
 			s := NewService(r, nil)
 
-			got, err := s.CategoryBySlug(userUUID, tc.slug)
+			got, err := s.CategoryBySlug(t.Context(), userUUID, tc.slug)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -279,7 +279,7 @@ func TestServiceCategoryByUUID(t *testing.T) {
 			}
 			s := NewService(r, nil)
 
-			got, err := s.CategoryByUUID(userUUID, tc.categoryUUID)
+			got, err := s.CategoryByUUID(t.Context(), userUUID, tc.categoryUUID)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -318,7 +318,7 @@ func TestServiceDeleteCategory(t *testing.T) {
 		}
 		s := NewService(r, nil)
 
-		if err := s.DeleteCategory(userUUID, emptyCategory.UUID); err != nil {
+		if err := s.DeleteCategory(t.Context(), userUUID, emptyCategory.UUID); err != nil {
 			t.Fatalf("want no error, got %q", err)
 		}
 
@@ -376,7 +376,7 @@ func TestServiceDeleteCategory(t *testing.T) {
 		}
 		s := NewService(r, nil)
 
-		if err := s.DeleteCategory(userUUID, category.UUID); err != nil {
+		if err := s.DeleteCategory(t.Context(), userUUID, category.UUID); err != nil {
 			t.Fatalf("want no error, got %q", err)
 		}
 
@@ -506,7 +506,7 @@ func TestServiceUpdateCategory(t *testing.T) {
 			}
 			s := NewService(r, nil)
 
-			err := s.UpdateCategory(tc.updatedCategory)
+			err := s.UpdateCategory(t.Context(), tc.updatedCategory)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -522,7 +522,7 @@ func TestServiceUpdateCategory(t *testing.T) {
 				t.Fatalf("want no error, got %q", err)
 			}
 
-			got, err := s.CategoryByUUID(userUUID, tc.updatedCategory.UUID)
+			got, err := s.CategoryByUUID(t.Context(), userUUID, tc.updatedCategory.UUID)
 			if err != nil {
 				t.Fatalf("failed to retrieve category: %q", err)
 			}
@@ -640,7 +640,7 @@ In the second half of the 20th century, aluminium gained usage in transportation
 			r := &FakeRepository{}
 			s := NewService(r, nil)
 
-			err := s.createEntries(feedUUID, tc.feedItems)
+			err := s.createEntries(t.Context(), feedUUID, tc.feedItems)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -824,7 +824,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 
 			s := NewService(r, feedClient)
 
-			gotFeed, gotIsCreated, err := s.GetOrCreateFeedAndEntries(tc.feedURL)
+			gotFeed, gotIsCreated, err := s.GetOrCreateFeedAndEntries(t.Context(), tc.feedURL)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -940,7 +940,7 @@ func TestServiceToggleEntryRead(t *testing.T) {
 			}
 			s := NewService(r, nil)
 
-			err := s.ToggleEntryRead(userUUID, tc.entryUID)
+			err := s.ToggleEntryRead(t.Context(), userUUID, tc.entryUID)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -1017,7 +1017,7 @@ func TestServiceUpdatePreferences(t *testing.T) {
 			}
 			s := NewService(r, nil)
 
-			err := s.UpdatePreferences(tc.preferences)
+			err := s.UpdatePreferences(t.Context(), tc.preferences)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -1101,7 +1101,7 @@ func TestServiceCreateSubscription(t *testing.T) {
 			}
 			s := NewService(r, nil)
 
-			_, err := s.createSubscription(tc.subscription)
+			_, err := s.createSubscription(t.Context(), tc.subscription)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -1162,7 +1162,7 @@ func TestServiceDeleteSubscription(t *testing.T) {
 		}
 		s := NewService(r, nil)
 
-		if err := s.DeleteSubscription(userUUID, subscription.UUID); err != nil {
+		if err := s.DeleteSubscription(t.Context(), userUUID, subscription.UUID); err != nil {
 			t.Fatalf("want no error, got %q", err)
 		}
 
@@ -1170,7 +1170,7 @@ func TestServiceDeleteSubscription(t *testing.T) {
 			t.Fatalf("want 0 Subscriptions, got %d", len(r.Subscriptions))
 		}
 
-		if _, err := r.FeedGetByURL(feed.FeedURL); !errors.Is(err, ErrFeedNotFound) {
+		if _, err := r.FeedGetByURL(t.Context(), feed.FeedURL); !errors.Is(err, ErrFeedNotFound) {
 			t.Fatalf("want ErrFeedNotFound, got %q", err)
 		}
 	})
@@ -1289,7 +1289,7 @@ func TestServiceUpdateSubscription(t *testing.T) {
 			}
 			s := NewService(r, nil)
 
-			err := s.UpdateSubscription(tc.subscription)
+			err := s.UpdateSubscription(t.Context(), tc.subscription)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

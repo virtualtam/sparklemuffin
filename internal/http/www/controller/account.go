@@ -75,7 +75,8 @@ func (ac *accountController) handleInfoUpdate() func(w http.ResponseWriter, r *h
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 
 		var form infoUpdateForm
 		if err := decodeForm(r, &form); err != nil {
@@ -99,7 +100,7 @@ func (ac *accountController) handleInfoUpdate() func(w http.ResponseWriter, r *h
 			DisplayName: form.DisplayName,
 		}
 
-		if err := ac.userService.UpdateInfo(userInfo); err != nil {
+		if err := ac.userService.UpdateInfo(ctx, userInfo); err != nil {
 			log.Error().Err(err).Msg("failed to update account information")
 			view.PutFlashError(w, "There was an error updating your information")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -139,7 +140,8 @@ func (ac *accountController) handlePasswordUpdate() func(w http.ResponseWriter, 
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 
 		var form passwordUpdateForm
 		if err := decodeForm(r, &form); err != nil {
@@ -163,7 +165,7 @@ func (ac *accountController) handlePasswordUpdate() func(w http.ResponseWriter, 
 			NewPasswordConfirmation: form.NewPasswordConfirmation,
 		}
 
-		if err := ac.userService.UpdatePassword(userPassword); err != nil {
+		if err := ac.userService.UpdatePassword(ctx, userPassword); err != nil {
 			log.Error().Err(err).Msg("failed to update account password")
 			view.PutFlashError(w, fmt.Sprintf("There was an error updating your password: %s", err))
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -199,7 +201,8 @@ func (ac *accountController) handlePreferencesUpdate() func(w http.ResponseWrite
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 
 		var form preferencesUpdateForm
 		if err := decodeForm(r, &form); err != nil {
@@ -221,7 +224,7 @@ func (ac *accountController) handlePreferencesUpdate() func(w http.ResponseWrite
 			ShowEntries: feed.EntryVisibility(form.ShowEntries),
 		}
 
-		if err := ac.feedService.UpdatePreferences(feedPreferences); err != nil {
+		if err := ac.feedService.UpdatePreferences(ctx, feedPreferences); err != nil {
 			log.Error().Err(err).Msg("failed to update account preferences")
 			view.PutFlashError(w, fmt.Sprintf("There was an error updating your preferences: %s", err))
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -235,10 +238,11 @@ func (ac *accountController) handlePreferencesUpdate() func(w http.ResponseWrite
 
 func (ac *accountController) handlePreferencesView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 		csrfToken := ac.csrfService.Generate(ctxUser.UUID, actionAccountPreferencesUpdate)
 
-		preferences, err := ac.feedService.PreferencesByUserUUID(ctxUser.UUID)
+		preferences, err := ac.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve account preferences")
 			view.PutFlashError(w, "There was an error retrieving your preferences")

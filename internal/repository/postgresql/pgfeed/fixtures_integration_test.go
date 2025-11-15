@@ -26,31 +26,32 @@ type fakeData struct {
 
 func (fd *fakeData) insert(t *testing.T, r *pgfeed.Repository) {
 	t.Helper()
+	ctx := t.Context()
 
 	for _, f := range fd.feeds {
-		if err := r.FeedCreate(f); err != nil {
+		if err := r.FeedCreate(ctx, f); err != nil {
 			t.Fatalf("failed to create feed: %q", err)
 		}
 	}
 
-	if _, err := r.FeedEntryCreateMany(fd.entries); err != nil {
+	if _, err := r.FeedEntryCreateMany(ctx, fd.entries); err != nil {
 		t.Fatalf("failed to create entries: %q", err)
 	}
 
 	for _, category := range fd.categories {
-		if err := r.FeedCategoryCreate(category); err != nil {
+		if err := r.FeedCategoryCreate(ctx, category); err != nil {
 			t.Fatalf("failed to create category: %q", err)
 		}
 	}
 
 	for _, subscription := range fd.subscriptions {
-		if _, err := r.FeedSubscriptionCreate(subscription); err != nil {
+		if _, err := r.FeedSubscriptionCreate(ctx, subscription); err != nil {
 			t.Fatalf("failed to create subscription: %q", err)
 		}
 	}
 
 	for _, entryMetadata := range fd.entriesMetadata {
-		if err := r.FeedEntryMetadataCreate(entryMetadata); err != nil {
+		if err := r.FeedEntryMetadataCreate(ctx, entryMetadata); err != nil {
 			t.Fatalf("failed to create entry metadata: %q", err)
 		}
 	}

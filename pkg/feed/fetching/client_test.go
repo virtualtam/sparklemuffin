@@ -77,7 +77,7 @@ func TestClientFetch(t *testing.T) {
 			}
 
 			client := fetching.NewClient(httpClient, userAgent)
-			feedStatus, err := client.Fetch("", tc.eTag, tc.lastModified)
+			feedStatus, err := client.Fetch(t.Context(), "", tc.eTag, tc.lastModified)
 			if err != nil {
 				t.Fatalf("want no error, got %q", err)
 			}

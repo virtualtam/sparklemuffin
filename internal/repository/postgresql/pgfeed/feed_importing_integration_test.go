@@ -45,11 +45,11 @@ func TestImportingService(t *testing.T) {
 
 	u := pgbase.GenerateFakeUser(t, &fake)
 
-	if err := us.Add(u); err != nil {
+	if err := us.Add(t.Context(), u); err != nil {
 		t.Fatalf("failed to create user: %q", err)
 	}
 
-	testUser, err := us.ByNickName(u.NickName)
+	testUser, err := us.ByNickName(t.Context(), u.NickName)
 	if err != nil {
 		t.Fatalf("failed to retrieve user: %q", err)
 	}
@@ -104,7 +104,7 @@ func TestImportingService(t *testing.T) {
 			},
 		}
 
-		status, err := is.ImportFromOPMLDocument(testUser.UUID, document)
+		status, err := is.ImportFromOPMLDocument(t.Context(), testUser.UUID, document)
 		if err != nil {
 			t.Fatalf("failed to import OPML document: %q", err)
 		}

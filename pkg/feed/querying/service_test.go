@@ -185,7 +185,7 @@ func TestService(t *testing.T) {
 
 		for _, tc := range cases {
 			t.Run(tc.tname, func(t *testing.T) {
-				got, err := testService.FeedsByPage(tc.userUUID, preferences, tc.pageNumber)
+				got, err := testService.FeedsByPage(t.Context(), tc.userUUID, preferences, tc.pageNumber)
 
 				if tc.wantErr != nil {
 					if errors.Is(err, tc.wantErr) {
@@ -317,7 +317,7 @@ func TestService(t *testing.T) {
 
 		for _, tc := range cases {
 			t.Run(tc.tname, func(t *testing.T) {
-				got, err := testService.FeedsByCategoryAndPage(tc.userUUID, preferences, tc.category, tc.pageNumber)
+				got, err := testService.FeedsByCategoryAndPage(t.Context(), tc.userUUID, preferences, tc.category, tc.pageNumber)
 
 				if tc.wantErr != nil {
 					if errors.Is(err, tc.wantErr) {
@@ -426,7 +426,7 @@ func TestService(t *testing.T) {
 
 		for _, tc := range cases {
 			t.Run(tc.tname, func(t *testing.T) {
-				got, err := testService.FeedsBySubscriptionAndPage(tc.userUUID, preferences, tc.subscription, tc.pageNumber)
+				got, err := testService.FeedsBySubscriptionAndPage(t.Context(), tc.userUUID, preferences, tc.subscription, tc.pageNumber)
 
 				if tc.wantErr != nil {
 					if errors.Is(err, tc.wantErr) {

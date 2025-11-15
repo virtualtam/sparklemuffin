@@ -13,6 +13,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 #### WWW
 - Add user preferences page
+- Propagate request and task context to the Services and Repositories
 
 #### Packaging and automation
 - Add Make target to reindex the development database and refresh collation version

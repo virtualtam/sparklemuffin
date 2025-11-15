@@ -4,6 +4,7 @@
 package bookmark
 
 import (
+	"context"
 	"net/url"
 	"sort"
 	"strings"
@@ -51,12 +52,12 @@ func (b *Bookmark) Normalize() {
 }
 
 // ValidateForAddition ensures mandatory fields are properly set when adding a new Bookmark.
-func (b *Bookmark) ValidateForAddition(r ValidationRepository) error {
+func (b *Bookmark) ValidateForAddition(ctx context.Context, r ValidationRepository) error {
 	fns := []func() error{
 		b.requireUserUUID,
 		b.requireURL,
 		b.ensureURLIsValid,
-		b.ensureURLIsNotRegistered(r),
+		b.ensureURLIsNotRegistered(ctx, r),
 		b.requireTitle,
 		b.validateUID,
 	}
@@ -72,14 +73,14 @@ func (b *Bookmark) ValidateForAddition(r ValidationRepository) error {
 
 // ValidateForUpdate ensures mandatory fields are properly set when updating an
 // existing Bookmark.
-func (b *Bookmark) ValidateForUpdate(r Repository) error {
+func (b *Bookmark) ValidateForUpdate(ctx context.Context, r Repository) error {
 	fns := []func() error{
 		b.requireUID,
 		b.validateUID,
 		b.requireUserUUID,
 		b.requireURL,
 		b.ensureURLIsValid,
-		b.ensureURLIsNotRegisteredToAnotherBookmark(r),
+		b.ensureURLIsNotRegisteredToAnotherBookmark(ctx, r),
 		b.requireTitle,
 	}
 
@@ -161,9 +162,9 @@ func (b *Bookmark) ensureURLIsValid() error {
 	return nil
 }
 
-func (b *Bookmark) ensureURLIsNotRegistered(r ValidationRepository) func() error {
+func (b *Bookmark) ensureURLIsNotRegistered(ctx context.Context, r ValidationRepository) func() error {
 	return func() error {
-		registered, err := r.BookmarkIsURLRegistered(b.UserUUID, b.URL)
+		registered, err := r.BookmarkIsURLRegistered(ctx, b.UserUUID, b.URL)
 		if err != nil {
 			return err
 		}
@@ -174,9 +175,9 @@ func (b *Bookmark) ensureURLIsNotRegistered(r ValidationRepository) func() error
 	}
 }
 
-func (b *Bookmark) ensureURLIsNotRegisteredToAnotherBookmark(r ValidationRepository) func() error {
+func (b *Bookmark) ensureURLIsNotRegisteredToAnotherBookmark(ctx context.Context, r ValidationRepository) func() error {
 	return func() error {
-		registered, err := r.BookmarkIsURLRegisteredToAnotherUID(b.UserUUID, b.URL, b.UID)
+		registered, err := r.BookmarkIsURLRegisteredToAnotherUID(ctx, b.UserUUID, b.URL, b.UID)
 
 		if err != nil {
 			return err

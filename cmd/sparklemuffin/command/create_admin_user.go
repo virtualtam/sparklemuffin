@@ -4,6 +4,7 @@
 package command
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/rs/zerolog/log"
@@ -44,7 +45,7 @@ func NewCreateAdminUserCommand() *cobra.Command {
 				IsAdmin:     true,
 			}
 
-			if err := userService.Add(adminUser); err != nil {
+			if err := userService.Add(context.Background(), adminUser); err != nil {
 				log.Error().Err(err).Msg("failed to create admin user")
 				return err
 			}

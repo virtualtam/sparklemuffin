@@ -222,7 +222,7 @@ func TestServiceByPage(t *testing.T) {
 
 			s := NewService(r)
 
-			got, err := s.BookmarksByPage(tc.ownerUUID, tc.visibility, tc.pageNumber)
+			got, err := s.BookmarksByPage(t.Context(), tc.ownerUUID, tc.visibility, tc.pageNumber)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

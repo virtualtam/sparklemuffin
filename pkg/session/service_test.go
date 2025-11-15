@@ -34,7 +34,7 @@ func TestServiceAdd(t *testing.T) {
 			r := &FakeRepository{}
 			s := NewService(r, "hmac-key")
 
-			err := s.Add(tc.session)
+			err := s.Add(t.Context(), tc.session)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -93,7 +93,7 @@ func TestServiceByRememberToken(t *testing.T) {
 			}
 			s := NewService(r, "ugotcookies")
 
-			got, err := s.ByRememberToken(tc.token)
+			got, err := s.ByRememberToken(t.Context(), tc.token)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

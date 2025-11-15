@@ -54,25 +54,26 @@ func TestFeedService(t *testing.T) {
 
 	u := pgbase.GenerateFakeUser(t, &fake)
 
-	if err := us.Add(u); err != nil {
+	if err := us.Add(t.Context(), u); err != nil {
 		t.Fatalf("failed to create user: %q", err)
 	}
 
-	testUser, err := us.ByNickName(u.NickName)
+	testUser, err := us.ByNickName(t.Context(), u.NickName)
 	if err != nil {
 		t.Fatalf("failed to retrieve user: %q", err)
 	}
 
 	t.Run("create, retrieve and delete category", func(t *testing.T) {
+		ctx := t.Context()
 		categoryName := "Test Category"
 
 		// 1. Create category
-		category, err := fs.CreateCategory(testUser.UUID, categoryName)
+		category, err := fs.CreateCategory(ctx, testUser.UUID, categoryName)
 		if err != nil {
 			t.Fatalf("failed to create category: %q", err)
 		}
 
-		gotCategory, err := fs.CategoryByUUID(testUser.UUID, category.UUID)
+		gotCategory, err := fs.CategoryByUUID(ctx, testUser.UUID, category.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve category: %q", err)
 		}
@@ -88,11 +89,11 @@ func TestFeedService(t *testing.T) {
 		}
 
 		// 2. Teardown
-		if err := fs.DeleteCategory(testUser.UUID, category.UUID); err != nil {
+		if err := fs.DeleteCategory(ctx, testUser.UUID, category.UUID); err != nil {
 			t.Fatalf("failed to delete category: %q", err)
 		}
 
-		_, err = fs.CategoryByUUID(testUser.UUID, category.UUID)
+		_, err = fs.CategoryByUUID(ctx, testUser.UUID, category.UUID)
 		if !errors.Is(err, feed.ErrCategoryNotFound) {
 			t.Errorf("want ErrCategoryNotFound, got %q", err)
 		} else if err == nil {
@@ -101,9 +102,10 @@ func TestFeedService(t *testing.T) {
 	})
 
 	t.Run("create, update and delete category", func(t *testing.T) {
+		ctx := t.Context()
 		categoryName := "Test Category"
 
-		category, err := fs.CreateCategory(testUser.UUID, categoryName)
+		category, err := fs.CreateCategory(ctx, testUser.UUID, categoryName)
 		if err != nil {
 			t.Fatalf("failed to create category: %q", err)
 		}
@@ -115,11 +117,11 @@ func TestFeedService(t *testing.T) {
 			Name:     newCategoryName,
 		}
 
-		if err := fs.UpdateCategory(newCategory); err != nil {
+		if err := fs.UpdateCategory(ctx, newCategory); err != nil {
 			t.Fatalf("failed to update category: %q", err)
 		}
 
-		gotCategory, err := fs.CategoryByUUID(testUser.UUID, category.UUID)
+		gotCategory, err := fs.CategoryByUUID(ctx, testUser.UUID, category.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve category: %q", err)
 		}
@@ -134,27 +136,28 @@ func TestFeedService(t *testing.T) {
 			t.Errorf("want UUID %q, got %q", category.UUID, gotCategory.UUID)
 		}
 
-		if err := fs.DeleteCategory(testUser.UUID, category.UUID); err != nil {
+		if err := fs.DeleteCategory(ctx, testUser.UUID, category.UUID); err != nil {
 			t.Fatalf("failed to delete category: %q", err)
 		}
 	})
 
 	t.Run("create, retrieve and delete feed subscription", func(t *testing.T) {
+		ctx := t.Context()
 		categoryName := "Subscriptions"
 
 		// 1. Create category
-		category, err := fs.CreateCategory(testUser.UUID, categoryName)
+		category, err := fs.CreateCategory(ctx, testUser.UUID, categoryName)
 		if err != nil {
 			t.Fatalf("failed to create category: %q", err)
 		}
 
-		gotCategory, err := fs.CategoryByUUID(testUser.UUID, category.UUID)
+		gotCategory, err := fs.CategoryByUUID(ctx, testUser.UUID, category.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve category: %q", err)
 		}
 
 		// 2. Create feed, entries and subscription
-		if err := fs.Subscribe(testUser.UUID, category.UUID, "http://test.local"); err != nil {
+		if err := fs.Subscribe(ctx, testUser.UUID, category.UUID, "http://test.local"); err != nil {
 			t.Fatalf("failed to subscribe to feed: %q", err)
 		}
 
@@ -171,14 +174,14 @@ func TestFeedService(t *testing.T) {
 			FetchedAt:    now,
 		}
 
-		gotFeed, err := fs.FeedBySlug(wantFeed.Slug)
+		gotFeed, err := fs.FeedBySlug(ctx, wantFeed.Slug)
 		if err != nil {
 			t.Fatalf("failed to retrieve feed: %q", err)
 		}
 
 		feed.AssertFeedEquals(t, gotFeed, wantFeed)
 
-		gotSubscription, err := fs.SubscriptionByFeed(testUser.UUID, gotFeed.UUID)
+		gotSubscription, err := fs.SubscriptionByFeed(ctx, testUser.UUID, gotFeed.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve subscription: %q", err)
 		}
@@ -221,7 +224,7 @@ func TestFeedService(t *testing.T) {
 		}
 		wantNEntries := uint(len(wantEntries))
 
-		entryCount, err := r.FeedEntryGetCount(testUser.UUID, feed.EntryVisibilityAll)
+		entryCount, err := r.FeedEntryGetCount(ctx, testUser.UUID, feed.EntryVisibilityAll)
 		if err != nil {
 			t.Fatalf("failed to retrieve entry count: %q", err)
 		}
@@ -230,12 +233,12 @@ func TestFeedService(t *testing.T) {
 			t.Errorf("want %d entries, got %d", len(wantEntries), entryCount)
 		}
 
-		preferences, err := r.FeedPreferencesGetByUserUUID(testUser.UUID)
+		preferences, err := r.FeedPreferencesGetByUserUUID(ctx, testUser.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve preferences: %q", err)
 		}
 
-		gotEntries, err := r.FeedSubscriptionEntryGetN(testUser.UUID, preferences, wantNEntries, 0)
+		gotEntries, err := r.FeedSubscriptionEntryGetN(ctx, testUser.UUID, preferences, wantNEntries, 0)
 		if err != nil {
 			t.Fatalf("failed to retrieve entries: %q", err)
 		}
@@ -243,30 +246,31 @@ func TestFeedService(t *testing.T) {
 		querying.AssertSubscribedFeedEntriesEqual(t, gotEntries, wantEntries)
 
 		// 3. Teardown
-		if err := fs.DeleteSubscription(testUser.UUID, gotSubscription.UUID); err != nil {
+		if err := fs.DeleteSubscription(ctx, testUser.UUID, gotSubscription.UUID); err != nil {
 			t.Fatalf("failed to delete subscription: %q", err)
 		}
 
-		if _, err := r.FeedGetByUUID(gotFeed.UUID); !errors.Is(err, feed.ErrFeedNotFound) {
+		if _, err := r.FeedGetByUUID(ctx, gotFeed.UUID); !errors.Is(err, feed.ErrFeedNotFound) {
 			t.Errorf("want ErrFeedNotFound, got %q", err)
 		}
 
-		if err := fs.DeleteCategory(testUser.UUID, category.UUID); err != nil {
+		if err := fs.DeleteCategory(ctx, testUser.UUID, category.UUID); err != nil {
 			t.Fatalf("failed to delete category: %q", err)
 		}
 	})
 
 	t.Run("update preferences", func(t *testing.T) {
+		ctx := t.Context()
 		preferences := feed.Preferences{
 			UserUUID:    testUser.UUID,
 			ShowEntries: feed.EntryVisibilityRead,
 		}
 
-		if err := fs.UpdatePreferences(preferences); err != nil {
+		if err := fs.UpdatePreferences(ctx, preferences); err != nil {
 			t.Fatalf("failed to update preferences: %q", err)
 		}
 
-		gotPreferences, err := fs.PreferencesByUserUUID(testUser.UUID)
+		gotPreferences, err := fs.PreferencesByUserUUID(ctx, testUser.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve preferences: %q", err)
 		}

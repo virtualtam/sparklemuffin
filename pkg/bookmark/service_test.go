@@ -242,7 +242,7 @@ func TestServiceAdd(t *testing.T) {
 			}
 			s := NewService(r)
 
-			err := s.Add(tc.bookmark)
+			err := s.Add(t.Context(), tc.bookmark)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -324,7 +324,7 @@ func TestServiceByUID(t *testing.T) {
 			}
 			s := NewService(r)
 
-			got, err := s.ByUID(tc.userUUID, tc.uid)
+			got, err := s.ByUID(t.Context(), tc.userUUID, tc.uid)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -403,7 +403,7 @@ func TestServiceDelete(t *testing.T) {
 			}
 			s := NewService(r)
 
-			err := s.Delete(tc.userUUID, tc.uid)
+			err := s.Delete(t.Context(), tc.userUUID, tc.uid)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -596,7 +596,7 @@ func TestServiceUpdate(t *testing.T) {
 			}
 			s := NewService(r)
 
-			err := s.Update(tc.bookmark)
+			err := s.Update(t.Context(), tc.bookmark)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -612,7 +612,7 @@ func TestServiceUpdate(t *testing.T) {
 				t.Fatalf("want no error, got %q", err)
 			}
 
-			got, err := r.BookmarkGetByUID(tc.bookmark.UserUUID, tc.bookmark.UID)
+			got, err := r.BookmarkGetByUID(t.Context(), tc.bookmark.UserUUID, tc.bookmark.UID)
 			if err != nil {
 				t.Fatalf("want no error, got %q", err)
 			}
@@ -699,7 +699,7 @@ func TestServiceDeleteTag(t *testing.T) {
 			}
 			s := NewService(r)
 
-			got, err := s.DeleteTag(tc.tagDeleteQuery)
+			got, err := s.DeleteTag(t.Context(), tc.tagDeleteQuery)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -840,7 +840,7 @@ func TestServiceUpdateTag(t *testing.T) {
 			}
 			s := NewService(r)
 
-			got, err := s.UpdateTag(tc.tagNameUpdate)
+			got, err := s.UpdateTag(t.Context(), tc.tagNameUpdate)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

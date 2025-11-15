@@ -16,8 +16,8 @@ import (
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 )
 
-func (r *Repository) feedGetQuery(query string, queryParams ...any) (feed.Feed, error) {
-	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
+func (r *Repository) feedGetQuery(ctx context.Context, query string, queryParams ...any) (feed.Feed, error) {
+	rows, err := r.Pool.Query(ctx, query, queryParams...)
 	if err != nil {
 		return feed.Feed{}, err
 	}
@@ -36,8 +36,8 @@ func (r *Repository) feedGetQuery(query string, queryParams ...any) (feed.Feed, 
 	return dbFeed.asFeed(), nil
 }
 
-func (r *Repository) feedGetManyQuery(query string, queryParams ...any) ([]feed.Feed, error) {
-	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
+func (r *Repository) feedGetManyQuery(ctx context.Context, query string, queryParams ...any) ([]feed.Feed, error) {
+	rows, err := r.Pool.Query(ctx, query, queryParams...)
 	if err != nil {
 		return []feed.Feed{}, err
 	}
@@ -58,7 +58,7 @@ func (r *Repository) feedGetManyQuery(query string, queryParams ...any) ([]feed.
 	return feeds, nil
 }
 
-func (r *Repository) feedGetAllByCategory(userUUID string, categoryUUID string) ([]feed.Feed, error) {
+func (r *Repository) feedGetAllByCategory(ctx context.Context, userUUID string, categoryUUID string) ([]feed.Feed, error) {
 	query := `
 SELECT f.feed_url, f.title, f.slug
 FROM feed_subscriptions fs
@@ -67,11 +67,11 @@ WHERE fs.user_uuid=$1
 AND   fs.category_uuid=$2
 ORDER BY f.title`
 
-	return r.feedGetManyQuery(query, userUUID, categoryUUID)
+	return r.feedGetManyQuery(ctx, query, userUUID, categoryUUID)
 }
 
-func (r *Repository) feedCategoryGetQuery(query string, queryParams ...any) (feed.Category, error) {
-	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
+func (r *Repository) feedCategoryGetQuery(ctx context.Context, query string, queryParams ...any) (feed.Category, error) {
+	rows, err := r.Pool.Query(ctx, query, queryParams...)
 	if err != nil {
 		return feed.Category{}, err
 	}
@@ -90,14 +90,14 @@ func (r *Repository) feedCategoryGetQuery(query string, queryParams ...any) (fee
 	return dbCategory.asCategory(), nil
 }
 
-func (r *Repository) feedGetCategories(userUUID string) ([]DBCategory, error) {
+func (r *Repository) feedGetCategories(ctx context.Context, userUUID string) ([]DBCategory, error) {
 	query := `
 	SELECT uuid, name, slug
 	FROM feed_categories
 	WHERE user_uuid=$1
 	ORDER BY name`
 
-	rows, err := r.Pool.Query(context.Background(), query, userUUID)
+	rows, err := r.Pool.Query(ctx, query, userUUID)
 	if err != nil {
 		return []DBCategory{}, fmt.Errorf("failed to retrieve categories: %w", err)
 	}
@@ -111,7 +111,7 @@ func (r *Repository) feedGetCategories(userUUID string) ([]DBCategory, error) {
 	return dbCategories, nil
 }
 
-func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string, entries []feed.Entry) (int64, error) {
+func (r *Repository) feedEntryUpsertMany(ctx context.Context, operation string, onConflictStmt string, entries []feed.Entry) (int64, error) {
 	insertQuery := `
 	INSERT INTO feed_entries(
 		uid,
@@ -158,8 +158,6 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 		batch.Queue(query, args)
 	}
 
-	ctx := context.Background()
-
 	batchResults := r.Pool.SendBatch(ctx, batch)
 	defer func() {
 		if err := batchResults.Close(); err != nil {
@@ -185,7 +183,7 @@ func (r *Repository) feedEntryUpsertMany(operation string, onConflictStmt string
 	return rowsAffected, nil
 }
 
-func (r *Repository) feedEntryGetCount(query string, showEntries feed.EntryVisibility, args pgx.NamedArgs) (uint, error) {
+func (r *Repository) feedEntryGetCount(ctx context.Context, query string, showEntries feed.EntryVisibility, args pgx.NamedArgs) (uint, error) {
 	switch showEntries {
 	case feed.EntryVisibilityRead:
 		query += " AND fem.read = TRUE"
@@ -196,7 +194,7 @@ func (r *Repository) feedEntryGetCount(query string, showEntries feed.EntryVisib
 	var count uint
 
 	err := r.Pool.QueryRow(
-		context.Background(),
+		ctx,
 		query,
 		args,
 	).Scan(&count)
@@ -207,7 +205,7 @@ func (r *Repository) feedEntryGetCount(query string, showEntries feed.EntryVisib
 	return count, nil
 }
 
-func (r *Repository) feedSubscriptionEntryGetN(query string, showEntries feed.EntryVisibility, args pgx.NamedArgs) ([]feedquerying.SubscribedFeedEntry, error) {
+func (r *Repository) feedSubscriptionEntryGetN(ctx context.Context, query string, showEntries feed.EntryVisibility, args pgx.NamedArgs) ([]feedquerying.SubscribedFeedEntry, error) {
 	switch showEntries {
 	case feed.EntryVisibilityRead:
 		query += " AND read = TRUE"
@@ -219,7 +217,7 @@ func (r *Repository) feedSubscriptionEntryGetN(query string, showEntries feed.En
 	ORDER BY fe.published_at DESC
 	LIMIT @limit OFFSET @offset`
 
-	rows, err := r.Pool.Query(context.Background(), query, args)
+	rows, err := r.Pool.Query(ctx, query, args)
 	if err != nil {
 		return []feedquerying.SubscribedFeedEntry{}, err
 	}
@@ -240,7 +238,7 @@ func (r *Repository) feedSubscriptionEntryGetN(query string, showEntries feed.En
 	return queryingEntries, nil
 }
 
-func (r *Repository) feedGetSubscriptionsByCategory(userUUID string, categoryUUID string) ([]DBSubscribedFeed, error) {
+func (r *Repository) feedGetSubscriptionsByCategory(ctx context.Context, userUUID string, categoryUUID string) ([]DBSubscribedFeed, error) {
 	query := `
 SELECT
     f.feed_url,
@@ -265,7 +263,7 @@ ORDER BY
         ELSE f.title
     END`
 
-	rows, err := r.Pool.Query(context.Background(), query, userUUID, categoryUUID)
+	rows, err := r.Pool.Query(ctx, query, userUUID, categoryUUID)
 	if err != nil {
 		return []DBSubscribedFeed{}, err
 	}
@@ -280,8 +278,8 @@ ORDER BY
 	return dbFeeds, nil
 }
 
-func (r *Repository) feedSubscriptionGetQuery(query string, queryParams ...any) (feed.Subscription, error) {
-	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
+func (r *Repository) feedSubscriptionGetQuery(ctx context.Context, query string, queryParams ...any) (feed.Subscription, error) {
+	rows, err := r.Pool.Query(ctx, query, queryParams...)
 	if err != nil {
 		return feed.Subscription{}, err
 	}
@@ -300,8 +298,8 @@ func (r *Repository) feedSubscriptionGetQuery(query string, queryParams ...any) 
 	return dbSubscription.asSubscription(), nil
 }
 
-func (r *Repository) feedSubscriptionTitleGetQuery(query string, queryParams ...any) (feedquerying.Subscription, error) {
-	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
+func (r *Repository) feedSubscriptionTitleGetQuery(ctx context.Context, query string, queryParams ...any) (feedquerying.Subscription, error) {
+	rows, err := r.Pool.Query(ctx, query, queryParams...)
 	if err != nil {
 		return feedquerying.Subscription{}, err
 	}
@@ -320,7 +318,7 @@ func (r *Repository) feedSubscriptionTitleGetQuery(query string, queryParams ...
 	return dbSubscriptionTitle.asQueryingSubscription(), nil
 }
 
-func (r *Repository) feedGetSubscriptionTitlesByCategory(userUUID string, categoryUUID string) ([]DBQueryingSubscription, error) {
+func (r *Repository) feedGetSubscriptionTitlesByCategory(ctx context.Context, userUUID string, categoryUUID string) ([]DBQueryingSubscription, error) {
 	query := `
 SELECT
     fs.uuid,
@@ -338,7 +336,7 @@ ORDER BY
         ELSE f.title
     END`
 
-	rows, err := r.Pool.Query(context.Background(), query, userUUID, categoryUUID)
+	rows, err := r.Pool.Query(ctx, query, userUUID, categoryUUID)
 	if err != nil {
 		return []DBQueryingSubscription{}, err
 	}

@@ -3,12 +3,16 @@
 
 package session
 
+import (
+	"context"
+)
+
 // Repository provides access to users' Web Session.
 type Repository interface {
 	// SessionAdd saves a new user Session.
-	SessionAdd(Session) error
+	SessionAdd(ctx context.Context, s Session) error
 
 	// SessionGetByRememberTokenHash returns the Session corresponding to a
 	// given remember token hash.
-	SessionGetByRememberTokenHash(hash string) (Session, error)
+	SessionGetByRememberTokenHash(ctx context.Context, hash string) (Session, error)
 }

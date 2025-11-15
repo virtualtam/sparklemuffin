@@ -384,7 +384,7 @@ func TestServiceSynchronize(t *testing.T) {
 
 			s := NewService(r, feedClient)
 
-			err := s.Synchronize(tc.tname)
+			err := s.Synchronize(t.Context(), tc.tname)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

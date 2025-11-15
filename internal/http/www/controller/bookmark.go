@@ -145,10 +145,11 @@ type bookmarkFormContent struct {
 // handleBookmarkAddView renders the bookmark addition form.
 func (bc *bookmarkController) handleBookmarkAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 		csrfToken := bc.csrfService.Generate(ctxUser.UUID, actionBookmarkAdd)
 
-		tags, err := bc.queryingService.TagNamesByCount(ctxUser.UUID, bookmarkquerying.VisibilityAll)
+		tags, err := bc.queryingService.TagNamesByCount(ctx, ctxUser.UUID, bookmarkquerying.VisibilityAll)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
 			view.PutFlashError(w, "failed to retrieve existing tags")
@@ -179,7 +180,8 @@ func (bc *bookmarkController) handleBookmarkAdd() func(w http.ResponseWriter, r 
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 
 		var form bookmarkAddForm
 		if err := decodeForm(r, &form); err != nil {
@@ -205,7 +207,7 @@ func (bc *bookmarkController) handleBookmarkAdd() func(w http.ResponseWriter, r 
 			Tags:        strings.Split(form.Tags, " "),
 		}
 
-		if err := bc.bookmarkService.Add(newBookmark); err != nil {
+		if err := bc.bookmarkService.Add(ctx, newBookmark); err != nil {
 			log.Error().Err(err).Msg("failed to add bookmark")
 			view.PutFlashError(w, "failed to add bookmark")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -220,10 +222,11 @@ func (bc *bookmarkController) handleBookmarkAdd() func(w http.ResponseWriter, r 
 func (bc *bookmarkController) handleBookmarkDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		bookmarkUID := chi.URLParam(r, "uid")
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 		csrfToken := bc.csrfService.Generate(ctxUser.UUID, actionBookmarkDelete)
 
-		bookmarkToDelete, err := bc.bookmarkService.ByUID(ctxUser.UUID, bookmarkUID)
+		bookmarkToDelete, err := bc.bookmarkService.ByUID(ctx, ctxUser.UUID, bookmarkUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmark")
 			view.PutFlashError(w, "failed to retrieve bookmark")
@@ -251,7 +254,8 @@ func (bc *bookmarkController) handleBookmarkDelete() func(w http.ResponseWriter,
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		bookmarkUID := chi.URLParam(r, "uid")
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 
 		var form bookmarkDeleteForm
 		if err := decodeForm(r, &form); err != nil {
@@ -268,7 +272,7 @@ func (bc *bookmarkController) handleBookmarkDelete() func(w http.ResponseWriter,
 			return
 		}
 
-		if err := bc.bookmarkService.Delete(ctxUser.UUID, bookmarkUID); err != nil {
+		if err := bc.bookmarkService.Delete(ctx, ctxUser.UUID, bookmarkUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete bookmark")
 			view.PutFlashError(w, "failed to delete bookmark")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -283,10 +287,11 @@ func (bc *bookmarkController) handleBookmarkDelete() func(w http.ResponseWriter,
 func (bc *bookmarkController) handleBookmarkEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		bookmarkUID := chi.URLParam(r, "uid")
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 		csrfToken := bc.csrfService.Generate(ctxUser.UUID, actionBookmarkEdit)
 
-		tags, err := bc.queryingService.TagNamesByCount(ctxUser.UUID, bookmarkquerying.VisibilityAll)
+		tags, err := bc.queryingService.TagNamesByCount(ctx, ctxUser.UUID, bookmarkquerying.VisibilityAll)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
 			view.PutFlashError(w, "failed to retrieve existing tags")
@@ -294,7 +299,7 @@ func (bc *bookmarkController) handleBookmarkEditView() func(w http.ResponseWrite
 			return
 		}
 
-		bookmarkToEdit, err := bc.bookmarkService.ByUID(ctxUser.UUID, bookmarkUID)
+		bookmarkToEdit, err := bc.bookmarkService.ByUID(ctx, ctxUser.UUID, bookmarkUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmark")
 			view.PutFlashError(w, "failed to retrieve bookmark")
@@ -328,7 +333,8 @@ func (bc *bookmarkController) handleBookmarkEdit() func(w http.ResponseWriter, r
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		bookmarkUID := chi.URLParam(r, "uid")
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 
 		var form bookmarkEditForm
 		if err := decodeForm(r, &form); err != nil {
@@ -355,7 +361,7 @@ func (bc *bookmarkController) handleBookmarkEdit() func(w http.ResponseWriter, r
 			Tags:        strings.Split(form.Tags, " "),
 		}
 
-		if err := bc.bookmarkService.Update(editedBookmark); err != nil {
+		if err := bc.bookmarkService.Update(ctx, editedBookmark); err != nil {
 			log.Error().Err(err).Msg("failed to edit bookmark")
 			view.PutFlashError(w, "failed to edit bookmark")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -370,7 +376,8 @@ func (bc *bookmarkController) handleBookmarkEdit() func(w http.ResponseWriter, r
 func (bc *bookmarkController) handleBookmarkListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var viewData view.Data
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
@@ -383,6 +390,7 @@ func (bc *bookmarkController) handleBookmarkListView() func(w http.ResponseWrite
 		searchTermsParam := r.URL.Query().Get("search")
 		if searchTermsParam != "" {
 			bookmarksSearchPage, err := bc.queryingService.BookmarksBySearchQueryAndPage(
+				ctx,
 				ctxUser.UUID,
 				bookmarkquerying.VisibilityAll,
 				searchTermsParam,
@@ -406,6 +414,7 @@ func (bc *bookmarkController) handleBookmarkListView() func(w http.ResponseWrite
 
 		} else {
 			bookmarksPage, err := bc.queryingService.BookmarksByPage(
+				ctx,
 				ctxUser.UUID,
 				bookmarkquerying.VisibilityAll,
 				pageNumber,
@@ -466,7 +475,8 @@ func (bc *bookmarkController) handleBookmarkExport() func(w http.ResponseWriter,
 			return
 		}
 
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 
 		if !bc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionBookmarkExport) {
 			log.Warn().Msg("failed to validate CSRF token")
@@ -482,7 +492,7 @@ func (bc *bookmarkController) handleBookmarkExport() func(w http.ResponseWriter,
 		case bookmarkexporting.FormatJSON:
 			fileExtension = "json"
 
-			jsonDocument, err := bc.exportingService.ExportAsJSONDocument(ctxUser.UUID, form.Visibility)
+			jsonDocument, err := bc.exportingService.ExportAsJSONDocument(ctx, ctxUser.UUID, form.Visibility)
 			if err != nil {
 				log.Error().Err(err).Msg("bookmark: failed to retrieve bookmarks")
 				view.PutFlashError(w, "failed to export bookmarks")
@@ -501,7 +511,7 @@ func (bc *bookmarkController) handleBookmarkExport() func(w http.ResponseWriter,
 		case bookmarkexporting.FormatNetscape:
 			fileExtension = "htm"
 
-			netscapeDocument, err := bc.exportingService.ExportAsNetscapeDocument(ctxUser.UUID, form.Visibility)
+			netscapeDocument, err := bc.exportingService.ExportAsNetscapeDocument(ctx, ctxUser.UUID, form.Visibility)
 			if err != nil {
 				log.Error().Err(err).Msg("bookmark: failed to retrieve bookmarks")
 				view.PutFlashError(w, "failed to export bookmarks")
@@ -610,7 +620,8 @@ func (bc *bookmarkController) handleBookmarkImport() func(w http.ResponseWriter,
 			}
 		}
 
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 
 		if !bc.csrfService.Validate(csrfTokenBuffer.String(), ctxUser.UUID, actionBookmarkImport) {
 			log.Warn().Msg("failed to validate CSRF token")
@@ -630,7 +641,7 @@ func (bc *bookmarkController) handleBookmarkImport() func(w http.ResponseWriter,
 		overwrite := bookmarkimporting.OnConflictStrategy(onConflictStrategyBuffer.String())
 		visibility := bookmarkimporting.Visibility(visibilityBuffer.String())
 
-		importStatus, err := bc.importingService.ImportFromNetscapeDocument(ctxUser.UUID, document, visibility, overwrite)
+		importStatus, err := bc.importingService.ImportFromNetscapeDocument(ctx, ctxUser.UUID, document, visibility, overwrite)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to save imported bookmarks")
 			view.PutFlashError(w, "failed to save imported bookmarks")
@@ -646,6 +657,7 @@ func (bc *bookmarkController) handleBookmarkImport() func(w http.ResponseWriter,
 // handlePublicBookmarkListView renders the public bookmark list for a registered user.
 func (bc *bookmarkController) handlePublicBookmarkListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		var viewData view.Data
 
 		nickName := chi.URLParam(r, "nickname")
@@ -653,7 +665,7 @@ func (bc *bookmarkController) handlePublicBookmarkListView() func(w http.Respons
 		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
 		// in bookmarkquerying.Service.
 		// In practice, this requires performing an extra database query.
-		owner, err := bc.userService.ByNickName(nickName)
+		owner, err := bc.userService.ByNickName(ctx, nickName)
 		if err != nil {
 			log.Error().Err(err).Str("nickname", nickName).Msg("failed to retrieve user")
 			view.PutFlashError(w, "unknown user")
@@ -674,6 +686,7 @@ func (bc *bookmarkController) handlePublicBookmarkListView() func(w http.Respons
 		searchTermsParam := r.URL.Query().Get("search")
 		if searchTermsParam != "" {
 			bookmarksSearchPage, err := bc.queryingService.PublicBookmarksBySearchQueryAndPage(
+				ctx,
 				owner.UUID,
 				searchTermsParam,
 				pageNumber,
@@ -696,6 +709,7 @@ func (bc *bookmarkController) handlePublicBookmarkListView() func(w http.Respons
 
 		} else {
 			bookmarksPage, err := bc.queryingService.PublicBookmarksByPage(
+				ctx,
 				owner.UUID,
 				pageNumber,
 			)
@@ -726,6 +740,7 @@ func (bc *bookmarkController) handlePublicBookmarkListView() func(w http.Respons
 // handlePublicBookmarkPermalinkView renders a given public bookmark for a registered user.
 func (bc *bookmarkController) handlePublicBookmarkPermalinkView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		var viewData view.Data
 
 		nickName := chi.URLParam(r, "nickname")
@@ -734,7 +749,7 @@ func (bc *bookmarkController) handlePublicBookmarkPermalinkView() func(w http.Re
 		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
 		// in bookmarkquerying.Service.
 		// In practice, this requires performing an extra database query.
-		owner, err := bc.userService.ByNickName(nickName)
+		owner, err := bc.userService.ByNickName(ctx, nickName)
 		if err != nil {
 			log.Error().Err(err).Str("nickname", nickName).Msg("failed to retrieve user")
 			view.PutFlashError(w, "unknown user")
@@ -742,7 +757,7 @@ func (bc *bookmarkController) handlePublicBookmarkPermalinkView() func(w http.Re
 			return
 		}
 
-		bookmarkPage, err := bc.queryingService.PublicBookmarkByUID(owner.UUID, bookmarkUID)
+		bookmarkPage, err := bc.queryingService.PublicBookmarkByUID(ctx, owner.UUID, bookmarkUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmarks")
 			view.PutFlashError(w, "failed to retrieve bookmarks")
@@ -761,12 +776,13 @@ func (bc *bookmarkController) handlePublicBookmarkPermalinkView() func(w http.Re
 // handlePublicBookmarkFeedAtom renders the public Atom feed for a registered user.
 func (bc *bookmarkController) handlePublicBookmarkFeedAtom() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		nickName := chi.URLParam(r, "nickname")
 
 		// Retrieve the owner UUID via user.Service to avoid duplicating the normalization/validation layer
 		// in bookmarkquerying.Service.
 		// In practice, this requires performing an extra database query.
-		owner, err := bc.userService.ByNickName(nickName)
+		owner, err := bc.userService.ByNickName(ctx, nickName)
 		if err != nil {
 			log.Error().Err(err).Str("nickname", nickName).Msg("failed to retrieve user")
 			http.Error(w, "Not Found", http.StatusNotFound)
@@ -774,6 +790,7 @@ func (bc *bookmarkController) handlePublicBookmarkFeedAtom() func(w http.Respons
 		}
 
 		bookmarksPage, err := bc.queryingService.PublicBookmarksByPage(
+			ctx,
 			owner.UUID,
 			1,
 		)
@@ -852,14 +869,15 @@ func (bc *bookmarkController) handleTagDelete() func(w http.ResponseWriter, r *h
 
 		name := string(nameBytes)
 
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 
 		tagDelete := bookmark.TagDeleteQuery{
 			UserUUID: ctxUser.UUID,
 			Name:     name,
 		}
 
-		updated, err := bc.bookmarkService.DeleteTag(tagDelete)
+		updated, err := bc.bookmarkService.DeleteTag(ctx, tagDelete)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to delete tag")
 			view.PutFlashError(w, "failed to delete tag")
@@ -924,7 +942,8 @@ func (bc *bookmarkController) handleTagEdit() func(w http.ResponseWriter, r *htt
 
 		name := string(nameBytes)
 
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 
 		tagNameUpdate := bookmark.TagUpdateQuery{
 			UserUUID:    ctxUser.UUID,
@@ -932,7 +951,7 @@ func (bc *bookmarkController) handleTagEdit() func(w http.ResponseWriter, r *htt
 			NewName:     form.Name,
 		}
 
-		updated, err := bc.bookmarkService.UpdateTag(tagNameUpdate)
+		updated, err := bc.bookmarkService.UpdateTag(ctx, tagNameUpdate)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to rename tag")
 			view.PutFlashError(w, "failed to rename tag")
@@ -949,7 +968,9 @@ func (bc *bookmarkController) handleTagEdit() func(w http.ResponseWriter, r *htt
 func (bc *bookmarkController) handleTagListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var viewData view.Data
-		ctxUser := httpcontext.UserValue(r.Context())
+
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
@@ -963,6 +984,7 @@ func (bc *bookmarkController) handleTagListView() func(w http.ResponseWriter, r 
 
 		if filterTermParam != "" {
 			tagSearchPage, err := bc.queryingService.TagsByFilterQueryAndPage(
+				ctx,
 				ctxUser.UUID,
 				bookmarkquerying.VisibilityAll,
 				filterTermParam,
@@ -987,6 +1009,7 @@ func (bc *bookmarkController) handleTagListView() func(w http.ResponseWriter, r 
 
 		} else {
 			tagPage, err := bc.queryingService.TagsByPage(
+				ctx,
 				ctxUser.UUID,
 				bookmarkquerying.VisibilityAll,
 				pageNumber,

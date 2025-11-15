@@ -4,6 +4,7 @@
 package querying
 
 import (
+	"context"
 	"errors"
 	"sort"
 
@@ -29,7 +30,7 @@ func visibilityMatches(visibility Visibility, private bool) bool {
 	}
 }
 
-func (r *fakeRepository) BookmarkGetN(userUUID string, visibility Visibility, n uint, offset uint) ([]bookmark.Bookmark, error) {
+func (r *fakeRepository) BookmarkGetN(_ context.Context, userUUID string, visibility Visibility, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	var userBookmarks []bookmark.Bookmark
 
 	for _, b := range r.bookmarks {
@@ -50,7 +51,7 @@ func (r *fakeRepository) BookmarkGetN(userUUID string, visibility Visibility, n 
 	return userBookmarks[offset : offset+nBookmarks], nil
 }
 
-func (r *fakeRepository) BookmarkGetCount(userUUID string, visibility Visibility) (uint, error) {
+func (r *fakeRepository) BookmarkGetCount(_ context.Context, userUUID string, visibility Visibility) (uint, error) {
 	var userBookmarkCount uint
 
 	for _, b := range r.bookmarks {
@@ -65,7 +66,7 @@ func (r *fakeRepository) BookmarkGetCount(userUUID string, visibility Visibility
 	return userBookmarkCount, nil
 }
 
-func (r *fakeRepository) BookmarkGetPublicByUID(userUUID, uid string) (bookmark.Bookmark, error) {
+func (r *fakeRepository) BookmarkGetPublicByUID(_ context.Context, userUUID, uid string) (bookmark.Bookmark, error) {
 	for _, b := range r.bookmarks {
 		if b.UserUUID == userUUID && b.UID == uid && !b.Private {
 			return b, nil
@@ -75,15 +76,15 @@ func (r *fakeRepository) BookmarkGetPublicByUID(userUUID, uid string) (bookmark.
 	return bookmark.Bookmark{}, bookmark.ErrNotFound
 }
 
-func (r *fakeRepository) BookmarkSearchCount(userUUID string, visibility Visibility, searchTerms string) (uint, error) {
+func (r *fakeRepository) BookmarkSearchCount(_ context.Context, userUUID string, visibility Visibility, searchTerms string) (uint, error) {
 	return 0, errors.New("not implemented")
 }
 
-func (r *fakeRepository) BookmarkSearchN(userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]bookmark.Bookmark, error) {
+func (r *fakeRepository) BookmarkSearchN(_ context.Context, userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	return []bookmark.Bookmark{}, errors.New("not implemented")
 }
 
-func (r *fakeRepository) OwnerGetByUUID(userUUID string) (Owner, error) {
+func (r *fakeRepository) OwnerGetByUUID(_ context.Context, userUUID string) (Owner, error) {
 	for _, u := range r.users {
 		if u.UUID == userUUID {
 			owner := Owner{
@@ -98,22 +99,22 @@ func (r *fakeRepository) OwnerGetByUUID(userUUID string) (Owner, error) {
 	return Owner{}, ErrOwnerNotFound
 }
 
-func (r *fakeRepository) BookmarkTagGetAll(userUUID string, visibility Visibility) ([]Tag, error) {
+func (r *fakeRepository) BookmarkTagGetAll(_ context.Context, userUUID string, visibility Visibility) ([]Tag, error) {
 	return []Tag{}, errors.New("not implemented")
 }
 
-func (r *fakeRepository) BookmarkTagGetCount(userUUID string, visibility Visibility) (uint, error) {
+func (r *fakeRepository) BookmarkTagGetCount(_ context.Context, userUUID string, visibility Visibility) (uint, error) {
 	return 0, errors.New("not implemented")
 }
 
-func (r *fakeRepository) BookmarkTagGetN(userUUID string, visibility Visibility, n uint, offset uint) ([]Tag, error) {
+func (r *fakeRepository) BookmarkTagGetN(_ context.Context, userUUID string, visibility Visibility, n uint, offset uint) ([]Tag, error) {
 	return []Tag{}, errors.New("not implemented")
 }
 
-func (r *fakeRepository) BookmarkTagFilterCount(userUUID string, visibility Visibility, searchTerms string) (uint, error) {
+func (r *fakeRepository) BookmarkTagFilterCount(_ context.Context, userUUID string, visibility Visibility, searchTerms string) (uint, error) {
 	return 0, errors.New("not implemented")
 }
 
-func (r *fakeRepository) BookmarkTagFilterN(userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]Tag, error) {
+func (r *fakeRepository) BookmarkTagFilterN(_ context.Context, userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]Tag, error) {
 	return []Tag{}, errors.New("not implemented")
 }

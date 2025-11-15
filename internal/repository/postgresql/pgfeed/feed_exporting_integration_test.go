@@ -32,11 +32,11 @@ func TestFeedExportingService(t *testing.T) {
 
 	u := pgbase.GenerateFakeUser(t, &fake)
 
-	if err := us.Add(u); err != nil {
+	if err := us.Add(t.Context(), u); err != nil {
 		t.Fatalf("failed to create user: %q", err)
 	}
 
-	testUser, err := us.ByNickName(u.NickName)
+	testUser, err := us.ByNickName(t.Context(), u.NickName)
 	if err != nil {
 		t.Fatalf("failed to retrieve user: %q", err)
 	}
@@ -76,7 +76,7 @@ func TestFeedExportingService(t *testing.T) {
 			},
 		}
 
-		got, err := es.ExportAsOPMLDocument(testUser)
+		got, err := es.ExportAsOPMLDocument(t.Context(), testUser)
 		if err != nil {
 			t.Fatalf("want no error, got %q", err)
 		}

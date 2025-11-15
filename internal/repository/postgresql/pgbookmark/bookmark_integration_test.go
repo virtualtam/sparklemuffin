@@ -64,11 +64,11 @@ func TestBookmarkService(t *testing.T) {
 
 	u := pgbase.GenerateFakeUser(t, &fake)
 
-	if err := us.Add(u); err != nil {
+	if err := us.Add(t.Context(), u); err != nil {
 		t.Fatalf("failed to create user: %q", err)
 	}
 
-	testUser, err := us.ByNickName(u.NickName)
+	testUser, err := us.ByNickName(t.Context(), u.NickName)
 	if err != nil {
 		t.Fatalf("failed to retrieve user: %q", err)
 	}
@@ -108,11 +108,13 @@ func TestBookmarkService(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.tname, func(t *testing.T) {
-				if err := bs.Add(tc.bkm); err != nil {
+				ctx := t.Context()
+
+				if err := bs.Add(ctx, tc.bkm); err != nil {
 					t.Fatalf("failed to create bookmark: %q", err)
 				}
 
-				gotBookmark, err := bs.ByURL(testUser.UUID, tc.bkm.URL)
+				gotBookmark, err := bs.ByURL(ctx, testUser.UUID, tc.bkm.URL)
 				if err != nil {
 					t.Fatalf("failed to retrieve bookmark: %q", err)
 				}
@@ -123,11 +125,11 @@ func TestBookmarkService(t *testing.T) {
 
 				bookmark.AssertBookmarkEquals(t, gotBookmark, tc.bkm)
 
-				if err := bs.Delete(testUser.UUID, gotBookmark.UID); err != nil {
+				if err := bs.Delete(ctx, testUser.UUID, gotBookmark.UID); err != nil {
 					t.Fatalf("failed to delete bookmark: %q", err)
 				}
 
-				_, err = bs.ByUID(testUser.UUID, gotBookmark.UID)
+				_, err = bs.ByUID(ctx, testUser.UUID, gotBookmark.UID)
 				if !errors.Is(err, bookmark.ErrNotFound) {
 					t.Fatalf("want %q, got %q", bookmark.ErrNotFound, err)
 				}
@@ -136,6 +138,7 @@ func TestBookmarkService(t *testing.T) {
 	})
 
 	t.Run("create, update and delete bookmark", func(t *testing.T) {
+		ctx := t.Context()
 		bkm := bookmark.Bookmark{
 			UserUUID:    testUser.UUID,
 			URL:         fake.Internet().URL(),
@@ -144,11 +147,11 @@ func TestBookmarkService(t *testing.T) {
 			Tags:        generateUniqueSortedTags(&fake, 10),
 		}
 
-		if err := bs.Add(bkm); err != nil {
+		if err := bs.Add(ctx, bkm); err != nil {
 			t.Fatalf("failed to create bookmark: %q", err)
 		}
 
-		gotBookmark, err := bs.ByURL(testUser.UUID, bkm.URL)
+		gotBookmark, err := bs.ByURL(ctx, testUser.UUID, bkm.URL)
 		if err != nil {
 			t.Fatalf("failed to retrieve bookmark: %q", err)
 		}
@@ -162,28 +165,30 @@ func TestBookmarkService(t *testing.T) {
 			Tags:        generateUniqueSortedTags(&fake, 10),
 		}
 
-		if err := bs.Update(updatedBookmark); err != nil {
+		if err := bs.Update(ctx, updatedBookmark); err != nil {
 			t.Fatalf("failed to update bookmark: %q", err)
 		}
 
-		gotUpdatedBookmark, err := bs.ByUID(testUser.UUID, gotBookmark.UID)
+		gotUpdatedBookmark, err := bs.ByUID(ctx, testUser.UUID, gotBookmark.UID)
 		if err != nil {
 			t.Fatalf("failed to retrieve bookmark: %q", err)
 		}
 
 		bookmark.AssertBookmarkEquals(t, gotUpdatedBookmark, updatedBookmark)
 
-		if err := bs.Delete(testUser.UUID, gotBookmark.UID); err != nil {
+		if err := bs.Delete(ctx, testUser.UUID, gotBookmark.UID); err != nil {
 			t.Fatalf("failed to delete bookmark: %q", err)
 		}
 
-		_, err = bs.ByUID(testUser.UUID, gotBookmark.UID)
+		_, err = bs.ByUID(ctx, testUser.UUID, gotBookmark.UID)
 		if !errors.Is(err, bookmark.ErrNotFound) {
 			t.Fatalf("want %q, got %q", bookmark.ErrNotFound, err)
 		}
 	})
 
 	t.Run("update tag", func(t *testing.T) {
+		ctx := t.Context()
+
 		oldTagName := "common/tag2"
 		newTagName := "common/renamed"
 		commonTags := []string{"common/tag1", oldTagName}
@@ -204,7 +209,7 @@ func TestBookmarkService(t *testing.T) {
 				Tags:        tags,
 			}
 
-			if err := bs.Add(bkm); err != nil {
+			if err := bs.Add(ctx, bkm); err != nil {
 				t.Fatalf("failed to create bookmark: %q", err)
 			}
 		}
@@ -215,7 +220,7 @@ func TestBookmarkService(t *testing.T) {
 			NewName:     newTagName,
 		}
 
-		got, err := bs.UpdateTag(uq)
+		got, err := bs.UpdateTag(ctx, uq)
 		if err != nil {
 			t.Fatalf("failed to update tag: %q", err)
 		}
@@ -224,7 +229,7 @@ func TestBookmarkService(t *testing.T) {
 			t.Errorf("want %d updated bookmarks, got %d", nBookmarks, got)
 		}
 
-		allBookmarks, err := bs.All(testUser.UUID)
+		allBookmarks, err := bs.All(ctx, testUser.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve all bookmarks: %q", err)
 		}
@@ -244,13 +249,15 @@ func TestBookmarkService(t *testing.T) {
 		}
 
 		for _, b := range allBookmarks {
-			if err := bs.Delete(testUser.UUID, b.UID); err != nil {
+			if err := bs.Delete(ctx, testUser.UUID, b.UID); err != nil {
 				t.Fatalf("failed to delete bookmark: %q", err)
 			}
 		}
 	})
 
 	t.Run("delete tag", func(t *testing.T) {
+		ctx := t.Context()
+
 		deletedTagName := "common/tag1"
 		commonTags := []string{deletedTagName, "common/tag2"}
 		nBookmarks := 10
@@ -270,7 +277,7 @@ func TestBookmarkService(t *testing.T) {
 				Tags:        tags,
 			}
 
-			if err := bs.Add(bkm); err != nil {
+			if err := bs.Add(ctx, bkm); err != nil {
 				t.Fatalf("failed to create bookmark: %q", err)
 			}
 		}
@@ -280,7 +287,7 @@ func TestBookmarkService(t *testing.T) {
 			Name:     deletedTagName,
 		}
 
-		got, err := bs.DeleteTag(dq)
+		got, err := bs.DeleteTag(ctx, dq)
 		if err != nil {
 			t.Fatalf("failed to update tag: %q", err)
 		}
@@ -289,7 +296,7 @@ func TestBookmarkService(t *testing.T) {
 			t.Errorf("want %d updated bookmarks, got %d", nBookmarks, got)
 		}
 
-		allBookmarks, err := bs.All(testUser.UUID)
+		allBookmarks, err := bs.All(ctx, testUser.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve all bookmarks: %q", err)
 		}
@@ -307,7 +314,7 @@ func TestBookmarkService(t *testing.T) {
 		}
 
 		for _, b := range allBookmarks {
-			if err := bs.Delete(testUser.UUID, b.UID); err != nil {
+			if err := bs.Delete(ctx, testUser.UUID, b.UID); err != nil {
 				t.Fatalf("failed to delete bookmark: %q", err)
 			}
 		}

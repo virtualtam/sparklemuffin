@@ -4,6 +4,7 @@
 package exporting
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -24,14 +25,14 @@ func NewService(r Repository) *Service {
 	}
 }
 
-func (s *Service) getBookmarks(userUUID string, visibility Visibility) ([]bookmark.Bookmark, error) {
+func (s *Service) getBookmarks(ctx context.Context, userUUID string, visibility Visibility) ([]bookmark.Bookmark, error) {
 	switch visibility {
 	case VisibilityAll:
-		return s.r.BookmarkGetAll(userUUID)
+		return s.r.BookmarkGetAll(ctx, userUUID)
 	case VisibilityPrivate:
-		return s.r.BookmarkGetAllPrivate(userUUID)
+		return s.r.BookmarkGetAllPrivate(ctx, userUUID)
 	case VisibilityPublic:
-		return s.r.BookmarkGetAllPublic(userUUID)
+		return s.r.BookmarkGetAllPublic(ctx, userUUID)
 	default:
 		return []bookmark.Bookmark{}, ErrVisibilityInvalid
 	}
@@ -39,8 +40,8 @@ func (s *Service) getBookmarks(userUUID string, visibility Visibility) ([]bookma
 
 // ExportAsJSONDocument exports a given user's bookmarks matching the
 // provided Visibility as a JSON bookmark document.
-func (s *Service) ExportAsJSONDocument(userUUID string, visibility Visibility) (*JsonDocument, error) {
-	bookmarks, err := s.getBookmarks(userUUID, visibility)
+func (s *Service) ExportAsJSONDocument(ctx context.Context, userUUID string, visibility Visibility) (*JsonDocument, error) {
+	bookmarks, err := s.getBookmarks(ctx, userUUID, visibility)
 	if err != nil {
 		return &JsonDocument{}, err
 	}
@@ -71,8 +72,8 @@ func (s *Service) ExportAsJSONDocument(userUUID string, visibility Visibility) (
 
 // ExportAsNetscapeDocument exports a given user's bookmarks matching the
 // provided Visibility as a Netscape bookmark document.
-func (s *Service) ExportAsNetscapeDocument(userUUID string, visibility Visibility) (*netscape.Document, error) {
-	bookmarks, err := s.getBookmarks(userUUID, visibility)
+func (s *Service) ExportAsNetscapeDocument(ctx context.Context, userUUID string, visibility Visibility) (*netscape.Document, error) {
+	bookmarks, err := s.getBookmarks(ctx, userUUID, visibility)
 	if err != nil {
 		return &netscape.Document{}, err
 	}

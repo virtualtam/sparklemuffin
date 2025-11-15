@@ -4,6 +4,7 @@
 package exporting
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -25,8 +26,8 @@ func NewService(r Repository) *Service {
 }
 
 // ExportAsOPMLDocument exports a given user's feed subscriptions as an OPML document.
-func (s *Service) ExportAsOPMLDocument(user user.User) (*opml.Document, error) {
-	categorySubscriptions, err := s.r.FeedCategorySubscriptionsGetAll(user.UUID)
+func (s *Service) ExportAsOPMLDocument(ctx context.Context, user user.User) (*opml.Document, error) {
+	categorySubscriptions, err := s.r.FeedCategorySubscriptionsGetAll(ctx, user.UUID)
 	if err != nil {
 		return &opml.Document{}, err
 	}

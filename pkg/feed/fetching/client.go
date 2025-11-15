@@ -41,9 +41,7 @@ func NewClient(httpClient *http.Client, userAgent string) *Client {
 // - User-Agent header;
 // - Use the value of the ETag header to set the If-None-Match header;
 // - Use the value of the Last-Modified header to set the If-Modified-Since header.
-func (c *Client) Fetch(feedURL string, eTag string, lastModified time.Time) (FeedStatus, error) {
-	ctx := context.Background()
-
+func (c *Client) Fetch(ctx context.Context, feedURL string, eTag string, lastModified time.Time) (FeedStatus, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, feedURL, nil)
 	if err != nil {
 		log.

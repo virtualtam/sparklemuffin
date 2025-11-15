@@ -190,7 +190,13 @@ func TestServiceImportFromNetscapeDocument(t *testing.T) {
 
 			s := NewService(r)
 
-			status, err := s.ImportFromNetscapeDocument(tc.userUUID, &tc.document, tc.visibility, tc.onConflictStrategy)
+			status, err := s.ImportFromNetscapeDocument(
+				t.Context(),
+				tc.userUUID,
+				&tc.document,
+				tc.visibility,
+				tc.onConflictStrategy,
+			)
 
 			if tc.wantErr != nil {
 				if !errors.Is(err, tc.wantErr) {

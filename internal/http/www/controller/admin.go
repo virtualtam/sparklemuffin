@@ -68,9 +68,10 @@ type adminController struct {
 // handleUserListView renders the users list view.
 func (ac *adminController) handleUserListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		viewData := view.Data{Title: "Administration"}
 
-		users, err := ac.userService.All()
+		users, err := ac.userService.All(ctx)
 		if err != nil {
 			view.PutFlashError(w, err.Error())
 		} else {
@@ -110,6 +111,7 @@ func (ac *adminController) handleUserAdd() func(w http.ResponseWriter, r *http.R
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		adminUser := httpcontext.UserValue(r.Context())
 
 		var form userAddForm
@@ -135,7 +137,7 @@ func (ac *adminController) handleUserAdd() func(w http.ResponseWriter, r *http.R
 			IsAdmin:     form.IsAdmin,
 		}
 
-		if err := ac.userService.Add(newUser); err != nil {
+		if err := ac.userService.Add(ctx, newUser); err != nil {
 			log.Error().Err(err).Msg("failed to persist user")
 			view.PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -150,12 +152,13 @@ func (ac *adminController) handleUserAdd() func(w http.ResponseWriter, r *http.R
 // handleUserDeleteView renders the user deletion form.
 func (ac *adminController) handleUserDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		adminUser := httpcontext.UserValue(r.Context())
 		userUUID := chi.URLParam(r, "uuid")
 
 		csrfToken := ac.csrfService.Generate(adminUser.UUID, actionAdminUserDelete)
 
-		userToDelete, err := ac.userService.ByUUID(userUUID)
+		userToDelete, err := ac.userService.ByUUID(ctx, userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
 			view.PutFlashError(w, err.Error())
@@ -182,6 +185,7 @@ func (ac *adminController) handleUserDelete() func(w http.ResponseWriter, r *htt
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		adminUser := httpcontext.UserValue(r.Context())
 		userUUID := chi.URLParam(r, "uuid")
 
@@ -200,7 +204,7 @@ func (ac *adminController) handleUserDelete() func(w http.ResponseWriter, r *htt
 			return
 		}
 
-		userToDelete, err := ac.userService.ByUUID(userUUID)
+		userToDelete, err := ac.userService.ByUUID(ctx, userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
 			view.PutFlashError(w, err.Error())
@@ -208,7 +212,7 @@ func (ac *adminController) handleUserDelete() func(w http.ResponseWriter, r *htt
 			return
 		}
 
-		if err := ac.userService.DeleteByUUID(userUUID); err != nil {
+		if err := ac.userService.DeleteByUUID(ctx, userUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete user")
 			view.PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
@@ -223,12 +227,13 @@ func (ac *adminController) handleUserDelete() func(w http.ResponseWriter, r *htt
 // handleUserEditView renders the user edition form.
 func (ac *adminController) handleUserEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		adminUser := httpcontext.UserValue(r.Context())
 		userUUID := chi.URLParam(r, "uuid")
 
 		csrfToken := ac.csrfService.Generate(adminUser.UUID, actionAdminUserEdit)
 
-		userToEdit, err := ac.userService.ByUUID(userUUID)
+		userToEdit, err := ac.userService.ByUUID(ctx, userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
 			view.PutFlashError(w, err.Error())
@@ -259,6 +264,7 @@ func (ac *adminController) handleUserEdit() func(w http.ResponseWriter, r *http.
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		adminUser := httpcontext.UserValue(r.Context())
 		userUUID := chi.URLParam(r, "uuid")
 
@@ -286,7 +292,7 @@ func (ac *adminController) handleUserEdit() func(w http.ResponseWriter, r *http.
 			IsAdmin:     form.IsAdmin,
 		}
 
-		if err := ac.userService.Update(editedUser); err != nil {
+		if err := ac.userService.Update(ctx, editedUser); err != nil {
 			log.Error().Err(err).Msg("failed to update user")
 			view.PutFlashError(w, err.Error())
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)

@@ -15,8 +15,8 @@ import (
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 )
 
-func (r *Repository) bookmarkGetQuery(query string, queryParams ...any) (bookmark.Bookmark, error) {
-	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
+func (r *Repository) bookmarkGetQuery(ctx context.Context, query string, queryParams ...any) (bookmark.Bookmark, error) {
+	rows, err := r.Pool.Query(ctx, query, queryParams...)
 	if err != nil {
 		return bookmark.Bookmark{}, err
 	}
@@ -45,8 +45,8 @@ func (r *Repository) bookmarkGetQuery(query string, queryParams ...any) (bookmar
 	}, nil
 }
 
-func (r *Repository) bookmarkGetManyQuery(query string, queryParams ...any) ([]bookmark.Bookmark, error) {
-	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
+func (r *Repository) bookmarkGetManyQuery(ctx context.Context, query string, queryParams ...any) ([]bookmark.Bookmark, error) {
+	rows, err := r.Pool.Query(ctx, query, queryParams...)
 	if err != nil {
 		return []bookmark.Bookmark{}, err
 	}
@@ -79,7 +79,7 @@ func (r *Repository) bookmarkGetManyQuery(query string, queryParams ...any) ([]b
 	return bookmarks, nil
 }
 
-func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookmark.Bookmark) (int64, error) {
+func (r *Repository) bookmarkUpsertMany(ctx context.Context, onConflictStmt string, bookmarks []bookmark.Bookmark) (int64, error) {
 	insertQuery := `
 	INSERT INTO bookmarks(
 		uid,
@@ -129,8 +129,6 @@ func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookm
 		batch.Queue(query, args)
 	}
 
-	ctx := context.Background()
-
 	batchResults := r.Pool.SendBatch(ctx, batch)
 	defer func() {
 		if err := batchResults.Close(); err != nil {
@@ -156,8 +154,8 @@ func (r *Repository) bookmarkUpsertMany(onConflictStmt string, bookmarks []bookm
 	return rowsAffected, nil
 }
 
-func (r *Repository) tagGetQuery(query string, queryParams ...any) ([]bookmarkquerying.Tag, error) {
-	rows, err := r.Pool.Query(context.Background(), query, queryParams...)
+func (r *Repository) tagGetQuery(ctx context.Context, query string, queryParams ...any) ([]bookmarkquerying.Tag, error) {
+	rows, err := r.Pool.Query(ctx, query, queryParams...)
 	if err != nil {
 		return []bookmarkquerying.Tag{}, err
 	}

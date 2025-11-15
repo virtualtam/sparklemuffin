@@ -4,6 +4,7 @@
 package synchronizing
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -32,7 +33,7 @@ func NewScheduler(service *Service, locker sync.Locker) *Scheduler {
 }
 
 // Run periodically synchronizes all syndication feeds.
-func (sc *Scheduler) Run() {
+func (sc *Scheduler) Run(ctx context.Context) {
 	ticker := time.NewTicker(sc.interval)
 	log.Info().Dur("interval_seconds", sc.interval).Msg("feeds: synchronization scheduler started")
 
@@ -45,7 +46,7 @@ func (sc *Scheduler) Run() {
 			sc.locker.Lock()
 			defer sc.locker.Unlock()
 
-			if err := sc.s.Synchronize(jobID); err != nil {
+			if err := sc.s.Synchronize(ctx, jobID); err != nil {
 				log.
 					Error().
 					Err(err).

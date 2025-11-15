@@ -159,7 +159,7 @@ func TestServiceExportAsJSONDocument(t *testing.T) {
 			}
 			s := NewService(r)
 
-			got, err := s.ExportAsJSONDocument(tc.userUUID, tc.visibility)
+			got, err := s.ExportAsJSONDocument(t.Context(), tc.userUUID, tc.visibility)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -299,7 +299,7 @@ func TestServiceExportAsNetscapeDocument(t *testing.T) {
 			}
 			s := NewService(r)
 
-			got, err := s.ExportAsNetscapeDocument(tc.userUUID, tc.visibility)
+			got, err := s.ExportAsNetscapeDocument(t.Context(), tc.userUUID, tc.visibility)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

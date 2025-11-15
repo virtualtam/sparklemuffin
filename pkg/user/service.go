@@ -4,6 +4,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"regexp"
 	"strings"
@@ -30,16 +31,16 @@ func NewService(r Repository) *Service {
 }
 
 // Add adds a new User.
-func (s *Service) Add(user User) error {
+func (s *Service) Add(ctx context.Context, user User) error {
 	err := s.runValidationFuncs(
 		&user,
 		s.normalizeEmail,
 		s.requireEmail,
-		s.ensureEmailIsNotRegistered,
+		s.ensureEmailIsNotRegistered(ctx),
 		s.normalizeNickName,
 		s.requireNickName,
 		s.ensureNickNameIsValid,
-		s.ensureNickNameIsNotRegistered,
+		s.ensureNickNameIsNotRegistered(ctx),
 		s.normalizeDisplayName,
 		s.requireDisplayName,
 		s.requirePassword,
@@ -53,18 +54,18 @@ func (s *Service) Add(user User) error {
 		return err
 	}
 
-	return s.r.UserAdd(user)
+	return s.r.UserAdd(ctx, user)
 }
 
 // All returns a list of all users.
-func (s *Service) All() ([]User, error) {
-	return s.r.UserGetAll()
+func (s *Service) All(ctx context.Context) ([]User, error) {
+	return s.r.UserGetAll(ctx)
 }
 
 // Authenticate checks user-submitted credentials to determine whether a user
 // submitted the correct login information.
-func (s *Service) Authenticate(email, password string) (User, error) {
-	user, err := s.getUserByEmail(email)
+func (s *Service) Authenticate(ctx context.Context, email, password string) (User, error) {
+	user, err := s.getUserByEmail(ctx, email)
 	if err != nil {
 		return User{}, err
 	}
@@ -84,7 +85,7 @@ func (s *Service) Authenticate(email, password string) (User, error) {
 }
 
 // ByNickName returns the user corresponding to a given NickName.
-func (s *Service) ByNickName(nick string) (User, error) {
+func (s *Service) ByNickName(ctx context.Context, nick string) (User, error) {
 	user := User{NickName: nick}
 
 	err := s.runValidationFuncs(
@@ -97,11 +98,11 @@ func (s *Service) ByNickName(nick string) (User, error) {
 		return User{}, err
 	}
 
-	return s.r.UserGetByNickName(user.NickName)
+	return s.r.UserGetByNickName(ctx, user.NickName)
 }
 
 // ByUUID returns the user corresponding to a given UUID.
-func (s *Service) ByUUID(userUUID string) (User, error) {
+func (s *Service) ByUUID(ctx context.Context, userUUID string) (User, error) {
 	user := User{UUID: userUUID}
 
 	err := s.runValidationFuncs(
@@ -112,11 +113,11 @@ func (s *Service) ByUUID(userUUID string) (User, error) {
 		return User{}, err
 	}
 
-	return s.r.UserGetByUUID(user.UUID)
+	return s.r.UserGetByUUID(ctx, user.UUID)
 }
 
 // DeleteByUUID deletes an existing user and all related data.
-func (s *Service) DeleteByUUID(userUUID string) error {
+func (s *Service) DeleteByUUID(ctx context.Context, userUUID string) error {
 	user := User{UUID: userUUID}
 
 	err := s.runValidationFuncs(
@@ -127,21 +128,21 @@ func (s *Service) DeleteByUUID(userUUID string) error {
 		return err
 	}
 
-	return s.r.UserDeleteByUUID(userUUID)
+	return s.r.UserDeleteByUUID(ctx, userUUID)
 }
 
 // Update updates an existing user.
-func (s *Service) Update(user User) error {
+func (s *Service) Update(ctx context.Context, user User) error {
 	err := s.runValidationFuncs(
 		&user,
 		s.requireUUID,
 		s.normalizeEmail,
 		s.requireEmail,
-		s.ensureEmailIsNotRegisteredToAnotherUser,
+		s.ensureEmailIsNotRegisteredToAnotherUser(ctx),
 		s.normalizeNickName,
 		s.requireNickName,
 		s.ensureNickNameIsValid,
-		s.ensureNickNameIsNotRegisteredToAnotherUser,
+		s.ensureNickNameIsNotRegisteredToAnotherUser(ctx),
 		s.normalizeDisplayName,
 		s.requireDisplayName,
 		s.requirePassword,
@@ -153,11 +154,11 @@ func (s *Service) Update(user User) error {
 		return err
 	}
 
-	return s.r.UserUpdate(user)
+	return s.r.UserUpdate(ctx, user)
 }
 
 // UpdateInfo updates an existing user's account information.
-func (s *Service) UpdateInfo(info InfoUpdate) error {
+func (s *Service) UpdateInfo(ctx context.Context, info InfoUpdate) error {
 	user := User{
 		UUID:        info.UUID,
 		Email:       info.Email,
@@ -170,11 +171,11 @@ func (s *Service) UpdateInfo(info InfoUpdate) error {
 		s.requireUUID,
 		s.normalizeEmail,
 		s.requireEmail,
-		s.ensureEmailIsNotRegisteredToAnotherUser,
+		s.ensureEmailIsNotRegisteredToAnotherUser(ctx),
 		s.normalizeNickName,
 		s.requireNickName,
 		s.ensureNickNameIsValid,
-		s.ensureNickNameIsNotRegisteredToAnotherUser,
+		s.ensureNickNameIsNotRegisteredToAnotherUser(ctx),
 		s.normalizeDisplayName,
 		s.requireDisplayName,
 		s.refreshUpdatedAt,
@@ -185,11 +186,11 @@ func (s *Service) UpdateInfo(info InfoUpdate) error {
 
 	info.UpdatedAt = user.UpdatedAt
 
-	return s.r.UserUpdateInfo(info)
+	return s.r.UserUpdateInfo(ctx, info)
 }
 
 // UpdatePassword updates an existing user's password.
-func (s *Service) UpdatePassword(passwordUpdate PasswordUpdate) error {
+func (s *Service) UpdatePassword(ctx context.Context, passwordUpdate PasswordUpdate) error {
 	// validate current password
 	user := User{
 		UUID:     passwordUpdate.UUID,
@@ -205,7 +206,7 @@ func (s *Service) UpdatePassword(passwordUpdate PasswordUpdate) error {
 		return err
 	}
 
-	existingUser, err := s.ByUUID(user.UUID)
+	existingUser, err := s.ByUUID(ctx, user.UUID)
 	if err != nil {
 		return err
 	}
@@ -243,11 +244,11 @@ func (s *Service) UpdatePassword(passwordUpdate PasswordUpdate) error {
 		return err
 	}
 
-	return s.UpdatePasswordHash(user)
+	return s.UpdatePasswordHash(ctx, user)
 }
 
 // UpdatePasswordHash updates an existing user's password hash.
-func (s *Service) UpdatePasswordHash(user User) error {
+func (s *Service) UpdatePasswordHash(ctx context.Context, user User) error {
 	err := s.runValidationFuncs(
 		&user,
 		s.requireUUID,
@@ -264,10 +265,10 @@ func (s *Service) UpdatePasswordHash(user User) error {
 		UpdatedAt:    user.UpdatedAt,
 	}
 
-	return s.r.UserUpdatePasswordHash(passwordHashUpdate)
+	return s.r.UserUpdatePasswordHash(ctx, passwordHashUpdate)
 }
 
-func (s *Service) getUserByEmail(email string) (User, error) {
+func (s *Service) getUserByEmail(ctx context.Context, email string) (User, error) {
 	user := User{Email: email}
 
 	err := s.runValidationFuncs(
@@ -279,7 +280,7 @@ func (s *Service) getUserByEmail(email string) (User, error) {
 		return User{}, err
 	}
 
-	return s.r.UserGetByEmail(user.Email)
+	return s.r.UserGetByEmail(ctx, user.Email)
 }
 
 // validationFunc defines a function that can be applied to normalize or
@@ -297,52 +298,60 @@ func (s *Service) runValidationFuncs(user *User, fns ...validationFunc) error {
 	return nil
 }
 
-func (s *Service) ensureNickNameIsNotRegistered(user *User) error {
-	registered, err := s.r.UserIsNickNameRegistered(user.NickName)
-	if err != nil {
-		return err
+func (s *Service) ensureNickNameIsNotRegistered(ctx context.Context) validationFunc {
+	return func(user *User) error {
+		registered, err := s.r.UserIsNickNameRegistered(ctx, user.NickName)
+		if err != nil {
+			return err
+		}
+		if registered {
+			return ErrNickNameAlreadyRegistered
+		}
+		return nil
 	}
-	if registered {
+}
+
+func (s *Service) ensureNickNameIsNotRegisteredToAnotherUser(ctx context.Context) validationFunc {
+	return func(user *User) error {
+		existingUser, err := s.r.UserGetByNickName(ctx, user.NickName)
+		if errors.Is(err, ErrNotFound) {
+			return nil
+		}
+
+		if existingUser.UUID == user.UUID {
+			return nil
+		}
+
 		return ErrNickNameAlreadyRegistered
 	}
-	return nil
 }
 
-func (s *Service) ensureNickNameIsNotRegisteredToAnotherUser(user *User) error {
-	existingUser, err := s.r.UserGetByNickName(user.NickName)
-	if errors.Is(err, ErrNotFound) {
+func (s *Service) ensureEmailIsNotRegistered(ctx context.Context) validationFunc {
+	return func(user *User) error {
+		registered, err := s.r.UserIsEmailRegistered(ctx, user.Email)
+		if err != nil {
+			return err
+		}
+		if registered {
+			return ErrEmailAlreadyRegistered
+		}
 		return nil
 	}
-
-	if existingUser.UUID == user.UUID {
-		return nil
-	}
-
-	return ErrNickNameAlreadyRegistered
 }
 
-func (s *Service) ensureEmailIsNotRegistered(user *User) error {
-	registered, err := s.r.UserIsEmailRegistered(user.Email)
-	if err != nil {
-		return err
-	}
-	if registered {
+func (s *Service) ensureEmailIsNotRegisteredToAnotherUser(ctx context.Context) validationFunc {
+	return func(user *User) error {
+		existingUser, err := s.r.UserGetByEmail(ctx, user.Email)
+		if errors.Is(err, ErrNotFound) {
+			return nil
+		}
+
+		if existingUser.UUID == user.UUID {
+			return nil
+		}
+
 		return ErrEmailAlreadyRegistered
 	}
-	return nil
-}
-
-func (s *Service) ensureEmailIsNotRegisteredToAnotherUser(user *User) error {
-	existingUser, err := s.r.UserGetByEmail(user.Email)
-	if errors.Is(err, ErrNotFound) {
-		return nil
-	}
-
-	if existingUser.UUID == user.UUID {
-		return nil
-	}
-
-	return ErrEmailAlreadyRegistered
 }
 
 func (s *Service) ensureNickNameIsValid(user *User) error {

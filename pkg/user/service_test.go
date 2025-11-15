@@ -123,7 +123,7 @@ func TestServiceAdd(t *testing.T) {
 			}
 			s := NewService(r)
 
-			err := s.Add(tc.user)
+			err := s.Add(t.Context(), tc.user)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -139,7 +139,7 @@ func TestServiceAdd(t *testing.T) {
 				t.Fatalf("want no error, got %q", err)
 			}
 
-			got, err := r.UserGetByEmail(tc.user.Email)
+			got, err := r.UserGetByEmail(t.Context(), tc.user.Email)
 			if err != nil {
 				t.Fatalf("want no error, got %q", err)
 			}
@@ -221,7 +221,7 @@ func TestServiceAuthenticate(t *testing.T) {
 			}
 			s := NewService(r)
 
-			got, err := s.Authenticate(tc.email, tc.password)
+			got, err := s.Authenticate(t.Context(), tc.email, tc.password)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -275,7 +275,7 @@ func TestServiceDeleteByUUID(t *testing.T) {
 			}
 			s := NewService(r)
 
-			err := s.DeleteByUUID(tc.userUUID)
+			err := s.DeleteByUUID(t.Context(), tc.userUUID)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -402,7 +402,7 @@ func TestServiceUpdate(t *testing.T) {
 			}
 			s := NewService(r)
 
-			err := s.Update(tc.user)
+			err := s.Update(t.Context(), tc.user)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -586,7 +586,7 @@ func TestServiceUpdateInfo(t *testing.T) {
 			}
 			s := NewService(r)
 
-			err := s.UpdateInfo(tc.info)
+			err := s.UpdateInfo(t.Context(), tc.info)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -680,7 +680,7 @@ func TestServiceUpdatePassword(t *testing.T) {
 			}
 			s := NewService(r)
 
-			err := s.UpdatePassword(tc.passwordUpdate)
+			err := s.UpdatePassword(t.Context(), tc.passwordUpdate)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

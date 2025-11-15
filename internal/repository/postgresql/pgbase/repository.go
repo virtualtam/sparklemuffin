@@ -50,15 +50,10 @@ func (r *Repository) Rollback(ctx context.Context, tx pgx.Tx, domain string, ope
 		Msg("transaction rolled back")
 }
 
-func (r *Repository) RowExistsByQuery(query string, queryParams ...any) (bool, error) {
+func (r *Repository) RowExistsByQuery(ctx context.Context, query string, queryParams ...any) (bool, error) {
 	var exists int64
 
-	err := r.Pool.QueryRow(
-		context.Background(),
-		query,
-		queryParams...,
-	).Scan(&exists)
-
+	err := r.Pool.QueryRow(ctx, query, queryParams...).Scan(&exists)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
 	}
@@ -69,9 +64,7 @@ func (r *Repository) RowExistsByQuery(query string, queryParams ...any) (bool, e
 	return true, nil
 }
 
-func (r *Repository) BatchTx(domain string, operation string, batch *pgx.Batch) error {
-	ctx := context.Background()
-
+func (r *Repository) BatchTx(ctx context.Context, domain string, operation string, batch *pgx.Batch) error {
 	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -86,9 +79,7 @@ func (r *Repository) BatchTx(domain string, operation string, batch *pgx.Batch) 
 	return tx.Commit(ctx)
 }
 
-func (r *Repository) QueryTx(domain string, operation string, query string, args pgx.NamedArgs) error {
-	ctx := context.Background()
-
+func (r *Repository) QueryTx(ctx context.Context, domain string, operation string, query string, args pgx.NamedArgs) error {
 	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
 		return err

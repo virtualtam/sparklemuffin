@@ -3,7 +3,11 @@
 
 package importing
 
-import "github.com/virtualtam/sparklemuffin/pkg/bookmark"
+import (
+	"context"
+
+	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+)
 
 var _ Repository = &FakeRepository{}
 
@@ -11,11 +15,11 @@ type FakeRepository struct {
 	Bookmarks []bookmark.Bookmark
 }
 
-func (r *FakeRepository) BookmarkAddMany(bookmarks []bookmark.Bookmark) (int64, error) {
+func (r *FakeRepository) BookmarkAddMany(_ context.Context, bookmarks []bookmark.Bookmark) (int64, error) {
 	return r.bookmarkUpsertMany(bookmarks, false)
 }
 
-func (r *FakeRepository) BookmarkUpsertMany(bookmarks []bookmark.Bookmark) (int64, error) {
+func (r *FakeRepository) BookmarkUpsertMany(_ context.Context, bookmarks []bookmark.Bookmark) (int64, error) {
 	return r.bookmarkUpsertMany(bookmarks, true)
 }
 

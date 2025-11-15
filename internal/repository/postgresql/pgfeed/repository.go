@@ -35,7 +35,7 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	}
 }
 
-func (r *Repository) FeedCreate(f feed.Feed) error {
+func (r *Repository) FeedCreate(ctx context.Context, f feed.Feed) error {
 	query := `
 	INSERT INTO feed_feeds(
 		uuid,
@@ -83,37 +83,37 @@ func (r *Repository) FeedCreate(f feed.Feed) error {
 		"fetched_at":            f.FetchedAt,
 	}
 
-	return r.QueryTx("feeds", "FeedCreate", query, args)
+	return r.QueryTx(ctx, "feeds", "FeedCreate", query, args)
 }
 
-func (r *Repository) FeedGetBySlug(feedSlug string) (feed.Feed, error) {
+func (r *Repository) FeedGetBySlug(ctx context.Context, feedSlug string) (feed.Feed, error) {
 	query := `
 	SELECT uuid, feed_url, title, description, slug, etag, last_modified, hash_xxhash64, created_at, updated_at, fetched_at
 	FROM feed_feeds
 	WHERE slug=$1`
 
-	return r.feedGetQuery(query, feedSlug)
+	return r.feedGetQuery(ctx, query, feedSlug)
 }
 
-func (r *Repository) FeedGetByURL(feedURL string) (feed.Feed, error) {
+func (r *Repository) FeedGetByURL(ctx context.Context, feedURL string) (feed.Feed, error) {
 	query := `
 	SELECT uuid, feed_url, title, description, slug, etag, last_modified, hash_xxhash64, created_at, updated_at, fetched_at
 	FROM feed_feeds
 	WHERE feed_url=$1`
 
-	return r.feedGetQuery(query, feedURL)
+	return r.feedGetQuery(ctx, query, feedURL)
 }
 
-func (r *Repository) FeedGetByUUID(feedUUID string) (feed.Feed, error) {
+func (r *Repository) FeedGetByUUID(ctx context.Context, feedUUID string) (feed.Feed, error) {
 	query := `
 	SELECT uuid, feed_url, title, description, slug, etag, last_modified, hash_xxhash64, created_at, updated_at, fetched_at
 	FROM feed_feeds
 	WHERE uuid=$1`
 
-	return r.feedGetQuery(query, feedUUID)
+	return r.feedGetQuery(ctx, query, feedUUID)
 }
 
-func (r *Repository) FeedGetNByLastSynchronizationTime(n uint, before time.Time) ([]feed.Feed, error) {
+func (r *Repository) FeedGetNByLastSynchronizationTime(ctx context.Context, n uint, before time.Time) ([]feed.Feed, error) {
 	query := `
 	SELECT f.uuid, f.feed_url, f.title, f.description, f.slug, f.etag, f.last_modified, f.hash_xxhash64, f.created_at, f.updated_at, f.fetched_at
 	FROM feed_feeds f
@@ -122,10 +122,10 @@ func (r *Repository) FeedGetNByLastSynchronizationTime(n uint, before time.Time)
 	OR    fetched_at IS NULL
 	LIMIT $2`
 
-	return r.feedGetManyQuery(query, before, n)
+	return r.feedGetManyQuery(ctx, query, before, n)
 }
 
-func (r *Repository) FeedUpdateFetchMetadata(feedFetchMetadata feedsynchronizing.FeedFetchMetadata) error {
+func (r *Repository) FeedUpdateFetchMetadata(ctx context.Context, feedFetchMetadata feedsynchronizing.FeedFetchMetadata) error {
 	query := `
 	UPDATE feed_feeds
 	SET
@@ -143,10 +143,10 @@ func (r *Repository) FeedUpdateFetchMetadata(feedFetchMetadata feedsynchronizing
 		"fetched_at":    feedFetchMetadata.FetchedAt,
 	}
 
-	return r.QueryTx("feeds", "FeedUpdateFetchMetadata", query, args)
+	return r.QueryTx(ctx, "feeds", "FeedUpdateFetchMetadata", query, args)
 }
 
-func (r *Repository) FeedUpdateMetadata(feedMetadata feedsynchronizing.FeedMetadata) error {
+func (r *Repository) FeedUpdateMetadata(ctx context.Context, feedMetadata feedsynchronizing.FeedMetadata) error {
 	query := `
 	UPDATE feed_feeds
 	SET
@@ -168,10 +168,10 @@ func (r *Repository) FeedUpdateMetadata(feedMetadata feedsynchronizing.FeedMetad
 		"updated_at":            feedMetadata.UpdatedAt,
 	}
 
-	return r.QueryTx("feeds", "FeedUpdateFetchMetadata", query, args)
+	return r.QueryTx(ctx, "feeds", "FeedUpdateFetchMetadata", query, args)
 }
 
-func (r *Repository) FeedCategoryCreate(c feed.Category) error {
+func (r *Repository) FeedCategoryCreate(ctx context.Context, c feed.Category) error {
 	query := `
 	INSERT INTO feed_categories(
 		uuid,
@@ -199,12 +199,10 @@ func (r *Repository) FeedCategoryCreate(c feed.Category) error {
 		"updated_at": c.UpdatedAt,
 	}
 
-	return r.QueryTx("feeds", "FeedCategoryCreate", query, args)
+	return r.QueryTx(ctx, "feeds", "FeedCategoryCreate", query, args)
 }
 
-func (r *Repository) FeedCategoryDelete(userUUID string, categoryUUID string) error {
-	ctx := context.Background()
-
+func (r *Repository) FeedCategoryDelete(ctx context.Context, userUUID string, categoryUUID string) error {
 	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -246,44 +244,44 @@ func (r *Repository) FeedCategoryDelete(userUUID string, categoryUUID string) er
 	return tx.Commit(ctx)
 }
 
-func (r *Repository) FeedCategoryGetByName(userUUID string, name string) (feed.Category, error) {
+func (r *Repository) FeedCategoryGetByName(ctx context.Context, userUUID string, name string) (feed.Category, error) {
 	query := `
 	SELECT uuid, user_uuid, name, slug, created_at, updated_at
 	FROM feed_categories
 	WHERE user_uuid=$1
 	AND name=$2`
 
-	return r.feedCategoryGetQuery(query, userUUID, name)
+	return r.feedCategoryGetQuery(ctx, query, userUUID, name)
 }
 
-func (r *Repository) FeedCategoryGetBySlug(userUUID string, slug string) (feed.Category, error) {
+func (r *Repository) FeedCategoryGetBySlug(ctx context.Context, userUUID string, slug string) (feed.Category, error) {
 	query := `
 	SELECT uuid, user_uuid, name, slug, created_at, updated_at
 	FROM feed_categories
 	WHERE user_uuid=$1
 	AND slug=$2`
 
-	return r.feedCategoryGetQuery(query, userUUID, slug)
+	return r.feedCategoryGetQuery(ctx, query, userUUID, slug)
 }
 
-func (r *Repository) FeedCategoryGetByUUID(userUUID string, categoryUUID string) (feed.Category, error) {
+func (r *Repository) FeedCategoryGetByUUID(ctx context.Context, userUUID string, categoryUUID string) (feed.Category, error) {
 	query := `
 	SELECT uuid, user_uuid, name, slug, created_at, updated_at
 	FROM feed_categories
 	WHERE user_uuid=$1
 	AND uuid=$2`
 
-	return r.feedCategoryGetQuery(query, userUUID, categoryUUID)
+	return r.feedCategoryGetQuery(ctx, query, userUUID, categoryUUID)
 }
 
-func (r *Repository) FeedCategoryGetMany(userUUID string) ([]feed.Category, error) {
+func (r *Repository) FeedCategoryGetMany(ctx context.Context, userUUID string) ([]feed.Category, error) {
 	query := `
 SELECT uuid, user_uuid, name, slug
 FROM feed_categories
 WHERE user_uuid=$1
 ORDER BY name`
 
-	rows, err := r.Pool.Query(context.Background(), query, userUUID)
+	rows, err := r.Pool.Query(ctx, query, userUUID)
 	if err != nil {
 		return []feed.Category{}, err
 	}
@@ -307,8 +305,9 @@ ORDER BY name`
 	return categories, nil
 }
 
-func (r *Repository) FeedCategoryNameAndSlugAreRegistered(userUUID string, name string, slug string) (bool, error) {
+func (r *Repository) FeedCategoryNameAndSlugAreRegistered(ctx context.Context, userUUID string, name string, slug string) (bool, error) {
 	return r.RowExistsByQuery(
+		ctx,
 		"SELECT 1 FROM feed_categories WHERE user_uuid=$1 AND (name=$2 OR slug=$3)",
 		userUUID,
 		name,
@@ -316,8 +315,9 @@ func (r *Repository) FeedCategoryNameAndSlugAreRegistered(userUUID string, name 
 	)
 }
 
-func (r *Repository) FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(userUUID string, categoryUUID string, name string, slug string) (bool, error) {
+func (r *Repository) FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(ctx context.Context, userUUID string, categoryUUID string, name string, slug string) (bool, error) {
 	return r.RowExistsByQuery(
+		ctx,
 		"SELECT 1 FROM feed_categories WHERE user_uuid = $1 AND uuid != $2 AND (name = $3 OR slug = $4)",
 		userUUID,
 		categoryUUID,
@@ -326,7 +326,7 @@ func (r *Repository) FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(userU
 	)
 }
 
-func (r *Repository) FeedCategoryUpdate(c feed.Category) error {
+func (r *Repository) FeedCategoryUpdate(ctx context.Context, c feed.Category) error {
 	query := `
 	UPDATE feed_categories
 	SET
@@ -344,15 +344,16 @@ func (r *Repository) FeedCategoryUpdate(c feed.Category) error {
 		"updated_at": c.UpdatedAt,
 	}
 
-	return r.QueryTx("feeds", "FeedCategoryUpdate", query, args)
+	return r.QueryTx(ctx, "feeds", "FeedCategoryUpdate", query, args)
 }
 
-func (r *Repository) FeedEntryCreateMany(entries []feed.Entry) (int64, error) {
-	return r.feedEntryUpsertMany("FeedEntryCreateMany", "ON CONFLICT DO NOTHING", entries)
+func (r *Repository) FeedEntryCreateMany(ctx context.Context, entries []feed.Entry) (int64, error) {
+	return r.feedEntryUpsertMany(ctx, "FeedEntryCreateMany", "ON CONFLICT DO NOTHING", entries)
 }
 
-func (r *Repository) FeedEntryUpsertMany(entries []feed.Entry) (int64, error) {
+func (r *Repository) FeedEntryUpsertMany(ctx context.Context, entries []feed.Entry) (int64, error) {
 	return r.feedEntryUpsertMany(
+		ctx,
 		"FeedEntryUpsertMany",
 		`
 		ON CONFLICT (feed_uuid, url) DO UPDATE
@@ -367,7 +368,7 @@ func (r *Repository) FeedEntryUpsertMany(entries []feed.Entry) (int64, error) {
 	)
 }
 
-func (r *Repository) FeedEntryGetCount(userUUID string, showEntries feed.EntryVisibility) (uint, error) {
+func (r *Repository) FeedEntryGetCount(ctx context.Context, userUUID string, showEntries feed.EntryVisibility) (uint, error) {
 	const (
 		query = `
 		SELECT COUNT(*)
@@ -381,10 +382,10 @@ func (r *Repository) FeedEntryGetCount(userUUID string, showEntries feed.EntryVi
 		"user_uuid": userUUID,
 	}
 
-	return r.feedEntryGetCount(query, showEntries, args)
+	return r.feedEntryGetCount(ctx, query, showEntries, args)
 }
 
-func (r *Repository) FeedEntryGetCountByCategory(userUUID string, showEntries feed.EntryVisibility, categoryUUID string) (uint, error) {
+func (r *Repository) FeedEntryGetCountByCategory(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, categoryUUID string) (uint, error) {
 	const (
 		query = `
 		SELECT COUNT(*)
@@ -400,10 +401,10 @@ func (r *Repository) FeedEntryGetCountByCategory(userUUID string, showEntries fe
 		"category_uuid": categoryUUID,
 	}
 
-	return r.feedEntryGetCount(query, showEntries, args)
+	return r.feedEntryGetCount(ctx, query, showEntries, args)
 }
 
-func (r *Repository) FeedEntryGetCountBySubscription(userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string) (uint, error) {
+func (r *Repository) FeedEntryGetCountBySubscription(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string) (uint, error) {
 	const (
 		query = `
 		SELECT COUNT(*)
@@ -419,10 +420,10 @@ func (r *Repository) FeedEntryGetCountBySubscription(userUUID string, showEntrie
 		"subscription_uuid": subscriptionUUID,
 	}
 
-	return r.feedEntryGetCount(query, showEntries, args)
+	return r.feedEntryGetCount(ctx, query, showEntries, args)
 }
 
-func (r *Repository) FeedEntryGetCountByQuery(userUUID string, showEntries feed.EntryVisibility, searchTerms string) (uint, error) {
+func (r *Repository) FeedEntryGetCountByQuery(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, searchTerms string) (uint, error) {
 	const (
 		query = `
 		SELECT COUNT(*)
@@ -439,10 +440,10 @@ func (r *Repository) FeedEntryGetCountByQuery(userUUID string, showEntries feed.
 		"search_terms": pgbase.FullTextSearchReplacer.Replace(searchTerms),
 	}
 
-	return r.feedEntryGetCount(query, showEntries, args)
+	return r.feedEntryGetCount(ctx, query, showEntries, args)
 }
 
-func (r *Repository) FeedEntryGetCountByCategoryAndQuery(userUUID string, showEntries feed.EntryVisibility, categoryUUID string, searchTerms string) (uint, error) {
+func (r *Repository) FeedEntryGetCountByCategoryAndQuery(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, categoryUUID string, searchTerms string) (uint, error) {
 	const (
 		query = `
 		SELECT COUNT(*)
@@ -461,10 +462,10 @@ func (r *Repository) FeedEntryGetCountByCategoryAndQuery(userUUID string, showEn
 		"search_terms":  pgbase.FullTextSearchReplacer.Replace(searchTerms),
 	}
 
-	return r.feedEntryGetCount(query, showEntries, args)
+	return r.feedEntryGetCount(ctx, query, showEntries, args)
 }
 
-func (r *Repository) FeedEntryGetCountBySubscriptionAndQuery(userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string, searchTerms string) (uint, error) {
+func (r *Repository) FeedEntryGetCountBySubscriptionAndQuery(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string, searchTerms string) (uint, error) {
 	const (
 		query = `
 		SELECT COUNT(*)
@@ -483,10 +484,10 @@ func (r *Repository) FeedEntryGetCountBySubscriptionAndQuery(userUUID string, sh
 		"search_terms":      pgbase.FullTextSearchReplacer.Replace(searchTerms),
 	}
 
-	return r.feedEntryGetCount(query, showEntries, args)
+	return r.feedEntryGetCount(ctx, query, showEntries, args)
 }
 
-func (r *Repository) FeedEntryMarkAllAsRead(userUUID string) error {
+func (r *Repository) FeedEntryMarkAllAsRead(ctx context.Context, userUUID string) error {
 	query := `
 	INSERT INTO feed_entries_metadata(
 		user_uuid,
@@ -506,10 +507,10 @@ func (r *Repository) FeedEntryMarkAllAsRead(userUUID string) error {
 		"user_uuid": userUUID,
 	}
 
-	return r.QueryTx("feeds", "FeedEntryMarkAllAsRead", query, args)
+	return r.QueryTx(ctx, "feeds", "FeedEntryMarkAllAsRead", query, args)
 }
 
-func (r *Repository) FeedEntryMarkAllAsReadByCategory(userUUID string, categoryUUID string) error {
+func (r *Repository) FeedEntryMarkAllAsReadByCategory(ctx context.Context, userUUID string, categoryUUID string) error {
 	query := `
 	INSERT INTO feed_entries_metadata(
 		user_uuid,
@@ -531,10 +532,10 @@ func (r *Repository) FeedEntryMarkAllAsReadByCategory(userUUID string, categoryU
 		"category_uuid": categoryUUID,
 	}
 
-	return r.QueryTx("feeds", "FeedEntryMarkAllAsReadByCategory", query, args)
+	return r.QueryTx(ctx, "feeds", "FeedEntryMarkAllAsReadByCategory", query, args)
 }
 
-func (r *Repository) FeedEntryMarkAllAsReadBySubscription(userUUID string, subscriptionUUID string) error {
+func (r *Repository) FeedEntryMarkAllAsReadBySubscription(ctx context.Context, userUUID string, subscriptionUUID string) error {
 	query := `
 	INSERT INTO feed_entries_metadata(
 		user_uuid,
@@ -556,10 +557,10 @@ func (r *Repository) FeedEntryMarkAllAsReadBySubscription(userUUID string, subsc
 		"subscription_uuid": subscriptionUUID,
 	}
 
-	return r.QueryTx("feeds", "FeedEntryMarkAllAsReadBySubscription", query, args)
+	return r.QueryTx(ctx, "feeds", "FeedEntryMarkAllAsReadBySubscription", query, args)
 }
 
-func (r *Repository) FeedEntryMetadataCreate(entryMetadata feed.EntryMetadata) error {
+func (r *Repository) FeedEntryMetadataCreate(ctx context.Context, entryMetadata feed.EntryMetadata) error {
 	query := `
 	INSERT INTO feed_entries_metadata(
 		user_uuid,
@@ -579,10 +580,10 @@ func (r *Repository) FeedEntryMetadataCreate(entryMetadata feed.EntryMetadata) e
 		"read":      entryMetadata.Read,
 	}
 
-	return r.QueryTx("feeds", "FeedEntryMetadataCreate", query, args)
+	return r.QueryTx(ctx, "feeds", "FeedEntryMetadataCreate", query, args)
 }
 
-func (r *Repository) FeedEntryMetadataGetByUID(userUUID string, entryUID string) (feed.EntryMetadata, error) {
+func (r *Repository) FeedEntryMetadataGetByUID(ctx context.Context, userUUID string, entryUID string) (feed.EntryMetadata, error) {
 	query := `
 	SELECT user_uuid, entry_uid, read
 	FROM feed_entries_metadata
@@ -590,7 +591,7 @@ func (r *Repository) FeedEntryMetadataGetByUID(userUUID string, entryUID string)
 	AND   entry_uid=$2
 	`
 
-	rows, err := r.Pool.Query(context.Background(), query, userUUID, entryUID)
+	rows, err := r.Pool.Query(ctx, query, userUUID, entryUID)
 	if err != nil {
 		return feed.EntryMetadata{}, err
 	}
@@ -609,7 +610,7 @@ func (r *Repository) FeedEntryMetadataGetByUID(userUUID string, entryUID string)
 	return dbEntryMetadata.asEntryMetadata(), nil
 }
 
-func (r *Repository) FeedEntryMetadataUpdate(entryMetadata feed.EntryMetadata) error {
+func (r *Repository) FeedEntryMetadataUpdate(ctx context.Context, entryMetadata feed.EntryMetadata) error {
 	query := `
 	UPDATE feed_entries_metadata
 	SET read=@read
@@ -623,10 +624,10 @@ func (r *Repository) FeedEntryMetadataUpdate(entryMetadata feed.EntryMetadata) e
 		"read":      entryMetadata.Read,
 	}
 
-	return r.QueryTx("feeds", "FeedEntryMetadataUpdate", query, args)
+	return r.QueryTx(ctx, "feeds", "FeedEntryMetadataUpdate", query, args)
 }
 
-func (r *Repository) FeedPreferencesGetByUserUUID(userUUID string) (feed.Preferences, error) {
+func (r *Repository) FeedPreferencesGetByUserUUID(ctx context.Context, userUUID string) (feed.Preferences, error) {
 	const (
 		query = `
 		SELECT user_uuid, show_entries, updated_at
@@ -634,7 +635,7 @@ func (r *Repository) FeedPreferencesGetByUserUUID(userUUID string) (feed.Prefere
 		WHERE user_uuid=$1`
 	)
 
-	rows, err := r.Pool.Query(context.Background(), query, userUUID)
+	rows, err := r.Pool.Query(ctx, query, userUUID)
 	if err != nil {
 		return feed.Preferences{}, err
 	}
@@ -656,7 +657,7 @@ func (r *Repository) FeedPreferencesGetByUserUUID(userUUID string) (feed.Prefere
 	}, nil
 }
 
-func (r *Repository) FeedPreferencesUpdate(preferences feed.Preferences) error {
+func (r *Repository) FeedPreferencesUpdate(ctx context.Context, preferences feed.Preferences) error {
 	const (
 		query = `
 		UPDATE feed_preferences
@@ -672,11 +673,11 @@ func (r *Repository) FeedPreferencesUpdate(preferences feed.Preferences) error {
 		"updated_at":   preferences.UpdatedAt,
 	}
 
-	return r.QueryTx("feeds", "FeedPreferencesUpdate", query, args)
+	return r.QueryTx(ctx, "feeds", "FeedPreferencesUpdate", query, args)
 }
 
-func (r *Repository) FeedCategorySubscriptionsGetAll(userUUID string) ([]feedexporting.CategorySubscriptions, error) {
-	dbCategories, err := r.feedGetCategories(userUUID)
+func (r *Repository) FeedCategorySubscriptionsGetAll(ctx context.Context, userUUID string) ([]feedexporting.CategorySubscriptions, error) {
+	dbCategories, err := r.feedGetCategories(ctx, userUUID)
 	if err != nil {
 		return []feedexporting.CategorySubscriptions{}, err
 	}
@@ -684,7 +685,7 @@ func (r *Repository) FeedCategorySubscriptionsGetAll(userUUID string) ([]feedexp
 	categoriesSubscriptions := make([]feedexporting.CategorySubscriptions, len(dbCategories))
 
 	for i, dbCategory := range dbCategories {
-		subscribedFeeds, err := r.feedGetAllByCategory(userUUID, dbCategory.UUID)
+		subscribedFeeds, err := r.feedGetAllByCategory(ctx, userUUID, dbCategory.UUID)
 		if err != nil {
 			return []feedexporting.CategorySubscriptions{}, err
 		}
@@ -701,8 +702,8 @@ func (r *Repository) FeedCategorySubscriptionsGetAll(userUUID string) ([]feedexp
 	return categoriesSubscriptions, nil
 }
 
-func (r *Repository) FeedSubscriptionCategoryGetAll(userUUID string) ([]feedquerying.SubscribedFeedsByCategory, error) {
-	dbCategories, err := r.feedGetCategories(userUUID)
+func (r *Repository) FeedSubscriptionCategoryGetAll(ctx context.Context, userUUID string) ([]feedquerying.SubscribedFeedsByCategory, error) {
+	dbCategories, err := r.feedGetCategories(ctx, userUUID)
 	if err != nil {
 		return []feedquerying.SubscribedFeedsByCategory{}, err
 	}
@@ -710,7 +711,7 @@ func (r *Repository) FeedSubscriptionCategoryGetAll(userUUID string) ([]feedquer
 	categories := make([]feedquerying.SubscribedFeedsByCategory, len(dbCategories))
 
 	for i, dbCategory := range dbCategories {
-		dbFeeds, err := r.feedGetSubscriptionsByCategory(userUUID, dbCategory.UUID)
+		dbFeeds, err := r.feedGetSubscriptionsByCategory(ctx, userUUID, dbCategory.UUID)
 		if err != nil {
 			return []feedquerying.SubscribedFeedsByCategory{}, err
 		}
@@ -739,7 +740,7 @@ func (r *Repository) FeedSubscriptionCategoryGetAll(userUUID string) ([]feedquer
 	return categories, nil
 }
 
-func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, preferences feed.Preferences, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+func (r *Repository) FeedSubscriptionEntryGetN(ctx context.Context, userUUID string, preferences feed.Preferences, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
 		query = `
 		SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
@@ -756,10 +757,10 @@ func (r *Repository) FeedSubscriptionEntryGetN(userUUID string, preferences feed
 		"offset":    offset,
 	}
 
-	return r.feedSubscriptionEntryGetN(query, preferences.ShowEntries, args)
+	return r.feedSubscriptionEntryGetN(ctx, query, preferences.ShowEntries, args)
 }
 
-func (r *Repository) FeedSubscriptionEntryGetNByCategory(userUUID string, preferences feed.Preferences, categoryUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+func (r *Repository) FeedSubscriptionEntryGetNByCategory(ctx context.Context, userUUID string, preferences feed.Preferences, categoryUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
 		query = `
 		SELECT  fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
@@ -778,10 +779,10 @@ func (r *Repository) FeedSubscriptionEntryGetNByCategory(userUUID string, prefer
 		"offset":        offset,
 	}
 
-	return r.feedSubscriptionEntryGetN(query, preferences.ShowEntries, args)
+	return r.feedSubscriptionEntryGetN(ctx, query, preferences.ShowEntries, args)
 }
 
-func (r *Repository) FeedSubscriptionEntryGetNBySubscription(userUUID string, preferences feed.Preferences, subscriptionUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+func (r *Repository) FeedSubscriptionEntryGetNBySubscription(ctx context.Context, userUUID string, preferences feed.Preferences, subscriptionUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
 		query = `
 		SELECT  fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
@@ -800,10 +801,10 @@ func (r *Repository) FeedSubscriptionEntryGetNBySubscription(userUUID string, pr
 		"offset":            offset,
 	}
 
-	return r.feedSubscriptionEntryGetN(query, preferences.ShowEntries, args)
+	return r.feedSubscriptionEntryGetN(ctx, query, preferences.ShowEntries, args)
 }
 
-func (r *Repository) FeedSubscriptionEntryGetNByQuery(userUUID string, preferences feed.Preferences, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+func (r *Repository) FeedSubscriptionEntryGetNByQuery(ctx context.Context, userUUID string, preferences feed.Preferences, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
 		query = `
 		SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
@@ -822,10 +823,10 @@ func (r *Repository) FeedSubscriptionEntryGetNByQuery(userUUID string, preferenc
 		"offset":       offset,
 	}
 
-	return r.feedSubscriptionEntryGetN(query, preferences.ShowEntries, args)
+	return r.feedSubscriptionEntryGetN(ctx, query, preferences.ShowEntries, args)
 }
 
-func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(userUUID string, preferences feed.Preferences, categoryUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(ctx context.Context, userUUID string, preferences feed.Preferences, categoryUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
 		query = `
 		SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
@@ -846,10 +847,10 @@ func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(userUUID string
 		"offset":        offset,
 	}
 
-	return r.feedSubscriptionEntryGetN(query, preferences.ShowEntries, args)
+	return r.feedSubscriptionEntryGetN(ctx, query, preferences.ShowEntries, args)
 }
 
-func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(userUUID string, preferences feed.Preferences, subscriptionUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
+func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(ctx context.Context, userUUID string, preferences feed.Preferences, subscriptionUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
 		query = `
 		SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
@@ -869,18 +870,19 @@ func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(userUUID st
 		"limit":             n,
 		"offset":            offset,
 	}
-	return r.feedSubscriptionEntryGetN(query, preferences.ShowEntries, args)
+	return r.feedSubscriptionEntryGetN(ctx, query, preferences.ShowEntries, args)
 }
 
-func (r *Repository) FeedSubscriptionIsRegistered(userUUID string, feedUUID string) (bool, error) {
+func (r *Repository) FeedSubscriptionIsRegistered(ctx context.Context, userUUID string, feedUUID string) (bool, error) {
 	return r.RowExistsByQuery(
+		ctx,
 		"SELECT 1 FROM feed_subscriptions WHERE user_uuid=$1 AND feed_uuid=$2",
 		userUUID,
 		feedUUID,
 	)
 }
 
-func (r *Repository) FeedSubscriptionCreate(s feed.Subscription) (feed.Subscription, error) {
+func (r *Repository) FeedSubscriptionCreate(ctx context.Context, s feed.Subscription) (feed.Subscription, error) {
 	query := `
 	INSERT INTO feed_subscriptions(
 		uuid,
@@ -908,16 +910,14 @@ func (r *Repository) FeedSubscriptionCreate(s feed.Subscription) (feed.Subscript
 		"updated_at":    s.UpdatedAt,
 	}
 
-	if err := r.QueryTx("feeds", "FeedSubscriptionCreate", query, args); err != nil {
+	if err := r.QueryTx(ctx, "feeds", "FeedSubscriptionCreate", query, args); err != nil {
 		return feed.Subscription{}, err
 	}
 
 	return s, nil
 }
 
-func (r *Repository) FeedSubscriptionDelete(userUUID string, subscriptionUUID string) error {
-	ctx := context.Background()
-
+func (r *Repository) FeedSubscriptionDelete(ctx context.Context, userUUID string, subscriptionUUID string) error {
 	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -959,25 +959,25 @@ func (r *Repository) FeedSubscriptionDelete(userUUID string, subscriptionUUID st
 	return tx.Commit(ctx)
 }
 
-func (r *Repository) FeedSubscriptionGetByFeed(userUUID string, feedUUID string) (feed.Subscription, error) {
+func (r *Repository) FeedSubscriptionGetByFeed(ctx context.Context, userUUID string, feedUUID string) (feed.Subscription, error) {
 	query := `
 	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, created_at, updated_at
 	FROM feed_subscriptions
 	WHERE feed_uuid=$1`
 
-	return r.feedSubscriptionGetQuery(query, feedUUID)
+	return r.feedSubscriptionGetQuery(ctx, query, feedUUID)
 }
 
-func (r *Repository) FeedSubscriptionGetByUUID(userUUID string, subscriptionUUID string) (feed.Subscription, error) {
+func (r *Repository) FeedSubscriptionGetByUUID(ctx context.Context, userUUID string, subscriptionUUID string) (feed.Subscription, error) {
 	query := `
 	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, created_at, updated_at
 	FROM feed_subscriptions
 	WHERE uuid=$1`
 
-	return r.feedSubscriptionGetQuery(query, subscriptionUUID)
+	return r.feedSubscriptionGetQuery(ctx, query, subscriptionUUID)
 }
 
-func (r *Repository) FeedSubscriptionUpdate(s feed.Subscription) error {
+func (r *Repository) FeedSubscriptionUpdate(ctx context.Context, s feed.Subscription) error {
 	query := `
 	UPDATE feed_subscriptions
 	SET
@@ -995,10 +995,10 @@ func (r *Repository) FeedSubscriptionUpdate(s feed.Subscription) error {
 		"updated_at":    s.UpdatedAt,
 	}
 
-	return r.QueryTx("feeds", "FeedSubscriptionUpdate", query, args)
+	return r.QueryTx(ctx, "feeds", "FeedSubscriptionUpdate", query, args)
 }
 
-func (r *Repository) FeedQueryingSubscriptionByUUID(userUUID string, subscriptionUUID string) (feedquerying.Subscription, error) {
+func (r *Repository) FeedQueryingSubscriptionByUUID(ctx context.Context, userUUID string, subscriptionUUID string) (feedquerying.Subscription, error) {
 	query := `
 	SELECT fs.uuid, fs.alias, fs.category_uuid, f.title, f.description
 	FROM   feed_subscriptions fs
@@ -1006,11 +1006,11 @@ func (r *Repository) FeedQueryingSubscriptionByUUID(userUUID string, subscriptio
 	WHERE  fs.user_uuid=$1
 	AND    fs.uuid=$2`
 
-	return r.feedSubscriptionTitleGetQuery(query, userUUID, subscriptionUUID)
+	return r.feedSubscriptionTitleGetQuery(ctx, query, userUUID, subscriptionUUID)
 }
 
-func (r *Repository) FeedQueryingSubscriptionsByCategory(userUUID string) ([]feedquerying.SubscriptionsByCategory, error) {
-	dbCategories, err := r.feedGetCategories(userUUID)
+func (r *Repository) FeedQueryingSubscriptionsByCategory(ctx context.Context, userUUID string) ([]feedquerying.SubscriptionsByCategory, error) {
+	dbCategories, err := r.feedGetCategories(ctx, userUUID)
 	if err != nil {
 		return []feedquerying.SubscriptionsByCategory{}, err
 	}
@@ -1018,7 +1018,7 @@ func (r *Repository) FeedQueryingSubscriptionsByCategory(userUUID string) ([]fee
 	categories := make([]feedquerying.SubscriptionsByCategory, len(dbCategories))
 
 	for i, dbCategory := range dbCategories {
-		dbSubscriptionTitles, err := r.feedGetSubscriptionTitlesByCategory(userUUID, dbCategory.UUID)
+		dbSubscriptionTitles, err := r.feedGetSubscriptionTitlesByCategory(ctx, userUUID, dbCategory.UUID)
 		if err != nil {
 			return []feedquerying.SubscriptionsByCategory{}, err
 		}

@@ -4,6 +4,7 @@
 package feed
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -52,13 +53,13 @@ func (s *Subscription) Normalize() {
 	s.normalizeAlias()
 }
 
-func (s *Subscription) ValidateForCreation(v ValidationRepository) error {
+func (s *Subscription) ValidateForCreation(ctx context.Context, v ValidationRepository) error {
 	fns := []func() error{
 		s.requireUUID,
 		s.requireCategoryUUID,
 		s.requireFeedUUID,
 		s.requireUserUUID,
-		s.ensureSubscriptionIsNotRegistered(v),
+		s.ensureSubscriptionIsNotRegistered(ctx, v),
 	}
 
 	for _, fn := range fns {
@@ -70,9 +71,9 @@ func (s *Subscription) ValidateForCreation(v ValidationRepository) error {
 	return nil
 }
 
-func (s *Subscription) ensureSubscriptionIsNotRegistered(v ValidationRepository) func() error {
+func (s *Subscription) ensureSubscriptionIsNotRegistered(ctx context.Context, v ValidationRepository) func() error {
 	return func() error {
-		registered, err := v.FeedSubscriptionIsRegistered(s.UserUUID, s.FeedUUID)
+		registered, err := v.FeedSubscriptionIsRegistered(ctx, s.UserUUID, s.FeedUUID)
 		if err != nil {
 			return err
 		}

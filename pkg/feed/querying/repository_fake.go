@@ -4,6 +4,7 @@
 package querying
 
 import (
+	"context"
 	"errors"
 	"sort"
 
@@ -20,7 +21,7 @@ type fakeRepository struct {
 	Subscriptions   []feed.Subscription
 }
 
-func (r *fakeRepository) FeedGetByUUID(feedUUID string) (feed.Feed, error) {
+func (r *fakeRepository) FeedGetByUUID(_ context.Context, feedUUID string) (feed.Feed, error) {
 	for _, f := range r.Feeds {
 		if f.UUID == feedUUID {
 			return f, nil
@@ -30,7 +31,7 @@ func (r *fakeRepository) FeedGetByUUID(feedUUID string) (feed.Feed, error) {
 	return feed.Feed{}, feed.ErrFeedNotFound
 }
 
-func (r *fakeRepository) FeedSubscriptionCategoryGetAll(userUUID string) ([]SubscribedFeedsByCategory, error) {
+func (r *fakeRepository) FeedSubscriptionCategoryGetAll(_ context.Context, userUUID string) ([]SubscribedFeedsByCategory, error) {
 	var subscriptionCategories []SubscribedFeedsByCategory
 
 	for _, category := range r.Categories {
@@ -102,7 +103,7 @@ func (r *fakeRepository) FeedSubscriptionCategoryGetAll(userUUID string) ([]Subs
 	return subscriptionCategories, nil
 }
 
-func (r *fakeRepository) FeedEntryGetCount(userUUID string, showEntries feed.EntryVisibility) (uint, error) {
+func (r *fakeRepository) FeedEntryGetCount(_ context.Context, userUUID string, showEntries feed.EntryVisibility) (uint, error) {
 	var count uint
 
 	for _, subscription := range r.Subscriptions {
@@ -122,7 +123,7 @@ func (r *fakeRepository) FeedEntryGetCount(userUUID string, showEntries feed.Ent
 	return count, nil
 }
 
-func (r *fakeRepository) FeedEntryGetCountByCategory(userUUID string, showEntries feed.EntryVisibility, categoryUUID string) (uint, error) {
+func (r *fakeRepository) FeedEntryGetCountByCategory(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, categoryUUID string) (uint, error) {
 	var count uint
 
 	for _, subscription := range r.Subscriptions {
@@ -134,7 +135,7 @@ func (r *fakeRepository) FeedEntryGetCountByCategory(userUUID string, showEntrie
 			continue
 		}
 
-		subCount, err := r.FeedEntryGetCountBySubscription(userUUID, showEntries, subscription.UUID)
+		subCount, err := r.FeedEntryGetCountBySubscription(ctx, userUUID, showEntries, subscription.UUID)
 		if err != nil {
 			return 0, err
 		}
@@ -145,10 +146,10 @@ func (r *fakeRepository) FeedEntryGetCountByCategory(userUUID string, showEntrie
 	return count, nil
 }
 
-func (r *fakeRepository) FeedEntryGetCountBySubscription(userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string) (uint, error) {
+func (r *fakeRepository) FeedEntryGetCountBySubscription(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string) (uint, error) {
 	var count uint
 
-	subscription, err := r.FeedSubscriptionGetByUUID(userUUID, subscriptionUUID)
+	subscription, err := r.FeedSubscriptionGetByUUID(ctx, userUUID, subscriptionUUID)
 	if err != nil {
 		return 0, err
 	}
@@ -164,19 +165,19 @@ func (r *fakeRepository) FeedEntryGetCountBySubscription(userUUID string, showEn
 	return count, nil
 }
 
-func (r *fakeRepository) FeedEntryGetCountByQuery(userUUID string, showEntries feed.EntryVisibility, searchTerms string) (uint, error) {
+func (r *fakeRepository) FeedEntryGetCountByQuery(_ context.Context, userUUID string, showEntries feed.EntryVisibility, searchTerms string) (uint, error) {
 	return 0, errors.New("not implemented")
 }
 
-func (r *fakeRepository) FeedEntryGetCountByCategoryAndQuery(userUUID string, showEntries feed.EntryVisibility, categoryUUID string, searchTerms string) (uint, error) {
+func (r *fakeRepository) FeedEntryGetCountByCategoryAndQuery(_ context.Context, userUUID string, showEntries feed.EntryVisibility, categoryUUID string, searchTerms string) (uint, error) {
 	return 0, errors.New("not implemented")
 }
 
-func (r *fakeRepository) FeedEntryGetCountBySubscriptionAndQuery(userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string, searchTerms string) (uint, error) {
+func (r *fakeRepository) FeedEntryGetCountBySubscriptionAndQuery(_ context.Context, userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string, searchTerms string) (uint, error) {
 	return 0, errors.New("not implemented")
 }
 
-func (r *fakeRepository) FeedSubscriptionGetByUUID(userUUID string, subscriptionUUID string) (feed.Subscription, error) {
+func (r *fakeRepository) FeedSubscriptionGetByUUID(_ context.Context, userUUID string, subscriptionUUID string) (feed.Subscription, error) {
 	for _, subscription := range r.Subscriptions {
 		if subscription.UserUUID == userUUID && subscription.UUID == subscriptionUUID {
 			return subscription, nil
@@ -186,7 +187,7 @@ func (r *fakeRepository) FeedSubscriptionGetByUUID(userUUID string, subscription
 	return feed.Subscription{}, feed.ErrSubscriptionNotFound
 }
 
-func (r *fakeRepository) feedSubscriptionGetByFeed(userUUID string, feedUUID string) (feed.Subscription, error) {
+func (r *fakeRepository) feedSubscriptionGetByFeed(_ context.Context, userUUID string, feedUUID string) (feed.Subscription, error) {
 	for _, subscription := range r.Subscriptions {
 		if subscription.UserUUID == userUUID && subscription.FeedUUID == feedUUID {
 			return subscription, nil
@@ -196,15 +197,15 @@ func (r *fakeRepository) feedSubscriptionGetByFeed(userUUID string, feedUUID str
 	return feed.Subscription{}, feed.ErrSubscriptionNotFound
 }
 
-func (r *fakeRepository) subscribedFeedEntryGetByFeed(userUUID string, feedUUID string) ([]SubscribedFeedEntry, error) {
+func (r *fakeRepository) subscribedFeedEntryGetByFeed(ctx context.Context, userUUID string, feedUUID string) ([]SubscribedFeedEntry, error) {
 	var subscriptionEntries []SubscribedFeedEntry
 
-	f, err := r.FeedGetByUUID(feedUUID)
+	f, err := r.FeedGetByUUID(ctx, feedUUID)
 	if err != nil {
 		return []SubscribedFeedEntry{}, err
 	}
 
-	subscription, err := r.feedSubscriptionGetByFeed(userUUID, feedUUID)
+	subscription, err := r.feedSubscriptionGetByFeed(ctx, userUUID, feedUUID)
 	if err != nil {
 		return []SubscribedFeedEntry{}, err
 	}
@@ -236,7 +237,7 @@ func (r *fakeRepository) subscribedFeedEntryGetByFeed(userUUID string, feedUUID 
 	return subscriptionEntries, nil
 }
 
-func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, preferences feed.Preferences, n uint, offset uint) ([]SubscribedFeedEntry, error) {
+func (r *fakeRepository) FeedSubscriptionEntryGetN(ctx context.Context, userUUID string, preferences feed.Preferences, n uint, offset uint) ([]SubscribedFeedEntry, error) {
 	var userEntries []SubscribedFeedEntry
 
 	for _, subscription := range r.Subscriptions {
@@ -244,7 +245,7 @@ func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, preferences 
 			continue
 		}
 
-		subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(userUUID, subscription.FeedUUID)
+		subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(ctx, userUUID, subscription.FeedUUID)
 		if err != nil {
 			return []SubscribedFeedEntry{}, err
 		}
@@ -262,7 +263,7 @@ func (r *fakeRepository) FeedSubscriptionEntryGetN(userUUID string, preferences 
 	return userEntries[offset : offset+nEntries], nil
 }
 
-func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, preferences feed.Preferences, categoryUUID string, n uint, offset uint) ([]SubscribedFeedEntry, error) {
+func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(ctx context.Context, userUUID string, preferences feed.Preferences, categoryUUID string, n uint, offset uint) ([]SubscribedFeedEntry, error) {
 	var categoryEntries []SubscribedFeedEntry
 
 	for _, subscription := range r.Subscriptions {
@@ -274,7 +275,7 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, pr
 			continue
 		}
 
-		subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(userUUID, subscription.FeedUUID)
+		subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(ctx, userUUID, subscription.FeedUUID)
 		if err != nil {
 			return []SubscribedFeedEntry{}, err
 		}
@@ -292,13 +293,13 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(userUUID string, pr
 	return categoryEntries[offset : offset+nEntries], nil
 }
 
-func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscription(userUUID string, preferences feed.Preferences, subscriptionUUID string, n uint, offset uint) ([]SubscribedFeedEntry, error) {
-	subscription, err := r.FeedSubscriptionGetByUUID(userUUID, subscriptionUUID)
+func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscription(ctx context.Context, userUUID string, preferences feed.Preferences, subscriptionUUID string, n uint, offset uint) ([]SubscribedFeedEntry, error) {
+	subscription, err := r.FeedSubscriptionGetByUUID(ctx, userUUID, subscriptionUUID)
 	if err != nil {
 		return []SubscribedFeedEntry{}, err
 	}
 
-	subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(userUUID, subscription.FeedUUID)
+	subscriptionEntries, err := r.subscribedFeedEntryGetByFeed(ctx, userUUID, subscription.FeedUUID)
 	if err != nil {
 		return []SubscribedFeedEntry{}, err
 	}
@@ -313,22 +314,22 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscription(userUUID string
 	return subscriptionEntries[offset : offset+nEntries], nil
 }
 
-func (r *fakeRepository) FeedSubscriptionEntryGetNByQuery(userUUID string, preferences feed.Preferences, searchTerms string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error) {
+func (r *fakeRepository) FeedSubscriptionEntryGetNByQuery(_ context.Context, userUUID string, preferences feed.Preferences, searchTerms string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error) {
 	return []SubscribedFeedEntry{}, errors.New("not implemented")
 }
 
-func (r *fakeRepository) FeedSubscriptionEntryGetNByCategoryAndQuery(userUUID string, preferences feed.Preferences, categoryUUID string, searchTerms string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error) {
+func (r *fakeRepository) FeedSubscriptionEntryGetNByCategoryAndQuery(_ context.Context, userUUID string, preferences feed.Preferences, categoryUUID string, searchTerms string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error) {
 	return []SubscribedFeedEntry{}, errors.New("not implemented")
 }
 
-func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(userUUID string, preferences feed.Preferences, subscriptionUUID string, searchTerms string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error) {
+func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(_ context.Context, userUUID string, preferences feed.Preferences, subscriptionUUID string, searchTerms string, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error) {
 	return []SubscribedFeedEntry{}, errors.New("not implemented")
 }
 
-func (r *fakeRepository) FeedQueryingSubscriptionByUUID(userUUID string, subscriptionUUID string) (Subscription, error) {
+func (r *fakeRepository) FeedQueryingSubscriptionByUUID(_ context.Context, userUUID string, subscriptionUUID string) (Subscription, error) {
 	return Subscription{}, errors.New("not implemented")
 }
 
-func (r *fakeRepository) FeedQueryingSubscriptionsByCategory(userUUID string) ([]SubscriptionsByCategory, error) {
+func (r *fakeRepository) FeedQueryingSubscriptionsByCategory(_ context.Context, userUUID string) ([]SubscriptionsByCategory, error) {
 	return []SubscriptionsByCategory{}, errors.New("not implemented")
 }

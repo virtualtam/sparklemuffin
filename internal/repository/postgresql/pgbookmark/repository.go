@@ -35,7 +35,7 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	}
 }
 
-func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
+func (r *Repository) BookmarkAdd(ctx context.Context, b bookmark.Bookmark) error {
 	query := `
 	INSERT INTO bookmarks(
 		uid,
@@ -57,7 +57,7 @@ func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
 		@description,
 		@private,
 		@tags,
-		to_tsvector(@fulltextsearch_string),
+		TO_TSVECTOR(@fulltextsearch_string),
 		@created_at,
 		@updated_at
 	)`
@@ -77,15 +77,16 @@ func (r *Repository) BookmarkAdd(b bookmark.Bookmark) error {
 		"updated_at":            b.UpdatedAt,
 	}
 
-	return r.QueryTx("bookmarks", "BookmarkAdd", query, args)
+	return r.QueryTx(ctx, "bookmarks", "BookmarkAdd", query, args)
 }
 
-func (r *Repository) BookmarkAddMany(bookmarks []bookmark.Bookmark) (int64, error) {
-	return r.bookmarkUpsertMany("ON CONFLICT DO NOTHING", bookmarks)
+func (r *Repository) BookmarkAddMany(ctx context.Context, bookmarks []bookmark.Bookmark) (int64, error) {
+	return r.bookmarkUpsertMany(ctx, "ON CONFLICT DO NOTHING", bookmarks)
 }
 
-func (r *Repository) BookmarkUpsertMany(bookmarks []bookmark.Bookmark) (int64, error) {
+func (r *Repository) BookmarkUpsertMany(ctx context.Context, bookmarks []bookmark.Bookmark) (int64, error) {
 	return r.bookmarkUpsertMany(
+		ctx,
 		`
 ON CONFLICT (user_uuid, url) DO UPDATE
 SET
@@ -101,9 +102,7 @@ SET
 	)
 }
 
-func (r *Repository) BookmarkDelete(userUUID, uid string) error {
-	ctx := context.Background()
-
+func (r *Repository) BookmarkDelete(ctx context.Context, userUUID, uid string) error {
 	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -112,7 +111,7 @@ func (r *Repository) BookmarkDelete(userUUID, uid string) error {
 	defer r.Rollback(ctx, tx, "bookmarks", "BookmarkDelete")
 
 	commandTag, err := tx.Exec(
-		context.Background(),
+		ctx,
 		"DELETE FROM bookmarks WHERE user_uuid=$1 AND uid=$2",
 		userUUID,
 		uid,
@@ -130,8 +129,9 @@ func (r *Repository) BookmarkDelete(userUUID, uid string) error {
 	return tx.Commit(ctx)
 }
 
-func (r *Repository) BookmarkGetAll(userUUID string) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkGetAll(ctx context.Context, userUUID string) ([]bookmark.Bookmark, error) {
 	return r.bookmarkGetManyQuery(
+		ctx,
 		`
 SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 FROM bookmarks
@@ -141,8 +141,9 @@ ORDER BY created_at DESC`,
 	)
 }
 
-func (r *Repository) BookmarkGetAllPrivate(userUUID string) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkGetAllPrivate(ctx context.Context, userUUID string) ([]bookmark.Bookmark, error) {
 	return r.bookmarkGetManyQuery(
+		ctx,
 		`
 SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 FROM bookmarks
@@ -153,8 +154,9 @@ ORDER BY created_at DESC`,
 	)
 }
 
-func (r *Repository) BookmarkGetAllPublic(userUUID string) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkGetAllPublic(ctx context.Context, userUUID string) ([]bookmark.Bookmark, error) {
 	return r.bookmarkGetManyQuery(
+		ctx,
 		`
 SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 FROM bookmarks
@@ -165,7 +167,7 @@ ORDER BY created_at DESC`,
 	)
 }
 
-func (r *Repository) BookmarkGetByTag(userUUID string, tag string) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkGetByTag(ctx context.Context, userUUID string, tag string) ([]bookmark.Bookmark, error) {
 	query := `
 	SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 	FROM bookmarks
@@ -173,33 +175,34 @@ func (r *Repository) BookmarkGetByTag(userUUID string, tag string) ([]bookmark.B
 	AND   $2=ANY(tags)`
 
 	return r.bookmarkGetManyQuery(
+		ctx,
 		query,
 		userUUID,
 		tag,
 	)
 }
 
-func (r *Repository) BookmarkGetByUID(userUUID, uid string) (bookmark.Bookmark, error) {
+func (r *Repository) BookmarkGetByUID(ctx context.Context, userUUID, uid string) (bookmark.Bookmark, error) {
 	query := `
 	SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 	FROM bookmarks
 	WHERE user_uuid=$1
 	AND uid=$2`
 
-	return r.bookmarkGetQuery(query, userUUID, uid)
+	return r.bookmarkGetQuery(ctx, query, userUUID, uid)
 }
 
-func (r *Repository) BookmarkGetByURL(userUUID, u string) (bookmark.Bookmark, error) {
+func (r *Repository) BookmarkGetByURL(ctx context.Context, userUUID, u string) (bookmark.Bookmark, error) {
 	query := `
 	SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 	FROM bookmarks
 	WHERE user_uuid=$1
 	AND url=$2`
 
-	return r.bookmarkGetQuery(query, userUUID, u)
+	return r.bookmarkGetQuery(ctx, query, userUUID, u)
 }
 
-func (r *Repository) BookmarkGetCount(userUUID string, visibility bookmarkquerying.Visibility) (uint, error) {
+func (r *Repository) BookmarkGetCount(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility) (uint, error) {
 	var query string
 
 	switch visibility {
@@ -227,7 +230,7 @@ func (r *Repository) BookmarkGetCount(userUUID string, visibility bookmarkqueryi
 	var count uint
 
 	err := r.Pool.QueryRow(
-		context.Background(),
+		ctx,
 		query,
 		userUUID,
 	).Scan(&count)
@@ -238,7 +241,7 @@ func (r *Repository) BookmarkGetCount(userUUID string, visibility bookmarkqueryi
 	return count, nil
 }
 
-func (r *Repository) BookmarkGetN(userUUID string, visibility bookmarkquerying.Visibility, n uint, offset uint) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkGetN(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	var query string
 
 	switch visibility {
@@ -270,6 +273,7 @@ func (r *Repository) BookmarkGetN(userUUID string, visibility bookmarkquerying.V
 	}
 
 	return r.bookmarkGetManyQuery(
+		ctx,
 		query,
 		userUUID,
 		n,
@@ -277,18 +281,18 @@ func (r *Repository) BookmarkGetN(userUUID string, visibility bookmarkquerying.V
 	)
 }
 
-func (r *Repository) BookmarkGetPublicByUID(userUUID, uid string) (bookmark.Bookmark, error) {
+func (r *Repository) BookmarkGetPublicByUID(ctx context.Context, userUUID, uid string) (bookmark.Bookmark, error) {
 	query := `
 	SELECT user_uuid, uid, url, title, description, private, tags, created_at, updated_at
 	FROM bookmarks
 	WHERE user_uuid=$1
 	AND uid=$2
-	AND private=false`
+	AND private=FALSE`
 
-	return r.bookmarkGetQuery(query, userUUID, uid)
+	return r.bookmarkGetQuery(ctx, query, userUUID, uid)
 }
 
-func (r *Repository) BookmarkSearchCount(userUUID string, visibility bookmarkquerying.Visibility, searchTerms string) (uint, error) {
+func (r *Repository) BookmarkSearchCount(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility, searchTerms string) (uint, error) {
 	var query string
 
 	switch visibility {
@@ -320,7 +324,7 @@ func (r *Repository) BookmarkSearchCount(userUUID string, visibility bookmarkque
 	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
 
 	err := r.Pool.QueryRow(
-		context.Background(),
+		ctx,
 		query,
 		userUUID,
 		fullTextSearchTerms,
@@ -332,7 +336,7 @@ func (r *Repository) BookmarkSearchCount(userUUID string, visibility bookmarkque
 	return count, nil
 }
 
-func (r *Repository) BookmarkSearchN(userUUID string, visibility bookmarkquerying.Visibility, searchTerms string, n uint, offset uint) ([]bookmark.Bookmark, error) {
+func (r *Repository) BookmarkSearchN(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility, searchTerms string, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	var query string
 
 	switch visibility {
@@ -369,6 +373,7 @@ func (r *Repository) BookmarkSearchN(userUUID string, visibility bookmarkqueryin
 	fullTextSearchTerms := pgbase.FullTextSearchReplacer.Replace(searchTerms)
 
 	return r.bookmarkGetManyQuery(
+		ctx,
 		query,
 		userUUID,
 		fullTextSearchTerms,
@@ -377,16 +382,18 @@ func (r *Repository) BookmarkSearchN(userUUID string, visibility bookmarkqueryin
 	)
 }
 
-func (r *Repository) BookmarkIsURLRegistered(userUUID, url string) (bool, error) {
+func (r *Repository) BookmarkIsURLRegistered(ctx context.Context, userUUID, url string) (bool, error) {
 	return r.RowExistsByQuery(
+		ctx,
 		"SELECT 1 FROM bookmarks WHERE user_uuid=$1 AND url=$2",
 		userUUID,
 		url,
 	)
 }
 
-func (r *Repository) BookmarkIsURLRegisteredToAnotherUID(userUUID, url, uid string) (bool, error) {
+func (r *Repository) BookmarkIsURLRegisteredToAnotherUID(ctx context.Context, userUUID, url, uid string) (bool, error) {
 	return r.RowExistsByQuery(
+		ctx,
 		"SELECT 1 FROM bookmarks WHERE user_uuid=$1 AND url=$2 AND uid!=$3",
 		userUUID,
 		url,
@@ -394,11 +401,11 @@ func (r *Repository) BookmarkIsURLRegisteredToAnotherUID(userUUID, url, uid stri
 	)
 }
 
-func (r *Repository) BookmarkTagUpdateMany(bookmarks []bookmark.Bookmark) (int64, error) {
-	return r.BookmarkUpsertMany(bookmarks)
+func (r *Repository) BookmarkTagUpdateMany(ctx context.Context, bookmarks []bookmark.Bookmark) (int64, error) {
+	return r.BookmarkUpsertMany(ctx, bookmarks)
 }
 
-func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
+func (r *Repository) BookmarkUpdate(ctx context.Context, b bookmark.Bookmark) error {
 	query := `
 	UPDATE bookmarks
 	SET
@@ -407,7 +414,7 @@ func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
 		description=@description,
 		private=@private,
 		tags=@tags,
-		fulltextsearch_tsv=to_tsvector(@fulltextsearch_string),
+		fulltextsearch_tsv=TO_TSVECTOR(@fulltextsearch_string),
 		updated_at=@updated_at
 	WHERE user_uuid=@user_uuid
 	AND uid=@uid
@@ -427,10 +434,10 @@ func (r *Repository) BookmarkUpdate(b bookmark.Bookmark) error {
 		"updated_at":            b.UpdatedAt,
 	}
 
-	return r.QueryTx("bookmarks", "BookmarkUpdate", query, args)
+	return r.QueryTx(ctx, "bookmarks", "BookmarkUpdate", query, args)
 }
 
-func (r *Repository) OwnerGetByUUID(userUUID string) (bookmarkquerying.Owner, error) {
+func (r *Repository) OwnerGetByUUID(ctx context.Context, userUUID string) (bookmarkquerying.Owner, error) {
 	query := `
 	SELECT uuid, nick_name, display_name
 	FROM users
@@ -439,7 +446,7 @@ func (r *Repository) OwnerGetByUUID(userUUID string) (bookmarkquerying.Owner, er
 	dbUser := &pguser.DBUser{}
 
 	rows, err := r.Pool.Query(
-		context.Background(),
+		ctx,
 		query,
 		userUUID,
 	)
@@ -464,7 +471,7 @@ func (r *Repository) OwnerGetByUUID(userUUID string) (bookmarkquerying.Owner, er
 	}, nil
 }
 
-func (r *Repository) BookmarkTagGetCount(userUUID string, visibility bookmarkquerying.Visibility) (uint, error) {
+func (r *Repository) BookmarkTagGetCount(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility) (uint, error) {
 	var query string
 
 	switch visibility {
@@ -472,7 +479,7 @@ func (r *Repository) BookmarkTagGetCount(userUUID string, visibility bookmarkque
 		query = `
 		SELECT COUNT(DISTINCT name)
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM bookmarks
 			WHERE user_uuid=$1
 			AND   private=TRUE
@@ -482,7 +489,7 @@ func (r *Repository) BookmarkTagGetCount(userUUID string, visibility bookmarkque
 		query = `
 		SELECT COUNT(DISTINCT name)
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM bookmarks
 			WHERE user_uuid=$1
 			AND   private=FALSE
@@ -492,7 +499,7 @@ func (r *Repository) BookmarkTagGetCount(userUUID string, visibility bookmarkque
 		query = `
 		SELECT COUNT(DISTINCT name)
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM bookmarks
 			WHERE user_uuid=$1
 		) s`
@@ -501,7 +508,7 @@ func (r *Repository) BookmarkTagGetCount(userUUID string, visibility bookmarkque
 	var count uint
 
 	err := r.Pool.QueryRow(
-		context.Background(),
+		ctx,
 		query,
 		userUUID,
 	).Scan(&count)
@@ -512,15 +519,15 @@ func (r *Repository) BookmarkTagGetCount(userUUID string, visibility bookmarkque
 	return count, nil
 }
 
-func (r *Repository) BookmarkTagGetAll(userUUID string, visibility bookmarkquerying.Visibility) ([]bookmarkquerying.Tag, error) {
+func (r *Repository) BookmarkTagGetAll(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility) ([]bookmarkquerying.Tag, error) {
 	var query string
 
 	switch visibility {
 	case bookmarkquerying.VisibilityPrivate:
 		query = `
-		SELECT name, COUNT(name) as count
+		SELECT name, COUNT(name) AS count
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM  bookmarks
 			WHERE user_uuid=$1
 			AND   private=TRUE
@@ -530,9 +537,9 @@ func (r *Repository) BookmarkTagGetAll(userUUID string, visibility bookmarkquery
 
 	case bookmarkquerying.VisibilityPublic:
 		query = `
-		SELECT name, COUNT(name) as count
+		SELECT name, COUNT(name) AS count
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM  bookmarks
 			WHERE user_uuid=$1
 			AND   private=FALSE
@@ -542,9 +549,9 @@ func (r *Repository) BookmarkTagGetAll(userUUID string, visibility bookmarkquery
 
 	default:
 		query = `
-		SELECT name, COUNT(name) as count
+		SELECT name, COUNT(name) AS count
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM  bookmarks
 			WHERE user_uuid=$1
 		) s
@@ -552,18 +559,18 @@ func (r *Repository) BookmarkTagGetAll(userUUID string, visibility bookmarkquery
 		ORDER BY count DESC, name ASC`
 	}
 
-	return r.tagGetQuery(query, userUUID)
+	return r.tagGetQuery(ctx, query, userUUID)
 }
 
-func (r *Repository) BookmarkTagGetN(userUUID string, visibility bookmarkquerying.Visibility, n uint, offset uint) ([]bookmarkquerying.Tag, error) {
+func (r *Repository) BookmarkTagGetN(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility, n uint, offset uint) ([]bookmarkquerying.Tag, error) {
 	var query string
 
 	switch visibility {
 	case bookmarkquerying.VisibilityPrivate:
 		query = `
-		SELECT name, COUNT(name) as count
+		SELECT name, COUNT(name) AS count
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM  bookmarks
 			WHERE user_uuid=$1
 			AND   private=TRUE
@@ -574,9 +581,9 @@ func (r *Repository) BookmarkTagGetN(userUUID string, visibility bookmarkqueryin
 
 	case bookmarkquerying.VisibilityPublic:
 		query = `
-		SELECT name, COUNT(name) as count
+		SELECT name, COUNT(name) AS count
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM  bookmarks
 			WHERE user_uuid=$1
 			AND   private=FALSE
@@ -587,9 +594,9 @@ func (r *Repository) BookmarkTagGetN(userUUID string, visibility bookmarkqueryin
 
 	default:
 		query = `
-		SELECT name, COUNT(name) as count
+		SELECT name, COUNT(name) AS count
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM  bookmarks
 			WHERE user_uuid=$1
 		) s
@@ -598,10 +605,10 @@ func (r *Repository) BookmarkTagGetN(userUUID string, visibility bookmarkqueryin
 		LIMIT $2 OFFSET $3`
 	}
 
-	return r.tagGetQuery(query, userUUID, n, offset)
+	return r.tagGetQuery(ctx, query, userUUID, n, offset)
 }
 
-func (r *Repository) BookmarkTagFilterCount(userUUID string, visibility bookmarkquerying.Visibility, filterTerm string) (uint, error) {
+func (r *Repository) BookmarkTagFilterCount(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility, filterTerm string) (uint, error) {
 	var query string
 
 	switch visibility {
@@ -609,7 +616,7 @@ func (r *Repository) BookmarkTagFilterCount(userUUID string, visibility bookmark
 		query = `
 		SELECT COUNT(DISTINCT name)
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM bookmarks
 			WHERE user_uuid=$1
 			AND   private=TRUE
@@ -620,7 +627,7 @@ func (r *Repository) BookmarkTagFilterCount(userUUID string, visibility bookmark
 		query = `
 		SELECT COUNT(DISTINCT name)
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM bookmarks
 			WHERE user_uuid=$1
 			AND   private=FALSE
@@ -631,7 +638,7 @@ func (r *Repository) BookmarkTagFilterCount(userUUID string, visibility bookmark
 		query = `
 		SELECT COUNT(DISTINCT name)
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM bookmarks
 			WHERE user_uuid=$1
 		) s
@@ -641,7 +648,7 @@ func (r *Repository) BookmarkTagFilterCount(userUUID string, visibility bookmark
 	var count uint
 
 	err := r.Pool.QueryRow(
-		context.Background(),
+		ctx,
 		query,
 		userUUID,
 		"%"+filterTerm+"%",
@@ -653,15 +660,15 @@ func (r *Repository) BookmarkTagFilterCount(userUUID string, visibility bookmark
 	return count, nil
 }
 
-func (r *Repository) BookmarkTagFilterN(userUUID string, visibility bookmarkquerying.Visibility, filterTerm string, n uint, offset uint) ([]bookmarkquerying.Tag, error) {
+func (r *Repository) BookmarkTagFilterN(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility, filterTerm string, n uint, offset uint) ([]bookmarkquerying.Tag, error) {
 	var query string
 
 	switch visibility {
 	case bookmarkquerying.VisibilityPrivate:
 		query = `
-		SELECT name, COUNT(name) as count
+		SELECT name, COUNT(name) AS count
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM  bookmarks
 			WHERE user_uuid=$1
 			AND   private=TRUE
@@ -673,9 +680,9 @@ func (r *Repository) BookmarkTagFilterN(userUUID string, visibility bookmarkquer
 
 	case bookmarkquerying.VisibilityPublic:
 		query = `
-		SELECT name, COUNT(name) as count
+		SELECT name, COUNT(name) AS count
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM  bookmarks
 			WHERE user_uuid=$1
 			AND   private=FALSE
@@ -687,9 +694,9 @@ func (r *Repository) BookmarkTagFilterN(userUUID string, visibility bookmarkquer
 
 	default:
 		query = `
-		SELECT name, COUNT(name) as count
+		SELECT name, COUNT(name) AS count
 		FROM (
-			SELECT unnest(tags) as name
+			SELECT UNNEST(tags) AS name
 			FROM  bookmarks
 			WHERE user_uuid=$1
 		) s
@@ -699,5 +706,5 @@ func (r *Repository) BookmarkTagFilterN(userUUID string, visibility bookmarkquer
 		LIMIT $3 OFFSET $4`
 	}
 
-	return r.tagGetQuery(query, userUUID, "%"+filterTerm+"%", n, offset)
+	return r.tagGetQuery(ctx, query, userUUID, "%"+filterTerm+"%", n, offset)
 }

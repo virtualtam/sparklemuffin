@@ -3,7 +3,10 @@
 
 package user
 
-import "slices"
+import (
+	"context"
+	"slices"
+)
 
 var _ Repository = &FakeRepository{}
 
@@ -12,12 +15,12 @@ type FakeRepository struct {
 	Users []User
 }
 
-func (r *FakeRepository) UserAdd(user User) error {
+func (r *FakeRepository) UserAdd(_ context.Context, user User) error {
 	r.Users = append(r.Users, user)
 	return nil
 }
 
-func (r *FakeRepository) UserDeleteByUUID(userUUID string) error {
+func (r *FakeRepository) UserDeleteByUUID(_ context.Context, userUUID string) error {
 	for index, user := range r.Users {
 		if user.UUID == userUUID {
 			r.Users = slices.Delete(r.Users, index, index+1)
@@ -27,11 +30,11 @@ func (r *FakeRepository) UserDeleteByUUID(userUUID string) error {
 	return ErrNotFound
 }
 
-func (r *FakeRepository) UserGetAll() ([]User, error) {
+func (r *FakeRepository) UserGetAll(_ context.Context) ([]User, error) {
 	return r.Users, nil
 }
 
-func (r *FakeRepository) UserGetByEmail(email string) (User, error) {
+func (r *FakeRepository) UserGetByEmail(_ context.Context, email string) (User, error) {
 	for _, user := range r.Users {
 		if user.Email == email {
 			return user, nil
@@ -41,7 +44,7 @@ func (r *FakeRepository) UserGetByEmail(email string) (User, error) {
 	return User{}, ErrNotFound
 }
 
-func (r *FakeRepository) UserGetByNickName(nick string) (User, error) {
+func (r *FakeRepository) UserGetByNickName(_ context.Context, nick string) (User, error) {
 	for _, user := range r.Users {
 		if user.NickName == nick {
 			return user, nil
@@ -51,7 +54,7 @@ func (r *FakeRepository) UserGetByNickName(nick string) (User, error) {
 	return User{}, ErrNotFound
 }
 
-func (r *FakeRepository) UserGetByUUID(userUUID string) (User, error) {
+func (r *FakeRepository) UserGetByUUID(_ context.Context, userUUID string) (User, error) {
 	for _, user := range r.Users {
 		if user.UUID == userUUID {
 			return user, nil
@@ -61,7 +64,7 @@ func (r *FakeRepository) UserGetByUUID(userUUID string) (User, error) {
 	return User{}, ErrNotFound
 }
 
-func (r *FakeRepository) UserIsEmailRegistered(email string) (bool, error) {
+func (r *FakeRepository) UserIsEmailRegistered(_ context.Context, email string) (bool, error) {
 	registered := false
 
 	for _, user := range r.Users {
@@ -74,7 +77,7 @@ func (r *FakeRepository) UserIsEmailRegistered(email string) (bool, error) {
 	return registered, nil
 }
 
-func (r *FakeRepository) UserIsNickNameRegistered(nick string) (bool, error) {
+func (r *FakeRepository) UserIsNickNameRegistered(_ context.Context, nick string) (bool, error) {
 	registered := false
 
 	for _, user := range r.Users {
@@ -87,7 +90,7 @@ func (r *FakeRepository) UserIsNickNameRegistered(nick string) (bool, error) {
 	return registered, nil
 }
 
-func (r *FakeRepository) UserUpdate(user User) error {
+func (r *FakeRepository) UserUpdate(_ context.Context, user User) error {
 	for index, existingUser := range r.Users {
 		if existingUser.UUID == user.UUID {
 			r.Users[index] = user
@@ -98,7 +101,7 @@ func (r *FakeRepository) UserUpdate(user User) error {
 	return ErrNotFound
 }
 
-func (r *FakeRepository) UserUpdateInfo(info InfoUpdate) error {
+func (r *FakeRepository) UserUpdateInfo(_ context.Context, info InfoUpdate) error {
 	for index, existingUser := range r.Users {
 		if existingUser.UUID == info.UUID {
 			r.Users[index].Email = info.Email
@@ -110,7 +113,7 @@ func (r *FakeRepository) UserUpdateInfo(info InfoUpdate) error {
 	return ErrNotFound
 }
 
-func (r *FakeRepository) UserUpdatePasswordHash(passwordHash PasswordHashUpdate) error {
+func (r *FakeRepository) UserUpdatePasswordHash(_ context.Context, passwordHash PasswordHashUpdate) error {
 	for index, existingUser := range r.Users {
 		if existingUser.UUID == passwordHash.UUID {
 			r.Users[index].PasswordHash = passwordHash.PasswordHash

@@ -144,7 +144,7 @@ func TestServiceImportFromOPMLDocument(t *testing.T) {
 				},
 			}
 
-			status, err := s.ImportFromOPMLDocument(testUser.UUID, document)
+			status, err := s.ImportFromOPMLDocument(t.Context(), testUser.UUID, document)
 			if err != nil {
 				t.Fatalf("want no error, got %q", err)
 			}

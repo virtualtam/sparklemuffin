@@ -28,15 +28,16 @@ func TestUserService(t *testing.T) {
 	fake := faker.New()
 
 	t.Run("create, retrieve and delete user", func(t *testing.T) {
+		ctx := t.Context()
 		u := pgbase.GenerateFakeUser(t, &fake)
 
 		// 1. Create user
-		if err := s.Add(u); err != nil {
+		if err := s.Add(ctx, u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
 		}
 
 		// 2. Retrieve user
-		gotUser, err := s.ByNickName(u.NickName)
+		gotUser, err := s.ByNickName(ctx, u.NickName)
 		if err != nil {
 			t.Fatalf("failed to retrieve user: %q", err)
 		}
@@ -52,7 +53,7 @@ func TestUserService(t *testing.T) {
 		}
 
 		// 3. Retrieve feed preferences
-		gotPreferences, err := fs.PreferencesByUserUUID(gotUser.UUID)
+		gotPreferences, err := fs.PreferencesByUserUUID(ctx, gotUser.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve feed preferences: %q", err)
 		}
@@ -62,24 +63,25 @@ func TestUserService(t *testing.T) {
 		}
 
 		// 4. Delete user
-		if err := s.DeleteByUUID(gotUser.UUID); err != nil {
+		if err := s.DeleteByUUID(ctx, gotUser.UUID); err != nil {
 			t.Fatalf("failed to delete user by UUID: %q", err)
 		}
 
-		_, err = s.ByNickName(u.NickName)
+		_, err = s.ByNickName(ctx, u.NickName)
 		if !errors.Is(err, user.ErrNotFound) {
 			t.Fatalf("want %q, got %q", user.ErrNotFound, err)
 		}
 	})
 
 	t.Run("update user", func(t *testing.T) {
+		ctx := t.Context()
 		u := pgbase.GenerateFakeUser(t, &fake)
 
-		if err := s.Add(u); err != nil {
+		if err := s.Add(ctx, u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
 		}
 
-		gotUser, err := s.ByNickName(u.NickName)
+		gotUser, err := s.ByNickName(ctx, u.NickName)
 		if err != nil {
 			t.Fatalf("failed to retrieve user: %q", err)
 		}
@@ -94,11 +96,11 @@ func TestUserService(t *testing.T) {
 			Password:    fake.Internet().Password(),
 		}
 
-		if err := s.Update(updatedUser); err != nil {
+		if err := s.Update(ctx, updatedUser); err != nil {
 			t.Fatalf("want no error, got %q", err)
 		}
 
-		gotUpdatedUser, err := s.ByUUID(gotUser.UUID)
+		gotUpdatedUser, err := s.ByUUID(ctx, gotUser.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve user: %q", err)
 		}
@@ -112,13 +114,14 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("update user info with no change", func(t *testing.T) {
+		ctx := t.Context()
 		u := pgbase.GenerateFakeUser(t, &fake)
 
-		if err := s.Add(u); err != nil {
+		if err := s.Add(ctx, u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
 		}
 
-		gotUser, err := s.ByNickName(u.NickName)
+		gotUser, err := s.ByNickName(ctx, u.NickName)
 		if err != nil {
 			t.Fatalf("failed to retrieve user: %q", err)
 		}
@@ -130,11 +133,11 @@ func TestUserService(t *testing.T) {
 			DisplayName: gotUser.DisplayName,
 		}
 
-		if err := s.UpdateInfo(info); err != nil {
+		if err := s.UpdateInfo(ctx, info); err != nil {
 			t.Fatalf("want no error, got %q", err)
 		}
 
-		gotUpdatedUser, err := s.ByUUID(gotUser.UUID)
+		gotUpdatedUser, err := s.ByUUID(ctx, gotUser.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve user: %q", err)
 		}
@@ -148,13 +151,14 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("update user info", func(t *testing.T) {
+		ctx := t.Context()
 		u := pgbase.GenerateFakeUser(t, &fake)
 
-		if err := s.Add(u); err != nil {
+		if err := s.Add(ctx, u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
 		}
 
-		gotUser, err := s.ByNickName(u.NickName)
+		gotUser, err := s.ByNickName(ctx, u.NickName)
 		if err != nil {
 			t.Fatalf("failed to retrieve user: %q", err)
 		}
@@ -168,11 +172,11 @@ func TestUserService(t *testing.T) {
 			DisplayName: newPerson.Name(),
 		}
 
-		if err := s.UpdateInfo(info); err != nil {
+		if err := s.UpdateInfo(ctx, info); err != nil {
 			t.Fatalf("want no error, got %q", err)
 		}
 
-		gotUpdatedUser, err := s.ByUUID(gotUser.UUID)
+		gotUpdatedUser, err := s.ByUUID(ctx, gotUser.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve user: %q", err)
 		}
@@ -186,13 +190,14 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("update user password", func(t *testing.T) {
+		ctx := t.Context()
 		u := pgbase.GenerateFakeUser(t, &fake)
 
-		if err := s.Add(u); err != nil {
+		if err := s.Add(ctx, u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
 		}
 
-		gotUser, err := s.ByNickName(u.NickName)
+		gotUser, err := s.ByNickName(ctx, u.NickName)
 		if err != nil {
 			t.Fatalf("failed to retrieve user: %q", err)
 		}
@@ -206,11 +211,11 @@ func TestUserService(t *testing.T) {
 			NewPasswordConfirmation: newPassword,
 		}
 
-		if err := s.UpdatePassword(passwordUpdate); err != nil {
+		if err := s.UpdatePassword(ctx, passwordUpdate); err != nil {
 			t.Fatalf("want no error, got %q", err)
 		}
 
-		gotUpdatedUser, err := s.ByUUID(gotUser.UUID)
+		gotUpdatedUser, err := s.ByUUID(ctx, gotUser.UUID)
 		if err != nil {
 			t.Fatalf("failed to retrieve user: %q", err)
 		}
@@ -221,13 +226,14 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("authenticate user", func(t *testing.T) {
+		ctx := t.Context()
 		u := pgbase.GenerateFakeUser(t, &fake)
 
-		if err := s.Add(u); err != nil {
+		if err := s.Add(ctx, u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
 		}
 
-		authenticatedUser, err := s.Authenticate(u.Email, u.Password)
+		authenticatedUser, err := s.Authenticate(ctx, u.Email, u.Password)
 		if err != nil {
 			t.Fatalf("want no error, got %q", err)
 		}

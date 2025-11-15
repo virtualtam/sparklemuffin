@@ -4,6 +4,7 @@
 package feed
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -52,11 +53,11 @@ func (c *Category) Normalize() {
 }
 
 // ValidateForAddition ensures mandatory fields are properly set when adding a Category.
-func (c *Category) ValidateForAddition(v ValidationRepository) error {
+func (c *Category) ValidateForAddition(ctx context.Context, v ValidationRepository) error {
 	fns := []func() error{
 		c.requireName,
 		c.requireSlug,
-		c.ensureNameAndSlugAreNotRegistered(v),
+		c.ensureNameAndSlugAreNotRegistered(ctx, v),
 	}
 
 	for _, fn := range fns {
@@ -86,11 +87,11 @@ func (c *Category) ValidateForDeletion() error {
 }
 
 // ValidateForUpdate ensures mandatory fields are properly set when editing a Category.
-func (c *Category) ValidateForUpdate(v ValidationRepository) error {
+func (c *Category) ValidateForUpdate(ctx context.Context, v ValidationRepository) error {
 	fns := []func() error{
 		c.requireName,
 		c.requireSlug,
-		c.ensureNameAndSlugAreNotRegisteredToAnotherCategory(v),
+		c.ensureNameAndSlugAreNotRegisteredToAnotherCategory(ctx, v),
 	}
 
 	for _, fn := range fns {
@@ -138,9 +139,9 @@ func (c *Category) requireUUID() error {
 	return nil
 }
 
-func (c *Category) ensureNameAndSlugAreNotRegistered(v ValidationRepository) func() error {
+func (c *Category) ensureNameAndSlugAreNotRegistered(ctx context.Context, v ValidationRepository) func() error {
 	return func() error {
-		registered, err := v.FeedCategoryNameAndSlugAreRegistered(c.UserUUID, c.Name, c.Slug)
+		registered, err := v.FeedCategoryNameAndSlugAreRegistered(ctx, c.UserUUID, c.Name, c.Slug)
 		if err != nil {
 			return err
 		}
@@ -153,9 +154,9 @@ func (c *Category) ensureNameAndSlugAreNotRegistered(v ValidationRepository) fun
 	}
 }
 
-func (c *Category) ensureNameAndSlugAreNotRegisteredToAnotherCategory(v ValidationRepository) func() error {
+func (c *Category) ensureNameAndSlugAreNotRegisteredToAnotherCategory(ctx context.Context, v ValidationRepository) func() error {
 	return func() error {
-		registered, err := v.FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(c.UserUUID, c.UUID, c.Name, c.Slug)
+		registered, err := v.FeedCategoryNameAndSlugAreRegisteredToAnotherCategory(ctx, c.UserUUID, c.UUID, c.Name, c.Slug)
 		if err != nil {
 			return err
 		}

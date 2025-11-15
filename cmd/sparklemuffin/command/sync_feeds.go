@@ -4,6 +4,8 @@
 package command
 
 import (
+	"context"
+
 	"github.com/earthboundkid/versioninfo/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -20,7 +22,7 @@ func NewSyncFeedsCommand() *cobra.Command {
 				Str("version", versioninfo.Short()).
 				Msg("feeds: synchronizing")
 
-			return feedSynchronizingService.Synchronize("cli")
+			return feedSynchronizingService.Synchronize(context.Background(), "cli")
 		},
 	}
 

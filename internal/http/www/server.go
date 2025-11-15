@@ -223,20 +223,20 @@ func (s *Server) rememberUser(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		userSession, err := s.sessionService.ByRememberToken(cookie.Value)
-		if err != nil {
-			h(w, r)
-			return
-		}
-
-		ctxUser, err := s.userService.ByUUID(userSession.UserUUID)
-		if err != nil {
-			h(w, r)
-			return
-		}
-
 		ctx := r.Context()
-		ctx = httpcontext.WithUser(ctx, ctxUser)
+		userSession, err := s.sessionService.ByRememberToken(ctx, cookie.Value)
+		if err != nil {
+			h(w, r)
+			return
+		}
+
+		usr, err := s.userService.ByUUID(ctx, userSession.UserUUID)
+		if err != nil {
+			h(w, r)
+			return
+		}
+
+		ctx = httpcontext.WithUser(ctx, usr)
 		r = r.WithContext(ctx)
 
 		h(w, r)

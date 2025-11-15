@@ -4,6 +4,7 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -56,6 +57,8 @@ func (sc *sessionController) handleUserLogin() func(w http.ResponseWriter, r *ht
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		var form loginForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse login form")
@@ -64,7 +67,7 @@ func (sc *sessionController) handleUserLogin() func(w http.ResponseWriter, r *ht
 			return
 		}
 
-		authenticatedUser, err := sc.userService.Authenticate(form.Email, form.Password)
+		authenticatedUser, err := sc.userService.Authenticate(ctx, form.Email, form.Password)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to authenticate user")
 			view.PutFlashError(w, "invalid email or password")
@@ -72,7 +75,7 @@ func (sc *sessionController) handleUserLogin() func(w http.ResponseWriter, r *ht
 			return
 		}
 
-		if err := sc.setUserRememberToken(w, authenticatedUser.UUID); err != nil {
+		if err := sc.setUserRememberToken(ctx, w, authenticatedUser.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to set remember token")
 			view.PutFlashError(w, "failed to save session cookie")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -95,7 +98,8 @@ func (sc *sessionController) handleUserLogout() func(w http.ResponseWriter, r *h
 		}
 		http.SetCookie(w, &cookie)
 
-		ctxUser := httpcontext.UserValue(r.Context())
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
 		if ctxUser == nil {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
@@ -113,7 +117,7 @@ func (sc *sessionController) handleUserLogout() func(w http.ResponseWriter, r *h
 			RememberToken: token,
 		}
 
-		err = sc.sessionService.Add(userSession)
+		err = sc.sessionService.Add(ctx, userSession)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to save user session")
 			http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -126,7 +130,7 @@ func (sc *sessionController) handleUserLogout() func(w http.ResponseWriter, r *h
 
 // setUserRememberToken creates and persists a new RememberToken if needed, and
 // sets it as a session cookie.
-func (sc *sessionController) setUserRememberToken(w http.ResponseWriter, userUUID string) error {
+func (sc *sessionController) setUserRememberToken(ctx context.Context, w http.ResponseWriter, userUUID string) error {
 	token, err := rand.RandomBase64URLString(UserRememberTokenNBytes)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate a remember token")
@@ -142,8 +146,7 @@ func (sc *sessionController) setUserRememberToken(w http.ResponseWriter, userUUI
 		RememberTokenExpiresAt: expiresAt,
 	}
 
-	err = sc.sessionService.Add(userSession)
-	if err != nil {
+	if err = sc.sessionService.Add(ctx, userSession); err != nil {
 		log.Error().Err(err).Msg("failed to update user")
 		return err
 	}

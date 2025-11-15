@@ -4,6 +4,7 @@
 package synchronizing
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -44,11 +45,11 @@ func NewService(r Repository, client *fetching.Client) *Service {
 }
 
 // Synchronize synchronizes syndication feeds for all users.
-func (s *Service) Synchronize(jobID string) error {
+func (s *Service) Synchronize(ctx context.Context, jobID string) error {
 	lastSyncBefore := time.Now().UTC().Add(-minFeedAge)
 
 	// 1. List all feeds that have last been synchronized before a given time.Time
-	feeds, err := s.r.FeedGetNByLastSynchronizationTime(feedsToSynchronize, lastSyncBefore)
+	feeds, err := s.r.FeedGetNByLastSynchronizationTime(ctx, feedsToSynchronize, lastSyncBefore)
 	if err != nil {
 		log.
 			Error().
@@ -75,7 +76,7 @@ func (s *Service) Synchronize(jobID string) error {
 			// 3.1. Fetch entries
 			// 3.2. Upsert entries
 			// 3.3. Update FetchedAt date
-			return s.synchronizeFeed(workerFeed, jobID)
+			return s.synchronizeFeed(ctx, workerFeed, jobID)
 		})
 	}
 
@@ -91,14 +92,14 @@ func (s *Service) Synchronize(jobID string) error {
 	return nil
 }
 
-func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
+func (s *Service) synchronizeFeed(ctx context.Context, feed feed.Feed, jobID string) error {
 	log.
 		Info().
 		Str("feed_url", feed.FeedURL).
 		Str("job_id", jobID).
 		Msg("feeds: synchronizing")
 
-	feedStatus, err := s.client.Fetch(feed.FeedURL, feed.ETag, feed.LastModified)
+	feedStatus, err := s.client.Fetch(ctx, feed.FeedURL, feed.ETag, feed.LastModified)
 	if err != nil {
 		log.
 			Error().
@@ -119,7 +120,7 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 		FetchedAt:    now,
 	}
 
-	if err := s.r.FeedUpdateFetchMetadata(feedFetchMetadata); err != nil {
+	if err := s.r.FeedUpdateFetchMetadata(ctx, feedFetchMetadata); err != nil {
 		log.
 			Error().
 			Err(err).
@@ -165,7 +166,7 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 			UpdatedAt:   now,
 		}
 
-		if err := s.r.FeedUpdateMetadata(feedMetadata); err != nil {
+		if err := s.r.FeedUpdateMetadata(ctx, feedMetadata); err != nil {
 			log.
 				Error().
 				Err(err).
@@ -176,7 +177,7 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 		}
 	}
 
-	rowsAffected, err := s.createOrUpdateEntries(feed, now, feedStatus.Feed.Items)
+	rowsAffected, err := s.createOrUpdateEntries(ctx, feed, now, feedStatus.Feed.Items)
 	if err != nil {
 		log.
 			Error().
@@ -196,7 +197,7 @@ func (s *Service) synchronizeFeed(feed feed.Feed, jobID string) error {
 	return nil
 }
 
-func (s *Service) createOrUpdateEntries(f feed.Feed, now time.Time, items []*gofeed.Item) (int64, error) {
+func (s *Service) createOrUpdateEntries(ctx context.Context, f feed.Feed, now time.Time, items []*gofeed.Item) (int64, error) {
 	var entries []feed.Entry
 
 	for _, item := range items {
@@ -216,7 +217,7 @@ func (s *Service) createOrUpdateEntries(f feed.Feed, now time.Time, items []*gof
 		entries = append(entries, entry)
 	}
 
-	rowsAffected, err := s.r.FeedEntryUpsertMany(entries)
+	rowsAffected, err := s.r.FeedEntryUpsertMany(ctx, entries)
 	if err != nil {
 		log.
 			Error().

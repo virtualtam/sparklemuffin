@@ -31,16 +31,16 @@ func TestFeedQueryingService(t *testing.T) {
 
 	u := pgbase.GenerateFakeUser(t, &fake)
 
-	if err := us.Add(u); err != nil {
+	if err := us.Add(t.Context(), u); err != nil {
 		t.Fatalf("failed to create user: %q", err)
 	}
 
-	testUser, err := us.ByNickName(u.NickName)
+	testUser, err := us.ByNickName(t.Context(), u.NickName)
 	if err != nil {
 		t.Fatalf("failed to retrieve user: %q", err)
 	}
 
-	preferences, err := r.FeedPreferencesGetByUserUUID(testUser.UUID)
+	preferences, err := r.FeedPreferencesGetByUserUUID(t.Context(), testUser.UUID)
 	if err != nil {
 		t.Fatalf("failed to retrieve preferences: %q", err)
 	}
@@ -117,7 +117,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByPage(testUser.UUID, preferences, 1)
+		gotPage, err := qs.FeedsByPage(t.Context(), testUser.UUID, preferences, 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by page: %q", err)
 		}
@@ -154,7 +154,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByPage(testUser.UUID, preferencesRead, 1)
+		gotPage, err := qs.FeedsByPage(t.Context(), testUser.UUID, preferencesRead, 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by page: %q", err)
 		}
@@ -193,7 +193,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByPage(testUser.UUID, preferencesUnread, 1)
+		gotPage, err := qs.FeedsByPage(t.Context(), testUser.UUID, preferencesUnread, 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by page: %q", err)
 		}
@@ -242,7 +242,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByCategoryAndPage(testUser.UUID, preferences, fakeData.categories[0], 1)
+		gotPage, err := qs.FeedsByCategoryAndPage(t.Context(), testUser.UUID, preferences, fakeData.categories[0], 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by category and page: %q", err)
 		}
@@ -279,7 +279,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByCategoryAndPage(testUser.UUID, preferencesRead, fakeData.categories[0], 1)
+		gotPage, err := qs.FeedsByCategoryAndPage(t.Context(), testUser.UUID, preferencesRead, fakeData.categories[0], 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by category and page: %q", err)
 		}
@@ -318,7 +318,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByCategoryAndPage(testUser.UUID, preferencesUnread, fakeData.categories[0], 1)
+		gotPage, err := qs.FeedsByCategoryAndPage(t.Context(), testUser.UUID, preferencesUnread, fakeData.categories[0], 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by category and page: %q", err)
 		}
@@ -354,7 +354,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsBySubscriptionAndPage(testUser.UUID, preferences, fakeData.subscriptions[1], 1)
+		gotPage, err := qs.FeedsBySubscriptionAndPage(t.Context(), testUser.UUID, preferences, fakeData.subscriptions[1], 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by subscription and page: %q", err)
 		}
@@ -386,7 +386,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsBySubscriptionAndPage(testUser.UUID, preferencesRead, fakeData.subscriptions[1], 1)
+		gotPage, err := qs.FeedsBySubscriptionAndPage(t.Context(), testUser.UUID, preferencesRead, fakeData.subscriptions[1], 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by subscription and page: %q", err)
 		}
@@ -417,7 +417,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsBySubscriptionAndPage(testUser.UUID, preferencesUnread, fakeData.subscriptions[1], 1)
+		gotPage, err := qs.FeedsBySubscriptionAndPage(t.Context(), testUser.UUID, preferencesUnread, fakeData.subscriptions[1], 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by subscription and page: %q", err)
 		}
@@ -453,7 +453,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByQueryAndPage(testUser.UUID, preferences, "authentic production", 1)
+		gotPage, err := qs.FeedsByQueryAndPage(t.Context(), testUser.UUID, preferences, "authentic production", 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by query and page: %q", err)
 		}
@@ -485,7 +485,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByQueryAndPage(testUser.UUID, preferencesRead, "authentic production", 1)
+		gotPage, err := qs.FeedsByQueryAndPage(t.Context(), testUser.UUID, preferencesRead, "authentic production", 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by query and page: %q", err)
 		}
@@ -516,7 +516,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByQueryAndPage(testUser.UUID, preferencesUnread, "authentic production", 1)
+		gotPage, err := qs.FeedsByQueryAndPage(t.Context(), testUser.UUID, preferencesUnread, "authentic production", 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by query and page: %q", err)
 		}
@@ -553,7 +553,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByCategoryAndQueryAndPage(testUser.UUID, preferences, fakeData.categories[0], "authentic production", 1)
+		gotPage, err := qs.FeedsByCategoryAndQueryAndPage(t.Context(), testUser.UUID, preferences, fakeData.categories[0], "authentic production", 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by category and query and page: %q", err)
 		}
@@ -586,7 +586,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByCategoryAndQueryAndPage(testUser.UUID, preferencesRead, fakeData.categories[0], "authentic production", 1)
+		gotPage, err := qs.FeedsByCategoryAndQueryAndPage(t.Context(), testUser.UUID, preferencesRead, fakeData.categories[0], "authentic production", 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by category and query and page: %q", err)
 		}
@@ -618,7 +618,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsByCategoryAndQueryAndPage(testUser.UUID, preferencesUnread, fakeData.categories[0], "authentic production", 1)
+		gotPage, err := qs.FeedsByCategoryAndQueryAndPage(t.Context(), testUser.UUID, preferencesUnread, fakeData.categories[0], "authentic production", 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by category and query and page: %q", err)
 		}
@@ -655,7 +655,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsBySubscriptionAndQueryAndPage(testUser.UUID, preferences, fakeData.subscriptions[1], "authentic production", 1)
+		gotPage, err := qs.FeedsBySubscriptionAndQueryAndPage(t.Context(), testUser.UUID, preferences, fakeData.subscriptions[1], "authentic production", 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by subscription and query and page: %q", err)
 		}
@@ -688,7 +688,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsBySubscriptionAndQueryAndPage(testUser.UUID, preferencesRead, fakeData.subscriptions[1], "authentic production", 1)
+		gotPage, err := qs.FeedsBySubscriptionAndQueryAndPage(t.Context(), testUser.UUID, preferencesRead, fakeData.subscriptions[1], "authentic production", 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by subscription and query and page: %q", err)
 		}
@@ -720,7 +720,7 @@ func TestFeedQueryingService(t *testing.T) {
 			},
 		}
 
-		gotPage, err := qs.FeedsBySubscriptionAndQueryAndPage(testUser.UUID, preferencesUnread, fakeData.subscriptions[1], "authentic production", 1)
+		gotPage, err := qs.FeedsBySubscriptionAndQueryAndPage(t.Context(), testUser.UUID, preferencesUnread, fakeData.subscriptions[1], "authentic production", 1)
 		if err != nil {
 			t.Fatalf("failed to retrieve feeds by subscription and query and page: %q", err)
 		}

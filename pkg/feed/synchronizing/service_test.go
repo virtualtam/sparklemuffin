@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/feeds"
-	"github.com/jaswdr/faker"
+	"github.com/jaswdr/faker/v2"
 
 	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"

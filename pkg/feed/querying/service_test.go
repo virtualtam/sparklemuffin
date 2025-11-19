@@ -7,7 +7,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jaswdr/faker"
+	"github.com/jaswdr/faker/v2"
 
 	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"

@@ -24,6 +24,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Feed
 - Handle cases where an entry's publication and/or update date(s) are zero, and fall back to the current date/time
 
+#### Packaging and automation
+- Update direct and transitive dependencies
+- Bump github.com/jaswdr/faker to v2.9.0
+
 ### Fixed
 #### WWW
 - Fix `<time>` blocks in bookmark and feed list pages

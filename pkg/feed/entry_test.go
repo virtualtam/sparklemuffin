@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jaswdr/faker"
+	"github.com/jaswdr/faker/v2"
 	"github.com/mmcdole/gofeed"
 	"github.com/segmentio/ksuid"
 

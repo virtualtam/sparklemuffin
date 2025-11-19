@@ -9,7 +9,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/jaswdr/faker"
+	"github.com/jaswdr/faker/v2"
 	"golang.org/x/exp/slices"
 
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"

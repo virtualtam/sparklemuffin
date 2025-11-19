@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/cespare/xxhash/v2"
-	"github.com/jaswdr/faker"
+	"github.com/jaswdr/faker/v2"
 
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"

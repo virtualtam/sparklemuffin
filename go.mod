@@ -17,7 +17,7 @@ require (
 	github.com/gorilla/schema v1.4.1
 	github.com/gosimple/slug v1.15.0
 	github.com/jackc/pgx/v5 v5.7.6
-	github.com/jaswdr/faker v1.19.1
+	github.com/jaswdr/faker/v2 v2.9.0
 	github.com/k3a/html2text v1.2.1
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/prometheus/client_golang v1.23.2

@@ -28,6 +28,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Update direct and transitive dependencies
 - Bump github.com/jaswdr/faker to v2.9.0
 
+### Repository
+- Document query and transaction helpers
+- Cleanup SQL queries
+
 ### Fixed
 #### WWW
 - Fix `<time>` blocks in bookmark and feed list pages

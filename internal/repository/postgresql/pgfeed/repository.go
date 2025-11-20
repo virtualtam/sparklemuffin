@@ -966,19 +966,21 @@ func (r *Repository) FeedSubscriptionDelete(ctx context.Context, userUUID string
 func (r *Repository) FeedSubscriptionGetByFeed(ctx context.Context, userUUID string, feedUUID string) (feed.Subscription, error) {
 	query := `
 	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, created_at, updated_at
-	FROM feed_subscriptions
-	WHERE feed_uuid=$1`
+	  FROM feed_subscriptions
+	 WHERE user_uuid=$1
+	   AND feed_uuid=$2`
 
-	return r.feedSubscriptionGetQuery(ctx, query, feedUUID)
+	return r.feedSubscriptionGetQuery(ctx, query, userUUID, feedUUID)
 }
 
 func (r *Repository) FeedSubscriptionGetByUUID(ctx context.Context, userUUID string, subscriptionUUID string) (feed.Subscription, error) {
 	query := `
 	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, created_at, updated_at
-	FROM feed_subscriptions
-	WHERE uuid=$1`
+	  FROM feed_subscriptions
+	 WHERE user_uuid=$1
+	   AND uuid=$2`
 
-	return r.feedSubscriptionGetQuery(ctx, query, subscriptionUUID)
+	return r.feedSubscriptionGetQuery(ctx, query, userUUID, subscriptionUUID)
 }
 
 func (r *Repository) FeedSubscriptionUpdate(ctx context.Context, s feed.Subscription) error {

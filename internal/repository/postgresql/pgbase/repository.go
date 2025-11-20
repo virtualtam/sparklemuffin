@@ -14,6 +14,8 @@ import (
 )
 
 var (
+	// FullTextSearchReplacer normalizes query strings before they are transformed into PostgreSQL TSV
+	// for full-text search.
 	FullTextSearchReplacer = strings.NewReplacer("/", " ", ".", " ")
 )
 
@@ -29,6 +31,7 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	}
 }
 
+// Rollback rollbacks a PostgreSQL transaction.
 func (r *Repository) Rollback(ctx context.Context, tx pgx.Tx, domain string, operation string) {
 	err := tx.Rollback(ctx)
 	if errors.Is(err, pgx.ErrTxClosed) {
@@ -50,6 +53,7 @@ func (r *Repository) Rollback(ctx context.Context, tx pgx.Tx, domain string, ope
 		Msg("transaction rolled back")
 }
 
+// RowExistsByQuery returns whether a record matching the given query and parameters exists.
 func (r *Repository) RowExistsByQuery(ctx context.Context, query string, queryParams ...any) (bool, error) {
 	var exists int64
 
@@ -64,6 +68,7 @@ func (r *Repository) RowExistsByQuery(ctx context.Context, query string, queryPa
 	return true, nil
 }
 
+// BatchTx initiates a transaction and submits a batch of queries.
 func (r *Repository) BatchTx(ctx context.Context, domain string, operation string, batch *pgx.Batch) error {
 	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
@@ -79,6 +84,7 @@ func (r *Repository) BatchTx(ctx context.Context, domain string, operation strin
 	return tx.Commit(ctx)
 }
 
+// QueryTx initiates a transaction and executes a query.
 func (r *Repository) QueryTx(ctx context.Context, domain string, operation string, query string, args pgx.NamedArgs) error {
 	tx, err := r.Pool.Begin(ctx)
 	if err != nil {

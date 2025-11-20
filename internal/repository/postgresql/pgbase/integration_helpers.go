@@ -35,6 +35,7 @@ const (
 	databasePassword = "testpass"
 )
 
+// CreateAndMigrateTestDatabase creates a new database and applies all SQL migrations.
 func CreateAndMigrateTestDatabase(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 
@@ -146,6 +147,7 @@ func getDatabaseMigrater(t *testing.T, db *sql.DB) *migrate.Migrate {
 	return migrater
 }
 
+// GenerateFakeUser generates a new user for testing.
 func GenerateFakeUser(t *testing.T, fake *faker.Faker) user.User {
 	t.Helper()
 

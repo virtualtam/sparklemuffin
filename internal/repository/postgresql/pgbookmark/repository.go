@@ -35,6 +35,10 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	}
 }
 
+const (
+	domain = "bookmarks"
+)
+
 func (r *Repository) BookmarkAdd(ctx context.Context, b bookmark.Bookmark) error {
 	query := `
 	INSERT INTO bookmarks(
@@ -77,7 +81,7 @@ func (r *Repository) BookmarkAdd(ctx context.Context, b bookmark.Bookmark) error
 		"updated_at":            b.UpdatedAt,
 	}
 
-	return r.QueryTx(ctx, "bookmarks", "BookmarkAdd", query, args)
+	return r.QueryTx(ctx, domain, "BookmarkAdd", query, args)
 }
 
 func (r *Repository) BookmarkAddMany(ctx context.Context, bookmarks []bookmark.Bookmark) (int64, error) {
@@ -108,7 +112,7 @@ func (r *Repository) BookmarkDelete(ctx context.Context, userUUID, uid string) e
 		return err
 	}
 
-	defer r.Rollback(ctx, tx, "bookmarks", "BookmarkDelete")
+	defer r.Rollback(ctx, tx, domain, "BookmarkDelete")
 
 	commandTag, err := tx.Exec(
 		ctx,
@@ -434,7 +438,7 @@ func (r *Repository) BookmarkUpdate(ctx context.Context, b bookmark.Bookmark) er
 		"updated_at":            b.UpdatedAt,
 	}
 
-	return r.QueryTx(ctx, "bookmarks", "BookmarkUpdate", query, args)
+	return r.QueryTx(ctx, domain, "BookmarkUpdate", query, args)
 }
 
 func (r *Repository) OwnerGetByUUID(ctx context.Context, userUUID string) (bookmarkquerying.Owner, error) {

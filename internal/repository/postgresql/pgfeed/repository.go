@@ -35,6 +35,10 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	}
 }
 
+const (
+	domain = "feeds"
+)
+
 func (r *Repository) FeedCreate(ctx context.Context, f feed.Feed) error {
 	query := `
 	INSERT INTO feed_feeds(
@@ -83,7 +87,7 @@ func (r *Repository) FeedCreate(ctx context.Context, f feed.Feed) error {
 		"fetched_at":            f.FetchedAt,
 	}
 
-	return r.QueryTx(ctx, "feeds", "FeedCreate", query, args)
+	return r.QueryTx(ctx, domain, "FeedCreate", query, args)
 }
 
 func (r *Repository) FeedGetBySlug(ctx context.Context, feedSlug string) (feed.Feed, error) {
@@ -143,7 +147,7 @@ func (r *Repository) FeedUpdateFetchMetadata(ctx context.Context, feedFetchMetad
 		"fetched_at":    feedFetchMetadata.FetchedAt,
 	}
 
-	return r.QueryTx(ctx, "feeds", "FeedUpdateFetchMetadata", query, args)
+	return r.QueryTx(ctx, domain, "FeedUpdateFetchMetadata", query, args)
 }
 
 func (r *Repository) FeedUpdateMetadata(ctx context.Context, feedMetadata feedsynchronizing.FeedMetadata) error {
@@ -168,7 +172,7 @@ func (r *Repository) FeedUpdateMetadata(ctx context.Context, feedMetadata feedsy
 		"updated_at":            feedMetadata.UpdatedAt,
 	}
 
-	return r.QueryTx(ctx, "feeds", "FeedUpdateFetchMetadata", query, args)
+	return r.QueryTx(ctx, domain, "FeedUpdateFetchMetadata", query, args)
 }
 
 func (r *Repository) FeedCategoryCreate(ctx context.Context, c feed.Category) error {
@@ -199,7 +203,7 @@ func (r *Repository) FeedCategoryCreate(ctx context.Context, c feed.Category) er
 		"updated_at": c.UpdatedAt,
 	}
 
-	return r.QueryTx(ctx, "feeds", "FeedCategoryCreate", query, args)
+	return r.QueryTx(ctx, domain, "FeedCategoryCreate", query, args)
 }
 
 func (r *Repository) FeedCategoryDelete(ctx context.Context, userUUID string, categoryUUID string) error {
@@ -208,7 +212,7 @@ func (r *Repository) FeedCategoryDelete(ctx context.Context, userUUID string, ca
 		return err
 	}
 
-	defer r.Rollback(ctx, tx, "feeds", "FeedCategoryDelete")
+	defer r.Rollback(ctx, tx, domain, "FeedCategoryDelete")
 
 	// 1. Delete the category (cascaded to subscriptions)
 	commandTag, err := tx.Exec(
@@ -344,7 +348,7 @@ func (r *Repository) FeedCategoryUpdate(ctx context.Context, c feed.Category) er
 		"updated_at": c.UpdatedAt,
 	}
 
-	return r.QueryTx(ctx, "feeds", "FeedCategoryUpdate", query, args)
+	return r.QueryTx(ctx, domain, "FeedCategoryUpdate", query, args)
 }
 
 func (r *Repository) FeedEntryCreateMany(ctx context.Context, entries []feed.Entry) (int64, error) {
@@ -507,7 +511,7 @@ func (r *Repository) FeedEntryMarkAllAsRead(ctx context.Context, userUUID string
 		"user_uuid": userUUID,
 	}
 
-	return r.QueryTx(ctx, "feeds", "FeedEntryMarkAllAsRead", query, args)
+	return r.QueryTx(ctx, domain, "FeedEntryMarkAllAsRead", query, args)
 }
 
 func (r *Repository) FeedEntryMarkAllAsReadByCategory(ctx context.Context, userUUID string, categoryUUID string) error {
@@ -532,7 +536,7 @@ func (r *Repository) FeedEntryMarkAllAsReadByCategory(ctx context.Context, userU
 		"category_uuid": categoryUUID,
 	}
 
-	return r.QueryTx(ctx, "feeds", "FeedEntryMarkAllAsReadByCategory", query, args)
+	return r.QueryTx(ctx, domain, "FeedEntryMarkAllAsReadByCategory", query, args)
 }
 
 func (r *Repository) FeedEntryMarkAllAsReadBySubscription(ctx context.Context, userUUID string, subscriptionUUID string) error {
@@ -557,7 +561,7 @@ func (r *Repository) FeedEntryMarkAllAsReadBySubscription(ctx context.Context, u
 		"subscription_uuid": subscriptionUUID,
 	}
 
-	return r.QueryTx(ctx, "feeds", "FeedEntryMarkAllAsReadBySubscription", query, args)
+	return r.QueryTx(ctx, domain, "FeedEntryMarkAllAsReadBySubscription", query, args)
 }
 
 func (r *Repository) FeedEntryMetadataCreate(ctx context.Context, entryMetadata feed.EntryMetadata) error {
@@ -580,7 +584,7 @@ func (r *Repository) FeedEntryMetadataCreate(ctx context.Context, entryMetadata 
 		"read":      entryMetadata.Read,
 	}
 
-	return r.QueryTx(ctx, "feeds", "FeedEntryMetadataCreate", query, args)
+	return r.QueryTx(ctx, domain, "FeedEntryMetadataCreate", query, args)
 }
 
 func (r *Repository) FeedEntryMetadataGetByUID(ctx context.Context, userUUID string, entryUID string) (feed.EntryMetadata, error) {
@@ -624,7 +628,7 @@ func (r *Repository) FeedEntryMetadataUpdate(ctx context.Context, entryMetadata 
 		"read":      entryMetadata.Read,
 	}
 
-	return r.QueryTx(ctx, "feeds", "FeedEntryMetadataUpdate", query, args)
+	return r.QueryTx(ctx, domain, "FeedEntryMetadataUpdate", query, args)
 }
 
 func (r *Repository) FeedPreferencesGetByUserUUID(ctx context.Context, userUUID string) (feed.Preferences, error) {
@@ -673,7 +677,7 @@ func (r *Repository) FeedPreferencesUpdate(ctx context.Context, preferences feed
 		"updated_at":   preferences.UpdatedAt,
 	}
 
-	return r.QueryTx(ctx, "feeds", "FeedPreferencesUpdate", query, args)
+	return r.QueryTx(ctx, domain, "FeedPreferencesUpdate", query, args)
 }
 
 func (r *Repository) FeedCategorySubscriptionsGetAll(ctx context.Context, userUUID string) ([]feedexporting.CategorySubscriptions, error) {
@@ -910,7 +914,7 @@ func (r *Repository) FeedSubscriptionCreate(ctx context.Context, s feed.Subscrip
 		"updated_at":    s.UpdatedAt,
 	}
 
-	if err := r.QueryTx(ctx, "feeds", "FeedSubscriptionCreate", query, args); err != nil {
+	if err := r.QueryTx(ctx, domain, "FeedSubscriptionCreate", query, args); err != nil {
 		return feed.Subscription{}, err
 	}
 
@@ -923,7 +927,7 @@ func (r *Repository) FeedSubscriptionDelete(ctx context.Context, userUUID string
 		return err
 	}
 
-	defer r.Rollback(ctx, tx, "feeds", "FeedSubscriptionDelete")
+	defer r.Rollback(ctx, tx, domain, "FeedSubscriptionDelete")
 
 	// 1. Delete the subscription
 	commandTag, err := tx.Exec(
@@ -995,7 +999,7 @@ func (r *Repository) FeedSubscriptionUpdate(ctx context.Context, s feed.Subscrip
 		"updated_at":    s.UpdatedAt,
 	}
 
-	return r.QueryTx(ctx, "feeds", "FeedSubscriptionUpdate", query, args)
+	return r.QueryTx(ctx, domain, "FeedSubscriptionUpdate", query, args)
 }
 
 func (r *Repository) FeedQueryingSubscriptionByUUID(ctx context.Context, userUUID string, subscriptionUUID string) (feedquerying.Subscription, error) {

@@ -27,6 +27,10 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	}
 }
 
+const (
+	domain = "users"
+)
+
 func (r *Repository) UserAdd(ctx context.Context, u user.User) error {
 	const (
 		userAddQuery = `
@@ -75,7 +79,7 @@ func (r *Repository) UserAdd(ctx context.Context, u user.User) error {
 	batch.Queue(userAddQuery, userAddArgs)
 	batch.Queue(feedPreferencesAddQuery, feedPreferencesAddArgs)
 
-	return r.BatchTx(ctx, "users", "UserAdd", batch)
+	return r.BatchTx(ctx, domain, "UserAdd", batch)
 }
 
 func (r *Repository) UserDeleteByUUID(ctx context.Context, userUUID string) error {
@@ -84,7 +88,7 @@ func (r *Repository) UserDeleteByUUID(ctx context.Context, userUUID string) erro
 		return err
 	}
 
-	defer r.Rollback(ctx, tx, "users", "delete")
+	defer r.Rollback(ctx, tx, domain, "delete")
 
 	commandTag, err := tx.Exec(
 		ctx,
@@ -235,7 +239,7 @@ func (r *Repository) UserUpdate(ctx context.Context, u user.User) error {
 		"updated_at":    u.UpdatedAt,
 	}
 
-	return r.QueryTx(ctx, "users", "UserUpdate", query, args)
+	return r.QueryTx(ctx, domain, "UserUpdate", query, args)
 }
 
 func (r *Repository) UserUpdateInfo(ctx context.Context, info user.InfoUpdate) error {
@@ -256,7 +260,7 @@ func (r *Repository) UserUpdateInfo(ctx context.Context, info user.InfoUpdate) e
 		"updated_at":   info.UpdatedAt,
 	}
 
-	return r.QueryTx(ctx, "users", "UserUpdateInfo", query, args)
+	return r.QueryTx(ctx, domain, "UserUpdateInfo", query, args)
 }
 
 func (r *Repository) UserUpdatePasswordHash(ctx context.Context, passwordHash user.PasswordHashUpdate) error {
@@ -273,5 +277,5 @@ func (r *Repository) UserUpdatePasswordHash(ctx context.Context, passwordHash us
 		"updated_at":    passwordHash.UpdatedAt,
 	}
 
-	return r.QueryTx(ctx, "users", "UserUpdatePasswordHash", query, args)
+	return r.QueryTx(ctx, domain, "UserUpdatePasswordHash", query, args)
 }

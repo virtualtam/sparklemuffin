@@ -27,6 +27,10 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	}
 }
 
+const (
+	domain = "sessions"
+)
+
 func (r *Repository) SessionAdd(ctx context.Context, sess session.Session) error {
 	query := `
 	INSERT INTO sessions(
@@ -46,7 +50,7 @@ func (r *Repository) SessionAdd(ctx context.Context, sess session.Session) error
 		"remember_token_expires_at": sess.RememberTokenExpiresAt,
 	}
 
-	return r.QueryTx(ctx, "sessions", "SessionAdd", query, args)
+	return r.QueryTx(ctx, domain, "SessionAdd", query, args)
 }
 
 func (r *Repository) SessionGetByRememberTokenHash(ctx context.Context, hash string) (session.Session, error) {

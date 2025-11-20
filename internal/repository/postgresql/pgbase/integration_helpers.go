@@ -70,7 +70,7 @@ func createTestDatabase(t *testing.T) (string, *sql.DB) {
 	ctx := t.Context()
 
 	pgContainer, err := testpostgres.Run(ctx,
-		"postgres:15",
+		"postgres:17",
 		testpostgres.WithDatabase(databaseName),
 		testpostgres.WithUsername(databaseUser),
 		testpostgres.WithPassword(databasePassword),

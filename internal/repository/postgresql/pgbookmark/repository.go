@@ -533,7 +533,7 @@ func (r *Repository) BookmarkTagGetAll(ctx context.Context, userUUID string, vis
 			AND   private=TRUE
 		) s
 		GROUP BY name
-		ORDER BY count DESC, name ASC`
+		ORDER BY count DESC, name`
 
 	case bookmarkquerying.VisibilityPublic:
 		query = `
@@ -545,7 +545,7 @@ func (r *Repository) BookmarkTagGetAll(ctx context.Context, userUUID string, vis
 			AND   private=FALSE
 		) s
 		GROUP BY name
-		ORDER BY count DESC, name ASC`
+		ORDER BY count DESC, name`
 
 	default:
 		query = `
@@ -556,7 +556,7 @@ func (r *Repository) BookmarkTagGetAll(ctx context.Context, userUUID string, vis
 			WHERE user_uuid=$1
 		) s
 		GROUP BY name
-		ORDER BY count DESC, name ASC`
+		ORDER BY count DESC, name`
 	}
 
 	return r.tagGetQuery(ctx, query, userUUID)
@@ -576,7 +576,7 @@ func (r *Repository) BookmarkTagGetN(ctx context.Context, userUUID string, visib
 			AND   private=TRUE
 		) s
 		GROUP BY name
-		ORDER BY count DESC, name ASC
+		ORDER BY count DESC, name
 		LIMIT $2 OFFSET $3`
 
 	case bookmarkquerying.VisibilityPublic:
@@ -589,7 +589,7 @@ func (r *Repository) BookmarkTagGetN(ctx context.Context, userUUID string, visib
 			AND   private=FALSE
 		) s
 		GROUP BY name
-		ORDER BY count DESC, name ASC
+		ORDER BY count DESC, name
 		LIMIT $2 OFFSET $3`
 
 	default:
@@ -601,7 +601,7 @@ func (r *Repository) BookmarkTagGetN(ctx context.Context, userUUID string, visib
 			WHERE user_uuid=$1
 		) s
 		GROUP BY name
-		ORDER BY count DESC, name ASC
+		ORDER BY count DESC, name
 		LIMIT $2 OFFSET $3`
 	}
 
@@ -675,7 +675,7 @@ func (r *Repository) BookmarkTagFilterN(ctx context.Context, userUUID string, vi
 		) s
 		WHERE name ILIKE $2
 		GROUP BY name
-		ORDER BY count DESC, name ASC
+		ORDER BY count DESC, name
 		LIMIT $3 OFFSET $4`
 
 	case bookmarkquerying.VisibilityPublic:
@@ -689,7 +689,7 @@ func (r *Repository) BookmarkTagFilterN(ctx context.Context, userUUID string, vi
 		) s
 		WHERE name ILIKE $2
 		GROUP BY name
-		ORDER BY count DESC, name ASC
+		ORDER BY count DESC, name
 		LIMIT $3 OFFSET $4`
 
 	default:
@@ -702,7 +702,7 @@ func (r *Repository) BookmarkTagFilterN(ctx context.Context, userUUID string, vi
 		) s
 		WHERE name ILIKE $2
 		GROUP BY name
-		ORDER BY count DESC, name ASC
+		ORDER BY count DESC, name
 		LIMIT $3 OFFSET $4`
 	}
 

@@ -17,20 +17,6 @@ import (
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/migrations"
 )
 
-var _ migrate.Logger = &migrateLogger{}
-
-type migrateLogger struct {
-	verbose bool
-}
-
-func (l migrateLogger) Printf(format string, v ...any) {
-	log.Printf(format, v...)
-}
-
-func (l migrateLogger) Verbose() bool {
-	return l.verbose
-}
-
 // NewMigrateCommand initializes a CLI command to create database tables and run
 // SQL migrations.
 func NewMigrateCommand() *cobra.Command {
@@ -38,34 +24,27 @@ func NewMigrateCommand() *cobra.Command {
 		Use:   "migrate",
 		Short: "Initialize database and run migrations",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			logger := log.With().
+				Str("database_driver", databaseDriver).
+				Str("database_addr", databaseAddr).
+				Str("database_name", databaseName).
+				Logger()
+
 			migrationsSource, err := iofs.New(migrations.FS, ".")
 			if err != nil {
-				log.Error().Err(err).Msg("failed to open the database migration filesystem")
+				logger.Error().Err(err).Msg("failed to open the database migration filesystem")
 			}
 
 			db, err := sql.Open(databaseDriver, databaseURI)
 			if err != nil {
-				log.Error().
-					Err(err).
-					Str("database_driver", databaseDriver).
-					Str("database_addr", databaseAddr).
-					Str("database_name", databaseName).
-					Msg("failed to open database connection")
+				logger.Error().Err(err).Msg("failed to open database connection")
 				return err
 			}
-			log.Info().
-				Str("database_driver", databaseDriver).
-				Str("database_addr", databaseAddr).
-				Str("database_name", databaseName).
-				Msg("successfully opened database connection")
+			logger.Info().Msg("successfully opened database connection")
 
 			driver, err := migratepgx.WithInstance(db, &migratepgx.Config{})
 			if err != nil {
-				log.Error().
-					Err(err).
-					Str("database_driver", databaseDriver).
-					Str("database_addr", databaseAddr).
-					Msg("migrate: failed to prepare the database driver")
+				logger.Error().Err(err).Msg("migrate: failed to prepare the database driver")
 			}
 
 			migrater, err := migrate.NewWithInstance(
@@ -75,46 +54,50 @@ func NewMigrateCommand() *cobra.Command {
 				driver,
 			)
 			if err != nil {
-				log.Error().
-					Err(err).
-					Str("database_driver", databaseDriver).
-					Str("database_addr", databaseAddr).
-					Msg("migrate: failed to load database migrations")
+				logger.Error().Err(err).Msg("migrate: failed to load database migrations")
 				return err
 			}
-
-			var verbose bool
-			if logLevelValue == zerolog.LevelTraceValue || logLevelValue == zerolog.LevelDebugValue {
-				verbose = true
-			}
-			migrater.Log = migrateLogger{verbose: verbose}
+			
+			migrater.Log = newMigrateLogger(logger, logLevelValue)
 
 			err = migrater.Up()
 			if errors.Is(err, migrate.ErrNoChange) {
-				log.Info().
-					Str("database_driver", databaseDriver).
-					Str("database_addr", databaseAddr).
-					Msg("migrate: the database schema is up to date")
+				logger.Info().Msg("migrate: the database schema is up to date")
 				return nil
 			}
 
 			if err != nil {
-				log.Error().
-					Err(err).
-					Str("database_driver", databaseDriver).
-					Str("database_addr", databaseAddr).
-					Msg("migrate: failed to apply database migrations")
+				logger.Error().Err(err).Msg("migrate: failed to apply database migrations")
 				return err
 			}
 
-			log.Info().
-				Str("database_driver", databaseDriver).
-				Str("database_addr", databaseAddr).
-				Msg("migrate: all database migrations have been applied")
+			logger.Info().Msg("migrate: all database migrations have been applied")
 
 			return nil
 		},
 	}
 
 	return cmd
+}
+
+var _ migrate.Logger = &migrateLogger{}
+
+type migrateLogger struct {
+	logger  zerolog.Logger
+	verbose bool
+}
+
+func newMigrateLogger(logger zerolog.Logger, logLevelValue string) *migrateLogger {
+	return &migrateLogger{
+		logger:  logger,
+		verbose: logLevelValue == zerolog.LevelTraceValue || logLevelValue == zerolog.LevelDebugValue,
+	}
+}
+
+func (l *migrateLogger) Printf(format string, v ...any) {
+	l.logger.Printf(format, v...)
+}
+
+func (l *migrateLogger) Verbose() bool {
+	return l.verbose
 }

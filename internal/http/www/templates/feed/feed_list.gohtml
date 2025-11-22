@@ -2,37 +2,39 @@
 <section class="section pt-3">
   <div class="columns">
     <div class="column is-one-quarter pl-0">
-      <aside class="menu">
-        <ul class="menu-list">
-          <li>
-            <a class="pl-0" href="/feeds">
-              <strong>
-                All
-                <span class="tag is-light is-pulled-right">{{.Unread}}</span>
-              </strong>
-            </a>
-            <hr class="my-1">
-          </li>
-          {{- range .Categories}}
-          <li>
-            <a class="pl-0" href="/feeds/categories/{{.Slug}}">
-              <strong>
-                {{.Name}}
-                <span class="tag is-light is-pulled-right">{{.Unread}}</span>
-              </strong>
-            </a>
-            <ul>
-              {{- range .SubscribedFeeds}}
+      <aside class="menu" x-data="feedMenu()" x-init="loadState()">
+        <p class="menu-label mb-0">
+          <a class="pl-0" href="/feeds">
+            <strong>
+              All
+              <span class="tag is-light is-pulled-right">{{.Unread}}</span>
+            </strong>
+          </a>
+          <hr class="my-1">
+        </p>
+
+        {{- range .Categories}}
+          <p class="menu-label mb-0">
+            <strong>
+              <a class="pl-0" href="/feeds/categories/{{.Slug}}">{{.Name}}</a>
+              <span
+                @click.stop="toggleCategory('{{.Slug}}')"
+                style="cursor:pointer;"
+                x-text="open['{{.Slug}}'] ? '▾' : '▸'">
+              </span>
+              <span class="tag is-light is-pulled-right">{{.Unread}}</span>
+            </strong>
+          </p>
+          <ul class="menu-list" x-show="open['{{.Slug}}']">
+            {{- range .SubscribedFeeds}}
               <li>
                 <a class="pr-0" href="/feeds/subscriptions/{{.Slug}}">{{or .Alias .Title}}
                   <span class="tag is-light is-pulled-right">{{.Unread}}</span>
                 </a>
               </li>
-              {{- end}}
-            </ul>
-          </li>
-          {{- end}}
-        </ul>
+            {{- end}}
+          </ul>
+        {{- end}}
       </aside>
     </div>
 
@@ -200,7 +202,29 @@
     </div>
   </nav>
 </section>
+{{template "alpinejs"}}
 {{template "htmx"}}
+<script>
+  function feedMenu() {
+    return {
+      open: {},
+
+      loadState() {
+        const saved = localStorage.getItem('feedMenuState');
+        this.open = saved ? JSON.parse(saved) : {};
+      },
+
+      saveState() {
+        localStorage.setItem('feedMenuState', JSON.stringify(this.open));
+      },
+
+      toggleCategory(key) {
+        this.open[key] = !this.open[key];
+        this.saveState();
+      },
+    };
+  }
+</script>
 {{end}}
 
 {{define "feedSearchForm"}}

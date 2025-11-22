@@ -5,7 +5,6 @@ All high-level goals and planned work for this project will be documented in thi
 The roadmap is based on the Now / Next / Later format to communicate current focus, upcoming work and longer-term ideas.
 
 ## Now
-- Feed: Collapse/expand categories
 - www: Review CSRF protection for HTML forms
 - www: SameSite cookie policy
 - www: Content Security Policy (CSP)

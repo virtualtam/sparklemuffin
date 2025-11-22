@@ -42,6 +42,9 @@ func main() {
 		log.Fatalf("failed to build CSS: %s\n", strings.Join(errors, ", "))
 	}
 
+	if err := copyFile("node_modules/alpinejs/dist/cdn.min.js", "../static/alpinejs.min.js"); err != nil {
+		log.Fatal(err)
+	}
 	if err := copyFile("node_modules/awesomplete/awesomplete.min.js", "../static/awesomplete.min.js"); err != nil {
 		log.Fatal(err)
 	}

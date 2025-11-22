@@ -20,6 +20,8 @@ import (
 // NewMigrateCommand initializes a CLI command to create database tables and run
 // SQL migrations.
 func NewMigrateCommand() *cobra.Command {
+	var dbVersion uint
+
 	cmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "Initialize database and run migrations",
@@ -57,12 +59,34 @@ func NewMigrateCommand() *cobra.Command {
 				logger.Error().Err(err).Msg("migrate: failed to load database migrations")
 				return err
 			}
-			
+
 			migrater.Log = newMigrateLogger(logger, logLevelValue)
 
-			err = migrater.Up()
+			previousVersion, _, err := migrater.Version()
+			if err != nil {
+				logger.Error().Err(err).Msg("migrate: failed to retrieve database migration version")
+				return err
+			}
+
+			if dbVersion != 0 {
+				// Migrate to a specific database schema version.
+				err = migrater.Migrate(dbVersion)
+			} else {
+				// Migrate to the latest database schema version.
+				err = migrater.Up()
+			}
+
 			if errors.Is(err, migrate.ErrNoChange) {
-				logger.Info().Msg("migrate: the database schema is up to date")
+				currentVersion, dirty, err := migrater.Version()
+				if err != nil {
+					logger.Error().Err(err).Msg("migrate: failed to retrieve database migration version")
+					return err
+				}
+
+				logger.Info().
+					Uint("current_version", currentVersion).
+					Bool("dirty", dirty).
+					Msg("migrate: nothing to do, the database schema is up to date")
 				return nil
 			}
 
@@ -71,11 +95,28 @@ func NewMigrateCommand() *cobra.Command {
 				return err
 			}
 
-			logger.Info().Msg("migrate: all database migrations have been applied")
+			currentVersion, dirty, err := migrater.Version()
+			if err != nil {
+				logger.Error().Err(err).Msg("migrate: failed to retrieve database migration version")
+				return err
+			}
+
+			logger.Info().
+				Uint("current_version", currentVersion).
+				Uint("previous_version", previousVersion).
+				Bool("dirty", dirty).
+				Msg("migrate: all database migrations have been applied")
 
 			return nil
 		},
 	}
+
+	cmd.Flags().UintVar(
+		&dbVersion,
+		"db-version",
+		0,
+		"Migrate the database schema to this version",
+	)
 
 	return cmd
 }

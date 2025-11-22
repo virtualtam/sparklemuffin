@@ -23,6 +23,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Update .gitignore and .dockerignore to exclude JetBrains IDE configuration
 
 ### Changed
+#### CLI
+- Allow to migrate to a specific database schema version
+- Simplify database migration logging
+
 #### Feed
 - Handle cases where an entry's publication and/or update date(s) are zero, and fall back to the current date/time
 

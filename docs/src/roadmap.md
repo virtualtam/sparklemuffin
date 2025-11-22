@@ -5,8 +5,11 @@ All high-level goals and planned work for this project will be documented in thi
 The roadmap is based on the Now / Next / Later format to communicate current focus, upcoming work and longer-term ideas.
 
 ## Now
-- Feed: Toggle description visibility (show / hide)
-- www: Dark mode / theme switching
+- CLI: Migrate up/down/goto
+- www: Review CSRF protection for HTML forms
+- www: SameSite cookie policy
+- www: Content Security Policy (CSP)
+- www: Review OWASP Top 10 checklist
 
 ## Next
 - Bookmark: Handle conflict with an existing bookmark (URL)
@@ -14,10 +17,6 @@ The roadmap is based on the Now / Next / Later format to communicate current foc
 - Feed: Bookmark entry
 - Internal: Rework error flow (logging, metadata)
     - www: Improve error messages
-- www: Review CSRF protection for HTML forms
-- www: SameSite cookie policy
-- www: Content Security Policy (CSP)
-- www: Review OWASP Top 10 checklist
 
 ## Later
 ### Content & Features
@@ -41,9 +40,9 @@ The roadmap is based on the Now / Next / Later format to communicate current foc
 - www: Display curated content on the home page
 - www: Responsive design
 - www: Internationalization (i18n)
+- www: Dark mode / theme switching
 
 ### Command-line
-- CLI: Migrate up/down/goto
 - Database: Review connection pool transaction and timeout usage
 
 ### API

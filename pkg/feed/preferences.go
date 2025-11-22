@@ -8,6 +8,16 @@ import (
 	"time"
 )
 
+// Preferences represents a user's preferences.
+type Preferences struct {
+	UserUUID           string
+	ShowEntries        EntryVisibility
+	ShowEntrySummaries bool
+
+	UpdatedAt time.Time
+}
+
+// EntryVisibility allows users to choose which feed entries to display, according to their read status.
 type EntryVisibility string
 
 const (
@@ -25,15 +35,7 @@ var (
 	allEntryVisibilities = []EntryVisibility{EntryVisibilityAll, EntryVisibilityRead, EntryVisibilityUnread}
 )
 
-// Preferences represents a user's preferences.
-type Preferences struct {
-	UserUUID    string
-	ShowEntries EntryVisibility
-
-	UpdatedAt time.Time
-}
-
-// ValidateForUpdate ensures mandatory fields are properly set when updating existing Preferences.
+// ValidateForUpdate ensures mandatory fields are set when updating existing Preferences.
 func (p *Preferences) ValidateForUpdate() error {
 	if !slices.Contains(allEntryVisibilities, p.ShowEntries) {
 		return ErrPreferencesEntryVisibilityUnknown

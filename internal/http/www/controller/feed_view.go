@@ -14,7 +14,7 @@ type feedQueryingPage struct {
 	CSRFToken string
 	URLPath   string
 
-	ShowEntries feed.EntryVisibility
+	Preferences feed.Preferences
 }
 
 type feedEntryMetadataMarkReadForm struct {

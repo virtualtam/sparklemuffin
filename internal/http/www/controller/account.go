@@ -196,8 +196,9 @@ func (ac *accountController) handlePasswordView() func(w http.ResponseWriter, r 
 }
 func (ac *accountController) handlePreferencesUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type preferencesUpdateForm struct {
-		CSRFToken   string `schema:"csrf_token"`
-		ShowEntries string `schema:"feed_show_entries"`
+		CSRFToken          string `schema:"csrf_token"`
+		ShowEntries        string `schema:"feed_show_entries"`
+		ShowEntrySummaries bool   `schema:"feed_show_entry_summaries"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -220,8 +221,9 @@ func (ac *accountController) handlePreferencesUpdate() func(w http.ResponseWrite
 		}
 
 		feedPreferences := feed.Preferences{
-			UserUUID:    ctxUser.UUID,
-			ShowEntries: feed.EntryVisibility(form.ShowEntries),
+			UserUUID:           ctxUser.UUID,
+			ShowEntries:        feed.EntryVisibility(form.ShowEntries),
+			ShowEntrySummaries: form.ShowEntrySummaries,
 		}
 
 		if err := ac.feedService.UpdatePreferences(ctx, feedPreferences); err != nil {

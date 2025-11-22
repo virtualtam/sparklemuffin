@@ -107,6 +107,7 @@ func RegisterFeedHandlers(
 
 		r.Route("/preferences", func(sr chi.Router) {
 			sr.Post("/show-entries", fc.handlePreferencesFeedShowEntriesUpdate())
+			sr.Post("/toggle-show-entry-summaries", fc.handlePreferencesToggleShowEntrySummaries())
 		})
 
 		r.Route("/subscriptions", func(sr chi.Router) {
@@ -248,7 +249,7 @@ func (fc *feedController) handleFeedListView(
 		feedQueryingPage := feedQueryingPage{
 			CSRFToken:   csrfToken,
 			URLPath:     r.URL.Path,
-			ShowEntries: preferences.ShowEntries,
+			Preferences: preferences,
 		}
 
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
@@ -1086,6 +1087,44 @@ func (fc *feedController) handleFeedImport() func(w http.ResponseWriter, r *http
 	}
 }
 
+func (fc *feedController) handlePreferencesToggleShowEntrySummaries() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
+
+		csrfToken := r.Header.Get("X-CSRFToken")
+
+		if !fc.csrfService.Validate(csrfToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
+			log.Warn().Msg("failed to validate CSRF token")
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve account preferences")
+			view.PutFlashError(w, fmt.Sprintf("There was an error updating your preferences: %s", err))
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		preferences.ShowEntrySummaries = !preferences.ShowEntrySummaries
+
+		if err := fc.feedService.UpdatePreferences(ctx, preferences); err != nil {
+			log.Error().Err(err).Msg("failed to update account preferences")
+			view.PutFlashError(w, fmt.Sprintf("There was an error updating your preferences: %s", err))
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		w.Header().Set(htmx.HeaderRefresh, "true")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte("OK")); err != nil {
+			log.Error().Err(err).Msg("failed to write response")
+		}
+	}
+}
+
 func (fc *feedController) handlePreferencesFeedShowEntriesUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type feedShowEntriesForm struct {
 		ShowEntries string `schema:"show"`
@@ -1110,12 +1149,17 @@ func (fc *feedController) handlePreferencesFeedShowEntriesUpdate() func(w http.R
 			return
 		}
 
-		feedPreferences := feed.Preferences{
-			UserUUID:    ctxUser.UUID,
-			ShowEntries: feed.EntryVisibility(form.ShowEntries),
+		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve account preferences")
+			view.PutFlashError(w, fmt.Sprintf("There was an error updating your preferences: %s", err))
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
 		}
 
-		if err := fc.feedService.UpdatePreferences(ctx, feedPreferences); err != nil {
+		preferences.ShowEntries = feed.EntryVisibility(form.ShowEntries)
+
+		if err := fc.feedService.UpdatePreferences(ctx, preferences); err != nil {
 			log.Error().Err(err).Msg("failed to update account preferences")
 			view.PutFlashError(w, fmt.Sprintf("There was an error updating your preferences: %s", err))
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)

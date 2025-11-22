@@ -42,7 +42,8 @@ var (
 
 	ErrEntryMetadataNotFound = errors.New("entry-metadata: not found")
 
-	ErrPreferencesEntryVisibilityUnknown = errors.New("preferences: unknown entry visibility")
+	ErrPreferencesEntryVisibilityUnknown            = errors.New("preferences: unknown entry visibility")
+	ErrPreferencesEntryDescriptionVisibilityUnknown = errors.New("preferences: unknown entry description visibility")
 
 	ErrSubscriptionAlreadyRegistered = errors.New("subscription: already registered")
 	ErrSubscriptionNotFound          = errors.New("subscription: not found")

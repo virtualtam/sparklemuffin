@@ -634,7 +634,7 @@ func (r *Repository) FeedEntryMetadataUpdate(ctx context.Context, entryMetadata 
 func (r *Repository) FeedPreferencesGetByUserUUID(ctx context.Context, userUUID string) (feed.Preferences, error) {
 	const (
 		query = `
-		SELECT user_uuid, show_entries, updated_at
+		SELECT user_uuid, show_entries, show_entry_summaries, updated_at
 		FROM feed_preferences
 		WHERE user_uuid=$1`
 	)
@@ -655,9 +655,10 @@ func (r *Repository) FeedPreferencesGetByUserUUID(ctx context.Context, userUUID 
 	}
 
 	return feed.Preferences{
-		UserUUID:    dbPreferences.UserUUID,
-		ShowEntries: feed.EntryVisibility(dbPreferences.ShowEntries),
-		UpdatedAt:   dbPreferences.UpdatedAt,
+		UserUUID:           dbPreferences.UserUUID,
+		ShowEntries:        feed.EntryVisibility(dbPreferences.ShowEntries),
+		ShowEntrySummaries: dbPreferences.ShowEntrySummaries,
+		UpdatedAt:          dbPreferences.UpdatedAt,
 	}, nil
 }
 
@@ -667,14 +668,16 @@ func (r *Repository) FeedPreferencesUpdate(ctx context.Context, preferences feed
 		UPDATE feed_preferences
 		SET
 			show_entries=@show_entries,
+			show_entry_summaries=@show_entry_summaries,
 			updated_at=@updated_at
 		WHERE user_uuid=@user_uuid`
 	)
 
 	args := pgx.NamedArgs{
-		"user_uuid":    preferences.UserUUID,
-		"show_entries": preferences.ShowEntries,
-		"updated_at":   preferences.UpdatedAt,
+		"user_uuid":            preferences.UserUUID,
+		"show_entries":         preferences.ShowEntries,
+		"show_entry_summaries": preferences.ShowEntrySummaries,
+		"updated_at":           preferences.UpdatedAt,
 	}
 
 	return r.QueryTx(ctx, domain, "FeedPreferencesUpdate", query, args)

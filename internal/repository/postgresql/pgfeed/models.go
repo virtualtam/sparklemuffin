@@ -184,9 +184,10 @@ func (f *DBSubscribedFeed) asSubscribedFeed() feedquerying.SubscribedFeed {
 }
 
 type DBPreferences struct {
-	UserUUID    string    `db:"user_uuid"`
-	ShowEntries string    `db:"show_entries"`
-	UpdatedAt   time.Time `db:"updated_at"`
+	UserUUID           string    `db:"user_uuid"`
+	ShowEntries        string    `db:"show_entries"`
+	ShowEntrySummaries bool      `db:"show_entry_summaries"`
+	UpdatedAt          time.Time `db:"updated_at"`
 }
 
 type DBSubscription struct {

@@ -47,7 +47,8 @@
           <div class="level-item">
             <div class="buttons has-addons">
               <button
-                class="button is-small{{if eq .ShowEntries "ALL"}} is-active{{end}}"
+                title="Show all entries"
+                class="button is-small{{if eq .Preferences.ShowEntries "ALL"}} is-active{{end}}"
                 hx-post="/feeds/preferences/show-entries"
                 hx-vals='{"show": "ALL"}'
                 hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
@@ -57,7 +58,8 @@
               </button>
 
               <button
-                class="button is-small{{if eq .ShowEntries "READ"}} is-active{{end}}"
+                title="Show only read entries"
+                class="button is-small{{if eq .Preferences.ShowEntries "READ"}} is-active{{end}}"
                 hx-post="/feeds/preferences/show-entries"
                 hx-vals='{"show": "READ"}'
                 hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
@@ -67,7 +69,8 @@
               </button>
 
               <button
-                class="button is-small{{if eq .ShowEntries "UNREAD"}} is-active{{end}}"
+                title="Show only unread entries"
+                class="button is-small{{if eq .Preferences.ShowEntries "UNREAD"}} is-active{{end}}"
                 hx-post="/feeds/preferences/show-entries"
                 hx-vals='{"show": "UNREAD"}'
                 hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
@@ -76,6 +79,19 @@
                 <span>Unread</span>
               </button>
           </div>
+          </div>
+          <div class="level-item">
+            <div class="buttons has-addons">
+              <button
+                title="Show or hide entry summaries"
+                class="button is-small{{if eq .Preferences.ShowEntrySummaries false}} is-active{{end}}"
+                hx-post="/feeds/preferences/toggle-show-entry-summaries"
+                hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
+              >
+                <span class="icon"><i class="fa-regular fa-rectangle-list"></i></span>
+                <span>Compact</span>
+              </button>
+            </div>
           </div>
           <div class="level-item">
             <form action="{{$.URLPath}}/entries/mark-all-read" method="POST">
@@ -149,8 +165,10 @@
           </div>
 
           <div class="{{if .Read}}has-text-grey-light{{end}}">
-            {{- with .Summary }}
-            <div class="content">{{.}}</div>
+            {{- if $.Preferences.ShowEntrySummaries}}
+              {{- with .Summary }}
+              <div class="content">{{.}}</div>
+              {{- end}}
             {{- end}}
           </div>
         </li>

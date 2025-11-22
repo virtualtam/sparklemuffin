@@ -142,7 +142,7 @@
                   <span class="icon">
                     <i class="fa-solid fa-newspaper"></i>
                   </span>
-                  <span><em>{{ or .SubscriptionAlias .FeedTitle }}</em></span>
+                  <span><em><a class="feed-title" href="/feeds/subscriptions/{{.FeedSlug}}">{{ or .SubscriptionAlias .FeedTitle }}</a></em></span>
                 </span>
               </div>
             </div>

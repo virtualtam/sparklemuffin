@@ -749,12 +749,7 @@ func (r *Repository) FeedSubscriptionCategoryGetAll(ctx context.Context, userUUI
 
 func (r *Repository) FeedSubscriptionEntryGetN(ctx context.Context, userUUID string, preferences feed.Preferences, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
-		query = `
-		SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
-		FROM feed_entries fe
-		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		where = `
 		WHERE fs.user_uuid=@user_uuid`
 	)
 
@@ -764,17 +759,12 @@ func (r *Repository) FeedSubscriptionEntryGetN(ctx context.Context, userUUID str
 		"offset":    offset,
 	}
 
-	return r.feedSubscriptionEntryGetN(ctx, query, preferences.ShowEntries, args)
+	return r.feedSubscriptionEntryGetN(ctx, where, preferences.ShowEntries, args)
 }
 
 func (r *Repository) FeedSubscriptionEntryGetNByCategory(ctx context.Context, userUUID string, preferences feed.Preferences, categoryUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
-		query = `
-		SELECT  fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
-		FROM feed_entries fe
-		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		where = `
 		WHERE fs.user_uuid=@user_uuid
 		AND   fs.category_uuid=@category_uuid`
 	)
@@ -786,17 +776,12 @@ func (r *Repository) FeedSubscriptionEntryGetNByCategory(ctx context.Context, us
 		"offset":        offset,
 	}
 
-	return r.feedSubscriptionEntryGetN(ctx, query, preferences.ShowEntries, args)
+	return r.feedSubscriptionEntryGetN(ctx, where, preferences.ShowEntries, args)
 }
 
 func (r *Repository) FeedSubscriptionEntryGetNBySubscription(ctx context.Context, userUUID string, preferences feed.Preferences, subscriptionUUID string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
-		query = `
-		SELECT  fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
-		FROM feed_entries fe
-		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		where = `
 		WHERE fs.user_uuid=@user_uuid
 		AND   fs.uuid=@subscription_uuid`
 	)
@@ -808,17 +793,12 @@ func (r *Repository) FeedSubscriptionEntryGetNBySubscription(ctx context.Context
 		"offset":            offset,
 	}
 
-	return r.feedSubscriptionEntryGetN(ctx, query, preferences.ShowEntries, args)
+	return r.feedSubscriptionEntryGetN(ctx, where, preferences.ShowEntries, args)
 }
 
 func (r *Repository) FeedSubscriptionEntryGetNByQuery(ctx context.Context, userUUID string, preferences feed.Preferences, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
-		query = `
-		SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
-		FROM feed_entries fe
-		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		where = `
 		WHERE fs.user_uuid=@user_uuid
 		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
 	)
@@ -830,17 +810,12 @@ func (r *Repository) FeedSubscriptionEntryGetNByQuery(ctx context.Context, userU
 		"offset":       offset,
 	}
 
-	return r.feedSubscriptionEntryGetN(ctx, query, preferences.ShowEntries, args)
+	return r.feedSubscriptionEntryGetN(ctx, where, preferences.ShowEntries, args)
 }
 
 func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(ctx context.Context, userUUID string, preferences feed.Preferences, categoryUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
-		query = `
-		SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
-		FROM feed_entries fe
-		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		where = `
 		WHERE fs.user_uuid=@user_uuid
 		AND   fs.category_uuid=@category_uuid
 		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
@@ -854,17 +829,12 @@ func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(ctx context.Con
 		"offset":        offset,
 	}
 
-	return r.feedSubscriptionEntryGetN(ctx, query, preferences.ShowEntries, args)
+	return r.feedSubscriptionEntryGetN(ctx, where, preferences.ShowEntries, args)
 }
 
 func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(ctx context.Context, userUUID string, preferences feed.Preferences, subscriptionUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
-		query = `
-		SELECT fe.uid, fe.url, fe.title, fe.summary, fe.published_at, fe.updated_at, fs.alias AS subscription_alias, f.uuid AS feed_uuid, f.title AS feed_title, COALESCE(fem.read, FALSE) AS read
-		FROM feed_entries fe
-		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		where = `
 		WHERE fs.user_uuid=@user_uuid
 		AND   fs.uuid=@subscription_uuid
 		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
@@ -877,7 +847,7 @@ func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(ctx context
 		"limit":             n,
 		"offset":            offset,
 	}
-	return r.feedSubscriptionEntryGetN(ctx, query, preferences.ShowEntries, args)
+	return r.feedSubscriptionEntryGetN(ctx, where, preferences.ShowEntries, args)
 }
 
 func (r *Repository) FeedSubscriptionIsRegistered(ctx context.Context, userUUID string, feedUUID string) (bool, error) {

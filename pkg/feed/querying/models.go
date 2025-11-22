@@ -25,9 +25,11 @@ type SubscribedFeed struct {
 type SubscribedFeedEntry struct {
 	feed.Entry
 
-	SubscriptionAlias string
+	FeedSlug          string
 	FeedTitle         string
-	Read              bool
+	SubscriptionAlias string
+
+	Read bool
 }
 
 type Subscription struct {

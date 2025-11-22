@@ -205,7 +205,29 @@ func (r *Repository) feedEntryGetCount(ctx context.Context, query string, showEn
 	return count, nil
 }
 
-func (r *Repository) feedSubscriptionEntryGetN(ctx context.Context, query string, showEntries feed.EntryVisibility, args pgx.NamedArgs) ([]feedquerying.SubscribedFeedEntry, error) {
+func (r *Repository) feedSubscriptionEntryGetN(ctx context.Context, where string, showEntries feed.EntryVisibility, args pgx.NamedArgs) ([]feedquerying.SubscribedFeedEntry, error) {
+	const (
+		baseQuery = `
+		SELECT
+			fe.uid,
+			fe.url,
+			fe.title,
+			fe.summary,
+			fe.published_at,
+			fe.updated_at,
+			fs.alias AS subscription_alias,
+			f.uuid AS feed_uuid,
+			f.title AS feed_title,
+			f.slug AS feed_slug,
+			COALESCE(fem.read, FALSE) AS read
+		FROM feed_entries fe
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		JOIN feed_feeds f ON f.uuid = fe.feed_uuid`
+	)
+
+	query := baseQuery + where
+
 	switch showEntries {
 	case feed.EntryVisibilityRead:
 		query += " AND read = TRUE"

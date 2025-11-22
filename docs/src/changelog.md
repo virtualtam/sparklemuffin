@@ -9,8 +9,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 #### Feed
 - Add display preferences
-- Filter displayed entries by reading status (all / read / unread)
-- Toggle entry summary visibility
+  - Filter displayed entries by reading status (all / read / unread)
+  - Toggle entry summary visibility
+- For each displayed entry, add a link to the corresponding subscription
 - Set a timeout for scheduled synchronization tasks
 
 #### WWW

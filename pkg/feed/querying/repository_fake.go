@@ -226,8 +226,9 @@ func (r *fakeRepository) subscribedFeedEntryGetByFeed(ctx context.Context, userU
 
 		subscriptionEntry := SubscribedFeedEntry{
 			Entry:             entry,
-			SubscriptionAlias: subscription.Alias,
+			FeedSlug:          f.Slug,
 			FeedTitle:         f.Title,
+			SubscriptionAlias: subscription.Alias,
 			Read:              read,
 		}
 

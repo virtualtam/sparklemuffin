@@ -94,24 +94,29 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[0],
+					FeedSlug:  fakeData.feeds[0].Slug,
 					FeedTitle: fakeData.feeds[0].Title,
 					Read:      true,
 				},
 				{
 					Entry:     fakeData.entries[3],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 					Read:      true,
 				},
 				{
 					Entry:     fakeData.entries[1],
+					FeedSlug:  fakeData.feeds[0].Slug,
 					FeedTitle: fakeData.feeds[0].Title,
 				},
 				{
 					Entry:     fakeData.entries[4],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 				},
 				{
 					Entry:     fakeData.entries[2],
+					FeedSlug:  fakeData.feeds[0].Slug,
 					FeedTitle: fakeData.feeds[0].Title,
 				},
 			},
@@ -143,11 +148,13 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[0],
+					FeedSlug:  fakeData.feeds[0].Slug,
 					FeedTitle: fakeData.feeds[0].Title,
 					Read:      true,
 				},
 				{
 					Entry:     fakeData.entries[3],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 					Read:      true,
 				},
@@ -180,14 +187,17 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[1],
+					FeedSlug:  fakeData.feeds[0].Slug,
 					FeedTitle: fakeData.feeds[0].Title,
 				},
 				{
 					Entry:     fakeData.entries[4],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 				},
 				{
 					Entry:     fakeData.entries[2],
+					FeedSlug:  fakeData.feeds[0].Slug,
 					FeedTitle: fakeData.feeds[0].Title,
 				},
 			},
@@ -219,24 +229,29 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[0],
+					FeedSlug:  fakeData.feeds[0].Slug,
 					FeedTitle: fakeData.feeds[0].Title,
 					Read:      true,
 				},
 				{
 					Entry:     fakeData.entries[3],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 					Read:      true,
 				},
 				{
 					Entry:     fakeData.entries[1],
+					FeedSlug:  fakeData.feeds[0].Slug,
 					FeedTitle: fakeData.feeds[0].Title,
 				},
 				{
 					Entry:     fakeData.entries[4],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 				},
 				{
 					Entry:     fakeData.entries[2],
+					FeedSlug:  fakeData.feeds[0].Slug,
 					FeedTitle: fakeData.feeds[0].Title,
 				},
 			},
@@ -268,11 +283,13 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[0],
+					FeedSlug:  fakeData.feeds[0].Slug,
 					FeedTitle: fakeData.feeds[0].Title,
 					Read:      true,
 				},
 				{
 					Entry:     fakeData.entries[3],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 					Read:      true,
 				},
@@ -305,14 +322,17 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[1],
+					FeedSlug:  fakeData.feeds[0].Slug,
 					FeedTitle: fakeData.feeds[0].Title,
 				},
 				{
 					Entry:     fakeData.entries[4],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 				},
 				{
 					Entry:     fakeData.entries[2],
+					FeedSlug:  fakeData.feeds[0].Slug,
 					FeedTitle: fakeData.feeds[0].Title,
 				},
 			},
@@ -344,11 +364,13 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 					Read:      true,
 				},
 				{
 					Entry:     fakeData.entries[4],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 				},
 			},
@@ -380,6 +402,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 					Read:      true,
 				},
@@ -412,6 +435,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[4],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 				},
 			},
@@ -443,11 +467,13 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 					Read:      true,
 				},
 				{
 					Entry:     fakeData.entries[4],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 				},
 			},
@@ -479,6 +505,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 					Read:      true,
 				},
@@ -511,6 +538,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[4],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 				},
 			},
@@ -543,11 +571,13 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 					Read:      true,
 				},
 				{
 					Entry:     fakeData.entries[4],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 				},
 			},
@@ -580,6 +610,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 					Read:      true,
 				},
@@ -613,6 +644,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[4],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 				},
 			},
@@ -645,11 +677,13 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 					Read:      true,
 				},
 				{
 					Entry:     fakeData.entries[4],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 				},
 			},
@@ -682,6 +716,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[3],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 					Read:      true,
 				},
@@ -715,6 +750,7 @@ func TestFeedQueryingService(t *testing.T) {
 			Entries: []querying.SubscribedFeedEntry{
 				{
 					Entry:     fakeData.entries[4],
+					FeedSlug:  fakeData.feeds[1].Slug,
 					FeedTitle: fakeData.feeds[1].Title,
 				},
 			},

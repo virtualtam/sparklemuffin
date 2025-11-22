@@ -154,14 +154,16 @@ func TestService(t *testing.T) {
 					Entries: []SubscribedFeedEntry{
 						{
 							Entry:             feed1Entry1,
-							SubscriptionAlias: user1Subscription1.Alias,
+							FeedSlug:          feed1.Slug,
 							FeedTitle:         feed1.Title,
+							SubscriptionAlias: user1Subscription1.Alias,
 							Read:              false,
 						},
 						{
 							Entry:             feed1Entry2,
-							SubscriptionAlias: user1Subscription1.Alias,
+							FeedSlug:          feed1.Slug,
 							FeedTitle:         feed1.Title,
+							SubscriptionAlias: user1Subscription1.Alias,
 							Read:              true,
 						},
 					},
@@ -286,14 +288,16 @@ func TestService(t *testing.T) {
 					Entries: []SubscribedFeedEntry{
 						{
 							Entry:             feed1Entry1,
-							SubscriptionAlias: user1Subscription1.Alias,
+							FeedSlug:          feed1.Slug,
 							FeedTitle:         feed1.Title,
+							SubscriptionAlias: user1Subscription1.Alias,
 							Read:              false,
 						},
 						{
 							Entry:             feed1Entry2,
-							SubscriptionAlias: user1Subscription1.Alias,
+							FeedSlug:          feed1.Slug,
 							FeedTitle:         feed1.Title,
+							SubscriptionAlias: user1Subscription1.Alias,
 							Read:              true,
 						},
 					},
@@ -387,14 +391,16 @@ func TestService(t *testing.T) {
 					Entries: []SubscribedFeedEntry{
 						{
 							Entry:             feed1Entry1,
+							FeedSlug:          feed1.Slug,
 							FeedTitle:         feed1.Title,
 							SubscriptionAlias: user1Subscription1.Alias,
 							Read:              false,
 						},
 						{
 							Entry:             feed1Entry2,
-							SubscriptionAlias: user1Subscription1.Alias,
+							FeedSlug:          feed1.Slug,
 							FeedTitle:         feed1.Title,
+							SubscriptionAlias: user1Subscription1.Alias,
 							Read:              true,
 						},
 					},

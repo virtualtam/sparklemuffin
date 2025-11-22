@@ -89,11 +89,14 @@ func AssertSubscriptionEntriesEqual(t *testing.T, got []SubscribedFeedEntry, wan
 		assert.TimeAlmostEquals(t, fmt.Sprintf("Entry %d UpdatedAt", i), gotEntry.UpdatedAt, wantEntry.UpdatedAt, assert.TimeComparisonDelta)
 
 		// querying.SubscribedFeedEntry fields
-		if gotEntry.SubscriptionAlias != wantEntry.SubscriptionAlias {
-			t.Errorf("want Entry %d SubscriptionAlias %q, got %q", i, wantEntry.SubscriptionAlias, gotEntry.SubscriptionAlias)
+		if gotEntry.FeedSlug != wantEntry.FeedSlug {
+			t.Errorf("want Entry %d Slug %q, got %q", i, wantEntry.FeedSlug, gotEntry.FeedSlug)
 		}
 		if gotEntry.FeedTitle != wantEntry.FeedTitle {
 			t.Errorf("want Entry %d FeedTitle %q, got %q", i, wantEntry.FeedTitle, gotEntry.FeedTitle)
+		}
+		if gotEntry.SubscriptionAlias != wantEntry.SubscriptionAlias {
+			t.Errorf("want Entry %d SubscriptionAlias %q, got %q", i, wantEntry.SubscriptionAlias, gotEntry.SubscriptionAlias)
 		}
 		if gotEntry.Read != wantEntry.Read {
 			t.Errorf("want Entry %d Read %t, got %t", i, wantEntry.Read, gotEntry.Read)

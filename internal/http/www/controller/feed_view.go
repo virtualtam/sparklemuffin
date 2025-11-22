@@ -16,7 +16,3 @@ type feedQueryingPage struct {
 
 	Preferences feed.Preferences
 }
-
-type feedEntryMetadataMarkReadForm struct {
-	CSRFToken string `schema:"csrf_token"`
-}

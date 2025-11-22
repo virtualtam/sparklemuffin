@@ -803,18 +803,11 @@ func (fc *feedController) handleEntryMetadataMarkAllAsRead() func(w http.Respons
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 
-		var form feedEntryMetadataMarkReadForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse feed entry metadata edition form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
+		csrfToken := r.Header.Get("X-CSRFToken")
 
-		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
+		if !fc.csrfService.Validate(csrfToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
 			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			http.Error(w, "There was an error processing the form", http.StatusBadRequest)
 			return
 		}
 
@@ -825,7 +818,11 @@ func (fc *feedController) handleEntryMetadataMarkAllAsRead() func(w http.Respons
 			return
 		}
 
-		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		w.Header().Set(htmx.HeaderRefresh, "true")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte("OK")); err != nil {
+			log.Error().Err(err).Msg("failed to write response")
+		}
 	}
 }
 
@@ -836,18 +833,11 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w ht
 		ctxUser := httpcontext.UserValue(ctx)
 		categorySlug := chi.URLParam(r, "slug")
 
-		var form feedEntryMetadataMarkReadForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse feed entry metadata edition form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
+		csrfToken := r.Header.Get("X-CSRFToken")
 
-		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
+		if !fc.csrfService.Validate(csrfToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
 			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			http.Error(w, "There was an error processing the form", http.StatusBadRequest)
 			return
 		}
 
@@ -866,7 +856,11 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w ht
 			return
 		}
 
-		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		w.Header().Set(htmx.HeaderRefresh, "true")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte("OK")); err != nil {
+			log.Error().Err(err).Msg("failed to write response")
+		}
 	}
 }
 
@@ -877,18 +871,11 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.R
 		ctxUser := httpcontext.UserValue(ctx)
 		feedSlug := chi.URLParam(r, "slug")
 
-		var form feedEntryMetadataMarkReadForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse feed entry metadata edition form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
+		csrfToken := r.Header.Get("X-CSRFToken")
 
-		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
+		if !fc.csrfService.Validate(csrfToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
 			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			http.Error(w, "There was an error processing the form", http.StatusBadRequest)
 			return
 		}
 
@@ -915,7 +902,11 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.R
 			return
 		}
 
-		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		w.Header().Set(htmx.HeaderRefresh, "true")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte("OK")); err != nil {
+			log.Error().Err(err).Msg("failed to write response")
+		}
 	}
 }
 

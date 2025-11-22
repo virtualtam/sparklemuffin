@@ -94,15 +94,19 @@
             </div>
           </div>
           <div class="level-item">
-            <form action="{{$.URLPath}}/entries/mark-all-read" method="POST">
-              <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-              <button type="submit" class="button is-small">
+            <div class="buttons has-addons">
+              <button
+                title="Mark all entries as read"
+                class="button is-small"
+                hx-post="{{$.URLPath}}/entries/mark-all-read"
+                hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
+              >
                 <span class="icon">
                   <i class="fa-solid fa-eye-slash"></i>
                 </span>
                 <span>Mark all as read</span>
               </button>
-            </form>
+            </div>
           </div>
         </div>
       </div>

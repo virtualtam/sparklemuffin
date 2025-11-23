@@ -25,7 +25,7 @@
               <span class="tag is-light is-pulled-right">{{.Unread}}</span>
             </strong>
           </p>
-          <ul class="menu-list" x-show="open['{{.Slug}}']">
+          <ul class="menu-list" x-cloak x-show="open['{{.Slug}}']">
             {{- range .SubscribedFeeds}}
               <li>
                 <a class="pr-0" href="/feeds/subscriptions/{{.Slug}}">{{or .Alias .Title}}

@@ -41,7 +41,7 @@ html,
 body,
 button,
 input {
-  font-family: exo2, sans;
+  font-family: exo2, sans, sans-serif;
 }
 
 a:hover {

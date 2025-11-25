@@ -19,7 +19,7 @@ services:
       timeout: 5s
       retries: 5
     ports:
-      - 15432:5432
+      - "15432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
@@ -34,5 +34,5 @@ services:
       SPARKLEMUFFIN_LOG_LEVEL: debug
       SPARKLEMUFFIN_METRICS_LISTEN_ADDR: "0.0.0.0:8081"
     ports:
-      - 8080:8080 # Application
-      - 8081:8081 # Metrics
+      - "8080:8080" # Application
+      - "8081:8081" # Metrics

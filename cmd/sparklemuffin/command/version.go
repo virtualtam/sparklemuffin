@@ -42,16 +42,26 @@ func NewVersionCommand() *cobra.Command {
 			if versionVerbose {
 				tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
 
-				fmt.Fprintf(tw, "Version:\t%s\n", versionDetails.Short)
-				fmt.Fprintf(tw, "Revision:\t%s\n", versionDetails.Revision)
-
-				if versionDetails.CommittedAt != nil && !versionDetails.CommittedAt.IsZero() {
-					fmt.Fprintf(tw, "Committed At:\t%s\n", versionDetails.CommittedAt.Format(time.UnixDate))
+				if _, err := fmt.Fprintf(tw, "Version:\t%s\n", versionDetails.Short); err != nil {
+					return err
+				}
+				if _, err := fmt.Fprintf(tw, "Revision:\t%s\n", versionDetails.Revision); err != nil {
+					return err
 				}
 
-				fmt.Fprintf(tw, "Dirty Build:\t%t\n", versionDetails.DirtyBuild)
+				if versionDetails.CommittedAt != nil && !versionDetails.CommittedAt.IsZero() {
+					if _, err := fmt.Fprintf(tw, "Committed At:\t%s\n", versionDetails.CommittedAt.Format(time.UnixDate)); err != nil {
+						return err
+					}
+				}
 
-				tw.Flush()
+				if _, err := fmt.Fprintf(tw, "Dirty Build:\t%t\n", versionDetails.DirtyBuild); err != nil {
+					return err
+				}
+
+				if err := tw.Flush(); err != nil {
+					return err
+				}
 
 				return nil
 			}

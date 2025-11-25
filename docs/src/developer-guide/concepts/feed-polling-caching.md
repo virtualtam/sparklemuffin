@@ -12,7 +12,7 @@ and perform additional checks on the feed content.
 
 When responding to an HTTP request, a remote server may set the following headers:
 
-- `ETag`: the current entity tag for the selected representation (usually a hash of the feed data));
+- `ETag`: the current entity tag for the selected representation (usually a hash of the feed data);
 - `Last-Modified`: a timestamp indicating the date and time at which the origin server believes
   the selected representation was last modified.
 

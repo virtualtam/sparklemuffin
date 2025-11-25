@@ -2,19 +2,19 @@
 
 ## Git
 The source code is tracked using the [Git](https://git-scm.com/) Source Code Management
-tool, and available on Github at
+tool, and available on GitHub at
 [github.com/virtualtam/sparklemuffin](https://github.com/virtualtam/sparklemuffin).
 
-To get started with using Git and Github:
+To get started with using Git and GitHub:
 
-- [Get started with Github](https://docs.github.com/en/get-started)
+- [Get started with GitHub](https://docs.github.com/en/get-started)
 - [First-Time Git Setup](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup)
 
 
 ## Go
 SparkleMuffin is mainly written with the [Go programming language](https://go.dev/).
 
-See [go.mod](https://github.com/virtualtam/sparklemuffin/blob/main/go.mod) for the
+See [`go.mod`](https://github.com/virtualtam/sparklemuffin/blob/main/go.mod) for the
 minimum version of Go required by SparkleMuffin.
 
 ### Linux

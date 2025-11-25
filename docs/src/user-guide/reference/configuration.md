@@ -19,7 +19,7 @@ All configuration variables are specified as program flags (see [command-line fl
 from which environment variables names and configuration file keys are derived:
 
 | Command-line flag   | Environment Variable            | Configuration File |
-| ------------------- | ------------------------------- | ------------------ |
+|---------------------|---------------------------------|--------------------|
 | `--example`         | `SPARKLEMUFFIN_EXAMPLE`         | `example: true`    |
 | `--log-level debug` | `SPARKLEMUFFIN_LOG_LEVEL=debug` | `log-level: debug` |
 

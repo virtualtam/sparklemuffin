@@ -1,5 +1,5 @@
 # Continuous Integration
-## Github Actions Workflows
+## GitHub Actions Workflows
 ### CI Workflow
 This workflow runs when:
 
@@ -22,7 +22,7 @@ This workflow runs when:
 - new Git tags are pushed.
 
 It builds and tags the SparkleMuffin production Docker images, and pushes them to
-the Github Container Registry (GHCR) at
+the GitHub Container Registry (GHCR) at
 [ghcr.io/virtualtam/sparklemuffin](https://github.com/virtualtam/sparklemuffin/pkgs/container/sparklemuffin).
 
 ### Documentation workflow
@@ -35,4 +35,4 @@ This workflow runs when:
 It generates the HTML documentation with `mdBook`.
 
 When new commits are pushed to the `main` Git branch and the `CI` workflow is successful,
-the documentation is uploaded to Github Pages and can be accessed here: [SparkleMuffin Documentation](https://virtualtam.github.io/sparklemuffin/).
+the documentation is uploaded to GitHub Pages and can be accessed here: [SparkleMuffin Documentation](https://virtualtam.github.io/sparklemuffin/).

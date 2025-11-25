@@ -16,7 +16,7 @@ The documentation is split in two main sections:
 ## Contributing
 
 SparkleMuffin is free and open-source, licensed under the [MIT License](https://opensource.org/license/MIT/).
-You can find the [source code on Github](https://github.com/virtualtam/sparklemuffin), and
+You can find the [source code on GitHub](https://github.com/virtualtam/sparklemuffin), and
 issues and feature requests can be posted on the [issue tracker](https://github.com/virtualtam/sparklemuffin/issues).
 
 If you would like to contribute, please read the [Contributing](./developer-guide/reference/contributing.md) guide!

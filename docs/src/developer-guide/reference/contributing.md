@@ -11,7 +11,7 @@ If this sounds interesting to you, please keep on reading!
 ## Providing feedback
 ### Issues and improvements
 The best way to provide feedback about the project and its documentation is
-via the [Github issue tracker](https://github.com/virtualtam/sparklemuffin/issues).
+via the [GitHub issue tracker](https://github.com/virtualtam/sparklemuffin/issues).
 
 Here are some good ways to start contributing:
 
@@ -33,7 +33,7 @@ Feel free to attach any relevant information that may be helpful in fixing the i
 - links to relevant documentation, articles or previous issues.
 
 ### Feature requests
-Feel free to open a new issue on the [Github issue tracker](https://github.com/virtualtam/sparklemuffin/issues)
+Feel free to open a new issue on the [GitHub issue tracker](https://github.com/virtualtam/sparklemuffin/issues)
 to discuss improvements to existing features, or request new features.
 
 ### Security issues
@@ -41,7 +41,7 @@ to discuss improvements to existing features, or request new features.
 
 ## Submitting patches
 ### Documentation
-To contribute to the documentation, you need to setup a local development environment:
+To contribute to the documentation, you need to set up a local development environment:
 
 - [Getting the source code](../how-to/getting-the-source-code.md)
 - [Generating the documentation](../how-to/generating-documentation.md)
@@ -54,7 +54,7 @@ submitting a Pull Request.
 
 ### Improvements and new features
 Improvements to existing features, and requests for new features, must be discussed
-first by opening a new issue on the [Github issue tracker](https://github.com/virtualtam/sparklemuffin/issues).
+first by opening a new issue on the [GitHub issue tracker](https://github.com/virtualtam/sparklemuffin/issues).
 
 This will ensure:
 

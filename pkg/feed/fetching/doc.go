@@ -1,7 +1,7 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-// Package fetching provides a HTTP Client to fetch syndication feeds from remote servers.
+// Package fetching provides an HTTP Client to fetch syndication feeds from remote servers.
 //
 // The Client performs HTTP conditional requests, and leverages the following HTTP headers;
 // - ETag (response) / If-None-Match (request)

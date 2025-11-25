@@ -48,7 +48,7 @@ func NewRoundTripperFromFeed(t *testing.T, feed feeds.Feed) *RoundTripper {
 	}
 }
 
-// NewRoundTripperFromString initializes and returns a RoundTripper from a string containing a XML feed.
+// NewRoundTripperFromString initializes and returns a RoundTripper from a string containing an XML feed.
 func NewRoundTripperFromString(t *testing.T, content string, lastModified time.Time) *RoundTripper {
 	t.Helper()
 

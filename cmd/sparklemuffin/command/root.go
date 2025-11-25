@@ -101,11 +101,11 @@ func NewRootCommand() *cobra.Command {
 			versionDetails = version.NewDetails()
 
 			if cmd.Name() == versionCmdName {
-				// Do not setup the service stack for these commands
+				// Do not set up the service stack for these commands.
 				return nil
 			}
 
-			// Configuration file lookup paths
+			// Configuration file lookup paths.
 			home, err := os.UserHomeDir()
 			if err != nil {
 				return err
@@ -114,7 +114,7 @@ func NewRootCommand() *cobra.Command {
 
 			configPaths := []string{config.DefaultConfigPath, homeConfigPath, "."}
 
-			// Inject global configuration as a pre-run hook
+			// Inject global configuration as a pre-run hook.
 			//
 			// This is required to let Viper load environment variables and
 			// configuration entries before invoking nested commands.
@@ -123,7 +123,7 @@ func NewRootCommand() *cobra.Command {
 				return err
 			}
 
-			// Global logger configuration
+			// Global logger configuration.
 			if err := config.SetupGlobalLogger(logFormat, logLevelValue); err != nil {
 				return err
 			}
@@ -135,8 +135,9 @@ func NewRootCommand() *cobra.Command {
 			}
 
 			// Encode the database password with percent encoding in case it contains special characters.
-			// https://www.postgresql.org/docs/current/libpq-connect.html
-			// https://datatracker.ietf.org/doc/html/rfc3986#section-2.1
+			//
+			// - https://www.postgresql.org/docs/current/libpq-connect.html
+			// - https://datatracker.ietf.org/doc/html/rfc3986#section-2.1
 			databasePassword = url.QueryEscape(databasePassword)
 			databaseURI = fmt.Sprintf(
 				"postgres://%s:%s@%s/%s?sslmode=%s",

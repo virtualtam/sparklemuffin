@@ -94,8 +94,7 @@ func (e *Entry) ExtractTextRankTerms(ranker *textkit.TextRanker, topN int) {
 	}
 }
 
-// ValidateForAddition ensures mandatory fields are properly set when adding an
-// new Entry.
+// ValidateForAddition ensures mandatory fields are properly set when adding a new Entry.
 func (e *Entry) ValidateForAddition(now time.Time) error {
 	entryTimeMustBeBefore := now.Add(entryTimeFutureBound)
 

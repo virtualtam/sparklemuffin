@@ -375,7 +375,7 @@ func TestServiceSynchronize(t *testing.T) {
 				Entries: tc.repositoryEntries,
 			}
 
-			transport := feedtest.NewRoundTripper(t, tc.atomFeed)
+			transport := feedtest.NewRoundTripperFromFeed(t, tc.atomFeed)
 			feedHTTPClient := &http.Client{
 				Transport: transport,
 			}

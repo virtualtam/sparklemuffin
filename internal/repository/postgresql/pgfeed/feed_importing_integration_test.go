@@ -27,7 +27,7 @@ func TestImportingService(t *testing.T) {
 	now := time.Now().UTC()
 	atomFeed := feedtest.GenerateDummyFeed(t, now)
 
-	transport := feedtest.NewRoundTripper(t, atomFeed)
+	transport := feedtest.NewRoundTripperFromFeed(t, atomFeed)
 
 	testHTTPClient := &http.Client{
 		Transport: transport,

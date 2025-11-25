@@ -31,8 +31,8 @@ type RoundTripper struct {
 	Requests []*http.Request
 }
 
-// NewRoundTripper initializes and returns a RoundTripper.
-func NewRoundTripper(t *testing.T, feed feeds.Feed) *RoundTripper {
+// NewRoundTripperFromFeed initializes and returns a RoundTripper from a feeds.Feed.
+func NewRoundTripperFromFeed(t *testing.T, feed feeds.Feed) *RoundTripper {
 	t.Helper()
 
 	feedStr, err := feed.ToAtom()
@@ -45,6 +45,18 @@ func NewRoundTripper(t *testing.T, feed feeds.Feed) *RoundTripper {
 		eTag:            HashETag(feedStr),
 		lastModified:    feed.Updated,
 		lastModifiedStr: formatLastModified(feed.Updated),
+	}
+}
+
+// NewRoundTripperFromString initializes and returns a RoundTripper from a string containing a XML feed.
+func NewRoundTripperFromString(t *testing.T, content string, lastModified time.Time) *RoundTripper {
+	t.Helper()
+
+	return &RoundTripper{
+		content:         content,
+		eTag:            HashETag(content),
+		lastModified:    lastModified,
+		lastModifiedStr: formatLastModified(lastModified),
 	}
 }
 

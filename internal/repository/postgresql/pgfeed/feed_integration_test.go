@@ -37,7 +37,7 @@ func TestFeedService(t *testing.T) {
 	feedLastModified := now
 	feedHash := xxhash.Sum64String(feedStr)
 
-	transport := feedtest.NewRoundTripper(t, atomFeed)
+	transport := feedtest.NewRoundTripperFromFeed(t, atomFeed)
 
 	testHTTPClient := &http.Client{
 		Transport: transport,

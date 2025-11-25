@@ -40,6 +40,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Cleanup SQL queries
 
 ### Fixed
+#### Feed
+- If we fail to parse an XML feed due to invalid Unicode characters, filter them out and attempt to parse
+  the feed again
+
 #### WWW
 - Fix `<time>` blocks in bookmark and feed list pages
 - Use the same `plus` sign icon for bookmark and feed navbar menu items

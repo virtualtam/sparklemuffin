@@ -674,7 +674,7 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 	feedLastModified := now
 	feedHash := xxhash.Sum64String(feedStr)
 
-	transport := feedtest.NewRoundTripper(t, feed)
+	transport := feedtest.NewRoundTripperFromFeed(t, feed)
 
 	testHTTPClient := &http.Client{
 		Transport: transport,

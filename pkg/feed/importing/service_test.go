@@ -26,7 +26,7 @@ func TestServiceImportFromOPMLDocument(t *testing.T) {
 
 	now := time.Now().UTC()
 	testFeed := feedtest.GenerateDummyFeed(t, now)
-	transport := feedtest.NewRoundTripper(t, testFeed)
+	transport := feedtest.NewRoundTripperFromFeed(t, testFeed)
 
 	testHTTPClient := &http.Client{
 		Transport: transport,

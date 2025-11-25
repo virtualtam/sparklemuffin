@@ -13,11 +13,13 @@
   {{define "userTable"}}
   <table class="table is-striped is-hoverable">
     <thead>
-      <th>Email</th>
-      <th>Nickname</th>
-      <th>Display Name</th>
-      <th>Is Admin?</th>
-      <th>Actions</th>
+      <tr>
+        <th>Email</th>
+        <th>Nickname</th>
+        <th>Display Name</th>
+        <th>Is Admin?</th>
+        <th>Actions</th>
+      </tr>
     </thead>
     <tbody>
       {{range .}}

@@ -112,6 +112,19 @@ code {
   color: var(--bulma-text);
 }
 
+.feed-category-toggle {
+  cursor: pointer;
+}
+
 .feed-title {
+  font-weight: 300;
+}
+
+.feed-title a {
+  color: var(--bulma-text);
+  font-style: italic;
+}
+
+.feed-entry-title {
   color: var(--bulma-text);
 }

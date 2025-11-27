@@ -1,6 +1,6 @@
 {{define "content"}}
 <section class="section pt-3">
-  <div class="columns">
+  <div class="columns is-3-desktop is-5">
     <div class="column is-one-quarter pl-0">
       <aside class="menu" x-data="feedMenu()" x-init="loadState()">
         <p class="menu-label mb-0">
@@ -16,11 +16,14 @@
         {{- range .Categories}}
           <p class="menu-label mb-0">
             <strong>
-              <a class="pl-0" href="/feeds/categories/{{.Slug}}">{{.Name}}</a>
-              <span
-                @click.stop="toggleCategory('{{.Slug}}')"
-                style="cursor:pointer;"
-                x-text="open['{{.Slug}}'] ? '▾' : '▸'">
+              <span class="icon-text">
+                <span
+                  class="icon feed-category-toggle"
+                  @click.stop="toggleCategory('{{.Slug}}')"
+                >
+                  <i class="fa-regular" :class="open['{{.Slug}}'] ? 'fa-square-minus' : 'fa-square-plus'"></i>
+                </span>
+                <span><a class="pl-0" href="/feeds/categories/{{.Slug}}">{{.Name}}</a></span>
               </span>
               <span class="tag is-light is-pulled-right">{{.Unread}}</span>
             </strong>
@@ -125,7 +128,7 @@
           <div class="level mb-1">
             <div class="level-left">
               <div class="level-item">
-                <strong><a class="feed-title{{if .Read}} has-text-grey-light{{end}}"
+                <strong><a class="feed-entry-title{{if .Read}} has-text-grey-light{{end}}"
                     href="{{.URL}}">{{.Title}}</a></strong>
               </div>
             </div>
@@ -142,9 +145,11 @@
               <div class="level-item{{if .Read}} has-text-grey-light{{end}}">
                 <span class="icon-text">
                   <span class="icon">
-                    <i class="fa-solid fa-newspaper"></i>
+                    <i class="fa-regular fa-newspaper"></i>
                   </span>
-                  <span><em><a class="feed-title" href="/feeds/subscriptions/{{.FeedSlug}}">{{ or .SubscriptionAlias .FeedTitle }}</a></em></span>
+                  <span class="feed-title" >
+                    <a class="{{if .Read}} has-text-grey-light{{end}}" href="/feeds/subscriptions/{{.FeedSlug}}">{{ or .SubscriptionAlias .FeedTitle }}</a>
+                  </span>
                 </span>
               </div>
             </div>

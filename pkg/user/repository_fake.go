@@ -11,7 +11,6 @@ import (
 var _ Repository = &FakeRepository{}
 
 type FakeRepository struct {
-	// TODO refactor with map[uuid]User
 	Users []User
 }
 

@@ -254,7 +254,6 @@ func (r *fakeRepository) FeedSubscriptionEntryGetN(ctx context.Context, userUUID
 		userEntries = append(userEntries, subscriptionEntries...)
 	}
 
-	// FIXME subscriptions should be sorted **before** querying
 	sort.Slice(userEntries, func(i, j int) bool {
 		return userEntries[i].PublishedAt.After(userEntries[j].PublishedAt)
 	})
@@ -284,7 +283,6 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNByCategory(ctx context.Context
 		categoryEntries = append(categoryEntries, subscriptionEntries...)
 	}
 
-	// FIXME subscriptions should be sorted **before** querying
 	sort.Slice(categoryEntries, func(i, j int) bool {
 		return categoryEntries[i].PublishedAt.After(categoryEntries[j].PublishedAt)
 	})
@@ -305,7 +303,6 @@ func (r *fakeRepository) FeedSubscriptionEntryGetNBySubscription(ctx context.Con
 		return []SubscribedFeedEntry{}, err
 	}
 
-	// FIXME subscriptions should be sorted **before** querying
 	sort.Slice(subscriptionEntries, func(i, j int) bool {
 		return subscriptionEntries[i].PublishedAt.After(subscriptionEntries[j].PublishedAt)
 	})

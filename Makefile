@@ -83,20 +83,28 @@ build-assets:
 .PHONY: build-assets
 
 # Live development server
-live: assets
+live:
 	@echo "== Starting database"
 	docker compose -f docker-compose.dev.yml up --remove-orphans -d
 	@echo "== Watching for changes... (hit Ctrl+C when done)"
-	@watchexec --restart --exts css,go,gohtml -- go run ./cmd/sparklemuffin/ run
+	@watchexec --restart --exts css,go,gohtml -- make build-assets run
 .PHONY: live
 
+run:
+	go run ./cmd/sparklemuffin/ run
+.PHONY: run
+
 # Live development server (with race detection enabled)
-live-race: assets
+live-race:
 	@echo "== Starting database"
 	docker compose -f docker-compose.dev.yml up --remove-orphans -d
 	@echo "== Watching for changes... (hit Ctrl+C when done)"
-	@watchexec --restart --exts css,go,gohtml -- go run -race ./cmd/sparklemuffin/ run
+	@watchexec --restart --exts css,go,gohtml -- make build-assets run-race
 .PHONY: live-race
+
+run-race:
+	go run -race ./cmd/sparklemuffin/ run
+.PHONY: run-race
 
 # Live development server - PostgreSQL database management
 PG_USER ?= sparklemuffin

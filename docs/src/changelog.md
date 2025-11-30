@@ -39,6 +39,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Document query and transaction helpers
 - Cleanup SQL queries
 
+### WWW
+- Indicate that only a light theme is available
+
 ### Fixed
 #### Feed
 - If we fail to parse an XML feed due to invalid Unicode characters, filter them out and attempt to parse

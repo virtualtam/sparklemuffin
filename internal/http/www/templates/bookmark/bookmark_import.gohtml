@@ -10,34 +10,75 @@
   <form action="/bookmarks/import" enctype="multipart/form-data" method="POST">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
-    <div class="field">
-      <label class="label" for="importfile">Choose a file to import</label>
-      <input type="file" id="importfile" name="importfile">
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label class="label" for="importfile">Import from</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <div class="file">
+              <label class="file-label">
+                <input class="file-input" type="file" id="importfile" name="importfile" />
+                <span class="file-cta">
+                  <span class="file-icon">
+                    <i class="fas fa-upload"></i>
+                  </span>
+                  <span class="file-label"> Choose a file… </span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <label class="label">Visibility</label>
-      <input type="radio" name="visibility" id="default" value="default" checked>
-      <label for="default">Use values from the imported file, default to public</label>
-      <br>
-      <input type="radio" name="visibility" id="private" value="private">
-      <label for="private">Import all bookmarks as private</label>
-      <br>
-      <input type="radio" name="visibility" id="public" value="public">
-      <label for="public">Import all bookmarks as public</label>
+    <div class="field is-horizontal">
+      <div class="field-label">
+        <label class="label">Visibility</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input type="radio" name="visibility" id="default" value="default" checked>
+            <label for="default">Use values from the imported file, default to public</label>
+            <br>
+            <input type="radio" name="visibility" id="private" value="private">
+            <label for="private">Import all bookmarks as private</label>
+            <br>
+            <input type="radio" name="visibility" id="public" value="public">
+            <label for="public">Import all bookmarks as public</label>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <label class="label">In case of conflict (same URL)</label>
-      <input type="radio" name="on-conflict" id="on-conflict-keep" value="keep" checked>
-      <label for="on-conflict-keep">Keep existing bookmarks</label>
-      <br>
-      <input type="radio" name="on-conflict" id="on-conflict-overwrite" value="overwrite">
-      <label for="on-conflict-overwrite">Overwrite existing bookmarks with imported data</label>
+    <div class="field is-horizontal">
+      <div class="field-label">
+        <label class="label">On conflict (same URL)</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input type="radio" name="on-conflict" id="on-conflict-keep" value="keep" checked>
+            <label for="on-conflict-keep">Keep existing bookmarks</label>
+            <br>
+            <input type="radio" name="on-conflict" id="on-conflict-overwrite" value="overwrite">
+            <label for="on-conflict-overwrite">Overwrite existing bookmarks with imported data</label>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <button type="submit" class="button is-primary">Import</button>
+    <div class="field is-horizontal">
+      <div class="field-label"></div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary">Import</button>
+          </div>
+        </div>
+      </div>
     </div>
   </form>
 </section>

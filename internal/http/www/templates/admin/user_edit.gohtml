@@ -3,6 +3,7 @@
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
       <li class="is-active"><a href="#" aria-current="page">Administration</a></li>
+      <li><a href="/admin/users" aria-current="page">Users</a></li>
       <li class="is-active"><a href="#" aria-current="page">Edit user</a></li>
     </ul>
   </nav>
@@ -10,38 +11,85 @@
   <form action="/admin/users/{{.Content.UUID}}" method="POST">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
-    <div class="field">
-      <label for="email" class="label">Email address</label>
-      <input class="input" type="email" id="email" name="email" placeholder="Email" value="{{.Content.Email}}"
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label for="email" class="label">Email address</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="email" id="email" name="email" placeholder="Email" value="{{.Content.Email}}"
         required="">
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <label for="nick_name" class="label">Nickname</label>
-      <input class="input" type="text" id="nick_name" name="nick_name" placeholder="Nickname"
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label for="nick_name" class="label">Nickname</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="text" id="nick_name" name="nick_name" placeholder="Nickname"
         value="{{.Content.NickName}}" required="">
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <label for="display_name" class="label">Display Name</label>
-      <input class="input" type="text" id="display_name" name="display_name" placeholder="Display Name"
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label for="display_name" class="label">Display Name</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="text" id="display_name" name="display_name" placeholder="Display Name"
         value="{{.Content.DisplayName}}" required="">
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <label for="password" class="label">Password</label>
-      <input class="input" type="password" id="password" name="password" placeholder="Password" required="">
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label for="password" class="label">Password</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="password" id="password" name="password" placeholder="Password" required="">
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <label for="is_admin" class="label">Administrator?</label>
-      <label class="checkbox">
-        <input type="checkbox" {{if .Content.IsAdmin}}checked{{end}} id="is_admin" name="is_admin">
-      </label>
+    <div class="field is-horizontal">
+      <div class="field-label">
+        <label for="is_admin" class="label">Administrator?</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <label class="checkbox">
+              <input type="checkbox" {{if .Content.IsAdmin}}checked{{end}} id="is_admin" name="is_admin">
+            </label>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <button type="submit" class="button is-primary">Save changes</button>
+    <div class="field is-horizontal">
+      <div class="field-label"></div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary">Save changes</button>
+          </div>
+        </div>
+      </div>
     </div>
   </form>
 </section>

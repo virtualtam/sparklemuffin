@@ -10,32 +10,57 @@
   <form action="/account/info" method="POST">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
-    <div class="field">
-      <label for="email" class="label">Email address</label>
-      <div class="control">
-        <input class="input" type="email" id="email" name="email" placeholder="Email" value="{{.Content.Email}}"
-          required="">
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label for="email" class="label">Email address</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="email" id="email" name="email" placeholder="Email" value="{{.Content.Email}}"
+              required="">
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="field">
-      <label for="nick_name" class="label">Nickname</label>
-      <div class="control">
-        <input class="input" type="text" id="nick_name" name="nick_name" placeholder="Nickname"
-          value="{{.Content.NickName}}" required="">
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label for="nick_name" class="label">Nickname</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="text" id="nick_name" name="nick_name" placeholder="Nickname"
+              value="{{.Content.NickName}}" required="">
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="field">
-      <label for="display_name" class="label">Display Name</label>
-      <div class="control">
-        <input class="input" type="text" id="display_name" name="display_name" placeholder="Display Name"
-          value="{{.Content.DisplayName}}" required="">
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label for="display_name" class="label">Display Name</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="text" id="display_name" name="display_name" placeholder="Display Name"
+              value="{{.Content.DisplayName}}" required="">
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="field">
-      <button type="submit" class="button is-primary">Update information</button>
+    <div class="field is-horizontal">
+      <div class="field-label"></div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary">Update information</button>
+          </div>
+        </div>
+      </div>
     </div>
   </form>
 </section>

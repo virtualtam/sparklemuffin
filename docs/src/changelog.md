@@ -40,7 +40,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Cleanup SQL queries
 
 ### WWW
-- Indicate that only a light theme is available
+- Indicate browsers that only a light theme is available
+- Homogenize all forms to use horizontal fields
 
 ### Fixed
 #### Feed

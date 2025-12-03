@@ -10,29 +10,52 @@
   <form action="/bookmarks/export" method="POST">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
-    <div class="field">
-      <label class="label">Visibility</label>
-      <input type="radio" name="visibility" id="all" value="all" checked>
-      <label for="all">All</label>
-      <br>
-      <input type="radio" name="visibility" id="private" value="private">
-      <label for="private">Private</label>
-      <br>
-      <input type="radio" name="visibility" id="public" value="public">
-      <label for="public">Public</label>
+    <div class="field is-horizontal">
+      <div class="field-label">
+        <label class="label">Visibility</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input type="radio" name="visibility" id="all" value="all" checked>
+            <label for="all">All</label>
+            <br>
+            <input type="radio" name="visibility" id="private" value="private">
+            <label for="private">Private</label>
+            <br>
+            <input type="radio" name="visibility" id="public" value="public">
+            <label for="public">Public</label>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <label class="label">Format</label>
-      <input type="radio" name="format" id="json" value="json" checked>
-      <label for="json">JSON</label>
-      <br>
-      <input type="radio" name="format" id="netscape" value="netscape">
-      <label for="netscape">Netscape Bookmark File</label>
+    <div class="field is-horizontal">
+      <div class="field-label">
+        <label class="label">Format</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input type="radio" name="format" id="json" value="json" checked>
+            <label for="json">JSON</label>
+            <br>
+            <input type="radio" name="format" id="netscape" value="netscape">
+            <label for="netscape">Netscape Bookmark File</label>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="field">
-      <button type="submit" class="button is-primary">Export</button>
+    <div class="field is-horizontal">
+      <div class="field-label"></div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary">Export</button>
+          </div>
+        </div>
+      </div>
     </div>
   </form>
 </section>

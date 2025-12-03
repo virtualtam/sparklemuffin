@@ -1,18 +1,45 @@
 {{define "content"}}
 <section class="section pt-3">
   <h2 class="title">Login</h2>
-  <form action="/login" method="POST">
-    <div class="field">
-      <label for="email" class="label">Email address</label>
-      <input class="input" type="email" id="email" name="email" placeholder="Email" required="">
+  <div class="column is-8">
+    <form action="/login" method="POST">
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label for="email" class="label">Email address</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+           <input class="input" type="email" id="email" name="email" placeholder="Email" required="">
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="field">
-      <label for="password" class="label">Password</label>
-      <input class="input" type="password" id="password" name="password" placeholder="Password" required="">
+
+    <div class="field is-horizontal">
+      <div class="field-label is-normal">
+        <label for="password" class="label">Password</label>
+      </div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <input class="input" type="password" id="password" name="password" placeholder="Password" required="">
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="field">
-      <button type="submit" class="button is-primary">Login</button>
+
+    <div class="field is-horizontal">
+      <div class="field-label"></div>
+      <div class="field-body">
+        <div class="field">
+          <div class="control">
+            <button type="submit" class="button is-primary">Login</button>
+          </div>
+        </div>
+      </div>
     </div>
   </form>
+  </div>
 </section>
 {{end}}

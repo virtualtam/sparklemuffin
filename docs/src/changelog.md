@@ -42,6 +42,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### WWW
 - Indicate browsers that only a light theme is available
 - Homogenize all forms to use horizontal fields
+- Rework the feed subscription management page
 
 ### Fixed
 #### Feed

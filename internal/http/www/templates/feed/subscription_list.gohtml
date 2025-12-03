@@ -7,44 +7,52 @@
     </ul>
   </nav>
 
-  <div>
-    <ul>
-      {{- range .}}
-      <li>
-        <div>
-          [
-          <span class="item-edit">
-            <a href="/feeds/categories/{{.UUID}}/edit" title="Edit category: {{.Name}}">e</a>
-          </span>
-          ,
-          <span class="item-delete">
-            <a href="/feeds/categories/{{.UUID}}/delete" title="Delete category: {{.Name}}">x</a>
-          </span>
-          ]
-          <strong>{{.Name}}</strong>
-        </div>
-        <ul class="ml-4">
-          {{- range .Subscriptions}}
-          <li>
-            <div>
-              [
-              <span class="item-edit">
-                <a href="/feeds/subscriptions/{{.UUID}}/edit" title="Edit subscription: {{.FeedTitle}}">e</a>
-              </span>
-              ,
-              <span class="item-delete">
-                <a class="has-text-danger" href="/feeds/subscriptions/{{.UUID}}/delete"
-                  title="Delete subscription: {{.FeedTitle}}">x</a>
-              </span>
-              ]
-              {{or .Alias .FeedTitle}}
+  <div class="columns is-multiline">
+    {{- range .}}
+    <div class="column is-full-mobile is-half-tablet is-one-third-desktop">
+      <nav class="panel is-light">
+        <div class="panel-heading level is-mobile">
+          <div class="level-left">
+            <span class="level-item">{{.Name}} ({{len .Subscriptions}})</span>
+          </div>
+          <div class="level-right">
+            <div class="level-item buttons has-addons">
+              <a class="button is-small is-info is-light" href="/feeds/categories/{{.UUID}}/edit"
+                title="Edit category: {{.Name}}">
+                <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
+              </a>
+              <a class="button is-small is-danger is-light" href="/feeds/categories/{{.UUID}}/delete"
+                title="Delete category: {{.Name}}">
+                <span class="icon"><i class="fa-solid fa-trash"></i></span>
+              </a>
             </div>
-          </li>
-          {{- end}}
-        </ul>
-      </li>
-      {{- end}}
-    </ul>
+          </div>
+        </div>
+        {{- range .Subscriptions}}
+        <div class="panel-block level is-mobile">
+          <div class="level-left">
+            <span class="level-item">
+              <span class="panel-icon"><i class="fa-solid fa-rss"></i></span>
+              {{or .Alias .FeedTitle}}
+            </span>
+          </div>
+          <div class="level-right">
+            <div class="level-item buttons has-addons">
+              <a class="button is-small is-info is-light" href="/feeds/subscriptions/{{.UUID}}/edit"
+                title="Edit subscription: {{.FeedTitle}}">
+                <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
+              </a>
+              <a class="button is-small is-danger is-light" href="/feeds/subscriptions/{{.UUID}}/delete"
+                title="Delete subscription: {{.FeedTitle}}">
+                <span class="icon"><i class="fa-solid fa-trash"></i></span>
+              </a>
+            </div>
+          </div>
+        </div>
+        {{- end}}
+      </nav>
+    </div>
+    {{- end}}
   </div>
 </section>
 {{end}}

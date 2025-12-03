@@ -87,6 +87,18 @@ code {
   padding-inline-start: 0;
 }
 
+.panel-heading {
+  padding: 0.75em 0.75em;
+}
+
+.panel .level {
+  margin-bottom: 0;
+}
+
+.panel-block:hover {
+  background-color: var(--bulma-scheme-main-bis);
+}
+
 .tag a {
   color: var(--bulma-text);
 }

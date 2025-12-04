@@ -20,7 +20,6 @@ import (
 	slokstd "github.com/slok/go-http-metrics/middleware/std"
 
 	"github.com/virtualtam/sparklemuffin/internal/http/www/controller"
-	"github.com/virtualtam/sparklemuffin/internal/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/static"
@@ -60,7 +59,6 @@ type Server struct {
 	feedQueryingService  *feedquerying.Service
 
 	// User and session management services
-	csrfService    *csrf.Service
 	sessionService *session.Service
 	userService    *user.Service
 
@@ -90,6 +88,14 @@ func NewServer(optionFuncs ...OptionFunc) (*Server, error) {
 
 // registerHandlers registers all HTTP handlers for the Web application.
 func (s *Server) registerHandlers() {
+	// Security middleware
+	//
+	// Cross-Site Request Forgery (CSRF):
+	// - https://www.alexedwards.net/blog/preventing-csrf-in-go
+	// - https://simonwillison.net/2025/Oct/15/csrf-in-go/
+	// - https://words.filippo.io/csrf/
+	s.router.Use(http.NewCrossOriginProtection().Handler)
+
 	// Global middleware
 	s.router.Use(chimiddleware.RequestID)
 	s.router.Use(chimiddleware.RealIP)
@@ -138,10 +144,10 @@ func (s *Server) registerHandlers() {
 
 	// Domain handlers
 	controller.RegisterSessionHandlers(s.router, s.sessionService, s.userService)
-	controller.RegisterAdminHandlers(s.router, s.csrfService, s.userService)
-	controller.RegisterAccountHandlers(s.router, s.csrfService, s.feedService, s.userService)
-	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.csrfService, s.bookmarkExportingService, s.bookmarkImportingService, s.bookmarkQueryingService, s.userService)
-	controller.RegisterFeedHandlers(s.router, s.csrfService, s.feedService, s.feedExportingService, s.feedImportingService, s.feedQueryingService, s.userService)
+	controller.RegisterAdminHandlers(s.router, s.userService)
+	controller.RegisterAccountHandlers(s.router, s.feedService, s.userService)
+	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.bookmarkExportingService, s.bookmarkImportingService, s.bookmarkQueryingService, s.userService)
+	controller.RegisterFeedHandlers(s.router, s.feedService, s.feedExportingService, s.feedImportingService, s.feedQueryingService, s.userService)
 
 	// 404 handler
 	s.router.NotFound(s.handleNotFound())

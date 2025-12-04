@@ -10,27 +10,17 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 
-	"github.com/virtualtam/sparklemuffin/internal/http/www/csrf"
-	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
-const (
-	actionAdminUserAdd    string = "admin-user-add"
-	actionAdminUserDelete string = "admin-user-delete"
-	actionAdminUserEdit   string = "admin-user-edit"
-)
-
 // RegisterAdminHandlers registers handlers for administration operations.
 func RegisterAdminHandlers(
 	r *chi.Mux,
-	csrfService *csrf.Service,
 	userService *user.Service,
 ) {
 	ac := adminController{
-		csrfService: csrfService,
 		userService: userService,
 
 		adminUserAddView:    view.New("admin/user_add.gohtml"),
@@ -56,7 +46,6 @@ func RegisterAdminHandlers(
 }
 
 type adminController struct {
-	csrfService *csrf.Service
 	userService *user.Service
 
 	adminUserAddView    *view.View
@@ -85,14 +74,8 @@ func (ac *adminController) handleUserListView() func(w http.ResponseWriter, r *h
 // handleUserAddView renders the user creation form.
 func (ac *adminController) handleUserAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		adminUser := httpcontext.UserValue(r.Context())
-		csrfToken := ac.csrfService.Generate(adminUser.UUID, actionAdminUserAdd)
-
 		viewData := view.Data{
 			Title: "Add user",
-			Content: view.FormContent{
-				CSRFToken: csrfToken,
-			},
 		}
 
 		ac.adminUserAddView.Render(w, r, viewData)
@@ -102,7 +85,6 @@ func (ac *adminController) handleUserAddView() func(w http.ResponseWriter, r *ht
 // handleUserAdd processes view.data submitted through the user creation form.
 func (ac *adminController) handleUserAdd() func(w http.ResponseWriter, r *http.Request) {
 	type userAddForm struct {
-		CSRFToken   string `schema:"csrf_token"`
 		Email       string `schema:"email"`
 		NickName    string `schema:"nick_name"`
 		DisplayName string `schema:"display_name"`
@@ -112,19 +94,11 @@ func (ac *adminController) handleUserAdd() func(w http.ResponseWriter, r *http.R
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		adminUser := httpcontext.UserValue(r.Context())
 
 		var form userAddForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user creation form")
 			view.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
-
-		if !ac.csrfService.Validate(form.CSRFToken, adminUser.UUID, actionAdminUserAdd) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
@@ -153,10 +127,7 @@ func (ac *adminController) handleUserAdd() func(w http.ResponseWriter, r *http.R
 func (ac *adminController) handleUserDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		adminUser := httpcontext.UserValue(r.Context())
 		userUUID := chi.URLParam(r, "uuid")
-
-		csrfToken := ac.csrfService.Generate(adminUser.UUID, actionAdminUserDelete)
 
 		userToDelete, err := ac.userService.ByUUID(ctx, userUUID)
 		if err != nil {
@@ -167,11 +138,8 @@ func (ac *adminController) handleUserDeleteView() func(w http.ResponseWriter, r 
 		}
 
 		viewData := view.Data{
-			Title: fmt.Sprintf("Delete user: %s", userToDelete.NickName),
-			Content: view.FormContent{
-				CSRFToken: csrfToken,
-				Content:   userToDelete,
-			},
+			Title:   fmt.Sprintf("Delete user: %s", userToDelete.NickName),
+			Content: userToDelete,
 		}
 
 		ac.adminUserDeleteView.Render(w, r, viewData)
@@ -180,29 +148,9 @@ func (ac *adminController) handleUserDeleteView() func(w http.ResponseWriter, r 
 
 // handleUserDelete processes the user deletion form.
 func (ac *adminController) handleUserDelete() func(w http.ResponseWriter, r *http.Request) {
-	type userDeleteForm struct {
-		CSRFToken string `schema:"csrf_token"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		adminUser := httpcontext.UserValue(r.Context())
 		userUUID := chi.URLParam(r, "uuid")
-
-		var form userDeleteForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse user deletion form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
-
-		if !ac.csrfService.Validate(form.CSRFToken, adminUser.UUID, actionAdminUserDelete) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
 
 		userToDelete, err := ac.userService.ByUUID(ctx, userUUID)
 		if err != nil {
@@ -228,10 +176,7 @@ func (ac *adminController) handleUserDelete() func(w http.ResponseWriter, r *htt
 func (ac *adminController) handleUserEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		adminUser := httpcontext.UserValue(r.Context())
 		userUUID := chi.URLParam(r, "uuid")
-
-		csrfToken := ac.csrfService.Generate(adminUser.UUID, actionAdminUserEdit)
 
 		userToEdit, err := ac.userService.ByUUID(ctx, userUUID)
 		if err != nil {
@@ -242,11 +187,8 @@ func (ac *adminController) handleUserEditView() func(w http.ResponseWriter, r *h
 		}
 
 		viewData := view.Data{
-			Title: fmt.Sprintf("Edit user: %s", userToEdit.NickName),
-			Content: view.FormContent{
-				CSRFToken: csrfToken,
-				Content:   userToEdit,
-			},
+			Title:   fmt.Sprintf("Edit user: %s", userToEdit.NickName),
+			Content: userToEdit,
 		}
 		ac.adminUserEditView.Render(w, r, viewData)
 	}
@@ -255,7 +197,6 @@ func (ac *adminController) handleUserEditView() func(w http.ResponseWriter, r *h
 // handleUserEdit processes the user edition form.
 func (ac *adminController) handleUserEdit() func(w http.ResponseWriter, r *http.Request) {
 	type userEditForm struct {
-		CSRFToken   string `schema:"csrf_token"`
 		Email       string `schema:"email"`
 		NickName    string `schema:"nick_name"`
 		DisplayName string `schema:"display_name"`
@@ -265,20 +206,12 @@ func (ac *adminController) handleUserEdit() func(w http.ResponseWriter, r *http.
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		adminUser := httpcontext.UserValue(r.Context())
 		userUUID := chi.URLParam(r, "uuid")
 
 		var form userEditForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user edition form")
 			view.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
-
-		if !ac.csrfService.Validate(form.CSRFToken, adminUser.UUID, actionAdminUserEdit) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}

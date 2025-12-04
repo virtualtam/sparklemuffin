@@ -8,8 +8,6 @@
   </nav>
 
   <form action="/feeds/add" method="POST">
-    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-
     <div class="field is-horizontal">
       <div class="field-label is-normal">
         <label class="label" for="url">URL</label>
@@ -32,7 +30,7 @@
           <div class="control">
             <div class="select">
               <select name="category" id="category">
-                {{- range .Categories}}
+                {{- range .}}
                 <option value="{{.UUID}}">{{.Name}}</option>
                 {{- end}}
               </select>

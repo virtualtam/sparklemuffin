@@ -8,7 +8,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/virtualtam/sparklemuffin/internal/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
@@ -23,18 +22,6 @@ import (
 
 // OptionFunc represents a function that configures a set of options for a Server.
 type OptionFunc func(*Server) error
-
-// WithCSRFKey sets the CSRF key used to secure HTML forms.
-func WithCSRFKey(csrfKey string) OptionFunc {
-	return func(s *Server) error {
-		if csrfKey == "" {
-			return ErrServerCSRFKeyRequired
-		}
-
-		s.csrfService = csrf.NewService(csrfKey)
-		return nil
-	}
-}
 
 // WithMetricsRegistry sets the Prometheus metrics registry used to expose application metrics.
 func WithMetricsRegistry(prefix string, registry *prometheus.Registry) OptionFunc {

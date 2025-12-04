@@ -34,12 +34,6 @@ type Data struct {
 	User        *user.User
 }
 
-// FormContent holds the data that can be rendered by a form, protected with a CSRF token.
-type FormContent struct {
-	CSRFToken string
-	Content   any
-}
-
 // View represents a Web View that will be rendered by the server in response to
 // an HTTP client request.
 type View struct {

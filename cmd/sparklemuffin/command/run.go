@@ -25,8 +25,6 @@ const (
 	defaultPublicHTTPAddr string = "http://localhost:8080"
 
 	defaultMetricsListenAddr string = "127.0.0.1:8081"
-
-	defaultCSRFKey string = "csrf-secret-key"
 )
 
 var (
@@ -34,8 +32,6 @@ var (
 	publicHTTPAddr string
 
 	metricsListenAddr string
-
-	csrfKey string
 )
 
 // NewRunCommand initializes a CLI command to start the HTTP server.
@@ -75,7 +71,6 @@ func NewRunCommand() *cobra.Command {
 			}
 
 			server, err := www.NewServer(
-				www.WithCSRFKey(csrfKey),
 				www.WithMetricsRegistry(rootCmdName, metricsRegistry),
 				www.WithPublicURL(publicURL),
 				www.WithBookmarkServices(
@@ -108,13 +103,6 @@ func NewRunCommand() *cobra.Command {
 			return httpServer.ListenAndServe()
 		},
 	}
-
-	cmd.Flags().StringVar(
-		&csrfKey,
-		"csrf-key",
-		defaultCSRFKey,
-		"Secret key for CSRF token hashing",
-	)
 
 	cmd.Flags().StringVar(
 		&listenAddr,

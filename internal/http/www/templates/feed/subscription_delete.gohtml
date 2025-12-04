@@ -8,10 +8,9 @@
     </ul>
   </nav>
 
-  <p class="mb-4">Delete feed subscription: <strong>{{or .Subscription.Alias .Subscription.FeedTitle}}</strong>?</p>
+  <p class="mb-4">Delete feed subscription: <strong>{{or .Alias .FeedTitle}}</strong>?</p>
 
-  <form action="/feeds/subscriptions/{{.Subscription.UUID}}/delete" method="POST">
-    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+  <form action="/feeds/subscriptions/{{.UUID}}/delete" method="POST">
     <p>
       <button type="submit" class="button is-danger">Delete</button>
     </p>

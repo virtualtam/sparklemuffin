@@ -9,8 +9,6 @@
   </nav>
 
   <form action="/feeds/subscriptions/{{.Subscription.UUID}}/edit" method="POST">
-    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-
     <div class="field is-horizontal">
       <div class="field-label">
         <label class="label" for="title">Title</label>

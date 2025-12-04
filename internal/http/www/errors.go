@@ -6,7 +6,6 @@ package www
 import "errors"
 
 var (
-	ErrServerCSRFKeyRequired         = errors.New("server: csrf key required")
 	ErrServerMetricsPrefixRequired   = errors.New("server: metrics prefix required")
 	ErrServerMetricsRegistryRequired = errors.New("server: metrics registry required")
 	ErrServerPublicURLRequired       = errors.New("server: public url required")

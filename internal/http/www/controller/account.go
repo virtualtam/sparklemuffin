@@ -10,7 +10,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 
-	"github.com/virtualtam/sparklemuffin/internal/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
@@ -18,20 +17,13 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
-const (
-	actionAccountUpdate            string = "account-update"
-	actionAccountPreferencesUpdate string = "account-preferences-update"
-)
-
 // RegisterAccountHandlers registers handlers for user account management..
 func RegisterAccountHandlers(
 	r *chi.Mux,
-	csrfService *csrf.Service,
 	feedService *feed.Service,
 	userService *user.Service,
 ) {
 	ac := accountController{
-		csrfService: csrfService,
 		feedService: feedService,
 		userService: userService,
 
@@ -56,7 +48,6 @@ func RegisterAccountHandlers(
 }
 
 type accountController struct {
-	csrfService *csrf.Service
 	feedService *feed.Service
 	userService *user.Service
 
@@ -68,7 +59,6 @@ type accountController struct {
 // handleInfoUpdate processes the account information update form.
 func (ac *accountController) handleInfoUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type infoUpdateForm struct {
-		CSRFToken   string `schema:"csrf_token"`
 		Email       string `schema:"email"`
 		NickName    string `schema:"nick_name"`
 		DisplayName string `schema:"display_name"`
@@ -81,13 +71,6 @@ func (ac *accountController) handleInfoUpdate() func(w http.ResponseWriter, r *h
 		var form infoUpdateForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account information update form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
-
-		if !ac.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionAccountUpdate) {
-			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
@@ -116,14 +99,10 @@ func (ac *accountController) handleInfoUpdate() func(w http.ResponseWriter, r *h
 func (ac *accountController) handleInfoView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := httpcontext.UserValue(r.Context())
-		csrfToken := ac.csrfService.Generate(ctxUser.UUID, actionAccountUpdate)
 
 		viewData := view.Data{
-			Content: view.FormContent{
-				CSRFToken: csrfToken,
-				Content:   ctxUser,
-			},
-			Title: "Account Information",
+			Title:   "Account Information",
+			Content: ctxUser,
 		}
 
 		ac.accountInfoView.Render(w, r, viewData)
@@ -133,7 +112,6 @@ func (ac *accountController) handleInfoView() func(w http.ResponseWriter, r *htt
 // handlePasswordUpdate processes the user account password update form.
 func (ac *accountController) handlePasswordUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type passwordUpdateForm struct {
-		CSRFToken               string `schema:"csrf_token"`
 		CurrentPassword         string `schema:"current_password"`
 		NewPassword             string `schema:"new_password"`
 		NewPasswordConfirmation string `schema:"new_password_confirmation"`
@@ -146,13 +124,6 @@ func (ac *accountController) handlePasswordUpdate() func(w http.ResponseWriter, 
 		var form passwordUpdateForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account password update form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
-
-		if !ac.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionAccountUpdate) {
-			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
@@ -181,14 +152,10 @@ func (ac *accountController) handlePasswordUpdate() func(w http.ResponseWriter, 
 func (ac *accountController) handlePasswordView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctxUser := httpcontext.UserValue(r.Context())
-		csrfToken := ac.csrfService.Generate(ctxUser.UUID, actionAccountUpdate)
 
 		viewData := view.Data{
-			Content: view.FormContent{
-				CSRFToken: csrfToken,
-				Content:   ctxUser,
-			},
-			Title: "Account Password",
+			Title:   "Account Password",
+			Content: ctxUser,
 		}
 
 		ac.accountPasswordView.Render(w, r, viewData)
@@ -196,7 +163,6 @@ func (ac *accountController) handlePasswordView() func(w http.ResponseWriter, r 
 }
 func (ac *accountController) handlePreferencesUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type preferencesUpdateForm struct {
-		CSRFToken          string `schema:"csrf_token"`
 		ShowEntries        string `schema:"feed_show_entries"`
 		ShowEntrySummaries bool   `schema:"feed_show_entry_summaries"`
 	}
@@ -208,13 +174,6 @@ func (ac *accountController) handlePreferencesUpdate() func(w http.ResponseWrite
 		var form preferencesUpdateForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse account preferences update form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
-
-		if !ac.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionAccountPreferencesUpdate) {
-			log.Warn().Msg("failed to validate CSRF token")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
@@ -242,7 +201,6 @@ func (ac *accountController) handlePreferencesView() func(w http.ResponseWriter,
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-		csrfToken := ac.csrfService.Generate(ctxUser.UUID, actionAccountPreferencesUpdate)
 
 		preferences, err := ac.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
 		if err != nil {
@@ -253,11 +211,8 @@ func (ac *accountController) handlePreferencesView() func(w http.ResponseWriter,
 		}
 
 		viewData := view.Data{
-			Content: view.FormContent{
-				CSRFToken: csrfToken,
-				Content:   preferences,
-			},
-			Title: "Preferences",
+			Title:   "Preferences",
+			Content: preferences,
 		}
 
 		ac.accountPreferencesView.Render(w, r, viewData)

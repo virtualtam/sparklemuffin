@@ -19,7 +19,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/netscape-go/v2"
 
-	"github.com/virtualtam/sparklemuffin/internal/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
@@ -31,20 +30,11 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
-const (
-	actionBookmarkAdd    string = "bookmark-add"
-	actionBookmarkDelete string = "bookmark-delete"
-	actionBookmarkEdit   string = "bookmark-edit"
-	actionBookmarkExport string = "bookmark-export"
-	actionBookmarkImport string = "bookmark-import"
-)
-
 // RegisterBookmarkHandlers registers handlers to manage and display bookmarks.
 func RegisterBookmarkHandlers(
 	r *chi.Mux,
 	publicURL *url.URL,
 	bookmarkService *bookmark.Service,
-	csrfService *csrf.Service,
 	exportingService *bookmarkexporting.Service,
 	importingService *bookmarkimporting.Service,
 	queryingService *bookmarkquerying.Service,
@@ -54,7 +44,6 @@ func RegisterBookmarkHandlers(
 		publicURL: publicURL,
 
 		bookmarkService:  bookmarkService,
-		csrfService:      csrfService,
 		exportingService: exportingService,
 		importingService: importingService,
 		queryingService:  queryingService,
@@ -115,7 +104,6 @@ type bookmarkController struct {
 	publicURL *url.URL
 
 	bookmarkService  *bookmark.Service
-	csrfService      *csrf.Service
 	exportingService *bookmarkexporting.Service
 	importingService *bookmarkimporting.Service
 	queryingService  *bookmarkquerying.Service
@@ -137,9 +125,8 @@ type bookmarkController struct {
 }
 
 type bookmarkFormContent struct {
-	CSRFToken string
-	Bookmark  *bookmark.Bookmark
-	Tags      []string
+	Bookmark *bookmark.Bookmark
+	Tags     []string
 }
 
 // handleBookmarkAddView renders the bookmark addition form.
@@ -147,7 +134,6 @@ func (bc *bookmarkController) handleBookmarkAddView() func(w http.ResponseWriter
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-		csrfToken := bc.csrfService.Generate(ctxUser.UUID, actionBookmarkAdd)
 
 		tags, err := bc.queryingService.TagNamesByCount(ctx, ctxUser.UUID, bookmarkquerying.VisibilityAll)
 		if err != nil {
@@ -159,8 +145,7 @@ func (bc *bookmarkController) handleBookmarkAddView() func(w http.ResponseWriter
 
 		viewData := view.Data{
 			Content: bookmarkFormContent{
-				CSRFToken: csrfToken,
-				Tags:      tags,
+				Tags: tags,
 			},
 			Title: "Add bookmark",
 		}
@@ -171,7 +156,6 @@ func (bc *bookmarkController) handleBookmarkAddView() func(w http.ResponseWriter
 // handleBookmarkAdd processes the bookmark addition form.
 func (bc *bookmarkController) handleBookmarkAdd() func(w http.ResponseWriter, r *http.Request) {
 	type bookmarkAddForm struct {
-		CSRFToken   string `schema:"csrf_token"`
 		URL         string `schema:"url"`
 		Title       string `schema:"title"`
 		Description string `schema:"description"`
@@ -188,13 +172,6 @@ func (bc *bookmarkController) handleBookmarkAdd() func(w http.ResponseWriter, r 
 			log.Error().Err(err).Msg("failed to parse bookmark creation form")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		if !bc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionBookmarkAdd) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
@@ -224,7 +201,6 @@ func (bc *bookmarkController) handleBookmarkDeleteView() func(w http.ResponseWri
 		bookmarkUID := chi.URLParam(r, "uid")
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-		csrfToken := bc.csrfService.Generate(ctxUser.UUID, actionBookmarkDelete)
 
 		bookmarkToDelete, err := bc.bookmarkService.ByUID(ctx, ctxUser.UUID, bookmarkUID)
 		if err != nil {
@@ -235,11 +211,8 @@ func (bc *bookmarkController) handleBookmarkDeleteView() func(w http.ResponseWri
 		}
 
 		viewData := view.Data{
-			Content: view.FormContent{
-				CSRFToken: csrfToken,
-				Content:   bookmarkToDelete,
-			},
-			Title: fmt.Sprintf("Delete bookmark: %s", bookmarkToDelete.Title),
+			Content: bookmarkToDelete,
+			Title:   fmt.Sprintf("Delete bookmark: %s", bookmarkToDelete.Title),
 		}
 
 		bc.bookmarkDeleteView.Render(w, r, viewData)
@@ -248,29 +221,10 @@ func (bc *bookmarkController) handleBookmarkDeleteView() func(w http.ResponseWri
 
 // handleBookmarkDelete processes the bookmark deletion form.
 func (bc *bookmarkController) handleBookmarkDelete() func(w http.ResponseWriter, r *http.Request) {
-	type bookmarkDeleteForm struct {
-		CSRFToken string `schema:"csrf_token"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		bookmarkUID := chi.URLParam(r, "uid")
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-
-		var form bookmarkDeleteForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse bookmark deletion form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
-
-		if !bc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionBookmarkDelete) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
 
 		if err := bc.bookmarkService.Delete(ctx, ctxUser.UUID, bookmarkUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete bookmark")
@@ -289,7 +243,6 @@ func (bc *bookmarkController) handleBookmarkEditView() func(w http.ResponseWrite
 		bookmarkUID := chi.URLParam(r, "uid")
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-		csrfToken := bc.csrfService.Generate(ctxUser.UUID, actionBookmarkEdit)
 
 		tags, err := bc.queryingService.TagNamesByCount(ctx, ctxUser.UUID, bookmarkquerying.VisibilityAll)
 		if err != nil {
@@ -309,9 +262,8 @@ func (bc *bookmarkController) handleBookmarkEditView() func(w http.ResponseWrite
 
 		viewData := view.Data{
 			Content: bookmarkFormContent{
-				CSRFToken: csrfToken,
-				Bookmark:  &bookmarkToEdit,
-				Tags:      tags,
+				Bookmark: &bookmarkToEdit,
+				Tags:     tags,
 			},
 			Title: fmt.Sprintf("Edit bookmark: %s", bookmarkToEdit.Title),
 		}
@@ -323,7 +275,6 @@ func (bc *bookmarkController) handleBookmarkEditView() func(w http.ResponseWrite
 // handleBookmarkEdit processes the bookmark edition form.
 func (bc *bookmarkController) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Request) {
 	type bookmarkEditForm struct {
-		CSRFToken   string `schema:"csrf_token"`
 		URL         string `schema:"url"`
 		Title       string `schema:"title"`
 		Description string `schema:"description"`
@@ -341,13 +292,6 @@ func (bc *bookmarkController) handleBookmarkEdit() func(w http.ResponseWriter, r
 			log.Error().Err(err).Msg("failed to parse bookmark edition form")
 			view.PutFlashError(w, "failed to process form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		if !bc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionBookmarkEdit) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
@@ -443,13 +387,7 @@ func (bc *bookmarkController) handleBookmarkListView() func(w http.ResponseWrite
 // handleBookmarkExportView renders the bookmark export page.
 func (bc *bookmarkController) handleBookmarkExportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctxUser := httpcontext.UserValue(r.Context())
-		csrfToken := bc.csrfService.Generate(ctxUser.UUID, actionBookmarkExport)
-
 		viewData := view.Data{
-			Content: csrf.Data{
-				CSRFToken: csrfToken,
-			},
 			Title: "Export bookmarks",
 		}
 
@@ -461,7 +399,6 @@ func (bc *bookmarkController) handleBookmarkExportView() func(w http.ResponseWri
 // corresponding file to the user.
 func (bc *bookmarkController) handleBookmarkExport() func(w http.ResponseWriter, r *http.Request) {
 	type exportForm struct {
-		CSRFToken  string                       `schema:"csrf_token"`
 		Format     bookmarkexporting.Format     `schema:"format"`
 		Visibility bookmarkexporting.Visibility `schema:"visibility"`
 	}
@@ -477,13 +414,6 @@ func (bc *bookmarkController) handleBookmarkExport() func(w http.ResponseWriter,
 
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-
-		if !bc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionBookmarkExport) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
 
 		var marshaled []byte
 		var fileExtension string
@@ -548,13 +478,7 @@ func (bc *bookmarkController) handleBookmarkExport() func(w http.ResponseWriter,
 // handleBookmarkImportView renders the bookmark import page.
 func (bc *bookmarkController) handleBookmarkImportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctxUser := httpcontext.UserValue(r.Context())
-		csrfToken := bc.csrfService.Generate(ctxUser.UUID, actionBookmarkImport)
-
 		viewData := view.Data{
-			Content: csrf.Data{
-				CSRFToken: csrfToken,
-			},
 			Title: "Import bookmarks",
 		}
 
@@ -574,12 +498,10 @@ func (bc *bookmarkController) handleBookmarkImport() func(w http.ResponseWriter,
 		}
 
 		var (
-			csrfTokenBuffer          bytes.Buffer
 			importFileBuffer         bytes.Buffer
 			onConflictStrategyBuffer bytes.Buffer
 			visibilityBuffer         bytes.Buffer
 		)
-		csrfTokenWriter := bufio.NewWriter(&csrfTokenBuffer)
 		importFileWriter := bufio.NewWriter(&importFileBuffer)
 		onConflictStrategyWriter := bufio.NewWriter(&onConflictStrategyBuffer)
 		visibilityWriter := bufio.NewWriter(&visibilityBuffer)
@@ -600,8 +522,6 @@ func (bc *bookmarkController) handleBookmarkImport() func(w http.ResponseWriter,
 			}
 
 			switch part.FormName() {
-			case "csrf_token":
-				_, err = io.Copy(csrfTokenWriter, part)
 			case "importfile":
 				_, err = io.Copy(importFileWriter, part)
 			case "on-conflict":
@@ -622,13 +542,6 @@ func (bc *bookmarkController) handleBookmarkImport() func(w http.ResponseWriter,
 
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-
-		if !bc.csrfService.Validate(csrfTokenBuffer.String(), ctxUser.UUID, actionBookmarkImport) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
 
 		document, err := netscape.Unmarshal(importFileBuffer.Bytes())
 		if err != nil {

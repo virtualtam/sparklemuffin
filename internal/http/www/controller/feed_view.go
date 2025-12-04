@@ -11,8 +11,7 @@ import (
 type feedQueryingPage struct {
 	feedquerying.FeedPage
 
-	CSRFToken string
-	URLPath   string
+	URLPath string
 
 	Preferences feed.Preferences
 }

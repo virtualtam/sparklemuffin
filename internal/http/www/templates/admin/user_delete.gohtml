@@ -8,14 +8,13 @@
     </ul>
   </nav>
 
-  <h2 class="title">Delete user - {{.Content.Email}}</h2>
+  <h2 class="title">Delete user - {{.Email}}</h2>
 
   <p class="mb-4">
-    Delete user <strong>{{.Content.Email}}</strong> and all associated data?
+    Delete user <strong>{{.Email}}</strong> and all associated data?
   </p>
 
-  <form action="/admin/users/{{.Content.UUID}}/delete" method="POST">
-    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+  <form action="/admin/users/{{.UUID}}/delete" method="POST">
     <div class="field">
       <button type="submit" class="button is-danger">Delete</button>
     </div>

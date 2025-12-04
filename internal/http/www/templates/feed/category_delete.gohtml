@@ -7,10 +7,9 @@
     </ul>
   </nav>
 
-  <p class="mb-4">Delete feed category and subscriptions: <strong>{{.Category.Name}}</strong>?</p>
+  <p class="mb-4">Delete feed category and subscriptions: <strong>{{.Name}}</strong>?</p>
 
-  <form action="/feeds/categories/{{.Category.UUID}}/delete" method="POST">
-    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+  <form action="/feeds/categories/{{.UUID}}/delete" method="POST">
     <p>
       <button type="submit" class="button is-danger">Delete</button>
     </p>

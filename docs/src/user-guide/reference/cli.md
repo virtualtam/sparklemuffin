@@ -51,7 +51,6 @@ Usage:
   sparklemuffin run [flags]
 
 Flags:
-      --csrf-key string              Secret key for CSRF token hashing (default "csrf-secret-key")
   -h, --help                         help for run
       --listen-addr string           Listen to this address (host:port) (default "0.0.0.0:8080")
       --metrics-listen-addr string   Listen to this address for Prometheus metrics (host:port) (default "127.0.0.1:8081")

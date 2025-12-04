@@ -56,7 +56,6 @@
                 class="button is-small{{if eq .Preferences.ShowEntries "ALL"}} is-active{{end}}"
                 hx-post="/feeds/preferences/show-entries"
                 hx-vals='{"show": "ALL"}'
-                hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
               >
                 <span class="icon"><i class="fas fa-globe"></i></span>
                 <span>All</span>
@@ -67,7 +66,6 @@
                 class="button is-small{{if eq .Preferences.ShowEntries "READ"}} is-active{{end}}"
                 hx-post="/feeds/preferences/show-entries"
                 hx-vals='{"show": "READ"}'
-                hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
               >
                 <span class="icon"><i class="fas fa-check-circle"></i></span>
                 <span>Read</span>
@@ -78,7 +76,6 @@
                 class="button is-small{{if eq .Preferences.ShowEntries "UNREAD"}} is-active{{end}}"
                 hx-post="/feeds/preferences/show-entries"
                 hx-vals='{"show": "UNREAD"}'
-                hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
               >
                 <span class="icon"><i class="fas fa-envelope"></i></span>
                 <span>Unread</span>
@@ -91,7 +88,6 @@
                 title="Show or hide entry summaries"
                 class="button is-small{{if eq .Preferences.ShowEntrySummaries false}} is-active{{end}}"
                 hx-post="/feeds/preferences/toggle-show-entry-summaries"
-                hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
               >
                 <span class="icon"><i class="fa-regular fa-rectangle-list"></i></span>
                 <span>Compact</span>
@@ -104,7 +100,6 @@
                 title="Mark all entries as read"
                 class="button is-small"
                 hx-post="{{$.URLPath}}/entries/mark-all-read"
-                hx-headers='{"X-CSRFToken": "{{$.CSRFToken}}"}'
               >
                 <span class="icon">
                   <i class="fa-solid fa-eye-slash"></i>
@@ -156,7 +151,6 @@
             <div class="level-right">
               <div class="level-item">
                 <form action="/feeds/entries/{{.UID}}/toggle-read" method="POST">
-                  <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
                   <button type="submit" class="button is-small">
                     {{if .Read}}
                     <span class="icon has-text-grey-light">

@@ -8,8 +8,6 @@
     </nav>
 
     <form action="/account/preferences" method="POST">
-      <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-
       <h3 class="title is-3">Feeds</h3>
       <div class="field is-horizontal">
         <div class="field-label">
@@ -18,13 +16,13 @@
         <div class="field-body">
           <div class="field">
             <div class="control">
-                <input type="radio" name="feed_show_entries" id="all" value="ALL"{{ if eq .Content.ShowEntries "ALL" }} checked{{ end }}>
+                <input type="radio" name="feed_show_entries" id="all" value="ALL"{{ if eq .ShowEntries "ALL" }} checked{{ end }}>
                 <label for="all">All</label>
                 <br>
-                <input type="radio" name="feed_show_entries" id="read" value="READ"{{ if eq .Content.ShowEntries "READ" }} checked{{ end }}>
+                <input type="radio" name="feed_show_entries" id="read" value="READ"{{ if eq .ShowEntries "READ" }} checked{{ end }}>
                 <label for="private">Read</label>
                 <br>
-                <input type="radio" name="feed_show_entries" id="unread" value="UNREAD"{{ if eq .Content.ShowEntries "UNREAD" }} checked{{ end }}>
+                <input type="radio" name="feed_show_entries" id="unread" value="UNREAD"{{ if eq .ShowEntries "UNREAD" }} checked{{ end }}>
                 <label for="public">Unread</label>
             </div>
           </div>
@@ -37,7 +35,7 @@
         <div class="field-body">
           <div class="field">
             <div class="control">
-              <input type="checkbox" id="feed_show_entry_summaries" name="feed_show_entry_summaries"{{if .Content.ShowEntrySummaries}} checked{{end}}>
+              <input type="checkbox" id="feed_show_entry_summaries" name="feed_show_entry_summaries"{{if .ShowEntrySummaries}} checked{{end}}>
             </div>
           </div>
         </div>

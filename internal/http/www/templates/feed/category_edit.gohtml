@@ -7,9 +7,7 @@
     </ul>
   </nav>
 
-  <form action="/feeds/categories/{{.Category.UUID}}/edit" method="POST">
-    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-
+  <form action="/feeds/categories/{{.UUID}}/edit" method="POST">
     <div class="field is-horizontal">
       <div class="field-label is-normal">
         <label class="label" for="name">Name</label>
@@ -17,7 +15,7 @@
       <div class="field-body">
         <div class="field">
           <div class="control">
-            <input class="input" type="text" id="name" name="name" placeholder="Name" value="{{.Category.Name}}"
+            <input class="input" type="text" id="name" name="name" placeholder="Name" value="{{.Name}}"
               required="">
           </div>
         </div>

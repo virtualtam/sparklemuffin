@@ -8,8 +8,6 @@
   </nav>
 
   <form action="/bookmarks/{{.Bookmark.UID}}/edit" autocomplete="off" method="POST">
-    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-
     <div class="field is-horizontal">
       <div class="field-label is-normal">
         <label class="label" for="url">URL</label>

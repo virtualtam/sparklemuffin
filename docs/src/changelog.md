@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+### Security
+- Replace custom Cross-Site Request Forgery (CSRF) helpers with Go 1.25's CSRF protection middleware
+
 ## [v0.6.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.0) - 2025-12-04
 ### Added
 #### Feed

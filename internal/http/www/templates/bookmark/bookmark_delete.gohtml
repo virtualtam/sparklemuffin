@@ -7,10 +7,9 @@
     </ul>
   </nav>
 
-  <p class="mb-4">Delete bookmark: <a href="{{.Content.URL}}">{{.Content.Title}}</a>?</p>
+  <p class="mb-4">Delete bookmark: <a href="{{.URL}}">{{.Title}}</a>?</p>
 
-  <form action="/bookmarks/{{.Content.UID}}/delete" method="POST">
-    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+  <form action="/bookmarks/{{.UID}}/delete" method="POST">
     <div class="field">
       <button type="submit" class="button is-danger">Delete</button>
     </div>

@@ -16,7 +16,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/opml-go"
 
-	"github.com/virtualtam/sparklemuffin/internal/http/www/csrf"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/htmx"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
@@ -29,22 +28,9 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
-const (
-	actionFeedCategoryAdd        string = "feed-category-add"
-	actionFeedCategoryDelete     string = "feed-category-delete"
-	actionFeedCategoryEdit       string = "feed-category-edit"
-	actionFeedEntryMetadataEdit  string = "feed-entry-metadata-edit"
-	actionFeedSubscriptionAdd    string = "feed-subscription-add"
-	actionFeedSubscriptionDelete string = "feed-subscription-delete"
-	actionFeedSubscriptionEdit   string = "feed-subscription-edit"
-	actionFeedSubscriptionExport string = "feed-subscription-export"
-	actionFeedSubscriptionImport string = "feed-subscription-import"
-)
-
 // RegisterFeedHandlers registers HTTP handlers for syndication feed operations.
 func RegisterFeedHandlers(
 	r *chi.Mux,
-	csrfService *csrf.Service,
 	feedService *feed.Service,
 	exportingService *feedexporting.Service,
 	importingService *feedimporting.Service,
@@ -52,7 +38,6 @@ func RegisterFeedHandlers(
 	userService *user.Service,
 ) {
 	fc := feedController{
-		csrfService:      csrfService,
 		feedService:      feedService,
 		exportingService: exportingService,
 		importingService: importingService,
@@ -124,7 +109,6 @@ func RegisterFeedHandlers(
 }
 
 type feedController struct {
-	csrfService      *csrf.Service
 	feedService      *feed.Service
 	exportingService *feedexporting.Service
 	importingService *feedimporting.Service
@@ -146,22 +130,11 @@ type feedController struct {
 	feedImportView *view.View
 }
 
-type feedFormContent struct {
-	CSRFToken  string
-	Categories []feed.Category
-}
-
-type feedCategoryFormContent struct {
-	CSRFToken string
-	Category  feed.Category
-}
-
 // handleFeedAddView renders the feed subscription form.
 func (fc *feedController) handleFeedAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedSubscriptionAdd)
 
 		categories, err := fc.feedService.Categories(ctx, ctxUser.UUID)
 		if err != nil {
@@ -172,11 +145,8 @@ func (fc *feedController) handleFeedAddView() func(w http.ResponseWriter, r *htt
 		}
 
 		viewData := view.Data{
-			Content: feedFormContent{
-				CSRFToken:  csrfToken,
-				Categories: categories,
-			},
-			Title: "Add feed",
+			Content: categories,
+			Title:   "Add feed",
 		}
 
 		fc.feedAddView.Render(w, r, viewData)
@@ -186,7 +156,6 @@ func (fc *feedController) handleFeedAddView() func(w http.ResponseWriter, r *htt
 // handleFeedAdd processes the feed addition form.
 func (fc *feedController) handleFeedAdd() func(w http.ResponseWriter, r *http.Request) {
 	type feedAddForm struct {
-		CSRFToken    string `schema:"csrf_token"`
 		URL          string `schema:"url"`
 		CategoryUUID string `schema:"category"`
 	}
@@ -200,13 +169,6 @@ func (fc *feedController) handleFeedAdd() func(w http.ResponseWriter, r *http.Re
 			log.Error().Err(err).Msg("failed to parse feed subscription form")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedSubscriptionAdd) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
@@ -243,11 +205,8 @@ func (fc *feedController) handleFeedListView(
 			return
 		}
 
-		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedEntryMetadataEdit)
-
 		var viewData view.Data
 		feedQueryingPage := feedQueryingPage{
-			CSRFToken:   csrfToken,
 			URLPath:     r.URL.Path,
 			Preferences: preferences,
 		}
@@ -389,14 +348,7 @@ func (fc *feedController) handleFeedListBySubscriptionView() func(w http.Respons
 // handleFeedCategoryAddView renders the feed category addition form.
 func (fc *feedController) handleFeedCategoryAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctxUser := httpcontext.UserValue(ctx)
-		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedCategoryAdd)
-
 		viewData := view.Data{
-			Content: feedFormContent{
-				CSRFToken: csrfToken,
-			},
 			Title: "Add feed category",
 		}
 
@@ -407,8 +359,7 @@ func (fc *feedController) handleFeedCategoryAddView() func(w http.ResponseWriter
 // handleFeedCategoryAdd processes the feed category addition form.
 func (fc *feedController) handleFeedCategoryAdd() func(w http.ResponseWriter, r *http.Request) {
 	type feedAddForm struct {
-		CSRFToken string `schema:"csrf_token"`
-		Name      string `schema:"name"`
+		Name string `schema:"name"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -420,13 +371,6 @@ func (fc *feedController) handleFeedCategoryAdd() func(w http.ResponseWriter, r 
 			log.Error().Err(err).Msg("failed to parse feed category addition form")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedCategoryAdd) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
@@ -447,7 +391,6 @@ func (fc *feedController) handleFeedCategoryDeleteView() func(w http.ResponseWri
 		categoryUUID := chi.URLParam(r, "uuid")
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedCategoryDelete)
 
 		category, err := fc.feedService.CategoryByUUID(ctx, ctxUser.UUID, categoryUUID)
 		if err != nil {
@@ -458,11 +401,8 @@ func (fc *feedController) handleFeedCategoryDeleteView() func(w http.ResponseWri
 		}
 
 		viewData := view.Data{
-			Content: feedCategoryFormContent{
-				CSRFToken: csrfToken,
-				Category:  category,
-			},
-			Title: fmt.Sprintf("Delete category: %s", category.Name),
+			Content: category,
+			Title:   fmt.Sprintf("Delete category: %s", category.Name),
 		}
 
 		fc.feedCategoryDeleteView.Render(w, r, viewData)
@@ -470,29 +410,10 @@ func (fc *feedController) handleFeedCategoryDeleteView() func(w http.ResponseWri
 }
 
 func (fc *feedController) handleFeedCategoryDelete() func(w http.ResponseWriter, r *http.Request) {
-	type feedCategoryDeleteForm struct {
-		CSRFToken string `schema:"csrf_token"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		categoryUUID := chi.URLParam(r, "uuid")
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-
-		var form feedCategoryDeleteForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse feed category deletion form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
-
-		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedCategoryDelete) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
 
 		if err := fc.feedService.DeleteCategory(ctx, ctxUser.UUID, categoryUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete feed category")
@@ -510,7 +431,6 @@ func (fc *feedController) handleFeedCategoryEditView() func(w http.ResponseWrite
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedCategoryEdit)
 
 		categoryUUID := chi.URLParam(r, "uuid")
 
@@ -523,11 +443,8 @@ func (fc *feedController) handleFeedCategoryEditView() func(w http.ResponseWrite
 		}
 
 		viewData := view.Data{
-			Content: feedCategoryFormContent{
-				CSRFToken: csrfToken,
-				Category:  category,
-			},
-			Title: "Edit feed category",
+			Content: category,
+			Title:   "Edit feed category",
 		}
 
 		fc.feedCategoryEditView.Render(w, r, viewData)
@@ -537,8 +454,7 @@ func (fc *feedController) handleFeedCategoryEditView() func(w http.ResponseWrite
 // handleFeedCategoryEdit processes the feed category edition form.
 func (fc *feedController) handleFeedCategoryEdit() func(w http.ResponseWriter, r *http.Request) {
 	type feedCategoryEditForm struct {
-		CSRFToken string `schema:"csrf_token"`
-		Name      string `schema:"name"`
+		Name string `schema:"name"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -551,13 +467,6 @@ func (fc *feedController) handleFeedCategoryEdit() func(w http.ResponseWriter, r
 			log.Error().Err(err).Msg("failed to parse feed category edition form")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedCategoryEdit) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
@@ -579,29 +488,10 @@ func (fc *feedController) handleFeedCategoryEdit() func(w http.ResponseWriter, r
 }
 
 func (fc *feedController) handleFeedEntryToggleRead() func(w http.ResponseWriter, r *http.Request) {
-	type feedEntryReadForm struct {
-		CSRFToken string `schema:"csrf_token"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 		entryUID := chi.URLParam(r, "uid")
-
-		var form feedEntryReadForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse feed entry read toggle form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
-
-		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
 
 		if err := fc.feedService.ToggleEntryRead(ctx, ctxUser.UUID, entryUID); err != nil {
 			log.Error().Err(err).Msg("failed to set entry metadata")
@@ -639,16 +529,10 @@ func (fc *feedController) handleFeedSubscriptionListView() func(w http.ResponseW
 
 // handleFeedSubscriptionDeleteView renders the feed subscription deletion form.
 func (fc *feedController) handleFeedSubscriptionDeleteView() func(w http.ResponseWriter, r *http.Request) {
-	type feedSubscriptionTitleFormContent struct {
-		CSRFToken    string
-		Subscription feedquerying.Subscription
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		subscriptionUUID := chi.URLParam(r, "uuid")
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedSubscriptionDelete)
 
 		subscription, err := fc.queryingService.SubscriptionByUUID(ctx, ctxUser.UUID, subscriptionUUID)
 		if err != nil {
@@ -659,11 +543,8 @@ func (fc *feedController) handleFeedSubscriptionDeleteView() func(w http.Respons
 		}
 
 		viewData := view.Data{
-			Content: feedSubscriptionTitleFormContent{
-				CSRFToken:    csrfToken,
-				Subscription: subscription,
-			},
-			Title: fmt.Sprintf("Delete subscription: %s", subscription.FeedTitle),
+			Content: subscription,
+			Title:   fmt.Sprintf("Delete subscription: %s", subscription.FeedTitle),
 		}
 
 		fc.feedSubscriptionDeleteView.Render(w, r, viewData)
@@ -672,29 +553,10 @@ func (fc *feedController) handleFeedSubscriptionDeleteView() func(w http.Respons
 
 // handleFeedSubscriptionDelete processes the feed subscription deletion form.
 func (fc *feedController) handleFeedSubscriptionDelete() func(w http.ResponseWriter, r *http.Request) {
-	type feedSubscriptionDeleteForm struct {
-		CSRFToken string `schema:"csrf_token"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		subscriptionUUID := chi.URLParam(r, "uuid")
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-
-		var form feedSubscriptionDeleteForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse feed subscription deletion form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
-
-		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedSubscriptionDelete) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
 
 		if err := fc.feedService.DeleteSubscription(ctx, ctxUser.UUID, subscriptionUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete feed subscription")
@@ -710,7 +572,6 @@ func (fc *feedController) handleFeedSubscriptionDelete() func(w http.ResponseWri
 // handleFeedSubscriptionEditView renders the feed subscription edition form.
 func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionEditFormContent struct {
-		CSRFToken    string
 		Subscription feedquerying.Subscription
 		Categories   []feed.Category
 	}
@@ -719,8 +580,6 @@ func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseW
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 		subscriptionUUID := chi.URLParam(r, "uuid")
-
-		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedSubscriptionEdit)
 
 		subscription, err := fc.queryingService.SubscriptionByUUID(ctx, ctxUser.UUID, subscriptionUUID)
 		if err != nil {
@@ -740,7 +599,6 @@ func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseW
 
 		viewData := view.Data{
 			Content: feedSubscriptionEditFormContent{
-				CSRFToken:    csrfToken,
 				Subscription: subscription,
 				Categories:   categories,
 			},
@@ -754,7 +612,6 @@ func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseW
 // handleFeedSubscriptionEdit processes the feed subscription edition form.
 func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionEditForm struct {
-		CSRFToken    string `schema:"csrf_token"`
 		Alias        string `schema:"alias"`
 		CategoryUUID string `schema:"category"`
 	}
@@ -769,13 +626,6 @@ func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWrite
 			log.Error().Err(err).Msg("failed to parse feed subscription edition form")
 			view.PutFlashError(w, "There was an error processing the form")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedSubscriptionEdit) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
 
@@ -803,14 +653,6 @@ func (fc *feedController) handleEntryMetadataMarkAllAsRead() func(w http.Respons
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 
-		csrfToken := r.Header.Get("X-CSRFToken")
-
-		if !fc.csrfService.Validate(csrfToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
-			log.Warn().Msg("failed to validate CSRF token")
-			http.Error(w, "There was an error processing the form", http.StatusBadRequest)
-			return
-		}
-
 		if err := fc.feedService.MarkAllEntriesAsRead(ctx, ctxUser.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to mark feed entries as read")
 			view.PutFlashError(w, "failed to mark feed entries as read")
@@ -832,14 +674,6 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w ht
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 		categorySlug := chi.URLParam(r, "slug")
-
-		csrfToken := r.Header.Get("X-CSRFToken")
-
-		if !fc.csrfService.Validate(csrfToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
-			log.Warn().Msg("failed to validate CSRF token")
-			http.Error(w, "There was an error processing the form", http.StatusBadRequest)
-			return
-		}
 
 		category, err := fc.feedService.CategoryBySlug(ctx, ctxUser.UUID, categorySlug)
 		if err != nil {
@@ -870,14 +704,6 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.R
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 		feedSlug := chi.URLParam(r, "slug")
-
-		csrfToken := r.Header.Get("X-CSRFToken")
-
-		if !fc.csrfService.Validate(csrfToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
-			log.Warn().Msg("failed to validate CSRF token")
-			http.Error(w, "There was an error processing the form", http.StatusBadRequest)
-			return
-		}
 
 		f, err := fc.feedService.FeedBySlug(ctx, feedSlug)
 		if err != nil {
@@ -913,14 +739,7 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.R
 // handleFeedExportView renders the feed export page.
 func (fc *feedController) handleFeedExportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctxUser := httpcontext.UserValue(ctx)
-		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedSubscriptionExport)
-
 		viewData := view.Data{
-			Content: csrf.Data{
-				CSRFToken: csrfToken,
-			},
 			Title: "Export feed subscriptions",
 		}
 
@@ -931,28 +750,9 @@ func (fc *feedController) handleFeedExportView() func(w http.ResponseWriter, r *
 // handleFeedExport processes the feed subscription export form and sends the
 // corresponding file to the client.
 func (fc *feedController) handleFeedExport() func(w http.ResponseWriter, r *http.Request) {
-	type exportForm struct {
-		CSRFToken string `schema:"csrf_token"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-
-		var form exportForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse feed export form")
-			view.PutFlashError(w, "failed to process form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
-
-		if !fc.csrfService.Validate(form.CSRFToken, ctxUser.UUID, actionFeedSubscriptionExport) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
 
 		opmlDocument, err := fc.exportingService.ExportAsOPMLDocument(ctx, *ctxUser)
 		if err != nil {
@@ -982,14 +782,7 @@ func (fc *feedController) handleFeedExport() func(w http.ResponseWriter, r *http
 // handleFeedExportView renders the feed subscription import page.
 func (fc *feedController) handleFeedImportView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctxUser := httpcontext.UserValue(ctx)
-		csrfToken := fc.csrfService.Generate(ctxUser.UUID, actionFeedSubscriptionImport)
-
 		viewData := view.Data{
-			Content: csrf.Data{
-				CSRFToken: csrfToken,
-			},
 			Title: "Import feed subscriptions",
 		}
 
@@ -1008,11 +801,7 @@ func (fc *feedController) handleFeedImport() func(w http.ResponseWriter, r *http
 			return
 		}
 
-		var (
-			csrfTokenBuffer  bytes.Buffer
-			importFileBuffer bytes.Buffer
-		)
-		csrfTokenWriter := bufio.NewWriter(&csrfTokenBuffer)
+		var importFileBuffer bytes.Buffer
 		importFileWriter := bufio.NewWriter(&importFileBuffer)
 
 		for {
@@ -1031,8 +820,6 @@ func (fc *feedController) handleFeedImport() func(w http.ResponseWriter, r *http
 			}
 
 			switch part.FormName() {
-			case "csrf_token":
-				_, err = io.Copy(csrfTokenWriter, part)
 			case "importfile":
 				_, err = io.Copy(importFileWriter, part)
 			default:
@@ -1049,13 +836,6 @@ func (fc *feedController) handleFeedImport() func(w http.ResponseWriter, r *http
 
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-
-		if !fc.csrfService.Validate(csrfTokenBuffer.String(), ctxUser.UUID, actionFeedSubscriptionImport) {
-			log.Warn().Msg("failed to validate CSRF token")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-			return
-		}
 
 		document, err := opml.Unmarshal(importFileBuffer.Bytes())
 		if err != nil {
@@ -1082,14 +862,6 @@ func (fc *feedController) handlePreferencesToggleShowEntrySummaries() func(w htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
-
-		csrfToken := r.Header.Get("X-CSRFToken")
-
-		if !fc.csrfService.Validate(csrfToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
-			log.Warn().Msg("failed to validate CSRF token")
-			http.Error(w, "invalid request body", http.StatusBadRequest)
-			return
-		}
 
 		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
 		if err != nil {
@@ -1128,14 +900,6 @@ func (fc *feedController) handlePreferencesFeedShowEntriesUpdate() func(w http.R
 		var form feedShowEntriesForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse feed preferences update form")
-			http.Error(w, "invalid request body", http.StatusBadRequest)
-			return
-		}
-
-		csrfToken := r.Header.Get("X-CSRFToken")
-
-		if !fc.csrfService.Validate(csrfToken, ctxUser.UUID, actionFeedEntryMetadataEdit) {
-			log.Warn().Msg("failed to validate CSRF token")
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
 		}

@@ -82,6 +82,11 @@ build-assets:
 	cd internal/http/www/assets && go run main.go
 .PHONY: build-assets
 
+watch-assets:
+	@echo "== Watching frontend assets"
+	cd internal/http/www/assets && go run main.go -watch
+.PHONY: watch-assets
+
 # Live development server
 live:
 	@echo "== Starting database"

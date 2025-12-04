@@ -6,42 +6,85 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/evanw/esbuild/pkg/api"
 )
 
+var buildOptions = api.BuildOptions{
+	EntryPoints: []string{
+		"css/www.css",
+	},
+	Outfile:           "../static/www.min.css",
+	Bundle:            true,
+	MinifyWhitespace:  true,
+	MinifyIdentifiers: true,
+	MinifySyntax:      true,
+	Write:             true,
+	LogLevel:          api.LogLevelInfo,
+	Loader: map[string]api.Loader{
+		".css":   api.LoaderCSS,
+		".ttf":   api.LoaderFile,
+		".woff2": api.LoaderFile,
+	},
+}
+
 func main() {
-	cssResult := api.Build(api.BuildOptions{
-		EntryPoints: []string{
-			"css/www.css",
-		},
-		Outfile:           "../static/www.min.css",
-		Bundle:            true,
-		MinifyWhitespace:  true,
-		MinifyIdentifiers: true,
-		MinifySyntax:      true,
-		Write:             true,
-		LogLevel:          api.LogLevelInfo,
-		Loader: map[string]api.Loader{
-			".css":   api.LoaderCSS,
-			".ttf":   api.LoaderFile,
-			".woff2": api.LoaderFile,
-		},
-	})
+	watchMode := flag.Bool("watch", false, "Watch for changes and rebuild automatically")
+	flag.Parse()
+
+	// Copy static assets (JS libraries, favicons)
+	copyStaticAssets()
+
+	if *watchMode {
+		watchAssets()
+	} else {
+		buildAssets()
+	}
+}
+
+func buildAssets() {
+	cssResult := api.Build(buildOptions)
 	if len(cssResult.Errors) > 0 {
 		errors := make([]string, len(cssResult.Errors))
 		for i, err := range cssResult.Errors {
 			errors[i] = err.Text
 		}
-		log.Fatalf("failed to build CSS: %s\n", strings.Join(errors, ", "))
+		log.Fatalf("esbuild: failed to build assets: %s\n", strings.Join(errors, ", "))
+	}
+}
+
+func watchAssets() {
+	ctx, err := api.Context(buildOptions)
+	if err != nil {
+		log.Fatalf("esbuild: failed to create esbuild context: %s\n", err)
 	}
 
+	// Start watching
+	if err := ctx.Watch(api.WatchOptions{}); err != nil {
+		log.Fatalf("esbuild: failed to start watch mode: %s\n", err)
+	}
+
+	log.Println("esbuild: watching for asset changes... (Ctrl+C to stop)")
+
+	// Wait for interrupt signal
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	log.Println("esbuild: stopping watch mode...")
+	ctx.Dispose()
+}
+
+func copyStaticAssets() {
 	if err := copyFile("node_modules/alpinejs/dist/cdn.min.js", "../static/alpinejs.min.js"); err != nil {
 		log.Fatal(err)
 	}

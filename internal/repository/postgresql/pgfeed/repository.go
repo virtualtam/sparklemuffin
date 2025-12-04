@@ -373,92 +373,50 @@ func (r *Repository) FeedEntryUpsertMany(ctx context.Context, entries []feed.Ent
 }
 
 func (r *Repository) FeedEntryGetCount(ctx context.Context, userUUID string, showEntries feed.EntryVisibility) (uint, error) {
-	const (
-		query = `
-		SELECT COUNT(*)
-		FROM feed_entries fe
-		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-		WHERE fs.user_uuid=@user_uuid`
-	)
-
 	args := pgx.NamedArgs{
 		"user_uuid": userUUID,
 	}
 
-	return r.feedEntryGetCount(ctx, query, showEntries, args)
+	return r.feedEntryGetCount(ctx, "", showEntries, args)
 }
 
 func (r *Repository) FeedEntryGetCountByCategory(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, categoryUUID string) (uint, error) {
-	const (
-		query = `
-		SELECT COUNT(*)
-		FROM feed_entries fe
-		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-		WHERE fs.user_uuid=@user_uuid
-		AND   fs.category_uuid=@category_uuid`
-	)
+	const and = `AND fs.category_uuid=@category_uuid`
 
 	args := pgx.NamedArgs{
 		"user_uuid":     userUUID,
 		"category_uuid": categoryUUID,
 	}
 
-	return r.feedEntryGetCount(ctx, query, showEntries, args)
+	return r.feedEntryGetCount(ctx, and, showEntries, args)
 }
 
 func (r *Repository) FeedEntryGetCountBySubscription(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string) (uint, error) {
-	const (
-		query = `
-		SELECT COUNT(*)
-		FROM feed_entries fe
-		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-		WHERE fs.user_uuid=@user_uuid
-		AND   fs.uuid=@subscription_uuid`
-	)
+	const and = `AND   fs.uuid=@subscription_uuid`
 
 	args := pgx.NamedArgs{
 		"user_uuid":         userUUID,
 		"subscription_uuid": subscriptionUUID,
 	}
 
-	return r.feedEntryGetCount(ctx, query, showEntries, args)
+	return r.feedEntryGetCount(ctx, and, showEntries, args)
 }
 
 func (r *Repository) FeedEntryGetCountByQuery(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, searchTerms string) (uint, error) {
-	const (
-		query = `
-		SELECT COUNT(*)
-		FROM feed_entries fe
-		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
-		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-		WHERE fs.user_uuid=@user_uuid
-		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
-	)
+	const and = `AND (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
 
 	args := pgx.NamedArgs{
 		"user_uuid":    userUUID,
 		"search_terms": pgbase.FullTextSearchReplacer.Replace(searchTerms),
 	}
 
-	return r.feedEntryGetCount(ctx, query, showEntries, args)
+	return r.feedEntryGetCount(ctx, and, showEntries, args)
 }
 
 func (r *Repository) FeedEntryGetCountByCategoryAndQuery(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, categoryUUID string, searchTerms string) (uint, error) {
-	const (
-		query = `
-		SELECT COUNT(*)
-		FROM feed_entries fe
-		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
-		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-		WHERE fs.user_uuid=@user_uuid
-		AND   fs.category_uuid=@category_uuid
-		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
-	)
+	const and = `
+		AND fs.category_uuid=@category_uuid
+		AND (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
 
 	args := pgx.NamedArgs{
 		"user_uuid":     userUUID,
@@ -466,21 +424,13 @@ func (r *Repository) FeedEntryGetCountByCategoryAndQuery(ctx context.Context, us
 		"search_terms":  pgbase.FullTextSearchReplacer.Replace(searchTerms),
 	}
 
-	return r.feedEntryGetCount(ctx, query, showEntries, args)
+	return r.feedEntryGetCount(ctx, and, showEntries, args)
 }
 
 func (r *Repository) FeedEntryGetCountBySubscriptionAndQuery(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string, searchTerms string) (uint, error) {
-	const (
-		query = `
-		SELECT COUNT(*)
-		FROM feed_entries fe
-		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
-		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
-		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
-		WHERE fs.user_uuid=@user_uuid
-		AND   fs.uuid=@subscription_uuid
-		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
-	)
+	const and = `
+		AND fs.uuid=@subscription_uuid
+		AND (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
 
 	args := pgx.NamedArgs{
 		"user_uuid":         userUUID,
@@ -488,7 +438,7 @@ func (r *Repository) FeedEntryGetCountBySubscriptionAndQuery(ctx context.Context
 		"search_terms":      pgbase.FullTextSearchReplacer.Replace(searchTerms),
 	}
 
-	return r.feedEntryGetCount(ctx, query, showEntries, args)
+	return r.feedEntryGetCount(ctx, and, showEntries, args)
 }
 
 func (r *Repository) FeedEntryMarkAllAsRead(ctx context.Context, userUUID string) error {

@@ -183,7 +183,17 @@ func (r *Repository) feedEntryUpsertMany(ctx context.Context, operation string, 
 	return rowsAffected, nil
 }
 
-func (r *Repository) feedEntryGetCount(ctx context.Context, query string, showEntries feed.EntryVisibility, args pgx.NamedArgs) (uint, error) {
+func (r *Repository) feedEntryGetCount(ctx context.Context, and string, showEntries feed.EntryVisibility, args pgx.NamedArgs) (uint, error) {
+	const baseQuery = `
+		SELECT COUNT(*)
+		FROM feed_entries fe
+		JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+		WHERE fs.user_uuid=@user_uuid`
+
+	query := fmt.Sprintf("%s\n%s", baseQuery, and)
+
 	switch showEntries {
 	case feed.EntryVisibilityRead:
 		query += " AND fem.read = TRUE"
@@ -206,8 +216,7 @@ func (r *Repository) feedEntryGetCount(ctx context.Context, query string, showEn
 }
 
 func (r *Repository) feedSubscriptionEntryGetN(ctx context.Context, where string, showEntries feed.EntryVisibility, args pgx.NamedArgs) ([]feedquerying.SubscribedFeedEntry, error) {
-	const (
-		baseQuery = `
+	const baseQuery = `
 		SELECT
 			fe.uid,
 			fe.url,
@@ -224,9 +233,8 @@ func (r *Repository) feedSubscriptionEntryGetN(ctx context.Context, where string
 		LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
 		JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
 		JOIN feed_feeds f ON f.uuid = fe.feed_uuid`
-	)
 
-	query := baseQuery + where
+	query := fmt.Sprintf("%s\n%s", baseQuery, where)
 
 	switch showEntries {
 	case feed.EntryVisibilityRead:

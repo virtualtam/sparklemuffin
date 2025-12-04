@@ -1,5 +1,5 @@
 {{define "content"}}
-<section class="section pt-3">
+<section id="top" class="section pt-3">
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
       <li><a href="/bookmarks">Bookmarks</a></li>
@@ -10,29 +10,45 @@
   {{template "tagFilterForm" .}}
 
   <div class="columns is-multiline">
-    {{range $i, $tag := .Tags}}
+    {{- range $i, $tag := .Tags}}
     {{- if eq (mod $i 30) 0 }}
-    {{- if ne $i 0 }}</div>{{ end }}
-  <div class="column is-one-third">
-    {{- end }}
-    <div>
-      <span class="tag-count has-text-right pr-1">{{.Count}}</span>
-      [
-      <a href="/bookmarks/tags/{{$tag.EncodedName}}/edit" title="Edit tag: {{$tag.Name}}">e</a>
-      ,
-      <a href="/bookmarks/tags/{{$tag.EncodedName}}/delete" title="Delete tag: {{$tag.Name}}"
-         class="has-text-danger">x</a>
-      ]
-      <span class="tag">
-        <a href="/bookmarks?search={{$tag.Name}}" title="Bookmarks tagged {{.Name}}">{{$tag.Name}}</a>
-      </span>
+    {{- if ne $i 0 }}</div>{{end}}
+  <div class="column is-full-mobile is-half-tablet is-one-third-desktop">
+    {{- end}}
+    <div class="level is-mobile">
+      <div class="level-left">
+        <span class="level-item tag-count">
+          <span class="tag is-light">{{$tag.Count}}</span>
+        </span>
+        <span class="level-item tag">
+          <a href="/bookmarks?search={{$tag.Name}}" title="Bookmarks tagged {{$tag.Name}}">
+            <span class="icon-text">
+              <span class="icon"><i class="fa-solid fa-tag"></i></span>
+              <span>{{$tag.Name}}</span>
+            </span>
+          </a>
+        </span>
+      </div>
+      <div class="level-right">
+        <div class="level-item buttons has-addons">
+          <a class="button is-small is-info is-light" href="/bookmarks/tags/{{$tag.EncodedName}}/edit"
+            title="Edit tag: {{$tag.Name}}">
+            <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
+          </a>
+          <a class="button is-small is-danger is-light" href="/bookmarks/tags/{{$tag.EncodedName}}/delete"
+            title="Delete tag: {{$tag.Name}}">
+            <span class="icon"><i class="fa-solid fa-trash"></i></span>
+          </a>
+        </div>
+      </div>
     </div>
     {{- end}}
   </div>
-  <nav class="level">
+  </div>
+  <nav class="level is-mobile">
     <div class="level-left">
       <div class="level-item">
-        <a href="#" class="button is-small">
+        <a href="#top" class="button is-small">
           <span class="icon-text">
             <span class="icon">
               <i class="fa-solid fa-chevron-up"></i>
@@ -57,12 +73,15 @@
     <div class="level-item">
       <form action="/bookmarks/tags" method="GET">
         <div class="field has-addons">
-          <div class="control">
+          <div class="control is-expanded">
             <input class="input" type="text" id="filterTerm" name="filter" placeholder="Filter by name"
-                   value="{{.Page.SearchTerms}}">
+              value="{{.Page.SearchTerms}}">
           </div>
           <div class="control">
-            <button type="submit" class="button">Filter</button>
+            <button type="submit" class="button">
+              <span class="icon"><i class="fa-solid fa-filter"></i></span>
+              <span>Filter</span>
+            </button>
           </div>
         </div>
       </form>

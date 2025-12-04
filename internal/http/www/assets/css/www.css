@@ -75,6 +75,11 @@ code {
 }
 
 .level-left,
+.level-right {
+  flex-direction: row;
+}
+
+.level-left,
 .level-item {
   flex-shrink: unset;
 }
@@ -85,6 +90,14 @@ code {
   margin-bottom: 0;
   margin-left: 0;
   padding-inline-start: 0;
+}
+
+.column>.level {
+  margin-bottom: 0.2em;
+}
+
+.column>.level:hover {
+  background-color: var(--bulma-scheme-main-bis);
 }
 
 .panel-heading {
@@ -110,7 +123,7 @@ code {
 
 .tag-count {
   display: inline-block;
-  width: 4em;
+  width: 2.5em;
 }
 
 /* Feeds */

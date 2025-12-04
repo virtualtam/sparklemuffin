@@ -34,6 +34,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Packaging and automation
 - Update direct and transitive dependencies
 - Bump github.com/jaswdr/faker to v2.9.0
+- Enable esbuild watch mode for live asset rebuilding
+- Run assets pipeline and Go server concurrently to avoid live server interruptions
 
 ### Repository
 - Document query and transaction helpers

@@ -91,8 +91,17 @@ watch-assets:
 live:
 	@echo "== Starting database"
 	docker compose -f docker-compose.dev.yml up --remove-orphans -d
+	@make build-assets
 	@echo "== Watching for changes... (hit Ctrl+C when done)"
-	@watchexec --restart --exts css,go,gohtml -- make build-assets run
+	@bash -c 'trap "kill 0" INT TERM; \
+		make watch-assets & \
+		watchexec \
+			--restart \
+			--exts css,go,gohtml \
+			--ignore "internal/http/www/assets/**" \
+			--no-vcs-ignore \
+			-- make run & \
+		wait'
 .PHONY: live
 
 run:
@@ -103,8 +112,17 @@ run:
 live-race:
 	@echo "== Starting database"
 	docker compose -f docker-compose.dev.yml up --remove-orphans -d
+	@make build-assets
 	@echo "== Watching for changes... (hit Ctrl+C when done)"
-	@watchexec --restart --exts css,go,gohtml -- make build-assets run-race
+	@bash -c 'trap "kill 0" INT TERM; \
+		make watch-assets & \
+		watchexec \
+			--restart \
+			--exts css,go,gohtml \
+			--ignore "internal/http/www/assets/**" \
+			--no-vcs-ignore \
+			-- make run-race & \
+		wait'
 .PHONY: live-race
 
 run-race:

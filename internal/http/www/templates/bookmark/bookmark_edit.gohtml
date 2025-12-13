@@ -42,8 +42,8 @@
       <div class="field-body">
         <div class="field">
           <div class="control">
-            <textarea class="textarea" id="description" name="description" placeholder="Description"
-              rows="10">{{.Bookmark.Description}}</textarea>
+            <textarea class="textarea" id="description" name="description" placeholder="Description" rows="10"
+              data-easymde>{{.Bookmark.Description}}</textarea>
           </div>
         </div>
       </div>
@@ -87,7 +87,7 @@
       </div>
     </div>
   </form>
-  {{template "awesomplete"}}
-  {{template "easymde" "description"}}
 </section>
+{{template "awesomplete"}}
+<script src="/static/easymde-init.min.js"></script>
 {{end}}

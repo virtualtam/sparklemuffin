@@ -9,6 +9,14 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 - Replace custom Cross-Site Request Forgery (CSRF) helpers with Go 1.25's CSRF protection middleware
 
+### Added
+#### WWW
+- Add a JavaScript asset pipeline to the esbuild configuration
+
+### Changed
+#### WWW
+- Extract EasyMDE editor initialization as a JavaScript module
+
 ## [v0.6.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.0) - 2025-12-04
 ### Added
 #### Feed

@@ -19,7 +19,7 @@ import (
 	"github.com/evanw/esbuild/pkg/api"
 )
 
-var buildOptions = api.BuildOptions{
+var cssBuildOptions = api.BuildOptions{
 	EntryPoints: []string{
 		"css/www.css",
 	},
@@ -34,6 +34,22 @@ var buildOptions = api.BuildOptions{
 		".css":   api.LoaderCSS,
 		".ttf":   api.LoaderFile,
 		".woff2": api.LoaderFile,
+	},
+}
+
+var jsBuildOptions = api.BuildOptions{
+	EntryPoints: []string{
+		"js/easymde-init.js",
+	},
+	Outdir:            "../static",
+	Bundle:            true,
+	MinifyWhitespace:  true,
+	MinifyIdentifiers: true,
+	MinifySyntax:      true,
+	Write:             true,
+	LogLevel:          api.LogLevelInfo,
+	OutExtension: map[string]string{
+		".js": ".min.js",
 	},
 }
 
@@ -52,25 +68,42 @@ func main() {
 }
 
 func buildAssets() {
-	cssResult := api.Build(buildOptions)
+	cssResult := api.Build(cssBuildOptions)
 	if len(cssResult.Errors) > 0 {
 		errors := make([]string, len(cssResult.Errors))
 		for i, err := range cssResult.Errors {
 			errors[i] = err.Text
 		}
-		log.Fatalf("esbuild: failed to build assets: %s\n", strings.Join(errors, ", "))
+		log.Fatalf("esbuild: failed to build CSS assets: %s\n", strings.Join(errors, ", "))
+	}
+
+	jsResult := api.Build(jsBuildOptions)
+	if len(jsResult.Errors) > 0 {
+		errors := make([]string, len(jsResult.Errors))
+		for i, err := range jsResult.Errors {
+			errors[i] = err.Text
+		}
+		log.Fatalf("esbuild: failed to build JS assets: %s\n", strings.Join(errors, ", "))
 	}
 }
 
 func watchAssets() {
-	ctx, err := api.Context(buildOptions)
+	cssCtx, err := api.Context(cssBuildOptions)
 	if err != nil {
-		log.Fatalf("esbuild: failed to create esbuild context: %s\n", err)
+		log.Fatalf("esbuild: failed to create CSS esbuild context: %s\n", err)
+	}
+
+	jsCtx, err := api.Context(jsBuildOptions)
+	if err != nil {
+		log.Fatalf("esbuild: failed to create JS esbuild context: %s\n", err)
 	}
 
 	// Start watching
-	if err := ctx.Watch(api.WatchOptions{}); err != nil {
-		log.Fatalf("esbuild: failed to start watch mode: %s\n", err)
+	if err := cssCtx.Watch(api.WatchOptions{}); err != nil {
+		log.Fatalf("esbuild: failed to start CSS watch mode: %s\n", err)
+	}
+	if err := jsCtx.Watch(api.WatchOptions{}); err != nil {
+		log.Fatalf("esbuild: failed to start JS watch mode: %s\n", err)
 	}
 
 	log.Println("esbuild: watching for asset changes... (Ctrl+C to stop)")
@@ -81,7 +114,8 @@ func watchAssets() {
 	<-sigChan
 
 	log.Println("esbuild: stopping watch mode...")
-	ctx.Dispose()
+	cssCtx.Dispose()
+	jsCtx.Dispose()
 }
 
 func copyStaticAssets() {
@@ -89,9 +123,6 @@ func copyStaticAssets() {
 		log.Fatal(err)
 	}
 	if err := copyFile("node_modules/awesomplete/awesomplete.min.js", "../static/awesomplete.min.js"); err != nil {
-		log.Fatal(err)
-	}
-	if err := copyFile("node_modules/easymde/dist/easymde.min.js", "../static/easymde.min.js"); err != nil {
 		log.Fatal(err)
 	}
 	if err := copyFile("node_modules/htmx.org/dist/htmx.min.js", "../static/htmx.min.js"); err != nil {

@@ -97,7 +97,7 @@ live:
 		make watch-assets & \
 		watchexec \
 			--restart \
-			--exts css,go,gohtml \
+			--exts css,go,gohtml,js \
 			--ignore "internal/http/www/assets/**" \
 			--no-vcs-ignore \
 			-- make run & \

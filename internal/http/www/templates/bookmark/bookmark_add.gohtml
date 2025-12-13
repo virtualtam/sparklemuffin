@@ -56,7 +56,7 @@
         <div class="field is-expanded">
           <div class="control">
             <input class="input" type="text" id="tags" name="tags" placeholder="Tags, separated by spaces"
-              data-list="{{Join .Tags " ,"}}">
+              data-list="{{Join .Tags ","}}">
           </div>
         </div>
       </div>
@@ -87,6 +87,6 @@
     </div>
   </form>
 </section>
-{{template "awesomplete"}}
+<script src="/static/complete-tags.min.js"></script>
 <script src="/static/easymde-init.min.js"></script>
 {{end}}

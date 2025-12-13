@@ -15,6 +15,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 #### WWW
+- Extract Awesomplete tag completion as a Javascript module
 - Extract EasyMDE editor initialization as a JavaScript module
 
 ## [v0.6.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.0) - 2025-12-04

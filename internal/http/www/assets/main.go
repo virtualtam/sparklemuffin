@@ -39,6 +39,7 @@ var cssBuildOptions = api.BuildOptions{
 
 var jsBuildOptions = api.BuildOptions{
 	EntryPoints: []string{
+		"js/complete-tags.js",
 		"js/easymde-init.js",
 	},
 	Outdir:            "../static",
@@ -120,9 +121,6 @@ func watchAssets() {
 
 func copyStaticAssets() {
 	if err := copyFile("node_modules/alpinejs/dist/cdn.min.js", "../static/alpinejs.min.js"); err != nil {
-		log.Fatal(err)
-	}
-	if err := copyFile("node_modules/awesomplete/awesomplete.min.js", "../static/awesomplete.min.js"); err != nil {
 		log.Fatal(err)
 	}
 	if err := copyFile("node_modules/htmx.org/dist/htmx.min.js", "../static/htmx.min.js"); err != nil {

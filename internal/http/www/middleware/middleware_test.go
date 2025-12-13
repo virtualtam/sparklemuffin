@@ -124,7 +124,7 @@ func TestAuthenticatedUser(t *testing.T) {
 	}
 }
 
-func TestServerStaticCacheControl(t *testing.T) {
+func TestStaticCacheControl(t *testing.T) {
 	want := "max-age=2592000"
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -138,5 +138,38 @@ func TestServerStaticCacheControl(t *testing.T) {
 
 	if got != want {
 		t.Errorf("want Cache-Control %q, got %q", want, got)
+	}
+}
+
+func TestContentSecurityPolicy(t *testing.T) {
+	var gotNonce string
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotNonce = httpcontext.CSPNonceValue(r.Context())
+	})
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	ContentSecurityPolicy(handler).ServeHTTP(w, r)
+
+	if gotNonce == "" {
+		t.Errorf("want non-empty nonce")
+	}
+
+	gotPolicy := w.Header().Get("Content-Security-Policy")
+	wantPolicy := "default-src 'none'; " +
+		"script-src 'self' 'unsafe-eval' 'nonce-" + gotNonce + "'; " +
+		"style-src 'self'; " +
+		"img-src 'self'; " +
+		"font-src 'self'; " +
+		"connect-src 'self'; " +
+		"form-action 'self'; " +
+		"base-uri 'self'; " +
+		"frame-ancestors 'none'; " +
+		"upgrade-insecure-requests"
+
+	if gotPolicy != wantPolicy {
+		t.Errorf("want policy %q, got %q", wantPolicy, gotPolicy)
 	}
 }

@@ -89,6 +89,6 @@
 </section>
 {{end}}
 {{define "scripts"}}
-  <script src="/static/complete-tags.min.js"></script>
-  <script src="/static/easymde-init.min.js"></script>
+  <script nonce="{{.Nonce}}" src="/static/complete-tags.min.js"></script>
+  <script nonce="{{.Nonce}}" src="/static/easymde-init.min.js"></script>
 {{end}}

@@ -204,9 +204,9 @@
 {{end}}
 
 {{define "scripts"}}
-<script src="/static/alpinejs.min.js" defer></script>
-<script src="/static/htmx.min.js"></script>
-<script>
+<script nonce="{{.Nonce}}" src="/static/alpinejs.min.js" defer></script>
+<script nonce="{{.Nonce}}" src="/static/htmx.min.js"></script>
+<script nonce="{{.Nonce}}">
   function feedMenu() {
     return {
       open: {},

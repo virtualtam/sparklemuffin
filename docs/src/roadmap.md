@@ -6,7 +6,6 @@ The roadmap is based on the Now / Next / Later format to communicate current foc
 
 ## Now
 - www: Improve responsiveness using partial reloads with HTMX and Alpine.js
-- www: Content Security Policy (CSP)
 - www: Review OWASP Top 10 checklist
 
 ## Next

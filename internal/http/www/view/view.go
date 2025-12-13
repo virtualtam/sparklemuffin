@@ -29,9 +29,16 @@ const (
 type Data struct {
 	AtomFeedURL string
 	Content     any
+	CSP         ContentSecurityPolicy
 	Flash       *flash
 	Title       string
 	User        *user.User
+}
+
+// ContentSecurityPolicy exposes information required to enforce the Content Security Policy.
+type ContentSecurityPolicy struct {
+	// Nonce is a cryptographically secure nonce, unique to the request being served.
+	Nonce string
 }
 
 // View represents a Web View that will be rendered by the server in response to
@@ -88,6 +95,7 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request, data any) {
 
 	viewData.popFlash(w, r)
 	viewData.User = httpcontext.UserValue(r.Context())
+	viewData.CSP.Nonce = httpcontext.CSPNonceValue(r.Context())
 
 	var buf bytes.Buffer
 

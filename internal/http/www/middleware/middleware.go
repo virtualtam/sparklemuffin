@@ -1,9 +1,13 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
+// Package middleware provides HTTP middleware for user session management, static resource caching
+// and security policy enforcement.
 package middleware
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"net/http"
 	"time"
 
@@ -75,4 +79,39 @@ func StaticCacheControl(h http.Handler) http.HandlerFunc {
 		w.Header().Set("Cache-Control", "max-age=2592000") // 30 days
 		h.ServeHTTP(w, r)
 	}
+}
+
+// ContentSecurityPolicy sets the Content-Security-Policy header.
+func ContentSecurityPolicy(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nonce, err := generateNonce()
+		if err != nil {
+			errorView.Render(w, r, http.StatusInternalServerError)
+			return
+		}
+
+		policy := "default-src 'none'; " +
+			"script-src 'self' 'unsafe-eval' 'nonce-" + nonce + "'; " +
+			"style-src 'self'; " +
+			"img-src 'self'; " +
+			"font-src 'self'; " +
+			"connect-src 'self'; " +
+			"form-action 'self'; " +
+			"base-uri 'self'; " +
+			"frame-ancestors 'none'; " +
+			"upgrade-insecure-requests"
+		w.Header().Set("Content-Security-Policy", policy)
+
+		ctx := httpcontext.WithCSPNonce(r.Context(), nonce)
+		h.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// generateNonce generates a cryptographically secure 16-byte base64-encoded nonce.
+func generateNonce() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(b), nil
 }

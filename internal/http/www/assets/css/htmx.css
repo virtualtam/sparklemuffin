@@ -1,0 +1,22 @@
+/**
+ * HTMX - Content Security Policy workaround
+ *
+ * See https://github.com/bigskysoftware/htmx/issues/2832
+ *
+ * Copyright (c) VirtualTam
+ * SPDX-License-Identifier: MIT
+ */
+
+.htmx-indicator{
+  opacity:0;
+}
+
+.htmx-request .htmx-indicator{
+  opacity:1;
+  transition: opacity 200ms ease-in;
+}
+
+.htmx-request.htmx-indicator{
+  opacity:1;
+  transition: opacity 200ms ease-in;
+}

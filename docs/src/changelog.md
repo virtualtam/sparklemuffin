@@ -8,6 +8,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ## Unreleased
 ### Security
 - Replace custom Cross-Site Request Forgery (CSRF) helpers with Go 1.25's CSRF protection middleware
+- Define a Content Security Policy for Web browsers to enforce
 
 ### Added
 #### WWW

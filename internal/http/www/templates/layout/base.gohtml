@@ -6,6 +6,7 @@
     <meta charset="utf-8">
     <meta name="color-scheme" content="only light" />
     <meta name="viewport" content="width=device-width">
+    <meta name="htmx-config" content='{"includeIndicatorStyles": false}'>
     <title>{{.Title}}</title>
     <link rel="stylesheet" type="text/css" href="/static/www.min.css">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
@@ -28,7 +29,7 @@
     </main>
 
     {{template "footer"}}
-    <script>
+    <script nonce="{{.CSP.Nonce}}">
       document.addEventListener('DOMContentLoaded', () => {
         const navbarBurger = document.querySelector('#navbarBurger');
         const menu = document.getElementById(navbarBurger.dataset.target);
@@ -39,7 +40,7 @@
         });
       });
     </script>
-    {{template "scripts" .}}
+    {{template "scripts" .CSP}}
   </body>
 </html>
 {{end}}

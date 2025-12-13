@@ -1,6 +1,7 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
+// Package httpcontext provides utilities to set and retrieve values from HTTP request context.
 package httpcontext
 
 import (
@@ -9,11 +10,28 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
-type userContextKey string
+type contextKey string
 
 const (
-	userKey userContextKey = "user"
+	cspNonceKey contextKey = "csp_nonce"
+	userKey     contextKey = "user"
 )
+
+// WithCSPNonce enriches a context.Context with a nonce value used to enforce a Content Security Policy.
+func WithCSPNonce(ctx context.Context, nonce string) context.Context {
+	return context.WithValue(ctx, cspNonceKey, nonce)
+}
+
+// CSPNonceValue retrieves a nonce value used to enforce a Content Security Policy from a context.Context.
+func CSPNonceValue(ctx context.Context) string {
+	if value := ctx.Value(cspNonceKey); value != nil {
+		if nonce, ok := value.(string); ok {
+			return nonce
+		}
+	}
+
+	return ""
+}
 
 // WithUser enriches a context.Context with a user.User.
 func WithUser(ctx context.Context, user user.User) context.Context {

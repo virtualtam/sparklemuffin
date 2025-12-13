@@ -28,6 +28,7 @@
         - [Documentation Structure](./developer-guide/reference/documentation-structure.md)
         - [Development Tools](./developer-guide/reference/development-tools.md)
         - [Continuous Integration](./developer-guide/reference/continuous-integration.md)
+        - [Content Security Policy](./developer-guide/reference/content-security-policy.md)
         - [Database](./developer-guide/reference/database.md)
         - [Netscape Bookmark Parser](./developer-guide/reference/netscape.md)
         - [OPML Feed Subscription Parser](./developer-guide/reference/opml.md)

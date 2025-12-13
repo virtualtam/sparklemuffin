@@ -96,6 +96,9 @@ func (s *Server) registerHandlers() {
 	// - https://words.filippo.io/csrf/
 	s.router.Use(http.NewCrossOriginProtection().Handler)
 
+	// Content Security Policy nonce generation
+	s.router.Use(middleware.ContentSecurityPolicy)
+
 	// Global middleware
 	s.router.Use(chimiddleware.RequestID)
 	s.router.Use(chimiddleware.RealIP)

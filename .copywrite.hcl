@@ -5,6 +5,9 @@ project {
   copyright_holder = "VirtualTam"
 
   header_ignore = [
+    # IDEs
+    ".idea/**",
+
     # Docker Compose
     "docker-compose*.yml",
 
@@ -13,5 +16,9 @@ project {
 
     # Fonts
     "**/firacode/**",
+
+    # Generated assets
+    "internal/http/www/static/*.min.css",
+    "internal/http/www/static/*.min.js",
   ]
 }

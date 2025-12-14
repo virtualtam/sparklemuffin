@@ -28,7 +28,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists \
     --mount=type=cache,target=/var/cache/apt \
     rm -f /etc/apt/apt.conf.d/docker-clean \
     && apt update \
-    && apt install -y ca-certificates
+    && apt install -y ca-certificates curl
 
 RUN groupadd \
         --gid 1000 \
@@ -62,3 +62,6 @@ USER sparklemuffin
 WORKDIR /var/lib/sparklemuffin
 
 CMD ["/usr/local/bin/sparklemuffin", "run"]
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8090/health || exit 1

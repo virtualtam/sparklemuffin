@@ -21,7 +21,10 @@ const (
 <head><title>SparkleMuffin Monitoring</title></head>
 <body>
   <h1>Monitoring</h1>
-  <p><a href="/metrics">Metrics</a></p>
+  <ul>
+    <li><a href="/health">Health</a></li>
+    <li><a href="/metrics">Metrics</a></li>
+  </ul>
 </body>
 </html>`
 )
@@ -39,7 +42,15 @@ func NewServer(metricsPrefix string, metricsListenAddr string, versionDetails *v
 
 	router := http.NewServeMux()
 
+	router.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+		_, err := w.Write([]byte("OK"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
+
 	router.Handle("/metrics", promhttp.HandlerFor(metricsRegistry, opts))
+
 	router.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		_, err := w.Write([]byte(webroot))
 		if err != nil {

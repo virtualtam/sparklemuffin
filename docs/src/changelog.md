@@ -11,6 +11,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Define a Content Security Policy for Web browsers to enforce
 
 ### Added
+#### Monitoring
+- Add a `/health` endpoint and Docker `HEALTHCHECK` command
+
 #### WWW
 - Add a JavaScript asset pipeline to the esbuild configuration
 

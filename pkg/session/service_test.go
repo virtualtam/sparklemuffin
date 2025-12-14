@@ -32,9 +32,12 @@ func TestServiceAdd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
 			r := &FakeRepository{}
-			s := NewService(r, "hmac-key")
+			s, err := NewService(r, "hmac-key")
+			if err != nil {
+				t.Fatal(err)
+			}
 
-			err := s.Add(t.Context(), tc.session)
+			err = s.Add(t.Context(), tc.session)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {
@@ -91,7 +94,10 @@ func TestServiceByRememberToken(t *testing.T) {
 			r := &FakeRepository{
 				Sessions: tc.repositorySessions,
 			}
-			s := NewService(r, "ugotcookies")
+			s, err := NewService(r, "ugotcookies")
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			got, err := s.ByRememberToken(t.Context(), tc.token)
 

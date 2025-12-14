@@ -17,12 +17,16 @@ type Service struct {
 }
 
 // NewService initializes and returns a Session Service.
-func NewService(r Repository, hmacKey string) *Service {
+func NewService(r Repository, hmacKey string) (*Service, error) {
+	if hmacKey == "" {
+		return &Service{}, ErrHmacKeyRequired
+	}
+
 	hmac := hash.NewHMAC(hmacKey)
 	return &Service{
 		r:    r,
 		hmac: hmac,
-	}
+	}, nil
 }
 
 // Add saves a new Session.

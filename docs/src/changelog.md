@@ -10,6 +10,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Replace custom Cross-Site Request Forgery (CSRF) helpers with Go 1.25's CSRF protection middleware
 - Define a Content Security Policy for Web browsers to enforce
 - Do not expose sensitive configuration keys as Docker `ENV` variables
+- Require a non-empty HMAC key to be configured to generate session tokens
 
 ### Added
 #### Monitoring

@@ -64,7 +64,10 @@ func TestServerRememberUser(t *testing.T) {
 			sessionRepository := &session.FakeRepository{
 				Sessions: tc.repositorySessions,
 			}
-			sessionService := session.NewService(sessionRepository, "ugotcookies")
+			sessionService, err := session.NewService(sessionRepository, "ugotcookies")
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			userRepository := &user.FakeRepository{
 				Users: tc.repositoryUsers,

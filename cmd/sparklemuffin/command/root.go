@@ -44,17 +44,8 @@ import (
 )
 
 const (
-	rootCmdName string = "sparklemuffin"
-
-	defaultHMACKey string = "hmac-secret-key"
-
+	rootCmdName    string = "sparklemuffin"
 	databaseDriver string = "pgx"
-
-	defaultDatabaseAddr     string = "localhost:15432"
-	defaultDatabaseSSLMode  string = "disable"
-	defaultDatabaseName     string = "sparklemuffin"
-	defaultDatabaseUser     string = "sparklemuffin"
-	defaultDatabasePassword string = "sparklemuffin"
 )
 
 var (
@@ -63,8 +54,6 @@ var (
 	logFormat            string
 
 	versionDetails *version.Details
-
-	hmacKey string
 
 	databaseAddr     string
 	databaseSSLMode  string
@@ -94,6 +83,18 @@ var (
 
 // NewRootCommand initializes the main CLI entrypoint and common command flags.
 func NewRootCommand() *cobra.Command {
+	const (
+		defaultDatabaseAddr     string = "localhost:15432"
+		defaultDatabaseSSLMode  string = "disable"
+		defaultDatabaseName     string = "sparklemuffin"
+		defaultDatabaseUser     string = "sparklemuffin"
+		defaultDatabasePassword string = "sparklemuffin"
+	)
+
+	var (
+		hmacKey string
+	)
+
 	cmd := &cobra.Command{
 		Use:   rootCmdName,
 		Short: "SparkleMuffin - Web Bookmark Manager",
@@ -197,7 +198,11 @@ func NewRootCommand() *cobra.Command {
 			feedSynchronizingService = feedsynchronizing.NewService(feedRepository, feedClient)
 
 			sessionRepository := pgsession.NewRepository(pgxPool)
-			sessionService = session.NewService(sessionRepository, hmacKey)
+			sessionService, err = session.NewService(sessionRepository, hmacKey)
+			if err != nil {
+				log.Error().Err(err).Msg("session: failed to create session service")
+				return err
+			}
 
 			userRepository := pguser.NewRepository(pgxPool)
 			userService = user.NewService(userRepository)
@@ -256,7 +261,7 @@ func NewRootCommand() *cobra.Command {
 	cmd.PersistentFlags().StringVar(
 		&hmacKey,
 		"hmac-key",
-		defaultHMACKey,
+		"",
 		"Secret key for HMAC session token hashing",
 	)
 

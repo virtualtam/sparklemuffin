@@ -105,7 +105,7 @@ live:
 .PHONY: live
 
 run:
-	go run ./cmd/sparklemuffin/ run
+	go run ./cmd/sparklemuffin/ run --hmac-key insecure-hmac-key
 .PHONY: run
 
 # Live development server (with race detection enabled)

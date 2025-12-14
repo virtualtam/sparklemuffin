@@ -11,6 +11,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Define a Content Security Policy for Web browsers to enforce
 - Do not expose sensitive configuration keys as Docker `ENV` variables
 - Require a non-empty HMAC key to be configured to generate session tokens
+- Require a non-empty database password to be configured
 
 ### Added
 #### Monitoring

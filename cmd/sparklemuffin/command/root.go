@@ -84,11 +84,10 @@ var (
 // NewRootCommand initializes the main CLI entrypoint and common command flags.
 func NewRootCommand() *cobra.Command {
 	const (
-		defaultDatabaseAddr     string = "localhost:15432"
-		defaultDatabaseSSLMode  string = "disable"
-		defaultDatabaseName     string = "sparklemuffin"
-		defaultDatabaseUser     string = "sparklemuffin"
-		defaultDatabasePassword string = "sparklemuffin"
+		defaultDatabaseAddr    string = "localhost:15432"
+		defaultDatabaseSSLMode string = "disable"
+		defaultDatabaseName    string = "sparklemuffin"
+		defaultDatabaseUser    string = "sparklemuffin"
 	)
 
 	var (
@@ -254,7 +253,7 @@ func NewRootCommand() *cobra.Command {
 	cmd.PersistentFlags().StringVar(
 		&databasePassword,
 		"db-password",
-		defaultDatabasePassword,
+		"",
 		"Database password",
 	)
 

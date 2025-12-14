@@ -16,9 +16,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 #### WWW
-- Extract Awesomplete tag completion as a Javascript module
+- Extract Awesomplete tag completion as a JavaScript module
 - Extract EasyMDE editor initialization as a JavaScript module
-- Do not define Go templates that only contain a Javascript script block
+- Do not define Go templates that only contain a JavaScript script block
 - Rework the base template to allow content pages to define an optional `scripts` template
 - Rework Goldmark / Chroma usage to use CSS classes instead of outputting inline style information
 

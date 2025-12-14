@@ -36,6 +36,7 @@ func main() {
 	}
 }
 
+// copyStaticAssets copies static assets as-is.
 func copyStaticAssets() {
 	if err := copyFile("node_modules/alpinejs/dist/cdn.min.js", "../static/alpinejs.min.js"); err != nil {
 		log.Fatal(err)
@@ -48,6 +49,13 @@ func copyStaticAssets() {
 	}
 }
 
+// generateChromaCss generates a CSS file corresponding to the selected Chroma syntax highlighting style.
+//
+// The generated CSS is imported in the main CSS file (www.css) and processed as part of the assets pipeline.
+//
+// This allows:
+// - configuring Chroma to output CSS classes instead of inline style;
+// - enforcing a strict Content Security Policy by not having to allow 'unsafe-inline' styles.
 func generateChromaCss() {
 	const (
 		// chromaStyle is the name of the syntax highlighting style used by Chroma when rendering Markdown code blocks.
@@ -68,41 +76,46 @@ func generateChromaCss() {
 	}
 }
 
-var cssBuildOptions = api.BuildOptions{
-	EntryPoints: []string{
-		"css/www.css",
-	},
-	Outfile:           "../static/www.min.css",
-	Bundle:            true,
-	MinifyWhitespace:  true,
-	MinifyIdentifiers: true,
-	MinifySyntax:      true,
-	Write:             true,
-	LogLevel:          api.LogLevelInfo,
-	Loader: map[string]api.Loader{
-		".css":   api.LoaderCSS,
-		".ttf":   api.LoaderFile,
-		".woff2": api.LoaderFile,
-	},
-}
+var (
+	// cssBuildOptions configures how CSS files are processed by esbuild.
+	cssBuildOptions = api.BuildOptions{
+		EntryPoints: []string{
+			"css/www.css",
+		},
+		Outfile:           "../static/www.min.css",
+		Bundle:            true,
+		MinifyWhitespace:  true,
+		MinifyIdentifiers: true,
+		MinifySyntax:      true,
+		Write:             true,
+		LogLevel:          api.LogLevelInfo,
+		Loader: map[string]api.Loader{
+			".css":   api.LoaderCSS,
+			".ttf":   api.LoaderFile,
+			".woff2": api.LoaderFile,
+		},
+	}
 
-var jsBuildOptions = api.BuildOptions{
-	EntryPoints: []string{
-		"js/complete-tags.js",
-		"js/easymde-init.js",
-	},
-	Outdir:            "../static",
-	Bundle:            true,
-	MinifyWhitespace:  true,
-	MinifyIdentifiers: true,
-	MinifySyntax:      true,
-	Write:             true,
-	LogLevel:          api.LogLevelInfo,
-	OutExtension: map[string]string{
-		".js": ".min.js",
-	},
-}
+	// jsBuildOptions configure how JavaScript files are processed by esbuild.
+	jsBuildOptions = api.BuildOptions{
+		EntryPoints: []string{
+			"js/complete-tags.js",
+			"js/easymde-init.js",
+		},
+		Outdir:            "../static",
+		Bundle:            true,
+		MinifyWhitespace:  true,
+		MinifyIdentifiers: true,
+		MinifySyntax:      true,
+		Write:             true,
+		LogLevel:          api.LogLevelInfo,
+		OutExtension: map[string]string{
+			".js": ".min.js",
+		},
+	}
+)
 
+// buildAssets processes CSS and JavaScript assets once.
 func buildAssets() {
 	cssResult := api.Build(cssBuildOptions)
 	if len(cssResult.Errors) > 0 {
@@ -123,6 +136,7 @@ func buildAssets() {
 	}
 }
 
+// watchAssets watches for changes in CSS and JavaScript assets and processes them when necessary.
 func watchAssets() {
 	cssCtx, err := api.Context(cssBuildOptions)
 	if err != nil {
@@ -154,6 +168,7 @@ func watchAssets() {
 	jsCtx.Dispose()
 }
 
+// writeFile creates a file and its parent directories, and writes the contents of r to it.
 func writeFile(r io.Reader, path string) error {
 	f, err := os.Create(path)
 	if err != nil {
@@ -173,6 +188,7 @@ func writeFile(r io.Reader, path string) error {
 	return nil
 }
 
+// copyFile creates the destination file and its parent directories, and copies the contents of the source file to it.
 func copyFile(src, dest string) error {
 	err := os.MkdirAll(filepath.Dir(dest), 0755)
 	if err != nil {
@@ -208,6 +224,7 @@ func copyFile(src, dest string) error {
 	return nil
 }
 
+// copyFiles creates the destination directory and recursively copies the contents of the source directory to it.
 func copyFiles(srcDir, dstDir string) error {
 	return filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {

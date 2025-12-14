@@ -15,6 +15,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Add a JavaScript asset pipeline to the esbuild configuration
 
 ### Changed
+#### CLI
+- Change monitoring server port to `8090`
+- Let the monitoring server listen to all interfaces by default
+
 #### WWW
 - Extract Awesomplete tag completion as a JavaScript module
 - Extract EasyMDE editor initialization as a JavaScript module

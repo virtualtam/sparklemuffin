@@ -1,7 +1,9 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package metrics
+// Package monitoring provides utilities to set up a HTTP server to expose monitoring information
+// such as application metrics and metadata.
+package monitoring
 
 import (
 	"net/http"
@@ -16,9 +18,9 @@ import (
 
 const (
 	webroot = `<html>
-<head><title>SparkleMuffin</title></head>
+<head><title>SparkleMuffin Monitoring</title></head>
 <body>
-  <h1>SparkleMuffin</h1>
+  <h1>Monitoring</h1>
   <p><a href="/metrics">Metrics</a></p>
 </body>
 </html>`

@@ -22,7 +22,7 @@ cmd
 ```shell
 internal
 ├── hash            # Cryptographically secure hash helpers
-├── http            # HTTP servers: metrics, Web application
+├── http            # HTTP servers: monitoring, Web application
 ├── paginate        # Pagination utilities
 ├── rand            # Cryptographically secure pseudo-random helpers
 ├── repository

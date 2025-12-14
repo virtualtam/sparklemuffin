@@ -67,7 +67,7 @@ docker compose -f docker-compose.dev.yml up --remove-orphans -d
 2025-06-01T21:06:19+02:00 INF database: successfully created connection pool database_addr=localhost:15432 database_driver=pgx database_name=sparklemuffin
 2025-06-01T21:06:19+02:00 INF global: setting up services log_level=info version=devel
 2025-06-01T21:06:19+02:00 INF feeds: synchronization scheduler started interval_seconds=3600000
-2025-06-01T21:06:19+02:00 INF metrics: listening for HTTP requests metrics_addr=127.0.0.1:8081
+2025-06-01T21:06:19+02:00 INF monitoring: listening for HTTP requests metrics_addr=127.0.0.1:8090
 2025-06-01T21:06:19+02:00 INF sparklemuffin: listening for HTTP requests http_addr=0.0.0.0:8080
 ```
 
@@ -85,7 +85,7 @@ docker compose -f docker-compose.dev.yml up --remove-orphans -d
 2023-11-03T10:27:38+01:00 INF configuration: no file found config_paths=["/etc","/home/dev/.config","."]
 2023-11-03T10:27:38+01:00 INF database: successfully created connection pool database_addr=localhost:15432 database_driver=pgx database_name=sparklemuffin
 2023-11-03T10:27:38+01:00 INF global: setting up services log_level=info version=devel
-2023-11-03T10:27:38+01:00 INF metrics: listening for HTTP requests metrics_addr=127.0.0.1:8081
+2023-11-03T10:27:38+01:00 INF monitoring: listening for HTTP requests metrics_addr=127.0.0.1:8090
 2023-11-03T10:27:38+01:00 INF sparklemuffin: listening for HTTP requests http_addr=0.0.0.0:8080
 ```
 

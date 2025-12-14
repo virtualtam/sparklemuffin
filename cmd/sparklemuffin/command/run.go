@@ -15,27 +15,25 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/virtualtam/sparklemuffin/internal/http/metrics"
+	"github.com/virtualtam/sparklemuffin/internal/http/monitoring"
 	"github.com/virtualtam/sparklemuffin/internal/http/www"
 	feedsynchronizing "github.com/virtualtam/sparklemuffin/pkg/feed/synchronizing"
 )
 
-const (
-	defaultListenAddr     string = "0.0.0.0:8080"
-	defaultPublicHTTPAddr string = "http://localhost:8080"
-
-	defaultMetricsListenAddr string = "127.0.0.1:8081"
-)
-
-var (
-	listenAddr     string
-	publicHTTPAddr string
-
-	metricsListenAddr string
-)
-
-// NewRunCommand initializes a CLI command to start the HTTP server.
+// NewRunCommand initializes a CLI command to start the HTTP servers.
 func NewRunCommand() *cobra.Command {
+	const (
+		defaultWebListenAddr        string = "0.0.0.0:8080"
+		defaultPublicWebAddr        string = "http://localhost:8080"
+		defaultMonitoringListenAddr string = "0.0.0.0:8090"
+	)
+
+	var (
+		webListenAddr        string
+		publicWebAddr        string
+		monitoringListenAddr string
+	)
+
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Start the HTTP server",
@@ -53,19 +51,19 @@ func NewRunCommand() *cobra.Command {
 			)
 			go feedSynchronizingScheduler.Run(context.Background())
 
-			// HTTP - Metrics server
-			metricsServer, metricsRegistry := metrics.NewServer(rootCmdName, metricsListenAddr, versionDetails)
+			// HTTP - Monitoring server
+			monitoringServer, metricsRegistry := monitoring.NewServer(rootCmdName, monitoringListenAddr, versionDetails)
 
 			go func() {
-				log.Info().Str("metrics_addr", metricsListenAddr).Msg("metrics: listening for HTTP requests")
+				log.Info().Str("addr", monitoringListenAddr).Msg("monitoring: listening for HTTP requests")
 
-				if err := metricsServer.ListenAndServe(); err != nil {
-					log.Error().Err(err).Msg("metrics: server stopped")
+				if err := monitoringServer.ListenAndServe(); err != nil {
+					log.Error().Err(err).Msg("monitoring: server stopped")
 				}
 			}()
 
 			// HTTP - SparkleMuffin server
-			publicURL, err := url.Parse(publicHTTPAddr)
+			publicURL, err := url.Parse(publicWebAddr)
 			if err != nil {
 				return fmt.Errorf("%s: failed to parse public HTTP address: %w", rootCmdName, err)
 			}
@@ -93,35 +91,35 @@ func NewRunCommand() *cobra.Command {
 			}
 
 			httpServer := &http.Server{
-				Addr:         listenAddr,
+				Addr:         webListenAddr,
 				Handler:      server,
 				ReadTimeout:  15 * time.Second,
 				WriteTimeout: 15 * time.Second,
 			}
 
-			log.Info().Str("http_addr", listenAddr).Msgf("%s: listening for HTTP requests", rootCmdName)
+			log.Info().Str("addr", webListenAddr).Msgf("%s: listening for HTTP requests", rootCmdName)
 			return httpServer.ListenAndServe()
 		},
 	}
 
 	cmd.Flags().StringVar(
-		&listenAddr,
+		&webListenAddr,
 		"listen-addr",
-		defaultListenAddr,
+		defaultWebListenAddr,
 		"Listen to this address (host:port)",
 	)
 
 	cmd.Flags().StringVar(
-		&metricsListenAddr,
-		"metrics-listen-addr",
-		defaultMetricsListenAddr,
-		"Listen to this address for Prometheus metrics (host:port)",
+		&monitoringListenAddr,
+		"monitoring-listen-addr",
+		defaultMonitoringListenAddr,
+		"Listen to this address for monitoring (host:port)",
 	)
 
 	cmd.Flags().StringVar(
-		&publicHTTPAddr,
+		&publicWebAddr,
 		"public-addr",
-		defaultPublicHTTPAddr,
+		defaultPublicWebAddr,
 		"Public HTTP address (if behind a proxy)",
 	)
 

@@ -53,7 +53,7 @@ Usage:
 Flags:
   -h, --help                         help for run
       --listen-addr string           Listen to this address (host:port) (default "0.0.0.0:8080")
-      --metrics-listen-addr string   Listen to this address for Prometheus metrics (host:port) (default "127.0.0.1:8081")
+      --monitoring-listen-addr string   Listen to this address for Prometheus monitoring (host:port) (default "127.0.0.1:8090")
       --public-addr string           Public HTTP address (if behind a proxy) (default "http://localhost:8080")
 
 Global Flags:

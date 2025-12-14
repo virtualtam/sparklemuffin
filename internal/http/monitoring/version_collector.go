@@ -1,7 +1,7 @@
 // Copyright (c) VirtualTam
 // SPDX-License-Identifier: MIT
 
-package metrics
+package monitoring
 
 import (
 	"strconv"

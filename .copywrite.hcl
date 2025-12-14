@@ -18,6 +18,7 @@ project {
     "**/firacode/**",
 
     # Generated assets
+    "internal/http/www/assets/css/chroma.css",
     "internal/http/www/static/*.min.css",
     "internal/http/www/static/*.min.js",
   ]

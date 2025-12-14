@@ -6,6 +6,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -16,8 +17,56 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/alecthomas/chroma/v2/formatters/html"
+	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/evanw/esbuild/pkg/api"
 )
+
+func main() {
+	watchMode := flag.Bool("watch", false, "Watch for changes and rebuild automatically")
+	flag.Parse()
+
+	copyStaticAssets()
+	generateChromaCss()
+
+	if *watchMode {
+		watchAssets()
+	} else {
+		buildAssets()
+	}
+}
+
+func copyStaticAssets() {
+	if err := copyFile("node_modules/alpinejs/dist/cdn.min.js", "../static/alpinejs.min.js"); err != nil {
+		log.Fatal(err)
+	}
+	if err := copyFile("node_modules/htmx.org/dist/htmx.min.js", "../static/htmx.min.js"); err != nil {
+		log.Fatal(err)
+	}
+	if err := copyFiles("favicons", "../static"); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func generateChromaCss() {
+	const (
+		// chromaStyle is the name of the syntax highlighting style used by Chroma when rendering Markdown code blocks.
+		//
+		// This value MUST match the one configured in internal/http/www/view/markdown.go for the Markdown renderer.
+		chromaStyle = "catppuccin-latte"
+	)
+
+	formatter := html.New(html.WithClasses(true))
+
+	var buf bytes.Buffer
+	if err := formatter.WriteCSS(&buf, styles.Get(chromaStyle)); err != nil {
+		log.Fatalf("esbuild: failed to generate chroma CSS: %s\n", err)
+	}
+
+	if err := writeFile(&buf, "css/chroma.css"); err != nil {
+		log.Fatalf("esbuild: failed to write chroma CSS: %s\n", err)
+	}
+}
 
 var cssBuildOptions = api.BuildOptions{
 	EntryPoints: []string{
@@ -52,20 +101,6 @@ var jsBuildOptions = api.BuildOptions{
 	OutExtension: map[string]string{
 		".js": ".min.js",
 	},
-}
-
-func main() {
-	watchMode := flag.Bool("watch", false, "Watch for changes and rebuild automatically")
-	flag.Parse()
-
-	// Copy static assets (JS libraries, favicons)
-	copyStaticAssets()
-
-	if *watchMode {
-		watchAssets()
-	} else {
-		buildAssets()
-	}
 }
 
 func buildAssets() {
@@ -119,16 +154,23 @@ func watchAssets() {
 	jsCtx.Dispose()
 }
 
-func copyStaticAssets() {
-	if err := copyFile("node_modules/alpinejs/dist/cdn.min.js", "../static/alpinejs.min.js"); err != nil {
-		log.Fatal(err)
+func writeFile(r io.Reader, path string) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
 	}
-	if err := copyFile("node_modules/htmx.org/dist/htmx.min.js", "../static/htmx.min.js"); err != nil {
-		log.Fatal(err)
+	defer func(f *os.File) {
+		if err := f.Close(); err != nil {
+			log.Fatalf("failed to close %s: %s", path, err)
+		}
+	}(f)
+
+	if _, err := io.Copy(f, r); err != nil {
+		return err
 	}
-	if err := copyFiles("favicons", "../static"); err != nil {
-		log.Fatal(err)
-	}
+
+	log.Println("esbuild: wrote", path)
+	return nil
 }
 
 func copyFile(src, dest string) error {

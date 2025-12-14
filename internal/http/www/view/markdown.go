@@ -15,8 +15,15 @@ import (
 	"github.com/yuin/goldmark/extension"
 )
 
+const (
+	// chromaStyle is the name of the syntax highlighting style used by Chroma when rendering Markdown code blocks.
+	//
+	// This value MUST match the one configured in internal/http/www/assets/main.go for the esbuild assets pipeline.
+	chromaStyle = "catppuccin-latte"
+)
+
 var (
-	// Initializes a Markdown renderer.
+	// Initialize the Markdown renderer.
 	markdown = goldmark.New(
 		goldmark.WithExtensions(
 			// https://github.com/yuin/goldmark#linkify-extension
@@ -29,14 +36,22 @@ var (
 				),
 			),
 
-			// https://github.com/yuin/goldmark-highlighting
-			// https://github.com/alecthomas/chroma
-			// https://github.com/alecthomas/chroma/tree/master/styles
+			// Syntax highlighting options
+			//
+			// IMPORTANT: The renderer is configured to only output CSS classes instead of inline style information:
+			// - The corresponding CSS is managed as part of the esbuild assets pipeline;
+			// - This allows adhering to a strict Content Security Policy.
+			//
+			// See:
+			// - https://github.com/yuin/goldmark-highlighting
+			// - https://github.com/alecthomas/chroma
+			// - https://github.com/alecthomas/chroma/tree/master/styles
 			highlighting.NewHighlighting(
-				highlighting.WithStyle("catppuccin-latte"),
 				highlighting.WithFormatOptions(
 					html.WithLineNumbers(true),
+					html.WithClasses(true), // CSS is managed by the esbuild assets pipeline.
 				),
+				highlighting.WithStyle(chromaStyle),
 			),
 		),
 	)

@@ -20,6 +20,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Extract EasyMDE editor initialization as a JavaScript module
 - Do not define Go templates that only contain a Javascript script block
 - Rework the base template to allow content pages to define an optional `scripts` template
+- Rework Goldmark / Chroma usage to use CSS classes instead of outputting inline style information
 
 ## [v0.6.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.0) - 2025-12-04
 ### Added

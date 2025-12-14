@@ -2,6 +2,12 @@ module assets
 
 go 1.25
 
-require github.com/evanw/esbuild v0.25.11
+require (
+	github.com/alecthomas/chroma/v2 v2.20.0
+	github.com/evanw/esbuild v0.27.1
+)
 
-require golang.org/x/sys v0.37.0 // indirect
+require (
+	github.com/dlclark/regexp2 v1.11.5 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+)

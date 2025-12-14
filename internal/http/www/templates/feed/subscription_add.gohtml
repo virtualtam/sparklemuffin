@@ -3,11 +3,12 @@
   <nav class="breadcrumb">
     <ul>
       <li><a href="/feeds">Feeds</a></li>
-      <li class="is-active"><a href="#">Add subscription</a></li>
+      <li><a href="/feeds/subscriptions">Subscriptions</a></li>
+      <li class="is-active"><a href="#">Add</a></li>
     </ul>
   </nav>
 
-  <form action="/feeds/add" method="POST">
+  <form action="/feeds/subscriptions/add" method="POST">
     <div class="field is-horizontal">
       <div class="field-label is-normal">
         <label class="label" for="url">URL</label>

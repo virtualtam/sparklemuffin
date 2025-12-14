@@ -45,12 +45,12 @@ func RegisterFeedHandlers(
 		userService:      userService,
 
 		feedListView: view.New("feed/feed_list.gohtml"),
-		feedAddView:  view.New("feed/feed_add.gohtml"),
 
 		feedCategoryAddView:    view.New("feed/category_add.gohtml"),
 		feedCategoryDeleteView: view.New("feed/category_delete.gohtml"),
 		feedCategoryEditView:   view.New("feed/category_edit.gohtml"),
 
+		feedSubscriptionAddView:    view.New("feed/subscription_add.gohtml"),
 		feedSubscriptionDeleteView: view.New("feed/subscription_delete.gohtml"),
 		feedSubscriptionEditView:   view.New("feed/subscription_edit.gohtml"),
 		feedSubscriptionListView:   view.New("feed/subscription_list.gohtml"),
@@ -65,8 +65,6 @@ func RegisterFeedHandlers(
 		})
 
 		r.Get("/", fc.handleFeedListAllView())
-		r.Get("/add", fc.handleFeedAddView())
-		r.Post("/add", fc.handleFeedAdd())
 
 		r.Get("/export", fc.handleFeedExportView())
 		r.Post("/export", fc.handleFeedExport())
@@ -97,8 +95,13 @@ func RegisterFeedHandlers(
 
 		r.Route("/subscriptions", func(sr chi.Router) {
 			sr.Get("/", fc.handleFeedSubscriptionListView())
+
+			sr.Get("/add", fc.handleFeedSubscriptionAddView())
+			sr.Post("/add", fc.handleFeedSubscriptionAdd())
+
 			sr.Get("/{uuid}/delete", fc.handleFeedSubscriptionDeleteView())
 			sr.Post("/{uuid}/delete", fc.handleFeedSubscriptionDelete())
+
 			sr.Get("/{uuid}/edit", fc.handleFeedSubscriptionEditView())
 			sr.Post("/{uuid}/edit", fc.handleFeedSubscriptionEdit())
 
@@ -115,8 +118,8 @@ type feedController struct {
 	queryingService  *feedquerying.Service
 	userService      *user.Service
 
-	feedAddView  *view.View
-	feedListView *view.View
+	feedSubscriptionAddView *view.View
+	feedListView            *view.View
 
 	feedCategoryAddView    *view.View
 	feedCategoryDeleteView *view.View
@@ -128,59 +131,6 @@ type feedController struct {
 
 	feedExportView *view.View
 	feedImportView *view.View
-}
-
-// handleFeedAddView renders the feed subscription form.
-func (fc *feedController) handleFeedAddView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctxUser := httpcontext.UserValue(ctx)
-
-		categories, err := fc.feedService.Categories(ctx, ctxUser.UUID)
-		if err != nil {
-			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve feed categories")
-			view.PutFlashError(w, "failed to retrieve existing feed categories")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		viewData := view.Data{
-			Content: categories,
-			Title:   "Add feed",
-		}
-
-		fc.feedAddView.Render(w, r, viewData)
-	}
-}
-
-// handleFeedAdd processes the feed addition form.
-func (fc *feedController) handleFeedAdd() func(w http.ResponseWriter, r *http.Request) {
-	type feedAddForm struct {
-		URL          string `schema:"url"`
-		CategoryUUID string `schema:"category"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		ctxUser := httpcontext.UserValue(ctx)
-
-		var form feedAddForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse feed subscription form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		if err := fc.feedService.Subscribe(ctx, ctxUser.UUID, form.CategoryUUID, form.URL); err != nil {
-			log.Error().Err(err).Msg("failed to subscribe to feed")
-			view.PutFlashError(w, "failed to subscribe to feed")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
-		http.Redirect(w, r, "/feeds", http.StatusSeeOther)
-	}
 }
 
 type (
@@ -524,6 +474,59 @@ func (fc *feedController) handleFeedSubscriptionListView() func(w http.ResponseW
 		}
 
 		fc.feedSubscriptionListView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedSubscriptionAddView renders the feed subscription addition form.
+func (fc *feedController) handleFeedSubscriptionAddView() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
+
+		categories, err := fc.feedService.Categories(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve feed categories")
+			view.PutFlashError(w, "failed to retrieve existing feed categories")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		viewData := view.Data{
+			Content: categories,
+			Title:   "Add feed",
+		}
+
+		fc.feedSubscriptionAddView.Render(w, r, viewData)
+	}
+}
+
+// handleFeedSubscriptionAdd processes the feed subscription addition form.
+func (fc *feedController) handleFeedSubscriptionAdd() func(w http.ResponseWriter, r *http.Request) {
+	type feedAddForm struct {
+		URL          string `schema:"url"`
+		CategoryUUID string `schema:"category"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		ctxUser := httpcontext.UserValue(ctx)
+
+		var form feedAddForm
+		if err := decodeForm(r, &form); err != nil {
+			log.Error().Err(err).Msg("failed to parse feed subscription form")
+			view.PutFlashError(w, "There was an error processing the form")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		if err := fc.feedService.Subscribe(ctx, ctxUser.UUID, form.CategoryUUID, form.URL); err != nil {
+			log.Error().Err(err).Msg("failed to subscribe to feed")
+			view.PutFlashError(w, "failed to subscribe to feed")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		http.Redirect(w, r, "/feeds", http.StatusSeeOther)
 	}
 }
 

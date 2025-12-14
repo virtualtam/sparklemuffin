@@ -29,6 +29,8 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      SPARKLEMUFFIN_DB_PASSWORD: sparklemuffin
+      SPARKLEMUFFIN_HMAC_KEY: insecure-hmac-key
       SPARKLEMUFFIN_PUBLIC_ADDR: https://sparklemuffin.domain.tld
       SPARKLEMUFFIN_LOG_FORMAT: console
       SPARKLEMUFFIN_LOG_LEVEL: debug

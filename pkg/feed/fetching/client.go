@@ -114,8 +114,7 @@ func (c *Client) parse(body []byte) (*gofeed.Feed, error) {
 	feedStr := string(body)
 	parsedFeed, err := c.feedParser.ParseString(feedStr)
 
-	var xmlSyntaxError *xml.SyntaxError
-	if errors.As(err, &xmlSyntaxError) {
+	if xmlSyntaxError, ok := errors.AsType[*xml.SyntaxError](err); ok {
 		// Atom and RSS feed parsing errors.
 
 		if strings.HasPrefix(xmlSyntaxError.Msg, "illegal character code") {

@@ -1,10 +1,10 @@
 module assets
 
-go 1.25
+go 1.26
 
 require (
-	github.com/alecthomas/chroma/v2 v2.20.0
-	github.com/evanw/esbuild v0.27.1
+	github.com/alecthomas/chroma/v2 v2.23.1
+	github.com/evanw/esbuild v0.27.3
 )
 
 require (

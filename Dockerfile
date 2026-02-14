@@ -9,7 +9,7 @@ COPY internal/http/www/assets/package.json internal/http/www/assets/package-lock
 RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Step 2: Build Go binaries
-FROM golang:1.25-trixie AS builder
+FROM golang:1.26-trixie AS builder
 
 ARG CGO_ENABLED=1
 

@@ -21,6 +21,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Add a JavaScript asset pipeline to the esbuild configuration
 
 ### Changed
+#### Packaging and automation
+- Build with Go 1.26
+- Update direct and transitive dependencies
+
 #### CLI
 - Change monitoring server port to `8090`
 - Let the monitoring server listen to all interfaces by default

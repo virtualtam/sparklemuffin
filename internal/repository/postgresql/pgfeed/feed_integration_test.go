@@ -50,9 +50,7 @@ func TestFeedService(t *testing.T) {
 	ur := pguser.NewRepository(pool)
 	us := user.NewService(ur)
 
-	fake := faker.New()
-
-	u := pgbase.GenerateFakeUser(t, &fake)
+	u := pgbase.GenerateFakeUser(t, new(faker.New()))
 
 	if err := us.Add(t.Context(), u); err != nil {
 		t.Fatalf("failed to create user: %q", err)

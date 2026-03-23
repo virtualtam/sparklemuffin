@@ -1,4 +1,4 @@
-// Copyright (c) VirtualTam
+// Copyright VirtualTam 2022, 2026
 // SPDX-License-Identifier: MIT
 
 // Package monitoring provides utilities to set up a HTTP server to expose monitoring information

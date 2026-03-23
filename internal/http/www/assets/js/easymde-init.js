@@ -7,7 +7,7 @@
  * Usage:
  *   <textarea id="description" data-easymde></textarea>
  *
- * Copyright (c) VirtualTam
+ * Copyright VirtualTam 2022, 2026
  * SPDX-License-Identifier: MIT
  */
 import EasyMDE from "easymde";

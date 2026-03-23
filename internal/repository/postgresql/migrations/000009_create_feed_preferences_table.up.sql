@@ -1,4 +1,4 @@
--- Copyright (c) VirtualTam
+-- Copyright VirtualTam 2022, 2026
 -- SPDX-License-Identifier: MIT
 
 CREATE TYPE feed_entry_visibility AS ENUM(

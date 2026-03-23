@@ -1,4 +1,4 @@
-// Copyright (c) VirtualTam
+// Copyright VirtualTam 2022, 2026
 // SPDX-License-Identifier: MIT
 
 // Package hash provides hashing helpers to generate application tokens that can

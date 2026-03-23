@@ -1,4 +1,4 @@
-// Copyright (c) VirtualTam
+// Copyright VirtualTam 2022, 2026
 // SPDX-License-Identifier: MIT
 
 // Package main provides an esbuild pipeline to minify and bundle static assets used by

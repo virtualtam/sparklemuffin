@@ -7,7 +7,7 @@
  * Usage:
  *   <input type="text" id="tags" data-list="tag1,tag2,tag3">
  *
- * Copyright (c) VirtualTam
+ * Copyright VirtualTam 2022, 2026
  * SPDX-License-Identifier: MIT
  */
 import Awesomplete from "awesomplete";

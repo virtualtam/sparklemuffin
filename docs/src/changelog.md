@@ -12,6 +12,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Do not expose sensitive configuration keys as Docker `ENV` variables
 - Require a non-empty HMAC key to be configured to generate session tokens
 - Require a non-empty database password to be configured
+- Ensure golang-migrate is using the pgx/v5 database driver
 
 ### Added
 #### Monitoring
@@ -24,6 +25,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Packaging and automation
 - Build with Go 1.26
 - Update direct and transitive dependencies
+- Update all GitHub Actions
+- Update golangci-lint
 
 #### CLI
 - Change monitoring server port to `8090`

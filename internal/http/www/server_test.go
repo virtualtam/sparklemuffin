@@ -89,7 +89,7 @@ func TestServerRememberUser(t *testing.T) {
 			handler = s.rememberUser(handler)
 
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest(http.MethodGet, "/", nil)
+			r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
 			if tc.rememberTokenCookie != nil {
 				r.AddCookie(tc.rememberTokenCookie)
 			}

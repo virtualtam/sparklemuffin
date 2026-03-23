@@ -50,7 +50,7 @@ func TestAdminUser(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			r := httptest.NewRequest(http.MethodGet, "/", nil)
+			r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
 			if tc.user != nil {
 				ctx := httpcontext.WithUser(r.Context(), *tc.user)
 				r = r.WithContext(ctx)
@@ -106,7 +106,7 @@ func TestAuthenticatedUser(t *testing.T) {
 
 			w := httptest.NewRecorder()
 
-			r := httptest.NewRequest(http.MethodGet, "/", nil)
+			r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
 			if tc.user != nil {
 				ctx := httpcontext.WithUser(r.Context(), *tc.user)
 				r = r.WithContext(ctx)
@@ -131,7 +131,7 @@ func TestStaticCacheControl(t *testing.T) {
 	handler = StaticCacheControl(handler)
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
 
 	handler(w, r)
 	got := w.Header().Get("Cache-Control")
@@ -149,7 +149,7 @@ func TestContentSecurityPolicy(t *testing.T) {
 	})
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
 
 	ContentSecurityPolicy(handler).ServeHTTP(w, r)
 

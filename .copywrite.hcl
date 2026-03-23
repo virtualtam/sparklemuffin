@@ -5,6 +5,9 @@ project {
   copyright_holder = "VirtualTam"
 
   header_ignore = [
+    # SCM
+    ".git/**",
+
     # IDEs
     ".idea/**",
 

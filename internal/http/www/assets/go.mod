@@ -4,7 +4,7 @@ go 1.26
 
 require (
 	github.com/alecthomas/chroma/v2 v2.23.1
-	github.com/evanw/esbuild v0.27.3
+	github.com/evanw/esbuild v0.27.4
 )
 
 require (

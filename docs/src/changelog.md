@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [v0.6.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.1) - 2026-04-23
 ### Security
 - Replace custom Cross-Site Request Forgery (CSRF) helpers with Go 1.25's CSRF protection middleware
 - Define a Content Security Policy for Web browsers to enforce

@@ -9,6 +9,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 - Update Chi HTTP middleware to read the remote client IP address from a header set by a reverse proxy
 
+### Fixed
+#### Packaging and automation
+- Add missing command-line flags to Make targets used for local development
+
 ### Changed
 - Update direct and transitive dependencies
 

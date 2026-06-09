@@ -126,7 +126,7 @@ live-race:
 .PHONY: live-race
 
 run-race:
-	go run -race ./cmd/sparklemuffin/ run
+	go run -race ./cmd/sparklemuffin/ run --db-password sparklemuffin --hmac-key insecure-hmac-key
 .PHONY: run-race
 
 # Live development server - PostgreSQL database management
@@ -155,17 +155,19 @@ pgreindex:
 
 # Live development server - Database migrations
 dev-migrate:
-	go run ./cmd/sparklemuffin migrate
+	go run ./cmd/sparklemuffin migrate --db-password sparklemuffin --hmac-key insecure-hmac-key
 .PHONY: dev-migrate
 
 # Live development server - Synchronize feeds
 dev-sync-feeds:
-	go run ./cmd/sparklemuffin sync-feeds
+	go run ./cmd/sparklemuffin sync-feeds --db-password sparklemuffin --hmac-key insecure-hmac-key
 .PHONY: dev-sync-feeds
 
 # Live development server - Create administrator user
 dev-admin:
 	go run ./cmd/sparklemuffin createadmin \
+		--db-password sparklemuffin \
+		--hmac-key insecure-hmac-key \
 		--displayname Admin \
 		--email admin@dev.local \
 		--nickname admin

@@ -22,7 +22,6 @@ const (
 )
 
 func TestClientFetch(t *testing.T) {
-
 	now, err := time.Parse(time.DateTime, "2024-10-30 20:54:16")
 	if err != nil {
 		t.Fatalf("failed to parse date: %q", err)
@@ -39,39 +38,47 @@ func TestClientFetch(t *testing.T) {
 	feedLastModified := feed.Updated
 	feedHash := xxhash.Sum64String(feedStr)
 
+	feedBodySizeBytes := uint64(len(feedStr))
+
 	cases := []struct {
-		tname          string
-		eTag           string
-		lastModified   time.Time
-		wantStatusCode int
+		tname             string
+		eTag              string
+		lastModified      time.Time
+		wantStatusCode    int
+		wantBodySizeBytes uint64
 	}{
 		{
-			tname:          "first request",
-			wantStatusCode: http.StatusOK,
+			tname:             "first request",
+			wantStatusCode:    http.StatusOK,
+			wantBodySizeBytes: feedBodySizeBytes,
 		},
 		{
-			tname:          "If-None-Match = ETag, If-Modified-Since = Last-Modified",
-			eTag:           feedETag,
-			lastModified:   feedLastModified,
-			wantStatusCode: http.StatusNotModified,
+			tname:             "If-None-Match = ETag, If-Modified-Since = Last-Modified",
+			eTag:              feedETag,
+			lastModified:      feedLastModified,
+			wantStatusCode:    http.StatusNotModified,
+			wantBodySizeBytes: 0,
 		},
 		{
-			tname:          "If-None-Match = ETag, If-Modified-Since < Last-Modified",
-			eTag:           feedETag,
-			lastModified:   lastWeek,
-			wantStatusCode: http.StatusOK,
+			tname:             "If-None-Match = ETag, If-Modified-Since < Last-Modified",
+			eTag:              feedETag,
+			lastModified:      lastWeek,
+			wantStatusCode:    http.StatusOK,
+			wantBodySizeBytes: feedBodySizeBytes,
 		},
 		{
-			tname:          "If-None-Match = ETag, If-Modified-Since > Last-Modified",
-			eTag:           feedETag,
-			lastModified:   nextWeek,
-			wantStatusCode: http.StatusOK,
+			tname:             "If-None-Match = ETag, If-Modified-Since > Last-Modified",
+			eTag:              feedETag,
+			lastModified:      nextWeek,
+			wantStatusCode:    http.StatusOK,
+			wantBodySizeBytes: feedBodySizeBytes,
 		},
 		{
-			tname:          "If-None-Match != ETag, If-Modified-Since = Last-Modified",
-			eTag:           `W/"5d2e8871966e0dd7ff59684904b3d9fecf6ab62a09869e26163efe8b2e07539d"`,
-			lastModified:   lastWeek,
-			wantStatusCode: http.StatusOK,
+			tname:             "If-None-Match != ETag, If-Modified-Since = Last-Modified",
+			eTag:              `W/"5d2e8871966e0dd7ff59684904b3d9fecf6ab62a09869e26163efe8b2e07539d"`,
+			lastModified:      lastWeek,
+			wantStatusCode:    http.StatusOK,
+			wantBodySizeBytes: feedBodySizeBytes,
 		},
 	}
 
@@ -110,6 +117,10 @@ func TestClientFetch(t *testing.T) {
 
 			if feedStatus.ETag != feedETag {
 				t.Errorf("want ETag %q, got %q", feedETag, feedStatus.ETag)
+			}
+
+			if feedStatus.BodySizeBytes != tc.wantBodySizeBytes {
+				t.Errorf("want BodySizeBytes %d, got %d", tc.wantBodySizeBytes, feedStatus.BodySizeBytes)
 			}
 
 			if feedStatus.StatusCode == http.StatusOK {

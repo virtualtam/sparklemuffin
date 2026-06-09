@@ -103,6 +103,7 @@ func (c *Client) Fetch(ctx context.Context, feedURL string, eTag string, lastMod
 	}
 
 	feedStatus.Feed = parsedFeed
+	feedStatus.BodySizeBytes = uint64(len(body))
 	feedStatus.Hash = xxhash.Sum64(body)
 
 	return feedStatus, nil

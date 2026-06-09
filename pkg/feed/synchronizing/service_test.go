@@ -382,7 +382,7 @@ func TestServiceSynchronize(t *testing.T) {
 
 			feedClient := fetching.NewClient(feedHTTPClient, "sparklemuffin/test")
 
-			s := NewService(r, feedClient)
+			s := NewService(r, feedClient, "test")
 
 			err := s.Synchronize(t.Context(), tc.tname)
 

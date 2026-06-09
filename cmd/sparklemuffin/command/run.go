@@ -55,6 +55,7 @@ func NewRunCommand() *cobra.Command {
 
 			// HTTP - Monitoring server
 			monitoringServer, metricsRegistry := monitoring.NewServer(rootCmdName, monitoringListenAddr, versionDetails)
+			metricsRegistry.MustRegister(feedSynchronizingService.Collector())
 
 			go func() {
 				log.Info().Str("addr", monitoringListenAddr).Msg("monitoring: listening for HTTP requests")

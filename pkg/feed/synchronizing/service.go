@@ -32,20 +32,34 @@ type Service struct {
 
 	textRanker       *textkit.TextRanker
 	textRankMaxTerms int
+
+	collector *Collector
 }
 
 // NewService initializes and returns a new feed synchronization service.
-func NewService(r Repository, client *fetching.Client) *Service {
+func NewService(r Repository, client *fetching.Client, metricsPrefix string) *Service {
 	return &Service{
 		r:                r,
 		client:           client,
 		textRanker:       textkit.NewTextRanker(),
 		textRankMaxTerms: feed.EntryTextRankMaxTerms,
+		collector:        NewCollector(metricsPrefix),
 	}
+}
+
+// Collector returns the Prometheus metrics collector for the service.
+func (s *Service) Collector() *Collector {
+	return s.collector
 }
 
 // Synchronize synchronizes syndication feeds for all users.
 func (s *Service) Synchronize(ctx context.Context, jobID string) error {
+	s.collector.tasksTotal.Inc()
+	start := time.Now()
+	defer func() {
+		s.collector.durationTotal.Add(float64(time.Since(start).Milliseconds()))
+	}()
+
 	lastSyncBefore := time.Now().UTC().Add(-minFeedAge)
 
 	// 1. List all feeds that have last been synchronized before a given time.Time
@@ -56,6 +70,7 @@ func (s *Service) Synchronize(ctx context.Context, jobID string) error {
 			Err(err).
 			Str("job_id", jobID).
 			Msg("feeds: failed to list feeds to synchronize")
+		s.collector.errorsTotal.WithLabelValues(labelErrorTypeList).Inc()
 		return err
 	}
 
@@ -107,8 +122,11 @@ func (s *Service) synchronizeFeed(ctx context.Context, feed feed.Feed, jobID str
 			Str("feed_url", feed.FeedURL).
 			Str("job_id", jobID).
 			Msg("feeds: failed to fetch feed")
+		s.collector.errorsTotal.WithLabelValues(labelErrorTypeFetch).Inc()
 		return err
 	}
+
+	s.collector.bytesTotal.Add(float64(feedStatus.BodySizeBytes))
 
 	now := time.Now().UTC()
 
@@ -127,6 +145,7 @@ func (s *Service) synchronizeFeed(ctx context.Context, feed feed.Feed, jobID str
 			Str("feed_url", feed.FeedURL).
 			Str("job_id", jobID).
 			Msg("feeds: failed to update fetch metadata")
+		s.collector.errorsTotal.WithLabelValues(labelErrorTypeUpdateMetadata).Inc()
 		return err
 	}
 
@@ -140,6 +159,7 @@ func (s *Service) synchronizeFeed(ctx context.Context, feed feed.Feed, jobID str
 			Str("reason", "304 Not Modified").
 			Msg("feeds: skipping update, remote content not modified")
 
+		s.collector.skippedFeeds.WithLabelValues(labelFeedNotModified).Inc()
 		return nil
 	}
 
@@ -154,6 +174,7 @@ func (s *Service) synchronizeFeed(ctx context.Context, feed feed.Feed, jobID str
 			Str("job_id", jobID).
 			Str("reason", "hashes match").
 			Msg("feeds: skipping update, remote content not modified")
+		s.collector.skippedFeeds.WithLabelValues(labelFeedHashesMatch).Inc()
 		return nil
 	}
 
@@ -173,6 +194,7 @@ func (s *Service) synchronizeFeed(ctx context.Context, feed feed.Feed, jobID str
 				Str("feed_url", feed.FeedURL).
 				Str("job_id", jobID).
 				Msg("feeds: failed to update metadata")
+			s.collector.errorsTotal.WithLabelValues(labelErrorTypeUpdateMetadata).Inc()
 			return err
 		}
 	}
@@ -185,6 +207,7 @@ func (s *Service) synchronizeFeed(ctx context.Context, feed feed.Feed, jobID str
 			Str("feed_url", feed.FeedURL).
 			Str("job_id", jobID).
 			Msg("feeds: failed to create or update entries")
+		s.collector.errorsTotal.WithLabelValues(labelErrorTypeUpdateEntries).Inc()
 		return err
 	}
 
@@ -194,6 +217,7 @@ func (s *Service) synchronizeFeed(ctx context.Context, feed feed.Feed, jobID str
 		Int64("n_entries", rowsAffected).
 		Msg("feeds: entries created or updated")
 
+	s.collector.updatedFeeds.Inc()
 	return nil
 }
 
@@ -227,5 +251,6 @@ func (s *Service) createOrUpdateEntries(ctx context.Context, f feed.Feed, now ti
 		return 0, err
 	}
 
+	s.collector.entriesTotal.Add(float64(rowsAffected))
 	return rowsAffected, nil
 }

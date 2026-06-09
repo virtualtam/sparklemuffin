@@ -194,7 +194,7 @@ func NewRootCommand() *cobra.Command {
 			feedExportingService = feedexporting.NewService(feedRepository)
 			feedQueryingService = feedquerying.NewService(feedRepository)
 			feedImportingService = feedimporting.NewService(feedService)
-			feedSynchronizingService = feedsynchronizing.NewService(feedRepository, feedClient)
+			feedSynchronizingService = feedsynchronizing.NewService(feedRepository, feedClient, rootCmdName)
 
 			sessionRepository := pgsession.NewRepository(pgxPool)
 			sessionService, err = session.NewService(sessionRepository, hmacKey)

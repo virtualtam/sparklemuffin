@@ -27,7 +27,8 @@ type FeedStatus struct {
 	ETag         string
 	LastModified time.Time
 
-	Hash uint64
+	BodySizeBytes uint64
+	Hash          uint64
 
 	Feed *gofeed.Feed
 }

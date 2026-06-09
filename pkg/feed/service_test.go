@@ -6,6 +6,7 @@ package feed
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,6 +19,26 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
+
+func TestFeedNormalize_SameTitle_UniqueSlug(t *testing.T) {
+	feed1, err := NewFeed("http://feed1.example.com")
+	if err != nil {
+		t.Fatalf("failed to create feed1: %q", err)
+	}
+	feed1.Title = "Linux News"
+	feed1.Normalize()
+
+	feed2, err := NewFeed("http://feed2.example.com")
+	if err != nil {
+		t.Fatalf("failed to create feed2: %q", err)
+	}
+	feed2.Title = "Linux News"
+	feed2.Normalize()
+
+	if feed1.Slug == feed2.Slug {
+		t.Errorf("want different slugs for feeds with the same title but different UUIDs, got %q for both", feed1.Slug)
+	}
+}
 
 func TestServiceAddCategory(t *testing.T) {
 	userUUID := "179206c8-2965-47a7-ba04-bf0a6a0b8d11"
@@ -687,10 +708,11 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 		repositoryFeeds   []Feed
 		repositoryEntries []Entry
 
-		wantFeed      Feed
-		wantIsCreated bool
-		wantEntries   []Entry
-		wantErr       error
+		wantFeed       Feed
+		wantSlugPrefix string
+		wantIsCreated  bool
+		wantEntries    []Entry
+		wantErr        error
 	}{
 		// nominal cases
 		{
@@ -700,7 +722,6 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 				FeedURL:      "http://test.local",
 				Title:        "Local Test",
 				Description:  "A simple syndication feed, for testing purposes.",
-				Slug:         "local-test",
 				ETag:         feedETag,
 				LastModified: feedLastModified,
 				Hash:         feedHash,
@@ -708,7 +729,8 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 				UpdatedAt:    now,
 				FetchedAt:    now,
 			},
-			wantIsCreated: true,
+			wantSlugPrefix: "local-test-",
+			wantIsCreated:  true,
 			wantEntries: []Entry{
 				{
 					URL:         "http://test.local/first-post",
@@ -847,6 +869,13 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 
 			if gotIsCreated != tc.wantIsCreated {
 				t.Errorf("want isCreated %t, got %t", tc.wantIsCreated, gotIsCreated)
+			}
+
+			if tc.wantSlugPrefix != "" {
+				if !strings.HasPrefix(gotFeed.Slug, tc.wantSlugPrefix) {
+					t.Errorf("want Slug with prefix %q, got %q", tc.wantSlugPrefix, gotFeed.Slug)
+				}
+				tc.wantFeed.Slug = gotFeed.Slug
 			}
 
 			AssertFeedEquals(t, gotFeed, tc.wantFeed)

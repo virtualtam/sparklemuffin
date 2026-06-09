@@ -13,6 +13,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Packaging and automation
 - Add missing command-line flags to Make targets used for local development
 
+#### Feeds
+- Ensure each feed has a unique slug
+
 ### Added
 #### Monitoring
 - Expose Prometheus metrics for periodic feed synchronization tasks

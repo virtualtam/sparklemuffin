@@ -81,7 +81,7 @@ func (f *Feed) normalizeURL() {
 }
 
 func (f *Feed) slugify() {
-	f.Slug = slug.Make(f.Title)
+	f.Slug = slug.Make(f.Title) + "-" + f.UUID[:8]
 }
 
 // ValidateForCreation ensures mandatory fields are set

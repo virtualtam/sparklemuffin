@@ -6,6 +6,7 @@ package pgfeed_test
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -159,11 +160,22 @@ func TestFeedService(t *testing.T) {
 			t.Fatalf("failed to subscribe to feed: %q", err)
 		}
 
+		// Retrieve the feed by URL to obtain its actual slug (which now includes a UUID suffix).
+		gotFeed, err := r.FeedGetByURL(ctx, "http://test.local")
+		if err != nil {
+			t.Fatalf("failed to retrieve feed by URL: %q", err)
+		}
+
+		wantSlugPrefix := "local-test-"
+		if !strings.HasPrefix(gotFeed.Slug, wantSlugPrefix) {
+			t.Errorf("want Slug with prefix %q, got %q", wantSlugPrefix, gotFeed.Slug)
+		}
+
 		wantFeed := feed.Feed{
 			FeedURL:      "http://test.local",
 			Title:        "Local Test",
 			Description:  "A simple syndication feed, for testing purposes.",
-			Slug:         "local-test",
+			Slug:         gotFeed.Slug,
 			ETag:         feedETag,
 			LastModified: feedLastModified,
 			Hash:         feedHash,
@@ -172,12 +184,12 @@ func TestFeedService(t *testing.T) {
 			FetchedAt:    now,
 		}
 
-		gotFeed, err := fs.FeedBySlug(ctx, wantFeed.Slug)
+		gotFeedBySlug, err := fs.FeedBySlug(ctx, gotFeed.Slug)
 		if err != nil {
-			t.Fatalf("failed to retrieve feed: %q", err)
+			t.Fatalf("failed to retrieve feed by slug: %q", err)
 		}
 
-		feed.AssertFeedEquals(t, gotFeed, wantFeed)
+		feed.AssertFeedEquals(t, gotFeedBySlug, wantFeed)
 
 		gotSubscription, err := fs.SubscriptionByFeed(ctx, testUser.UUID, gotFeed.UUID)
 		if err != nil {
@@ -252,6 +264,62 @@ func TestFeedService(t *testing.T) {
 			t.Errorf("want ErrFeedNotFound, got %q", err)
 		}
 
+		if err := fs.DeleteCategory(ctx, testUser.UUID, category.UUID); err != nil {
+			t.Fatalf("failed to delete category: %q", err)
+		}
+	})
+
+	t.Run("two feeds with the same title get unique slugs", func(t *testing.T) {
+		ctx := t.Context()
+
+		category, err := fs.CreateCategory(ctx, testUser.UUID, "Same Title Test")
+		if err != nil {
+			t.Fatalf("failed to create category: %q", err)
+		}
+
+		// 1. Subscribe to two feeds with the same title.
+		if err := fs.Subscribe(ctx, testUser.UUID, category.UUID, "http://feed1.test.local"); err != nil {
+			t.Fatalf("failed to subscribe to feed1: %q", err)
+		}
+		if err := fs.Subscribe(ctx, testUser.UUID, category.UUID, "http://feed2.test.local"); err != nil {
+			t.Fatalf("failed to subscribe to feed2: %q", err)
+		}
+
+		// 2. Retrieve feeds.
+		feed1, err := r.FeedGetByURL(ctx, "http://feed1.test.local")
+		if err != nil {
+			t.Fatalf("failed to retrieve feed1: %q", err)
+		}
+		feed2, err := r.FeedGetByURL(ctx, "http://feed2.test.local")
+		if err != nil {
+			t.Fatalf("failed to retrieve feed2: %q", err)
+		}
+
+		if feed1.Slug == feed2.Slug {
+			t.Errorf("want different slugs for feeds with the same title, got %q for both", feed1.Slug)
+		}
+		if !strings.HasPrefix(feed1.Slug, "local-test-") {
+			t.Errorf("want feed1 Slug with prefix %q, got %q", "local-test-", feed1.Slug)
+		}
+		if !strings.HasPrefix(feed2.Slug, "local-test-") {
+			t.Errorf("want feed2 Slug with prefix %q, got %q", "local-test-", feed2.Slug)
+		}
+
+		// 3. Teardown
+		sub1, err := fs.SubscriptionByFeed(ctx, testUser.UUID, feed1.UUID)
+		if err != nil {
+			t.Fatalf("failed to retrieve subscription1: %q", err)
+		}
+		sub2, err := fs.SubscriptionByFeed(ctx, testUser.UUID, feed2.UUID)
+		if err != nil {
+			t.Fatalf("failed to retrieve subscription2: %q", err)
+		}
+		if err := fs.DeleteSubscription(ctx, testUser.UUID, sub1.UUID); err != nil {
+			t.Fatalf("failed to delete subscription1: %q", err)
+		}
+		if err := fs.DeleteSubscription(ctx, testUser.UUID, sub2.UUID); err != nil {
+			t.Fatalf("failed to delete subscription2: %q", err)
+		}
 		if err := fs.DeleteCategory(ctx, testUser.UUID, category.UUID); err != nil {
 			t.Fatalf("failed to delete category: %q", err)
 		}

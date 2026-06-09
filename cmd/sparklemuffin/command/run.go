@@ -32,6 +32,8 @@ func NewRunCommand() *cobra.Command {
 		webListenAddr        string
 		publicWebAddr        string
 		monitoringListenAddr string
+
+		clientIpHeader string
 	)
 
 	cmd := &cobra.Command{
@@ -71,6 +73,7 @@ func NewRunCommand() *cobra.Command {
 			server, err := www.NewServer(
 				www.WithMetricsRegistry(rootCmdName, metricsRegistry),
 				www.WithPublicURL(publicURL),
+				www.WithClientIpHeader(clientIpHeader),
 				www.WithBookmarkServices(
 					bookmarkService,
 					bookmarkExportingService,
@@ -121,6 +124,13 @@ func NewRunCommand() *cobra.Command {
 		"public-addr",
 		defaultPublicWebAddr,
 		"Public HTTP address (if behind a proxy)",
+	)
+
+	cmd.Flags().StringVar(
+		&clientIpHeader,
+		"client-ip-header",
+		"",
+		"HTTP header from which to read the remote client IP address",
 	)
 
 	return cmd

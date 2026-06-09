@@ -53,6 +53,20 @@ func WithPublicURL(publicURL *url.URL) OptionFunc {
 	}
 }
 
+// WithClientIpHeader sets the HTTP header the server should read the remote client IP from.
+//
+// - If left empty, the client IP is read from the HTTP request.
+// - If set, the client IP is read from the corresponding HTTP header.
+func WithClientIpHeader(clientIpHeader string) OptionFunc {
+	return func(s *Server) error {
+		if clientIpHeader != "" {
+			s.clientIpHeader = clientIpHeader
+		}
+
+		return nil
+	}
+}
+
 // WithBookmarkServices sets the bookmark management services.
 func WithBookmarkServices(
 	bookmarkService *bookmark.Service,

@@ -40,8 +40,9 @@ var _ http.Handler = &Server{}
 
 // Server represents the Web service.
 type Server struct {
-	router    *chi.Mux
-	publicURL *url.URL
+	router         *chi.Mux
+	publicURL      *url.URL
+	clientIpHeader string
 
 	metricsPrefix   string
 	metricsRegistry *prometheus.Registry
@@ -101,7 +102,15 @@ func (s *Server) registerHandlers() {
 
 	// Global middleware
 	s.router.Use(chimiddleware.RequestID)
-	s.router.Use(chimiddleware.RealIP)
+
+	// Remote client address
+	if s.clientIpHeader != "" {
+		// Read the address from a header set by a trusted reverse proxy.
+		s.router.Use(chimiddleware.ClientIPFromHeader(s.clientIpHeader))
+	} else {
+		// Read the address directly from the client request.
+		s.router.Use(chimiddleware.ClientIPFromRemoteAddr)
+	}
 
 	if s.metricsRegistry != nil {
 		prometheusMiddleware := slokmiddleware.New(

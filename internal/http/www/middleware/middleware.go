@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5/middleware"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/hlog"
 
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
@@ -24,10 +24,12 @@ var (
 
 // AccessLogger logs information about incoming HTTP requests.
 func AccessLogger(r *http.Request, status, size int, dur time.Duration) {
-	reqID := middleware.GetReqID(r.Context())
+	reqID := chimiddleware.GetReqID(r.Context())
+	clientIP := chimiddleware.GetClientIP(r.Context())
 
 	hlog.FromRequest(r).
 		Info().
+		Str("client_ip", clientIP).
 		Dur("duration_ms", dur).
 		Str("host", r.Host).
 		Str("method", r.Method).

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## UNRELEASED
+### Security
+- Update Chi HTTP middleware to read the remote client IP address from a header set by a reverse proxy
+
+### Changed
+- Update direct and transitive dependencies
+
 ## [v0.6.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.1) - 2026-04-23
 ### Security
 - Replace custom Cross-Site Request Forgery (CSRF) helpers with Go 1.25's CSRF protection middleware

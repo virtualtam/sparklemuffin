@@ -348,6 +348,274 @@ func TestServicePublicBookmarkByUID(t *testing.T) {
 	}
 }
 
+func TestServiceBookmarksBySearchQueryAndPage(t *testing.T) {
+	cases := []struct {
+		tname               string
+		repositoryBookmarks []bookmark.Bookmark
+		ownerUUID           string
+		visibility          Visibility
+		searchTerms         string
+		pageNumber          uint
+		want                BookmarkPage
+		wantErr             error
+	}{
+		// nominal cases
+		{
+			tname:       "0 results",
+			ownerUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:  VisibilityAll,
+			searchTerms: "notfound",
+			pageNumber:  1,
+			want: BookmarkPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					SearchTerms:        "notfound",
+				},
+			},
+		},
+		{
+			tname:               "1 result",
+			repositoryBookmarks: testRepositoryBookmarks,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityAll,
+			searchTerms:         "example1",
+			pageNumber:          1,
+			want: BookmarkPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          1,
+					SearchTerms:        "example1",
+				},
+				Bookmarks: []bookmark.Bookmark{
+					{
+						Title:     "Bookmark 1",
+						CreatedAt: time.Date(2021, 8, 15, 14, 30, 45, 100, time.Local),
+					},
+				},
+			},
+		},
+		{
+			tname:               "multiple results",
+			repositoryBookmarks: testRepositoryBookmarks,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityAll,
+			searchTerms:         "example",
+			pageNumber:          1,
+			want: BookmarkPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          3,
+					SearchTerms:        "example",
+				},
+				Bookmarks: []bookmark.Bookmark{
+					{
+						Title:     "Bookmark 3 (private)",
+						CreatedAt: time.Date(2021, 9, 22, 14, 30, 45, 100, time.Local),
+					},
+					{
+						Title:     "Bookmark 2",
+						CreatedAt: time.Date(2021, 8, 17, 14, 30, 45, 100, time.Local),
+					},
+					{
+						Title:     "Bookmark 1",
+						CreatedAt: time.Date(2021, 8, 15, 14, 30, 45, 100, time.Local),
+					},
+				},
+			},
+		},
+		{
+			tname:               "public only, multiple results",
+			repositoryBookmarks: testRepositoryBookmarks,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityPublic,
+			searchTerms:         "example",
+			pageNumber:          1,
+			want: BookmarkPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          2,
+					SearchTerms:        "example",
+				},
+				Bookmarks: []bookmark.Bookmark{
+					{
+						Title:     "Bookmark 2",
+						CreatedAt: time.Date(2021, 8, 17, 14, 30, 45, 100, time.Local),
+					},
+					{
+						Title:     "Bookmark 1",
+						CreatedAt: time.Date(2021, 8, 15, 14, 30, 45, 100, time.Local),
+					},
+				},
+			},
+		},
+
+		// error cases
+		{
+			tname:       "owner not found",
+			ownerUUID:   "9681e525-f205-489d-b53e-1a858b4ca561",
+			searchTerms: "example",
+			pageNumber:  1,
+			wantErr:     ErrOwnerNotFound,
+		},
+		{
+			tname:       "zeroth page",
+			ownerUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
+			searchTerms: "example",
+			pageNumber:  0,
+			wantErr:     paginate.ErrPageNumberOutOfBounds,
+		},
+		{
+			tname:               "page number out of bounds",
+			repositoryBookmarks: testRepositoryBookmarks,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			searchTerms:         "example",
+			pageNumber:          18,
+			wantErr:             paginate.ErrPageNumberOutOfBounds,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{
+				bookmarks: tc.repositoryBookmarks,
+				users:     testRepositoryUsers,
+			}
+
+			s := NewService(r)
+
+			got, err := s.BookmarksBySearchQueryAndPage(t.Context(), tc.ownerUUID, tc.visibility, tc.searchTerms, tc.pageNumber)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertBookmarkPageEquals(t, got, tc.want)
+		})
+	}
+}
+
+func TestServicePublicBookmarksBySearchQueryAndPage(t *testing.T) {
+	cases := []struct {
+		tname               string
+		repositoryBookmarks []bookmark.Bookmark
+		ownerUUID           string
+		searchTerms         string
+		pageNumber          uint
+		want                BookmarkPage
+		wantErr             error
+	}{
+		// nominal cases
+		{
+			tname:       "0 results",
+			ownerUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
+			searchTerms: "notfound",
+			pageNumber:  1,
+			want: BookmarkPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					SearchTerms:        "notfound",
+				},
+			},
+		},
+		{
+			tname:               "public bookmarks only",
+			repositoryBookmarks: testRepositoryBookmarks,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			searchTerms:         "example",
+			pageNumber:          1,
+			want: BookmarkPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          2,
+					SearchTerms:        "example",
+				},
+				Bookmarks: []bookmark.Bookmark{
+					{
+						Title:     "Bookmark 2",
+						CreatedAt: time.Date(2021, 8, 17, 14, 30, 45, 100, time.Local),
+					},
+					{
+						Title:     "Bookmark 1",
+						CreatedAt: time.Date(2021, 8, 15, 14, 30, 45, 100, time.Local),
+					},
+				},
+			},
+		},
+
+		// error cases
+		{
+			tname:       "owner not found",
+			ownerUUID:   "9681e525-f205-489d-b53e-1a858b4ca561",
+			searchTerms: "example",
+			pageNumber:  1,
+			wantErr:     ErrOwnerNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{
+				bookmarks: tc.repositoryBookmarks,
+				users:     testRepositoryUsers,
+			}
+
+			s := NewService(r)
+
+			got, err := s.PublicBookmarksBySearchQueryAndPage(t.Context(), tc.ownerUUID, tc.searchTerms, tc.pageNumber)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertBookmarkPageEquals(t, got, tc.want)
+		})
+	}
+}
+
 func TestServicePublicBookmarksByPage(t *testing.T) {
 	cases := []struct {
 		tname               string

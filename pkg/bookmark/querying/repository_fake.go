@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"strings"
 
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -76,12 +77,61 @@ func (r *fakeRepository) BookmarkGetPublicByUID(_ context.Context, userUUID, uid
 	return bookmark.Bookmark{}, bookmark.ErrNotFound
 }
 
+func bookmarkMatchesSearch(b bookmark.Bookmark, searchTerms string) bool {
+	term := strings.ToLower(searchTerms)
+
+	if strings.Contains(strings.ToLower(b.Title), term) {
+		return true
+	}
+	if strings.Contains(strings.ToLower(b.URL), term) {
+		return true
+	}
+	if strings.Contains(strings.ToLower(b.Description), term) {
+		return true
+	}
+	for _, tag := range b.Tags {
+		if strings.Contains(strings.ToLower(tag), term) {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *fakeRepository) bookmarkSearchMatches(userUUID string, visibility Visibility, searchTerms string) []bookmark.Bookmark {
+	var matches []bookmark.Bookmark
+
+	for _, b := range r.bookmarks {
+		if b.UserUUID != userUUID {
+			continue
+		}
+		if !visibilityMatches(visibility, b.Private) {
+			continue
+		}
+		if bookmarkMatchesSearch(b, searchTerms) {
+			matches = append(matches, b)
+		}
+	}
+
+	sort.Slice(matches, func(i, j int) bool {
+		return matches[i].CreatedAt.After(matches[j].CreatedAt)
+	})
+
+	return matches
+}
+
 func (r *fakeRepository) BookmarkSearchCount(_ context.Context, userUUID string, visibility Visibility, searchTerms string) (uint, error) {
-	return 0, errors.New("not implemented")
+	return uint(len(r.bookmarkSearchMatches(userUUID, visibility, searchTerms))), nil
 }
 
 func (r *fakeRepository) BookmarkSearchN(_ context.Context, userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]bookmark.Bookmark, error) {
-	return []bookmark.Bookmark{}, errors.New("not implemented")
+	matches := r.bookmarkSearchMatches(userUUID, visibility, searchTerms)
+
+	if offset >= uint(len(matches)) {
+		return []bookmark.Bookmark{}, nil
+	}
+
+	end := min(offset+n, uint(len(matches)))
+	return matches[offset:end], nil
 }
 
 func (r *fakeRepository) OwnerGetByUUID(_ context.Context, userUUID string) (Owner, error) {

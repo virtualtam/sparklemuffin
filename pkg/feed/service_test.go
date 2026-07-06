@@ -419,6 +419,50 @@ func TestServiceDeleteCategory(t *testing.T) {
 	})
 }
 
+func TestServiceDeleteCategoryValidation(t *testing.T) {
+	fake := faker.New()
+	userUUID := fake.UUID().V4()
+
+	cases := []struct {
+		tname        string
+		userUUID     string
+		categoryUUID string
+		wantErr      error
+	}{
+		{
+			tname:        "empty category UUID",
+			userUUID:     userUUID,
+			categoryUUID: "",
+			wantErr:      ErrCategoryUUIDRequired,
+		},
+		{
+			tname:        "invalid category UUID",
+			userUUID:     userUUID,
+			categoryUUID: "not-a-uuid",
+			wantErr:      ErrCategoryUUIDInvalid,
+		},
+		{
+			tname:        "empty user UUID",
+			userUUID:     "",
+			categoryUUID: fake.UUID().V4(),
+			wantErr:      ErrCategoryUserUUIDRequired,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{}
+			s := NewService(r, nil)
+
+			err := s.DeleteCategory(t.Context(), tc.userUUID, tc.categoryUUID)
+
+			if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+		})
+	}
+}
+
 func TestServiceUpdateCategory(t *testing.T) {
 	userUUID := "179206c8-2965-47a7-ba04-bf0a6a0b8d11"
 	now := time.Now().UTC()
@@ -1203,6 +1247,20 @@ func TestServiceDeleteSubscription(t *testing.T) {
 			t.Fatalf("want ErrFeedNotFound, got %q", err)
 		}
 	})
+}
+
+func TestServiceDeleteSubscriptionNotFound(t *testing.T) {
+	fake := faker.New()
+	userUUID := fake.UUID().V4()
+
+	r := &FakeRepository{}
+	s := NewService(r, nil)
+
+	err := s.DeleteSubscription(t.Context(), userUUID, fake.UUID().V4())
+
+	if !errors.Is(err, ErrSubscriptionNotFound) {
+		t.Fatalf("want error %q, got %q", ErrSubscriptionNotFound, err)
+	}
 }
 
 func TestServiceUpdateSubscription(t *testing.T) {

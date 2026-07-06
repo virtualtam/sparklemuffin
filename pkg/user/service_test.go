@@ -157,6 +157,173 @@ func TestServiceAdd(t *testing.T) {
 	}
 }
 
+func TestServiceAll(t *testing.T) {
+	cases := []struct {
+		tname           string
+		repositoryUsers []User
+		wantLen         int
+	}{
+		{
+			tname:   "no users",
+			wantLen: 0,
+		},
+		{
+			tname: "2 users",
+			repositoryUsers: []User{
+				{Email: "one@domain.tld"},
+				{Email: "two@domain.tld"},
+			},
+			wantLen: 2,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{Users: tc.repositoryUsers}
+			s := NewService(r)
+
+			got, err := s.All(t.Context())
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+			if len(got) != tc.wantLen {
+				t.Fatalf("want %d users, got %d", tc.wantLen, len(got))
+			}
+		})
+	}
+}
+
+func TestServiceByNickName(t *testing.T) {
+	cases := []struct {
+		tname           string
+		repositoryUsers []User
+		nick            string
+		want            User
+		wantErr         error
+	}{
+		// error cases
+		{
+			tname:   "empty nick",
+			wantErr: ErrNickNameRequired,
+		},
+		{
+			tname:   "empty nick (whitespace)",
+			nick:    "   ",
+			wantErr: ErrNickNameRequired,
+		},
+		{
+			tname:   "invalid nick (space)",
+			nick:    "in valid",
+			wantErr: ErrNickNameInvalid,
+		},
+		{
+			tname:   "not found",
+			nick:    "ghost",
+			wantErr: ErrNotFound,
+		},
+
+		// nominal cases
+		{
+			tname: "found",
+			repositoryUsers: []User{
+				{NickName: "testuser", Email: "test@domain.tld"},
+			},
+			nick: "testuser",
+			want: User{NickName: "testuser", Email: "test@domain.tld"},
+		},
+		{
+			tname: "found (nick normalized to lowercase)",
+			repositoryUsers: []User{
+				{NickName: "testuser", Email: "test@domain.tld"},
+			},
+			nick: "TestUser",
+			want: User{NickName: "testuser", Email: "test@domain.tld"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{Users: tc.repositoryUsers}
+			s := NewService(r)
+
+			got, err := s.ByNickName(t.Context(), tc.nick)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertUsersEqual(t, got, tc.want)
+		})
+	}
+}
+
+func TestServiceByUUID(t *testing.T) {
+	cases := []struct {
+		tname           string
+		repositoryUsers []User
+		userUUID        string
+		want            User
+		wantErr         error
+	}{
+		// error cases
+		{
+			tname:   "empty UUID",
+			wantErr: ErrUUIDRequired,
+		},
+		{
+			tname:    "not found",
+			userUUID: "b52cd2d5-89f7-4489-b023-722896ca3f98",
+			wantErr:  ErrNotFound,
+		},
+
+		// nominal cases
+		{
+			tname: "found",
+			repositoryUsers: []User{
+				{UUID: "b52cd2d5-89f7-4489-b023-722896ca3f98", Email: "found@domain.tld"},
+			},
+			userUUID: "b52cd2d5-89f7-4489-b023-722896ca3f98",
+			want:     User{UUID: "b52cd2d5-89f7-4489-b023-722896ca3f98", Email: "found@domain.tld"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{Users: tc.repositoryUsers}
+			s := NewService(r)
+
+			got, err := s.ByUUID(t.Context(), tc.userUUID)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertUsersEqual(t, got, tc.want)
+		})
+	}
+}
+
 func TestServiceAuthenticate(t *testing.T) {
 	cases := []struct {
 		tname           string
@@ -181,6 +348,18 @@ func TestServiceAuthenticate(t *testing.T) {
 			tname:   "not found",
 			email:   "ghost@domain.tld",
 			wantErr: ErrNotFound,
+		},
+		{
+			tname: "wrong password",
+			repositoryUsers: []User{
+				{
+					Email:        "found@domain.tld",
+					PasswordHash: "$2b$10$J0z6wKdvrPMmbUgg.uhhROv0Zp4bFQ19GnTshpsazLpK2l5fOnEmy",
+				},
+			},
+			email:    "found@domain.tld",
+			password: "nottest",
+			wantErr:  ErrPasswordIncorrect,
 		},
 		{
 			tname: "found",
@@ -624,6 +803,14 @@ func TestServiceUpdatePassword(t *testing.T) {
 			wantErr: ErrPasswordRequired,
 		},
 		{
+			tname: "user not found",
+			passwordUpdate: PasswordUpdate{
+				UUID:            "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+				CurrentPassword: "test",
+			},
+			wantErr: ErrNotFound,
+		},
+		{
 			tname: "invalid current password",
 			repositoryUsers: []User{
 				{
@@ -681,6 +868,74 @@ func TestServiceUpdatePassword(t *testing.T) {
 			s := NewService(r)
 
 			err := s.UpdatePassword(t.Context(), tc.passwordUpdate)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+		})
+	}
+}
+
+func TestServiceUpdatePasswordHash(t *testing.T) {
+	cases := []struct {
+		tname           string
+		repositoryUsers []User
+		user            User
+		wantErr         error
+	}{
+		// error cases
+		{
+			tname:   "empty UUID",
+			wantErr: ErrUUIDRequired,
+		},
+		{
+			tname: "empty password hash",
+			user: User{
+				UUID: "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+			},
+			wantErr: ErrPasswordHashRequired,
+		},
+		{
+			tname: "user not found",
+			user: User{
+				UUID:         "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+				PasswordHash: "$2b$10$AIUHvtnoIppMHkhpoTFdROVwedB9YC.iJvGaHpnIXEUesD6VHTLLK",
+			},
+			wantErr: ErrNotFound,
+		},
+
+		// nominal case
+		{
+			tname: "password hash updated",
+			repositoryUsers: []User{
+				{
+					UUID:         "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+					PasswordHash: "$2b$10$AIUHvtnoIppMHkhpoTFdROVwedB9YC.iJvGaHpnIXEUesD6VHTLLK",
+				},
+			},
+			user: User{
+				UUID:         "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+				PasswordHash: "$2b$10$J0z6wKdvrPMmbUgg.uhhROv0Zp4bFQ19GnTshpsazLpK2l5fOnEmy",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{Users: tc.repositoryUsers}
+			s := NewService(r)
+
+			err := s.UpdatePasswordHash(t.Context(), tc.user)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

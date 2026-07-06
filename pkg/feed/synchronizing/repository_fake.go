@@ -15,9 +15,18 @@ var _ Repository = &fakeRepository{}
 type fakeRepository struct {
 	Feeds   []feed.Feed
 	Entries []feed.Entry
+
+	FeedGetNByLastSynchronizationTimeErr error
+	FeedUpdateFetchMetadataErr           error
+	FeedUpdateMetadataErr                error
+	FeedEntryUpsertManyErr               error
 }
 
 func (r *fakeRepository) FeedGetNByLastSynchronizationTime(_ context.Context, n uint, lastSyncBefore time.Time) ([]feed.Feed, error) {
+	if r.FeedGetNByLastSynchronizationTimeErr != nil {
+		return nil, r.FeedGetNByLastSynchronizationTimeErr
+	}
+
 	var feedsToSync []feed.Feed
 
 	for _, f := range r.Feeds {
@@ -32,6 +41,10 @@ func (r *fakeRepository) FeedGetNByLastSynchronizationTime(_ context.Context, n 
 }
 
 func (r *fakeRepository) FeedUpdateFetchMetadata(_ context.Context, feedFetchMetadata FeedFetchMetadata) error {
+	if r.FeedUpdateFetchMetadataErr != nil {
+		return r.FeedUpdateFetchMetadataErr
+	}
+
 	for index, f := range r.Feeds {
 		if f.UUID == feedFetchMetadata.UUID {
 			r.Feeds[index].ETag = feedFetchMetadata.ETag
@@ -47,6 +60,10 @@ func (r *fakeRepository) FeedUpdateFetchMetadata(_ context.Context, feedFetchMet
 }
 
 func (r *fakeRepository) FeedUpdateMetadata(_ context.Context, feedMetadata FeedMetadata) error {
+	if r.FeedUpdateMetadataErr != nil {
+		return r.FeedUpdateMetadataErr
+	}
+
 	for index, f := range r.Feeds {
 		if f.UUID == feedMetadata.UUID {
 			r.Feeds[index].Title = feedMetadata.Title
@@ -61,6 +78,9 @@ func (r *fakeRepository) FeedUpdateMetadata(_ context.Context, feedMetadata Feed
 }
 
 func (r *fakeRepository) FeedEntryUpsertMany(_ context.Context, newEntries []feed.Entry) (int64, error) {
+	if r.FeedEntryUpsertManyErr != nil {
+		return 0, r.FeedEntryUpsertManyErr
+	}
 	uniqueURLs := map[string]int{}
 	for index, entry := range r.Entries {
 		uniqueURLs[entry.URL] = index

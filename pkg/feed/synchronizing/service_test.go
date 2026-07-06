@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cespare/xxhash/v2"
 	"github.com/gorilla/feeds"
 	"github.com/jaswdr/faker/v2"
 
@@ -16,6 +17,14 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
+
+var errFetchFailed = errors.New("network error")
+
+type errorRoundTripper struct{}
+
+func (rt *errorRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, errFetchFailed
+}
 
 func TestServiceSynchronize(t *testing.T) {
 	fake := faker.New()
@@ -38,7 +47,30 @@ func TestServiceSynchronize(t *testing.T) {
 	}
 
 	feedETag := feedtest.HashETag(feedStr)
+	feedHash := xxhash.Sum64([]byte(feedStr))
 	feedLastModified := today
+
+	invalidEntryFeed := feeds.Feed{
+		Title:       atomFeed.Title,
+		Description: atomFeed.Description,
+		Updated:     tomorrow,
+		Items: []*feeds.Item{
+			{
+				// Item with no URL: NewEntryFromItem produces entry.URL = "" → ValidateForAddition fails → skipped.
+				Id:      "no-url-item",
+				Title:   "No URL Entry",
+				Created: today,
+				Updated: today,
+			},
+			atomFeed.Items[0],
+			atomFeed.Items[1],
+		},
+	}
+	invalidEntryFeedStr, err := invalidEntryFeed.ToAtom()
+	if err != nil {
+		t.Fatalf("failed to encode invalid entry feed: %q", err)
+	}
+	invalidEntryFeedETag := feedtest.HashETag(invalidEntryFeedStr)
 
 	repositoryFeed := feed.Feed{
 		UUID:         fake.UUID().V4(),
@@ -76,6 +108,15 @@ func TestServiceSynchronize(t *testing.T) {
 		repositoryFeeds   []feed.Feed
 		repositoryEntries []feed.Entry
 
+		// error injection for repository methods
+		feedGetNErr           error
+		feedUpdateFetchErr    error
+		feedUpdateMetadataErr error
+		feedEntryUpsertErr    error
+
+		// custom HTTP transport (nil → use feedtest.NewRoundTripperFromFeed with atomFeed)
+		transport http.RoundTripper
+
 		// remote syndication feed
 		atomFeed feeds.Feed
 
@@ -84,6 +125,131 @@ func TestServiceSynchronize(t *testing.T) {
 		wantEntries []feed.Entry
 		wantErr     error
 	}{
+		// error cases
+		{
+			tname:       "FeedGetNByLastSynchronizationTime fails",
+			feedGetNErr: feed.ErrFeedNotFound,
+			wantErr:     feed.ErrFeedNotFound,
+		},
+		{
+			tname:           "fetch fails",
+			repositoryFeeds: []feed.Feed{repositoryFeed},
+			transport:       &errorRoundTripper{},
+			wantErr:         errFetchFailed,
+		},
+		{
+			tname:             "FeedUpdateFetchMetadata fails",
+			repositoryFeeds:   []feed.Feed{repositoryFeed},
+			atomFeed:          atomFeed,
+			feedUpdateFetchErr: feed.ErrFeedNotFound,
+			wantErr:           feed.ErrFeedNotFound,
+		},
+		{
+			tname: "FeedUpdateMetadata fails",
+			repositoryFeeds: []feed.Feed{
+				{
+					UUID:        repositoryFeed.UUID,
+					FeedURL:     repositoryFeed.FeedURL,
+					Title:       repositoryFeed.Title,
+					Description: repositoryFeed.Description,
+					Slug:        repositoryFeed.Slug,
+					// ETag/LastModified: zero → server returns 200 OK
+					// Hash: 0 → differs from remote → FeedUpdateMetadata called
+					FetchedAt: yesterday,
+					CreatedAt: yesterday,
+				},
+			},
+			atomFeed:              atomFeed,
+			feedUpdateMetadataErr: feed.ErrFeedNotFound,
+			wantErr:               feed.ErrFeedNotFound,
+		},
+		{
+			tname: "FeedEntryUpsertMany fails",
+			repositoryFeeds: []feed.Feed{
+				{
+					UUID:        repositoryFeed.UUID,
+					FeedURL:     repositoryFeed.FeedURL,
+					Title:       repositoryFeed.Title,
+					Description: repositoryFeed.Description,
+					Slug:        repositoryFeed.Slug,
+					FetchedAt:   yesterday,
+					CreatedAt:   yesterday,
+				},
+			},
+			atomFeed:           atomFeed,
+			feedEntryUpsertErr: feed.ErrFeedNotFound,
+			wantErr:            feed.ErrFeedNotFound,
+		},
+		// nominal cases: hash match → skip entry update
+		{
+			tname: "hashes match: remote content unchanged, entries not updated",
+			repositoryFeeds: []feed.Feed{
+				{
+					UUID:        repositoryFeed.UUID,
+					FeedURL:     repositoryFeed.FeedURL,
+					Title:       repositoryFeed.Title,
+					Description: repositoryFeed.Description,
+					Slug:        repositoryFeed.Slug,
+					Hash:        feedHash, // matches computed hash of remote content
+					// ETag/LastModified: zero → server returns 200 OK (no conditional GET)
+					FetchedAt: yesterday,
+					CreatedAt: yesterday,
+				},
+			},
+			repositoryEntries: []feed.Entry{secondEntry, firstEntry},
+			atomFeed:          atomFeed,
+			wantFeeds: []feed.Feed{
+				{
+					UUID:         repositoryFeed.UUID,
+					FeedURL:      repositoryFeed.FeedURL,
+					Title:        repositoryFeed.Title,
+					Description:  repositoryFeed.Description,
+					Slug:         repositoryFeed.Slug,
+					Hash:         feedHash,
+					ETag:         feedETag,
+					LastModified: feedLastModified,
+					CreatedAt:    yesterday,
+					UpdatedAt:    now,
+					FetchedAt:    now,
+				},
+			},
+			wantEntries: []feed.Entry{secondEntry, firstEntry},
+		},
+
+		// nominal cases: invalid entry skipped
+		{
+			tname: "feed has an entry without URL: invalid entry is skipped",
+			repositoryFeeds: []feed.Feed{
+				{
+					UUID:        repositoryFeed.UUID,
+					FeedURL:     repositoryFeed.FeedURL,
+					Title:       repositoryFeed.Title,
+					Description: repositoryFeed.Description,
+					Slug:        repositoryFeed.Slug,
+					FetchedAt:   yesterday,
+					CreatedAt:   yesterday,
+				},
+			},
+			repositoryEntries: []feed.Entry{secondEntry, firstEntry},
+			atomFeed:          invalidEntryFeed,
+			wantFeeds: []feed.Feed{
+				{
+					UUID:         repositoryFeed.UUID,
+					FeedURL:      repositoryFeed.FeedURL,
+					Title:        repositoryFeed.Title,
+					Description:  repositoryFeed.Description,
+					Slug:         repositoryFeed.Slug,
+					ETag:         invalidEntryFeedETag,
+					LastModified: tomorrow,
+					Hash:         0, // fake does not update Hash in FeedUpdateMetadata
+					CreatedAt:    yesterday,
+					UpdatedAt:    now,
+					FetchedAt:    now,
+				},
+			},
+			wantEntries: []feed.Entry{secondEntry, firstEntry},
+		},
+
 		// nominal cases
 		{
 			tname: "synchronized recently, nothing to do",
@@ -373,9 +539,19 @@ func TestServiceSynchronize(t *testing.T) {
 			r := &fakeRepository{
 				Feeds:   tc.repositoryFeeds,
 				Entries: tc.repositoryEntries,
+
+				FeedGetNByLastSynchronizationTimeErr: tc.feedGetNErr,
+				FeedUpdateFetchMetadataErr:           tc.feedUpdateFetchErr,
+				FeedUpdateMetadataErr:                tc.feedUpdateMetadataErr,
+				FeedEntryUpsertManyErr:               tc.feedEntryUpsertErr,
 			}
 
-			transport := feedtest.NewRoundTripperFromFeed(t, tc.atomFeed)
+			var transport http.RoundTripper
+			if tc.transport != nil {
+				transport = tc.transport
+			} else {
+				transport = feedtest.NewRoundTripperFromFeed(t, tc.atomFeed)
+			}
 			feedHTTPClient := &http.Client{
 				Transport: transport,
 			}

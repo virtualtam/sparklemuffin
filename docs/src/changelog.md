@@ -22,6 +22,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - Update direct and transitive dependencies
+- Improve test coverage for bookmark and feed operations
 
 ## [v0.6.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.1) - 2026-04-23
 ### Security

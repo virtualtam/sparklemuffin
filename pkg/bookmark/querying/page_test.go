@@ -121,3 +121,22 @@ func assertBookmarkPageEquals(t *testing.T, got, want BookmarkPage) {
 		}
 	}
 }
+
+func assertTagPageEquals(t *testing.T, got, want TagPage) {
+	t.Helper()
+
+	paginate.AssertPageEquals(t, got.Page, want.Page)
+
+	if len(got.Tags) != len(want.Tags) {
+		t.Fatalf("want %d tags, got %d", len(want.Tags), len(got.Tags))
+	}
+
+	for i, wantTag := range want.Tags {
+		if got.Tags[i].Name != wantTag.Name {
+			t.Errorf("want tag %d name %q, got %q", i, wantTag.Name, got.Tags[i].Name)
+		}
+		if got.Tags[i].Count != wantTag.Count {
+			t.Errorf("want tag %d count %d, got %d", i, wantTag.Count, got.Tags[i].Count)
+		}
+	}
+}

@@ -5,7 +5,6 @@ package querying
 
 import (
 	"context"
-	"errors"
 	"sort"
 	"strings"
 
@@ -149,22 +148,79 @@ func (r *fakeRepository) OwnerGetByUUID(_ context.Context, userUUID string) (Own
 	return Owner{}, ErrOwnerNotFound
 }
 
+func (r *fakeRepository) aggregateTags(userUUID string, visibility Visibility) []Tag {
+	counts := map[string]uint{}
+
+	for _, b := range r.bookmarks {
+		if b.UserUUID != userUUID {
+			continue
+		}
+		if !visibilityMatches(visibility, b.Private) {
+			continue
+		}
+		for _, tag := range b.Tags {
+			counts[tag]++
+		}
+	}
+
+	tags := make([]Tag, 0, len(counts))
+	for name, count := range counts {
+		tags = append(tags, NewTag(name, count))
+	}
+
+	sort.Slice(tags, func(i, j int) bool {
+		if tags[i].Count != tags[j].Count {
+			return tags[i].Count > tags[j].Count
+		}
+		return tags[i].Name < tags[j].Name
+	})
+
+	return tags
+}
+
 func (r *fakeRepository) BookmarkTagGetAll(_ context.Context, userUUID string, visibility Visibility) ([]Tag, error) {
-	return []Tag{}, errors.New("not implemented")
+	return r.aggregateTags(userUUID, visibility), nil
 }
 
 func (r *fakeRepository) BookmarkTagGetCount(_ context.Context, userUUID string, visibility Visibility) (uint, error) {
-	return 0, errors.New("not implemented")
+	return uint(len(r.aggregateTags(userUUID, visibility))), nil
 }
 
 func (r *fakeRepository) BookmarkTagGetN(_ context.Context, userUUID string, visibility Visibility, n uint, offset uint) ([]Tag, error) {
-	return []Tag{}, errors.New("not implemented")
+	tags := r.aggregateTags(userUUID, visibility)
+
+	if offset >= uint(len(tags)) {
+		return []Tag{}, nil
+	}
+
+	end := min(offset+n, uint(len(tags)))
+	return tags[offset:end], nil
 }
 
-func (r *fakeRepository) BookmarkTagFilterCount(_ context.Context, userUUID string, visibility Visibility, searchTerms string) (uint, error) {
-	return 0, errors.New("not implemented")
+func (r *fakeRepository) filterTags(userUUID string, visibility Visibility, filterTerm string) []Tag {
+	all := r.aggregateTags(userUUID, visibility)
+
+	filtered := all[:0]
+	for _, tag := range all {
+		if strings.Contains(strings.ToLower(tag.Name), strings.ToLower(filterTerm)) {
+			filtered = append(filtered, tag)
+		}
+	}
+
+	return filtered
 }
 
-func (r *fakeRepository) BookmarkTagFilterN(_ context.Context, userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]Tag, error) {
-	return []Tag{}, errors.New("not implemented")
+func (r *fakeRepository) BookmarkTagFilterCount(_ context.Context, userUUID string, visibility Visibility, filterTerm string) (uint, error) {
+	return uint(len(r.filterTags(userUUID, visibility, filterTerm))), nil
+}
+
+func (r *fakeRepository) BookmarkTagFilterN(_ context.Context, userUUID string, visibility Visibility, filterTerm string, n uint, offset uint) ([]Tag, error) {
+	tags := r.filterTags(userUUID, visibility, filterTerm)
+
+	if offset >= uint(len(tags)) {
+		return []Tag{}, nil
+	}
+
+	end := min(offset+n, uint(len(tags)))
+	return tags[offset:end], nil
 }

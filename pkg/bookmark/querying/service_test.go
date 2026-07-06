@@ -69,6 +69,36 @@ var testRepositoryBookmarks = []bookmark.Bookmark{
 	},
 }
 
+// testRepositoryBookmarksWithTags provides bookmarks with varied tags across
+// visibility levels to exercise tag-related service methods.
+var testRepositoryBookmarksWithTags = []bookmark.Bookmark{
+	{
+		UserUUID: "5d75c769-059c-4b36-9db6-1c82619e704a",
+		Title:    "Bookmark A",
+		URL:      "https://a.tld",
+		Tags:     []string{"go", "programming"},
+	},
+	{
+		UserUUID: "5d75c769-059c-4b36-9db6-1c82619e704a",
+		Title:    "Bookmark B (private)",
+		URL:      "https://b.tld",
+		Tags:     []string{"go", "testing"},
+		Private:  true,
+	},
+	{
+		UserUUID: "5d75c769-059c-4b36-9db6-1c82619e704a",
+		Title:    "Bookmark C",
+		URL:      "https://c.tld",
+		Tags:     []string{"go", "programming"},
+	},
+	{
+		UserUUID: "218d03f8-976c-4387-9d74-95ed656e3921",
+		Title:    "Other user bookmark",
+		URL:      "https://other.tld",
+		Tags:     []string{"go"},
+	},
+}
+
 func TestServiceByPage(t *testing.T) {
 	cases := []struct {
 		tname               string
@@ -708,6 +738,407 @@ func TestServicePublicBookmarksByPage(t *testing.T) {
 			}
 
 			assertBookmarkPageEquals(t, got, tc.want)
+		})
+	}
+}
+
+func TestServiceTags(t *testing.T) {
+	cases := []struct {
+		tname               string
+		repositoryBookmarks []bookmark.Bookmark
+		ownerUUID           string
+		visibility          Visibility
+		want                []Tag
+		wantErr             error
+	}{
+		{
+			tname:      "0 tags",
+			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility: VisibilityAll,
+			want:       []Tag{},
+		},
+		{
+			tname:               "all visibility",
+			repositoryBookmarks: testRepositoryBookmarksWithTags,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityAll,
+			want: []Tag{
+				{Name: "go", Count: 3},
+				{Name: "programming", Count: 2},
+				{Name: "testing", Count: 1},
+			},
+		},
+		{
+			tname:               "public visibility",
+			repositoryBookmarks: testRepositoryBookmarksWithTags,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityPublic,
+			want: []Tag{
+				{Name: "go", Count: 2},
+				{Name: "programming", Count: 2},
+			},
+		},
+		{
+			tname:               "private visibility",
+			repositoryBookmarks: testRepositoryBookmarksWithTags,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityPrivate,
+			want: []Tag{
+				{Name: "go", Count: 1},
+				{Name: "testing", Count: 1},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{
+				bookmarks: tc.repositoryBookmarks,
+				users:     testRepositoryUsers,
+			}
+
+			s := NewService(r)
+
+			got, err := s.Tags(t.Context(), tc.ownerUUID, tc.visibility)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			if len(got) != len(tc.want) {
+				t.Fatalf("want %d tags, got %d", len(tc.want), len(got))
+			}
+
+			for i, wantTag := range tc.want {
+				if got[i].Name != wantTag.Name {
+					t.Errorf("want tag %d name %q, got %q", i, wantTag.Name, got[i].Name)
+				}
+				if got[i].Count != wantTag.Count {
+					t.Errorf("want tag %d count %d, got %d", i, wantTag.Count, got[i].Count)
+				}
+			}
+		})
+	}
+}
+
+func TestServiceTagNamesByCount(t *testing.T) {
+	cases := []struct {
+		tname               string
+		repositoryBookmarks []bookmark.Bookmark
+		ownerUUID           string
+		visibility          Visibility
+		want                []string
+		wantErr             error
+	}{
+		{
+			tname:      "0 tags",
+			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility: VisibilityAll,
+			want:       []string{},
+		},
+		{
+			tname:               "all visibility",
+			repositoryBookmarks: testRepositoryBookmarksWithTags,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityAll,
+			want:                []string{"go", "programming", "testing"},
+		},
+		{
+			tname:               "public visibility",
+			repositoryBookmarks: testRepositoryBookmarksWithTags,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityPublic,
+			want:                []string{"go", "programming"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{
+				bookmarks: tc.repositoryBookmarks,
+				users:     testRepositoryUsers,
+			}
+
+			s := NewService(r)
+
+			got, err := s.TagNamesByCount(t.Context(), tc.ownerUUID, tc.visibility)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			if len(got) != len(tc.want) {
+				t.Fatalf("want %d tag names, got %d", len(tc.want), len(got))
+			}
+
+			for i, wantName := range tc.want {
+				if got[i] != wantName {
+					t.Errorf("want tag name %d %q, got %q", i, wantName, got[i])
+				}
+			}
+		})
+	}
+}
+
+func TestServiceTagsByPage(t *testing.T) {
+	cases := []struct {
+		tname               string
+		repositoryBookmarks []bookmark.Bookmark
+		ownerUUID           string
+		visibility          Visibility
+		pageNumber          uint
+		want                TagPage
+		wantErr             error
+	}{
+		// nominal cases
+		{
+			tname:      "0 tags",
+			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility: VisibilityAll,
+			pageNumber: 1,
+			want: TagPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+				},
+			},
+		},
+		{
+			tname:               "page 1, all visibility",
+			repositoryBookmarks: testRepositoryBookmarksWithTags,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityAll,
+			pageNumber:          1,
+			want: TagPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          3,
+				},
+				Tags: []Tag{
+					{Name: "go", Count: 3},
+					{Name: "programming", Count: 2},
+					{Name: "testing", Count: 1},
+				},
+			},
+		},
+		{
+			tname:               "page 1, public visibility",
+			repositoryBookmarks: testRepositoryBookmarksWithTags,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityPublic,
+			pageNumber:          1,
+			want: TagPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          2,
+				},
+				Tags: []Tag{
+					{Name: "go", Count: 2},
+					{Name: "programming", Count: 2},
+				},
+			},
+		},
+
+		// error cases
+		{
+			tname:      "zeroth page",
+			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility: VisibilityAll,
+			pageNumber: 0,
+			wantErr:    paginate.ErrPageNumberOutOfBounds,
+		},
+		{
+			tname:               "page number out of bounds",
+			repositoryBookmarks: testRepositoryBookmarksWithTags,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityAll,
+			pageNumber:          18,
+			wantErr:             paginate.ErrPageNumberOutOfBounds,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{
+				bookmarks: tc.repositoryBookmarks,
+				users:     testRepositoryUsers,
+			}
+
+			s := NewService(r)
+
+			got, err := s.TagsByPage(t.Context(), tc.ownerUUID, tc.visibility, tc.pageNumber)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertTagPageEquals(t, got, tc.want)
+		})
+	}
+}
+
+func TestServiceTagsByFilterQueryAndPage(t *testing.T) {
+	cases := []struct {
+		tname               string
+		repositoryBookmarks []bookmark.Bookmark
+		ownerUUID           string
+		visibility          Visibility
+		filterTerm          string
+		pageNumber          uint
+		want                TagPage
+		wantErr             error
+	}{
+		// nominal cases
+		{
+			tname:      "0 matches",
+			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility: VisibilityAll,
+			filterTerm: "notfound",
+			pageNumber: 1,
+			want: TagPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					SearchTerms:        "notfound",
+				},
+			},
+		},
+		{
+			tname:               "1 match",
+			repositoryBookmarks: testRepositoryBookmarksWithTags,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityAll,
+			filterTerm:          "test",
+			pageNumber:          1,
+			want: TagPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          1,
+					SearchTerms:        "test",
+				},
+				Tags: []Tag{
+					{Name: "testing", Count: 1},
+				},
+			},
+		},
+		{
+			tname:               "multiple matches",
+			repositoryBookmarks: testRepositoryBookmarksWithTags,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityAll,
+			filterTerm:          "o",
+			pageNumber:          1,
+			want: TagPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          2,
+					SearchTerms:        "o",
+				},
+				Tags: []Tag{
+					{Name: "go", Count: 3},
+					{Name: "programming", Count: 2},
+				},
+			},
+		},
+
+		// error cases
+		{
+			tname:      "zeroth page",
+			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility: VisibilityAll,
+			filterTerm: "go",
+			pageNumber: 0,
+			wantErr:    paginate.ErrPageNumberOutOfBounds,
+		},
+		{
+			tname:               "page number out of bounds",
+			repositoryBookmarks: testRepositoryBookmarksWithTags,
+			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:          VisibilityAll,
+			filterTerm:          "go",
+			pageNumber:          18,
+			wantErr:             paginate.ErrPageNumberOutOfBounds,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &fakeRepository{
+				bookmarks: tc.repositoryBookmarks,
+				users:     testRepositoryUsers,
+			}
+
+			s := NewService(r)
+
+			got, err := s.TagsByFilterQueryAndPage(t.Context(), tc.ownerUUID, tc.visibility, tc.filterTerm, tc.pageNumber)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertTagPageEquals(t, got, tc.want)
 		})
 	}
 }

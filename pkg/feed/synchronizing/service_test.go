@@ -138,11 +138,11 @@ func TestServiceSynchronize(t *testing.T) {
 			wantErr:         errFetchFailed,
 		},
 		{
-			tname:             "FeedUpdateFetchMetadata fails",
-			repositoryFeeds:   []feed.Feed{repositoryFeed},
-			atomFeed:          atomFeed,
+			tname:              "FeedUpdateFetchMetadata fails",
+			repositoryFeeds:    []feed.Feed{repositoryFeed},
+			atomFeed:           atomFeed,
 			feedUpdateFetchErr: feed.ErrFeedNotFound,
-			wantErr:           feed.ErrFeedNotFound,
+			wantErr:            feed.ErrFeedNotFound,
 		},
 		{
 			tname: "FeedUpdateMetadata fails",

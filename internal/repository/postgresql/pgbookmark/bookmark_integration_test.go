@@ -6,11 +6,11 @@ package pgbookmark_test
 import (
 	"errors"
 	"math/rand"
+	"slices"
 	"sort"
 	"testing"
 
 	"github.com/jaswdr/faker/v2"
-	"golang.org/x/exp/slices"
 
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbookmark"

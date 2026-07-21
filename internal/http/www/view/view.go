@@ -109,6 +109,21 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request, data any) {
 	_, _ = io.Copy(w, &buf) // nolint:errcheck
 }
 
+// RenderTemplate renders a single named template, without the base page layout.
+// It is intended for rendering HTML fragments, e.g. in response to htmx requests.
+func (v *View) RenderTemplate(w http.ResponseWriter, name string, data any) error {
+	var buf bytes.Buffer
+
+	if err := v.Template.ExecuteTemplate(&buf, name, data); err != nil {
+		return err
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+
+	_, err := io.Copy(w, &buf)
+	return err
+}
+
 func (d *Data) popFlash(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(flashCookieName)
 	if errors.Is(err, http.ErrNoCookie) {

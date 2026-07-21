@@ -7,7 +7,7 @@
           <a class="pl-0" href="/feeds">
             <strong>
               All
-              <span class="tag is-light is-pulled-right">{{.Unread}}</span>
+              <span id="unread-count-all" class="tag is-light is-pulled-right">{{.Unread}}</span>
             </strong>
           </a>
           <hr class="my-1">
@@ -25,14 +25,14 @@
                 </span>
                 <span><a class="pl-0" href="/feeds/categories/{{.Slug}}">{{.Name}}</a></span>
               </span>
-              <span class="tag is-light is-pulled-right">{{.Unread}}</span>
+              <span id="unread-count-category-{{.Slug}}" class="tag is-light is-pulled-right">{{.Unread}}</span>
             </strong>
           </p>
           <ul class="menu-list" x-cloak x-show="open['{{.Slug}}']">
             {{- range .SubscribedFeeds}}
               <li>
                 <a class="pr-0" href="/feeds/subscriptions/{{.Slug}}">{{or .Alias .Title}}
-                  <span class="tag is-light is-pulled-right">{{.Unread}}</span>
+                  <span id="unread-count-feed-{{.Slug}}" class="tag is-light is-pulled-right">{{.Unread}}</span>
                 </a>
               </li>
             {{- end}}
@@ -119,64 +119,7 @@
 
       <ol start="{{.Page.ItemOffset}}">
         {{- range .Entries}}
-        <li class="mb-5">
-          <div class="level mb-1">
-            <div class="level-left">
-              <div class="level-item">
-                <strong><a class="feed-entry-title{{if .Read}} has-text-grey-light{{end}}"
-                    href="{{.URL}}">{{.Title}}</a></strong>
-              </div>
-            </div>
-            <div class="level-right">
-              <div class="level-item">
-                <strong>
-                  <time class="{{if .Read}} has-text-grey-light{{end}}">{{.PublishedAt.Format "2006-01-02"}}</time>
-                </strong>
-              </div>
-            </div>
-          </div>
-          <div class="level mb-1">
-            <div class="level-left">
-              <div class="level-item{{if .Read}} has-text-grey-light{{end}}">
-                <span class="icon-text">
-                  <span class="icon">
-                    <i class="fa-regular fa-newspaper"></i>
-                  </span>
-                  <span class="feed-title" >
-                    <a class="{{if .Read}} has-text-grey-light{{end}}" href="/feeds/subscriptions/{{.FeedSlug}}">{{ or .SubscriptionAlias .FeedTitle }}</a>
-                  </span>
-                </span>
-              </div>
-            </div>
-            <div class="level-right">
-              <div class="level-item">
-                <form action="/feeds/entries/{{.UID}}/toggle-read" method="POST">
-                  <button type="submit" class="button is-small">
-                    {{if .Read}}
-                    <span class="icon has-text-grey-light">
-                      <i class="fa-solid fa-eye-slash"></i>
-                    </span>
-                    <span class="has-text-grey-light">Mark as unread</span>
-                    {{else}}
-                    <span class="icon">
-                      <i class="fa-solid fa-eye"></i>
-                    </span>
-                    <span>Mark as read</span>
-                    {{end}}
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-
-          <div class="{{if .Read}}has-text-grey-light{{end}}">
-            {{- if $.Preferences.ShowEntrySummaries}}
-              {{- with .Summary }}
-              <div class="content">{{.}}</div>
-              {{- end}}
-            {{- end}}
-          </div>
-        </li>
+          {{template "feedEntry" (dict "Entry" . "ShowEntrySummaries" $.Preferences.ShowEntrySummaries)}}
         {{- end}}
       </ol>
     </div>
@@ -246,7 +189,7 @@
       </form>
     </div>
     <div class="level-item">
-      <p class="subtitle is-5">
+      <p id="entry-count" class="subtitle is-5">
         {{if ne .Page.SearchTerms "" }}
         <strong>{{.Page.ItemCount}}</strong> entr{{if gt .Page.ItemCount 1}}ies{{else}}y{{end}} found
         {{else}}
@@ -261,4 +204,65 @@
     </div>
   </div>
 </nav>
+{{end}}
+
+{{define "feedEntry"}}
+<li class="mb-5" id="feed-entry-{{.Entry.UID}}">
+  <div class="level mb-1">
+    <div class="level-left">
+      <div class="level-item">
+        <strong><a class="feed-entry-title{{if .Entry.Read}} has-text-grey-light{{end}}"
+            href="{{.Entry.URL}}">{{.Entry.Title}}</a></strong>
+      </div>
+    </div>
+    <div class="level-right">
+      <div class="level-item">
+        <strong>
+          <time class="{{if .Entry.Read}} has-text-grey-light{{end}}">{{.Entry.PublishedAt.Format "2006-01-02"}}</time>
+        </strong>
+      </div>
+    </div>
+  </div>
+  <div class="level mb-1">
+    <div class="level-left">
+      <div class="level-item{{if .Entry.Read}} has-text-grey-light{{end}}">
+        <span class="icon-text">
+          <span class="icon">
+            <i class="fa-regular fa-newspaper"></i>
+          </span>
+          <span class="feed-title" >
+            <a class="{{if .Entry.Read}} has-text-grey-light{{end}}" href="/feeds/subscriptions/{{.Entry.FeedSlug}}">{{ or .Entry.SubscriptionAlias .Entry.FeedTitle }}</a>
+          </span>
+        </span>
+      </div>
+    </div>
+    <div class="level-right">
+      <div class="level-item">
+        <form action="/feeds/entries/{{.Entry.UID}}/toggle-read" method="POST">
+          <button type="submit" class="button is-small">
+            {{if .Entry.Read}}
+            <span class="icon has-text-grey-light">
+              <i class="fa-solid fa-eye-slash"></i>
+            </span>
+            <span class="has-text-grey-light">Mark as unread</span>
+            {{else}}
+            <span class="icon">
+              <i class="fa-solid fa-eye"></i>
+            </span>
+            <span>Mark as read</span>
+            {{end}}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="{{if .Entry.Read}}has-text-grey-light{{end}}">
+    {{- if .ShowEntrySummaries}}
+      {{- with .Entry.Summary }}
+      <div class="content">{{.}}</div>
+      {{- end}}
+    {{- end}}
+  </div>
+</li>
 {{end}}

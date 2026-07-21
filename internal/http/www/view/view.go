@@ -57,6 +57,7 @@ func New(templateFiles ...string) *View {
 			"Join":           strings.Join,
 			"MarkdownToHTML": MarkdownToHTMLFunc(),
 			"mod":            func(i, j int) int { return i % j },
+			"dict":           dictFunc,
 		}).
 		ParseFS(templates.FS, templateFiles...)
 
@@ -149,6 +150,28 @@ func (d *Data) popFlash(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Unix(1, 0),
 	}
 	http.SetCookie(w, cookie)
+}
+
+// dictFunc builds a map[string]any from an alternating list of string keys and
+// values, so that a template can pass more than one value to a sub-template
+// invoked via {{template "name" pipeline}}.
+func dictFunc(values ...any) (map[string]any, error) {
+	if len(values)%2 != 0 {
+		return nil, fmt.Errorf("dict: expected an even number of arguments, got %d", len(values))
+	}
+
+	d := make(map[string]any, len(values)/2)
+
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			return nil, fmt.Errorf("dict: keys must be strings, got %T", values[i])
+		}
+
+		d[key] = values[i+1]
+	}
+
+	return d, nil
 }
 
 func layoutTemplateFiles() []string {

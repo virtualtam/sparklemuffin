@@ -697,6 +697,46 @@ func (r *Repository) FeedSubscriptionCategoryGetAll(ctx context.Context, userUUI
 	return categories, nil
 }
 
+func (r *Repository) FeedSubscriptionEntryGetByUID(ctx context.Context, userUUID string, entryUID string) (feedquerying.SubscribedFeedEntry, error) {
+	query := `
+	SELECT
+		fe.uid,
+		fe.url,
+		fe.title,
+		fe.summary,
+		fe.published_at,
+		fe.updated_at,
+		fs.alias AS subscription_alias,
+		f.uuid AS feed_uuid,
+		f.title AS feed_title,
+		f.slug AS feed_slug,
+		COALESCE(fem.read, FALSE) AS read
+	FROM feed_entries fe
+	LEFT JOIN feed_entries_metadata fem ON fem.entry_uid = fe.uid
+	JOIN feed_subscriptions fs ON fs.feed_uuid = fe.feed_uuid
+	JOIN feed_feeds f ON f.uuid = fe.feed_uuid
+	WHERE fs.user_uuid=$1
+	AND   fe.uid=$2
+	`
+
+	rows, err := r.Pool.Query(ctx, query, userUUID, entryUID)
+	if err != nil {
+		return feedquerying.SubscribedFeedEntry{}, err
+	}
+	defer rows.Close()
+
+	dbQueryingEntry := &DBQueryingSubscribedFeedEntry{}
+
+	err = pgxscan.ScanOne(dbQueryingEntry, rows)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return feedquerying.SubscribedFeedEntry{}, feed.ErrEntryNotFound
+	} else if err != nil {
+		return feedquerying.SubscribedFeedEntry{}, err
+	}
+
+	return dbQueryingEntry.asQueryingSubscribedFeedEntry(), nil
+}
+
 func (r *Repository) FeedSubscriptionEntryGetN(ctx context.Context, userUUID string, preferences feed.Preferences, n uint, offset uint) ([]feedquerying.SubscribedFeedEntry, error) {
 	const (
 		where = `

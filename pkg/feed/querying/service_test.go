@@ -452,4 +452,70 @@ func TestService(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("SubscribedFeedEntryByUID", func(t *testing.T) {
+		cases := []struct {
+			tname    string
+			userUUID string
+			entryUID string
+			want     SubscribedFeedEntry
+			wantErr  error
+		}{
+			// nominal cases
+			{
+				tname:    "unread entry",
+				userUUID: user1.UUID,
+				entryUID: feed1Entry1.UID,
+				want: SubscribedFeedEntry{
+					Entry:             feed1Entry1,
+					FeedSlug:          feed1.Slug,
+					FeedTitle:         feed1.Title,
+					SubscriptionAlias: user1Subscription1.Alias,
+					Read:              false,
+				},
+			},
+			{
+				tname:    "read entry",
+				userUUID: user1.UUID,
+				entryUID: feed1Entry2.UID,
+				want: SubscribedFeedEntry{
+					Entry:             feed1Entry2,
+					FeedSlug:          feed1.Slug,
+					FeedTitle:         feed1.Title,
+					SubscriptionAlias: user1Subscription1.Alias,
+					Read:              true,
+				},
+			},
+
+			// error cases
+			{
+				tname:    "entry not found",
+				userUUID: user1.UUID,
+				entryUID: "does-not-exist",
+				wantErr:  feed.ErrEntryNotFound,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.tname, func(t *testing.T) {
+				got, err := testService.SubscribedFeedEntryByUID(t.Context(), tc.userUUID, tc.entryUID)
+
+				if tc.wantErr != nil {
+					if errors.Is(err, tc.wantErr) {
+						return
+					}
+					if err == nil {
+						t.Fatalf("want error %q, got nil", tc.wantErr)
+					}
+					t.Fatalf("want error %q, got %q", tc.wantErr, err)
+				}
+
+				if err != nil {
+					t.Fatalf("want no error, got %q", err)
+				}
+
+				AssertSubscriptionEntriesEqual(t, []SubscribedFeedEntry{got}, []SubscribedFeedEntry{tc.want})
+			})
+		}
+	})
 }

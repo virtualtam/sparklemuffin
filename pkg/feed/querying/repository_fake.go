@@ -238,6 +238,42 @@ func (r *fakeRepository) subscribedFeedEntryGetByFeed(ctx context.Context, userU
 	return subscriptionEntries, nil
 }
 
+func (r *fakeRepository) FeedSubscriptionEntryGetByUID(ctx context.Context, userUUID string, entryUID string) (SubscribedFeedEntry, error) {
+	for _, entry := range r.Entries {
+		if entry.UID != entryUID {
+			continue
+		}
+
+		subscription, err := r.feedSubscriptionGetByFeed(ctx, userUUID, entry.FeedUUID)
+		if err != nil {
+			return SubscribedFeedEntry{}, feed.ErrEntryNotFound
+		}
+
+		f, err := r.FeedGetByUUID(ctx, subscription.FeedUUID)
+		if err != nil {
+			return SubscribedFeedEntry{}, err
+		}
+
+		var read bool
+		for _, entryMetadata := range r.EntriesMetadata {
+			if entryMetadata.EntryUID == entry.UID && entryMetadata.Read {
+				read = true
+				break
+			}
+		}
+
+		return SubscribedFeedEntry{
+			Entry:             entry,
+			FeedSlug:          f.Slug,
+			FeedTitle:         f.Title,
+			SubscriptionAlias: subscription.Alias,
+			Read:              read,
+		}, nil
+	}
+
+	return SubscribedFeedEntry{}, feed.ErrEntryNotFound
+}
+
 func (r *fakeRepository) FeedSubscriptionEntryGetN(ctx context.Context, userUUID string, preferences feed.Preferences, n uint, offset uint) ([]SubscribedFeedEntry, error) {
 	var userEntries []SubscribedFeedEntry
 

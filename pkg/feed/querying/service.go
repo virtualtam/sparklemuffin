@@ -76,6 +76,11 @@ func (s *Service) feedsByPage(
 	return NewFeedPage(number, totalPages, pageTitle, pageDescription, categories, entryCount, entries), nil
 }
 
+// SubscribedFeedEntryByUID returns a single SubscribedFeedEntry for a given user.
+func (s *Service) SubscribedFeedEntryByUID(ctx context.Context, userUUID string, entryUID string) (SubscribedFeedEntry, error) {
+	return s.r.FeedSubscriptionEntryGetByUID(ctx, userUUID, entryUID)
+}
+
 // FeedsByPage returns a Page containing a limited and offset number of feeds.
 func (s *Service) FeedsByPage(ctx context.Context, userUUID string, preferences feed.Preferences, number uint) (FeedPage, error) {
 	getCountFn := func() (uint, error) {

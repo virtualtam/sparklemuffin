@@ -41,6 +41,9 @@ type Repository interface {
 	// FeedSubscriptionCategoryGetAll returns SubscribedFeeds, sorted by SubscriptionCategory.
 	FeedSubscriptionCategoryGetAll(ctx context.Context, userUUID string) ([]SubscribedFeedsByCategory, error)
 
+	// FeedSubscriptionEntryGetByUID returns a single SubscribedFeedEntry for a given user.
+	FeedSubscriptionEntryGetByUID(ctx context.Context, userUUID string, entryUID string) (SubscribedFeedEntry, error)
+
 	// FeedSubscriptionEntryGetN returns at most n SubscriptionEntries, starting at a given offset.
 	FeedSubscriptionEntryGetN(ctx context.Context, userUUID string, preferences feed.Preferences, entriesPerPage uint, offset uint) ([]SubscribedFeedEntry, error)
 

@@ -57,16 +57,12 @@
             )}}
           </div>
           <div class="level-item">
-            <div class="buttons has-addons">
-              <button
-                title="Show or hide entry summaries"
-                class="button is-small{{if eq .Preferences.ShowEntrySummaries false}} is-active{{end}}"
-                hx-post="/feeds/preferences/toggle-show-entry-summaries"
-              >
-                <span class="icon"><i class="fa-regular fa-rectangle-list"></i></span>
-                <span>Compact</span>
-              </button>
-            </div>
+            {{template "compactButton" (dict
+              "ShowEntrySummaries" .Preferences.ShowEntrySummaries
+              "URLPath" .URLPath
+              "SearchTerms" .Page.SearchTerms
+              "PageNumber" .Page.PageNumber
+            )}}
           </div>
           <div class="level-item">
             <div class="buttons has-addons">
@@ -309,6 +305,22 @@
   >
     <span class="icon"><i class="fas fa-envelope"></i></span>
     <span>Unread</span>
+  </button>
+</div>
+{{end}}
+
+{{define "compactButton"}}
+<div class="buttons has-addons" id="compact-button" hx-swap-oob="true">
+  <button
+    title="Show or hide entry summaries"
+    class="button is-small{{if eq .ShowEntrySummaries false}} is-active{{end}}"
+    hx-post="/feeds/preferences/toggle-show-entry-summaries"
+    hx-target="#entry-list"
+    hx-swap="outerHTML"
+    hx-vals='{{toJSON "urlPath" .URLPath "search" .SearchTerms "page" .PageNumber}}'
+  >
+    <span class="icon"><i class="fa-regular fa-rectangle-list"></i></span>
+    <span>Compact</span>
   </button>
 </div>
 {{end}}

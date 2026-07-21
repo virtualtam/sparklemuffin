@@ -85,12 +85,12 @@ func newToggleReadRequest(t *testing.T, entryUID string, ctxUser user.User, refe
 
 // newFeedPostRequest builds a POST request against a route with no chi URL
 // params (e.g. the preferences endpoints), with the given user set in context.
-func newFeedPostRequest(t *testing.T, path string, ctxUser user.User, referer string, form url.Values) *http.Request {
+func newFeedPostRequest(t *testing.T, path string, ctxUser user.User, form url.Values) *http.Request {
 	t.Helper()
 
 	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, path, strings.NewReader(form.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	r.Header.Set("Referer", referer)
+	r.Header.Set("Referer", "/feeds")
 
 	ctx := httpcontext.WithUser(r.Context(), ctxUser)
 
@@ -216,7 +216,7 @@ func TestHandlePreferencesFeedShowEntriesUpdate(t *testing.T) {
 		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityAll}, readMetadata)
 
 		form := url.Values{"show": {"UNREAD"}, "urlPath": {"/feeds"}, "search": {""}}
-		r := newFeedPostRequest(t, "/feeds/preferences/show-entries", ctxUser, "/feeds", form)
+		r := newFeedPostRequest(t, "/feeds/preferences/show-entries", ctxUser, form)
 		w := httptest.NewRecorder()
 
 		fc.handlePreferencesFeedShowEntriesUpdate()(w, r)
@@ -250,8 +250,11 @@ func TestHandlePreferencesFeedShowEntriesUpdate(t *testing.T) {
 			}
 		}
 
-		if got := strings.Count(body, "is-active"); got != 1 {
-			t.Errorf("want exactly 1 active filter button (Unread), got %d, body:\n%s", got, body)
+		// 2: the Unread filter button, plus the Compact button (also always
+		// re-rendered by the shared helper, active by default since
+		// ShowEntrySummaries is zero-valued/false in this fixture)
+		if got := strings.Count(body, "is-active"); got != 2 {
+			t.Errorf("want exactly 2 active buttons (Unread + Compact), got %d, body:\n%s", got, body)
 		}
 	})
 
@@ -260,10 +263,86 @@ func TestHandlePreferencesFeedShowEntriesUpdate(t *testing.T) {
 
 		unknownUser := user.User{UUID: "no-such-user"}
 		form := url.Values{"show": {"UNREAD"}, "urlPath": {"/feeds"}, "search": {""}}
-		r := newFeedPostRequest(t, "/feeds/preferences/show-entries", unknownUser, "/feeds", form)
+		r := newFeedPostRequest(t, "/feeds/preferences/show-entries", unknownUser, form)
 		w := httptest.NewRecorder()
 
 		fc.handlePreferencesFeedShowEntriesUpdate()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d", w.Code)
+		}
+		if got := w.Header().Get("Location"); got != "/feeds" {
+			t.Errorf("want redirect to %q, got %q", "/feeds", got)
+		}
+
+		foundFlashCookie := false
+		for _, cookie := range w.Result().Cookies() {
+			if cookie.Name == "flash" {
+				foundFlashCookie = true
+			}
+		}
+		if !foundFlashCookie {
+			t.Error("want a flash cookie to be set")
+		}
+	})
+}
+
+func TestHandlePreferencesToggleShowEntrySummaries(t *testing.T) {
+	ctxUser := testCtxUser
+
+	t.Run("success, list is re-rendered and the current page is preserved", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{
+			UserUUID:           ctxUser.UUID,
+			ShowEntries:        feed.EntryVisibilityAll,
+			ShowEntrySummaries: true,
+		}, nil)
+
+		form := url.Values{"urlPath": {"/feeds"}, "search": {""}, "page": {"1"}}
+		r := newFeedPostRequest(t, "/feeds/preferences/toggle-show-entry-summaries", ctxUser, form)
+		w := httptest.NewRecorder()
+
+		fc.handlePreferencesToggleShowEntrySummaries()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("HX-Refresh"); got != "" {
+			t.Errorf("want no HX-Refresh header, got %q", got)
+		}
+
+		body := w.Body.String()
+
+		wantContains := []string{
+			`<ol id="entry-list"`,
+			`id="compact-button"`,
+			`id="unread-count-all"`,
+			`id="entry-count"`,
+			`id="pagination-top"`,
+			`id="pagination-bottom"`,
+		}
+		for _, want := range wantContains {
+			if !strings.Contains(body, want) {
+				t.Errorf("want body to contain %q, got:\n%s", want, body)
+			}
+		}
+
+		// ShowEntrySummaries flips from true to false, so the Compact button
+		// (now hiding summaries) becomes active; the "All" filter button is
+		// also active since ShowEntries stays ALL. 2 total.
+		if got := strings.Count(body, "is-active"); got != 2 {
+			t.Errorf("want exactly 2 active buttons (All + Compact), got %d, body:\n%s", got, body)
+		}
+	})
+
+	t.Run("error falls back to a full reload", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID}, nil)
+
+		unknownUser := user.User{UUID: "no-such-user"}
+		form := url.Values{"urlPath": {"/feeds"}, "search": {""}, "page": {"1"}}
+		r := newFeedPostRequest(t, "/feeds/preferences/toggle-show-entry-summaries", unknownUser, form)
+		w := httptest.NewRecorder()
+
+		fc.handlePreferencesToggleShowEntrySummaries()(w, r)
 
 		if w.Code != http.StatusSeeOther {
 			t.Fatalf("want status 303, got %d", w.Code)

@@ -493,8 +493,7 @@ func (fc *feedController) feedPageForContext(
 // pages there are, unlike the single-entry toggle-read swap.
 //
 // On any failure it falls back to the same flash+redirect behavior used
-// throughout this file, which htmx follows as a full page reload. It
-// returns true if the response was written successfully.
+// throughout this file, which htmx follows as a full page reload.
 func (fc *feedController) renderFeedListUpdate(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -503,7 +502,7 @@ func (fc *feedController) renderFeedListUpdate(
 	urlPath string,
 	searchTerms string,
 	pageNumber uint,
-) bool {
+) {
 	ctx := r.Context()
 
 	ctxPage, err := fc.feedPageForContext(ctx, userUUID, preferences, urlPath, searchTerms, pageNumber)
@@ -511,7 +510,7 @@ func (fc *feedController) renderFeedListUpdate(
 		log.Error().Err(err).Msg("failed to retrieve feeds")
 		view.PutFlashError(w, "failed to retrieve feeds")
 		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
-		return false
+		return
 	}
 
 	var buf bytes.Buffer
@@ -535,27 +534,27 @@ func (fc *feedController) renderFeedListUpdate(
 		"PageNumber":         ctxPage.PageNumber,
 	}
 	if !renderFragment("entryList", entryListData) {
-		return false
+		return
 	}
 
 	if !renderFragment("unreadCountAll", ctxPage.Unread) {
-		return false
+		return
 	}
 
 	for _, category := range ctxPage.Categories {
 		if !renderFragment("unreadCountCategory", category) {
-			return false
+			return
 		}
 
 		for _, subscribedFeed := range category.SubscribedFeeds {
 			if !renderFragment("unreadCountFeed", subscribedFeed) {
-				return false
+				return
 			}
 		}
 	}
 
 	if !renderFragment("entryCount", ctxPage.Page) {
-		return false
+		return
 	}
 
 	showEntriesButtonsData := map[string]any{
@@ -564,22 +563,31 @@ func (fc *feedController) renderFeedListUpdate(
 		"SearchTerms": searchTerms,
 	}
 	if !renderFragment("showEntriesButtons", showEntriesButtonsData) {
-		return false
+		return
+	}
+
+	compactButtonData := map[string]any{
+		"ShowEntrySummaries": preferences.ShowEntrySummaries,
+		"URLPath":            urlPath,
+		"SearchTerms":        searchTerms,
+		"PageNumber":         ctxPage.PageNumber,
+	}
+	if !renderFragment("compactButton", compactButtonData) {
+		return
 	}
 
 	if !renderFragment("paginationTop", ctxPage.Page) {
-		return false
+		return
 	}
 
 	if !renderFragment("paginationBottom", ctxPage.Page) {
-		return false
+		return
 	}
 
 	w.Header().Set("Content-Type", "text/html")
 	if _, err := buf.WriteTo(w); err != nil {
 		log.Error().Err(err).Msg("failed to write response")
 	}
-	return true
 }
 
 // handleFeedEntryToggleRead handles a request to toggle the read status of a feed entry.
@@ -1109,10 +1117,25 @@ func (fc *feedController) handleFeedImport() func(w http.ResponseWriter, r *http
 	}
 }
 
+// handlePreferencesToggleShowEntrySummaries handles a request to toggle
+// whether entry summaries are shown ("Compact" mode).
+//
+// On success, it responds with the re-rendered entry list, preserving the
+// current page (unlike the filter change, toggling summaries doesn't affect
+// which entries match or how many pages there are), plus every fragment that
+// depends on it. On error, it falls back to the same flash+redirect behavior
+// used throughout this file.
 func (fc *feedController) handlePreferencesToggleShowEntrySummaries() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
+
+		if err := r.ParseForm(); err != nil {
+			log.Error().Err(err).Msg("failed to parse request form")
+			view.PutFlashError(w, "There was an error processing the request")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
 
 		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
 		if err != nil {
@@ -1131,11 +1154,15 @@ func (fc *feedController) handlePreferencesToggleShowEntrySummaries() func(w htt
 			return
 		}
 
-		w.Header().Set(htmx.HeaderRefresh, "true")
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("OK")); err != nil {
-			log.Error().Err(err).Msg("failed to write response")
+		urlPath := r.PostForm.Get("urlPath")
+		searchTerms := r.PostForm.Get("search")
+
+		pageNumber, _, err := paginate.GetPageNumber(r.PostForm)
+		if err != nil {
+			pageNumber = 1
 		}
+
+		fc.renderFeedListUpdate(w, r, ctxUser.UUID, preferences, urlPath, searchTerms, pageNumber)
 	}
 }
 

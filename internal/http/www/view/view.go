@@ -5,6 +5,7 @@ package view
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -58,6 +59,7 @@ func New(templateFiles ...string) *View {
 			"MarkdownToHTML": MarkdownToHTMLFunc(),
 			"mod":            func(i, j int) int { return i % j },
 			"dict":           dictFunc,
+			"toJSON":         toJSONFunc,
 		}).
 		ParseFS(templates.FS, templateFiles...)
 
@@ -172,6 +174,25 @@ func dictFunc(values ...any) (map[string]any, error) {
 	}
 
 	return d, nil
+}
+
+// toJSONFunc builds a JSON object from an alternating list of string keys and
+// values, for use as the value of an htmx hx-vals attribute. It returns a plain
+// string (not template.JS) so that html/template still HTML-escapes it for the
+// surrounding attribute, on top of the JSON-escaping encoding/json already
+// applies to the values themselves.
+func toJSONFunc(values ...any) (string, error) {
+	d, err := dictFunc(values...)
+	if err != nil {
+		return "", err
+	}
+
+	b, err := json.Marshal(d)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), nil
 }
 
 func layoutTemplateFiles() []string {

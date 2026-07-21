@@ -75,7 +75,7 @@ func TestService(t *testing.T) {
 		ShowEntries: feed.EntryVisibilityAll,
 	}
 
-	testRepository := fakeRepository{
+	testRepository := FakeRepository{
 		Categories: []feed.Category{
 			user1Category1,
 			user1Category2,

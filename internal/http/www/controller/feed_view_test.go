@@ -50,9 +50,16 @@ func TestFeedEntryTemplate(t *testing.T) {
 				"First Post",
 				"A short summary",
 				"Mark as read",
+				`hx-post="/feeds/entries/entry-uid-1/toggle-read"`,
+				`hx-target="#feed-entry-entry-uid-1"`,
+				`hx-swap="outerHTML"`,
+				`urlPath&#34;:&#34;/feeds`,
+				`search&#34;:&#34;term`,
+				`page&#34;:2`,
 			},
 			wantNotContains: []string{
 				"has-text-grey-light",
+				"<form",
 			},
 		},
 		{
@@ -63,9 +70,11 @@ func TestFeedEntryTemplate(t *testing.T) {
 				`id="feed-entry-entry-uid-1"`,
 				"has-text-grey-light",
 				"Mark as unread",
+				`hx-post="/feeds/entries/entry-uid-1/toggle-read"`,
 			},
 			wantNotContains: []string{
 				"A short summary",
+				"<form",
 			},
 		},
 	}
@@ -75,6 +84,9 @@ func TestFeedEntryTemplate(t *testing.T) {
 			data := map[string]any{
 				"Entry":              tc.entry,
 				"ShowEntrySummaries": tc.showEntrySummaries,
+				"URLPath":            "/feeds",
+				"SearchTerms":        "term",
+				"PageNumber":         uint(2),
 			}
 
 			w := httptest.NewRecorder()

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -437,6 +438,60 @@ func (fc *feedController) handleFeedCategoryEdit() func(w http.ResponseWriter, r
 	}
 }
 
+// feedPageForContext returns the FeedPage matching the view the user was on (All,
+// a category, or a subscription, with an optional search query), so that counts
+// derived from it (unread badges, entry count) stay consistent with that view.
+func (fc *feedController) feedPageForContext(
+	ctx context.Context,
+	userUUID string,
+	preferences feed.Preferences,
+	urlPath string,
+	searchTerms string,
+	pageNumber uint,
+) (feedquerying.FeedPage, error) {
+	switch {
+	case strings.HasPrefix(urlPath, "/feeds/categories/"):
+		category, err := fc.feedService.CategoryBySlug(ctx, userUUID, strings.TrimPrefix(urlPath, "/feeds/categories/"))
+		if err != nil {
+			return feedquerying.FeedPage{}, err
+		}
+
+		if searchTerms == "" {
+			return fc.queryingService.FeedsByCategoryAndPage(ctx, userUUID, preferences, category, pageNumber)
+		}
+		return fc.queryingService.FeedsByCategoryAndQueryAndPage(ctx, userUUID, preferences, category, searchTerms, pageNumber)
+
+	case strings.HasPrefix(urlPath, "/feeds/subscriptions/"):
+		f, err := fc.feedService.FeedBySlug(ctx, strings.TrimPrefix(urlPath, "/feeds/subscriptions/"))
+		if err != nil {
+			return feedquerying.FeedPage{}, err
+		}
+
+		subscription, err := fc.feedService.SubscriptionByFeed(ctx, userUUID, f.UUID)
+		if err != nil {
+			return feedquerying.FeedPage{}, err
+		}
+
+		if searchTerms == "" {
+			return fc.queryingService.FeedsBySubscriptionAndPage(ctx, userUUID, preferences, subscription, pageNumber)
+		}
+		return fc.queryingService.FeedsBySubscriptionAndQueryAndPage(ctx, userUUID, preferences, subscription, searchTerms, pageNumber)
+
+	default:
+		if searchTerms == "" {
+			return fc.queryingService.FeedsByPage(ctx, userUUID, preferences, pageNumber)
+		}
+		return fc.queryingService.FeedsByQueryAndPage(ctx, userUUID, preferences, searchTerms, pageNumber)
+	}
+}
+
+// handleFeedEntryToggleRead handles a request to toggle the read status of a feed entry.
+//
+// On success, it responds with an HTML fragment: the re-rendered entry (or nothing,
+// if the entry no longer matches the current read/unread filter, so htmx removes it),
+// plus out-of-band fragments refreshing the unread badges and entry count that the
+// toggle affects. On error, it falls back to the same flash+redirect behavior used
+// throughout this file, which htmx follows as a full page reload.
 func (fc *feedController) handleFeedEntryToggleRead() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -450,7 +505,103 @@ func (fc *feedController) handleFeedEntryToggleRead() func(w http.ResponseWriter
 			return
 		}
 
-		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve account preferences")
+			view.PutFlashError(w, "There was an error retrieving your preferences")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		entry, err := fc.queryingService.SubscribedFeedEntryByUID(ctx, ctxUser.UUID, entryUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed entry")
+			view.PutFlashError(w, "failed to retrieve feed entry")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		if err := r.ParseForm(); err != nil {
+			log.Error().Err(err).Msg("failed to parse request form")
+			view.PutFlashError(w, "There was an error processing the request")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		urlPath := r.PostForm.Get("urlPath")
+		searchTerms := r.PostForm.Get("search")
+
+		pageNumber, _, err := paginate.GetPageNumber(r.PostForm)
+		if err != nil {
+			pageNumber = 1
+		}
+
+		ctxPage, err := fc.feedPageForContext(ctx, ctxUser.UUID, preferences, urlPath, searchTerms, pageNumber)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feeds")
+			view.PutFlashError(w, "failed to retrieve feeds")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		var buf bytes.Buffer
+
+		renderFragment := func(name string, data any) bool {
+			if err := fc.feedListView.Template.ExecuteTemplate(&buf, name, data); err != nil {
+				log.Error().Err(err).Msg("failed to render feed fragment")
+				view.PutFlashError(w, "failed to render feed fragment")
+				http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+				return false
+			}
+			return true
+		}
+
+		stillVisible := true
+		switch preferences.ShowEntries {
+		case feed.EntryVisibilityRead:
+			stillVisible = entry.Read
+		case feed.EntryVisibilityUnread:
+			stillVisible = !entry.Read
+		}
+
+		if stillVisible {
+			entryData := map[string]any{
+				"Entry":              entry,
+				"ShowEntrySummaries": preferences.ShowEntrySummaries,
+				"URLPath":            urlPath,
+				"SearchTerms":        searchTerms,
+				"PageNumber":         pageNumber,
+			}
+
+			if !renderFragment("feedEntry", entryData) {
+				return
+			}
+		}
+
+		if !renderFragment("unreadCountAll", ctxPage.Unread) {
+			return
+		}
+
+		for _, category := range ctxPage.Categories {
+			if !renderFragment("unreadCountCategory", category) {
+				return
+			}
+
+			for _, subscribedFeed := range category.SubscribedFeeds {
+				if !renderFragment("unreadCountFeed", subscribedFeed) {
+					return
+				}
+			}
+		}
+
+		if !renderFragment("entryCount", ctxPage.Page) {
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/html")
+		if _, err := buf.WriteTo(w); err != nil {
+			log.Error().Err(err).Msg("failed to write response")
+		}
 	}
 }
 

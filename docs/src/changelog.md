@@ -21,8 +21,19 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Expose Prometheus metrics for periodic feed synchronization tasks
 
 ### Changed
+#### Packaging and automation
 - Update direct and transitive dependencies
-- Improve test coverage for bookmark and feed operations
+
+#### Bookmarks
+- Improve test coverage for bookmark operations
+
+#### Feeds
+- Improve test coverage for feed operations
+
+#### WWW
+- Add helper to render a single named HTML template
+- Add method to retrieve a given feed entry
+- Use HTMX to toggle a feed entry's read status and partially re-render the feed list view
 
 ## [v0.6.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.1) - 2026-04-23
 ### Security

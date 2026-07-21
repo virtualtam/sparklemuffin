@@ -7,7 +7,7 @@
           <a class="pl-0" href="/feeds">
             <strong>
               All
-              <span id="unread-count-all" class="tag is-light is-pulled-right">{{.Unread}}</span>
+              {{template "unreadCountAll" .Unread}}
             </strong>
           </a>
           <hr class="my-1">
@@ -25,14 +25,14 @@
                 </span>
                 <span><a class="pl-0" href="/feeds/categories/{{.Slug}}">{{.Name}}</a></span>
               </span>
-              <span id="unread-count-category-{{.Slug}}" class="tag is-light is-pulled-right">{{.Unread}}</span>
+              {{template "unreadCountCategory" .}}
             </strong>
           </p>
           <ul class="menu-list" x-cloak x-show="open['{{.Slug}}']">
             {{- range .SubscribedFeeds}}
               <li>
                 <a class="pr-0" href="/feeds/subscriptions/{{.Slug}}">{{or .Alias .Title}}
-                  <span id="unread-count-feed-{{.Slug}}" class="tag is-light is-pulled-right">{{.Unread}}</span>
+                  {{template "unreadCountFeed" .}}
                 </a>
               </li>
             {{- end}}
@@ -119,7 +119,13 @@
 
       <ol start="{{.Page.ItemOffset}}">
         {{- range .Entries}}
-          {{template "feedEntry" (dict "Entry" . "ShowEntrySummaries" $.Preferences.ShowEntrySummaries)}}
+          {{template "feedEntry" (dict
+            "Entry" .
+            "ShowEntrySummaries" $.Preferences.ShowEntrySummaries
+            "URLPath" $.URLPath
+            "SearchTerms" $.Page.SearchTerms
+            "PageNumber" $.Page.PageNumber
+          )}}
         {{- end}}
       </ol>
     </div>
@@ -189,13 +195,7 @@
       </form>
     </div>
     <div class="level-item">
-      <p id="entry-count" class="subtitle is-5">
-        {{if ne .Page.SearchTerms "" }}
-        <strong>{{.Page.ItemCount}}</strong> entr{{if gt .Page.ItemCount 1}}ies{{else}}y{{end}} found
-        {{else}}
-        <strong>{{.Page.ItemCount}}</strong> entr{{if gt .Page.ItemCount 1}}ies{{else}}y{{end}}
-        {{end}}
-      </p>
+      {{template "entryCount" .Page}}
     </div>
   </div>
   <div class="level-right">
@@ -238,21 +238,26 @@
     </div>
     <div class="level-right">
       <div class="level-item">
-        <form action="/feeds/entries/{{.Entry.UID}}/toggle-read" method="POST">
-          <button type="submit" class="button is-small">
-            {{if .Entry.Read}}
-            <span class="icon has-text-grey-light">
-              <i class="fa-solid fa-eye-slash"></i>
-            </span>
-            <span class="has-text-grey-light">Mark as unread</span>
-            {{else}}
-            <span class="icon">
-              <i class="fa-solid fa-eye"></i>
-            </span>
-            <span>Mark as read</span>
-            {{end}}
-          </button>
-        </form>
+        <button
+          type="button"
+          class="button is-small"
+          hx-post="/feeds/entries/{{.Entry.UID}}/toggle-read"
+          hx-target="#feed-entry-{{.Entry.UID}}"
+          hx-swap="outerHTML"
+          hx-vals='{{toJSON "urlPath" .URLPath "search" .SearchTerms "page" .PageNumber}}'
+        >
+          {{if .Entry.Read}}
+          <span class="icon has-text-grey-light">
+            <i class="fa-solid fa-eye-slash"></i>
+          </span>
+          <span class="has-text-grey-light">Mark as unread</span>
+          {{else}}
+          <span class="icon">
+            <i class="fa-solid fa-eye"></i>
+          </span>
+          <span>Mark as read</span>
+          {{end}}
+        </button>
       </div>
     </div>
   </div>
@@ -265,4 +270,20 @@
     {{- end}}
   </div>
 </li>
+{{end}}
+
+{{define "unreadCountAll"}}<span id="unread-count-all" class="tag is-light is-pulled-right" hx-swap-oob="true">{{.}}</span>{{end}}
+
+{{define "unreadCountCategory"}}<span id="unread-count-category-{{.Slug}}" class="tag is-light is-pulled-right" hx-swap-oob="true">{{.Unread}}</span>{{end}}
+
+{{define "unreadCountFeed"}}<span id="unread-count-feed-{{.Slug}}" class="tag is-light is-pulled-right" hx-swap-oob="true">{{.Unread}}</span>{{end}}
+
+{{define "entryCount"}}
+<p id="entry-count" class="subtitle is-5" hx-swap-oob="true">
+  {{if ne .SearchTerms "" }}
+  <strong>{{.ItemCount}}</strong> entr{{if gt .ItemCount 1}}ies{{else}}y{{end}} found
+  {{else}}
+  <strong>{{.ItemCount}}</strong> entr{{if gt .ItemCount 1}}ies{{else}}y{{end}}
+  {{end}}
+</p>
 {{end}}

@@ -485,6 +485,103 @@ func (fc *feedController) feedPageForContext(
 	}
 }
 
+// renderFeedListUpdate re-renders the entry list and every fragment whose
+// content depends on it (unread badges, entry count, filter button state,
+// both pagination widgets), as an htmx response covering all of it in one
+// go. It is shared by the feed list's preference/bulk-action endpoints,
+// which all end up changing which entries are visible and/or how many
+// pages there are, unlike the single-entry toggle-read swap.
+//
+// On any failure it falls back to the same flash+redirect behavior used
+// throughout this file, which htmx follows as a full page reload. It
+// returns true if the response was written successfully.
+func (fc *feedController) renderFeedListUpdate(
+	w http.ResponseWriter,
+	r *http.Request,
+	userUUID string,
+	preferences feed.Preferences,
+	urlPath string,
+	searchTerms string,
+	pageNumber uint,
+) bool {
+	ctx := r.Context()
+
+	ctxPage, err := fc.feedPageForContext(ctx, userUUID, preferences, urlPath, searchTerms, pageNumber)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to retrieve feeds")
+		view.PutFlashError(w, "failed to retrieve feeds")
+		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		return false
+	}
+
+	var buf bytes.Buffer
+
+	renderFragment := func(name string, data any) bool {
+		if err := fc.feedListView.Template.ExecuteTemplate(&buf, name, data); err != nil {
+			log.Error().Err(err).Msg("failed to render feed fragment")
+			view.PutFlashError(w, "failed to render feed fragment")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return false
+		}
+		return true
+	}
+
+	entryListData := map[string]any{
+		"Entries":            ctxPage.Entries,
+		"ItemOffset":         ctxPage.ItemOffset,
+		"ShowEntrySummaries": preferences.ShowEntrySummaries,
+		"URLPath":            urlPath,
+		"SearchTerms":        searchTerms,
+		"PageNumber":         ctxPage.PageNumber,
+	}
+	if !renderFragment("entryList", entryListData) {
+		return false
+	}
+
+	if !renderFragment("unreadCountAll", ctxPage.Unread) {
+		return false
+	}
+
+	for _, category := range ctxPage.Categories {
+		if !renderFragment("unreadCountCategory", category) {
+			return false
+		}
+
+		for _, subscribedFeed := range category.SubscribedFeeds {
+			if !renderFragment("unreadCountFeed", subscribedFeed) {
+				return false
+			}
+		}
+	}
+
+	if !renderFragment("entryCount", ctxPage.Page) {
+		return false
+	}
+
+	showEntriesButtonsData := map[string]any{
+		"ShowEntries": preferences.ShowEntries,
+		"URLPath":     urlPath,
+		"SearchTerms": searchTerms,
+	}
+	if !renderFragment("showEntriesButtons", showEntriesButtonsData) {
+		return false
+	}
+
+	if !renderFragment("paginationTop", ctxPage.Page) {
+		return false
+	}
+
+	if !renderFragment("paginationBottom", ctxPage.Page) {
+		return false
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	if _, err := buf.WriteTo(w); err != nil {
+		log.Error().Err(err).Msg("failed to write response")
+	}
+	return true
+}
+
 // handleFeedEntryToggleRead handles a request to toggle the read status of a feed entry.
 //
 // On success, it responds with an HTML fragment: the re-rendered entry (or nothing,
@@ -1042,9 +1139,18 @@ func (fc *feedController) handlePreferencesToggleShowEntrySummaries() func(w htt
 	}
 }
 
+// handlePreferencesFeedShowEntriesUpdate handles a request to change the
+// All/Read/Unread entry filter.
+//
+// On success, it responds with the re-rendered entry list (reset to page 1,
+// since the current page may no longer make sense for the new filter) plus
+// every fragment that depends on it. On error, it falls back to the same
+// flash+redirect behavior used throughout this file.
 func (fc *feedController) handlePreferencesFeedShowEntriesUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type feedShowEntriesForm struct {
 		ShowEntries string `schema:"show"`
+		URLPath     string `schema:"urlPath"`
+		SearchTerms string `schema:"search"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -1075,10 +1181,6 @@ func (fc *feedController) handlePreferencesFeedShowEntriesUpdate() func(w http.R
 			return
 		}
 
-		w.Header().Set(htmx.HeaderRefresh, "true")
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("OK")); err != nil {
-			log.Error().Err(err).Msg("failed to write response")
-		}
+		fc.renderFeedListUpdate(w, r, ctxUser.UUID, preferences, form.URLPath, form.SearchTerms, 1)
 	}
 }

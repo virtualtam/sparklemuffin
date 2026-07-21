@@ -519,3 +519,68 @@ func TestService(t *testing.T) {
 		}
 	})
 }
+
+func TestServiceFeedsByPageFiltersByShowEntries(t *testing.T) {
+	fake := faker.New()
+
+	f := feed.Feed{
+		UUID:  fake.UUID().V4(),
+		Title: "Local Test",
+		Slug:  "local-test",
+	}
+
+	unreadEntry := feed.Entry{UID: "unread", FeedUUID: f.UUID, URL: "http://test.local/1", Title: "Unread"}
+	readEntry := feed.Entry{UID: "read", FeedUUID: f.UUID, URL: "http://test.local/2", Title: "Read"}
+
+	userUUID := fake.UUID().V4()
+
+	category := feed.Category{UUID: fake.UUID().V4(), UserUUID: userUUID, Name: "Category", Slug: "category"}
+	subscription := feed.Subscription{UUID: fake.UUID().V4(), CategoryUUID: category.UUID, FeedUUID: f.UUID, UserUUID: userUUID}
+	readMetadata := feed.EntryMetadata{UserUUID: userUUID, EntryUID: readEntry.UID, Read: true}
+
+	testRepository := FakeRepository{
+		Categories:      []feed.Category{category},
+		Entries:         []feed.Entry{unreadEntry, readEntry},
+		EntriesMetadata: []feed.EntryMetadata{readMetadata},
+		Feeds:           []feed.Feed{f},
+		Subscriptions:   []feed.Subscription{subscription},
+	}
+
+	testService := NewService(&testRepository)
+
+	cases := []struct {
+		tname       string
+		showEntries feed.EntryVisibility
+		wantUIDs    []string
+	}{
+		{tname: "all", showEntries: feed.EntryVisibilityAll, wantUIDs: []string{unreadEntry.UID, readEntry.UID}},
+		{tname: "read only", showEntries: feed.EntryVisibilityRead, wantUIDs: []string{readEntry.UID}},
+		{tname: "unread only", showEntries: feed.EntryVisibilityUnread, wantUIDs: []string{unreadEntry.UID}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			preferences := feed.Preferences{ShowEntries: tc.showEntries}
+
+			got, err := testService.FeedsByPage(t.Context(), userUUID, preferences, 1)
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			var gotUIDs []string
+			for _, entry := range got.Entries {
+				gotUIDs = append(gotUIDs, entry.UID)
+			}
+
+			if len(gotUIDs) != len(tc.wantUIDs) {
+				t.Fatalf("want entries %v, got %v", tc.wantUIDs, gotUIDs)
+			}
+			for i, want := range tc.wantUIDs {
+				if gotUIDs[i] != want {
+					t.Errorf("want entries %v, got %v", tc.wantUIDs, gotUIDs)
+					break
+				}
+			}
+		})
+	}
+}

@@ -6,6 +6,7 @@ package querying
 import (
 	"context"
 	"errors"
+	"slices"
 	"sort"
 
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
@@ -19,6 +20,29 @@ type FakeRepository struct {
 	EntriesMetadata []feed.EntryMetadata
 	Feeds           []feed.Feed
 	Subscriptions   []feed.Subscription
+}
+
+// entryMatchesVisibility reports whether an entry's read status matches a
+// user's All/Read/Unread display preference.
+func entryMatchesVisibility(read bool, showEntries feed.EntryVisibility) bool {
+	switch showEntries {
+	case feed.EntryVisibilityRead:
+		return read
+	case feed.EntryVisibilityUnread:
+		return !read
+	default:
+		return true
+	}
+}
+
+func (r *FakeRepository) entryIsRead(entryUID string) bool {
+	for _, entryMetadata := range r.EntriesMetadata {
+		if entryMetadata.EntryUID == entryUID && entryMetadata.Read {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (r *FakeRepository) FeedGetByUUID(_ context.Context, feedUUID string) (feed.Feed, error) {
@@ -116,6 +140,10 @@ func (r *FakeRepository) FeedEntryGetCount(_ context.Context, userUUID string, s
 				continue
 			}
 
+			if !entryMatchesVisibility(r.entryIsRead(entry.UID), showEntries) {
+				continue
+			}
+
 			count++
 		}
 	}
@@ -156,6 +184,10 @@ func (r *FakeRepository) FeedEntryGetCountBySubscription(ctx context.Context, us
 
 	for _, entry := range r.Entries {
 		if entry.FeedUUID != subscription.FeedUUID {
+			continue
+		}
+
+		if !entryMatchesVisibility(r.entryIsRead(entry.UID), showEntries) {
 			continue
 		}
 
@@ -290,6 +322,10 @@ func (r *FakeRepository) FeedSubscriptionEntryGetN(ctx context.Context, userUUID
 		userEntries = append(userEntries, subscriptionEntries...)
 	}
 
+	userEntries = slices.DeleteFunc(userEntries, func(e SubscribedFeedEntry) bool {
+		return !entryMatchesVisibility(e.Read, preferences.ShowEntries)
+	})
+
 	sort.Slice(userEntries, func(i, j int) bool {
 		return userEntries[i].PublishedAt.After(userEntries[j].PublishedAt)
 	})
@@ -319,6 +355,10 @@ func (r *FakeRepository) FeedSubscriptionEntryGetNByCategory(ctx context.Context
 		categoryEntries = append(categoryEntries, subscriptionEntries...)
 	}
 
+	categoryEntries = slices.DeleteFunc(categoryEntries, func(e SubscribedFeedEntry) bool {
+		return !entryMatchesVisibility(e.Read, preferences.ShowEntries)
+	})
+
 	sort.Slice(categoryEntries, func(i, j int) bool {
 		return categoryEntries[i].PublishedAt.After(categoryEntries[j].PublishedAt)
 	})
@@ -338,6 +378,10 @@ func (r *FakeRepository) FeedSubscriptionEntryGetNBySubscription(ctx context.Con
 	if err != nil {
 		return []SubscribedFeedEntry{}, err
 	}
+
+	subscriptionEntries = slices.DeleteFunc(subscriptionEntries, func(e SubscribedFeedEntry) bool {
+		return !entryMatchesVisibility(e.Read, preferences.ShowEntries)
+	})
 
 	sort.Slice(subscriptionEntries, func(i, j int) bool {
 		return subscriptionEntries[i].PublishedAt.After(subscriptionEntries[j].PublishedAt)

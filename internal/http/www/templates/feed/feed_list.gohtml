@@ -50,37 +50,11 @@
         </div>
         <div class="level-right">
           <div class="level-item">
-            <div class="buttons has-addons">
-              <button
-                title="Show all entries"
-                class="button is-small{{if eq .Preferences.ShowEntries "ALL"}} is-active{{end}}"
-                hx-post="/feeds/preferences/show-entries"
-                hx-vals='{"show": "ALL"}'
-              >
-                <span class="icon"><i class="fas fa-globe"></i></span>
-                <span>All</span>
-              </button>
-
-              <button
-                title="Show only read entries"
-                class="button is-small{{if eq .Preferences.ShowEntries "READ"}} is-active{{end}}"
-                hx-post="/feeds/preferences/show-entries"
-                hx-vals='{"show": "READ"}'
-              >
-                <span class="icon"><i class="fas fa-check-circle"></i></span>
-                <span>Read</span>
-              </button>
-
-              <button
-                title="Show only unread entries"
-                class="button is-small{{if eq .Preferences.ShowEntries "UNREAD"}} is-active{{end}}"
-                hx-post="/feeds/preferences/show-entries"
-                hx-vals='{"show": "UNREAD"}'
-              >
-                <span class="icon"><i class="fas fa-envelope"></i></span>
-                <span>Unread</span>
-              </button>
-          </div>
+            {{template "showEntriesButtons" (dict
+              "ShowEntries" .Preferences.ShowEntries
+              "URLPath" .URLPath
+              "SearchTerms" .Page.SearchTerms
+            )}}
           </div>
           <div class="level-item">
             <div class="buttons has-addons">
@@ -142,7 +116,7 @@
     </div>
     <div class="level-right">
       <div class="level-item">
-        {{template "pagination" .Page}}
+        {{template "paginationBottom" .Page}}
       </div>
     </div>
   </nav>
@@ -197,7 +171,7 @@
   </div>
   <div class="level-right">
     <div class="level-item">
-      {{template "pagination" .Page}}
+      {{template "paginationTop" .Page}}
     </div>
   </div>
 </nav>
@@ -298,3 +272,47 @@
   {{end}}
 </p>
 {{end}}
+
+{{define "showEntriesButtons"}}
+<div class="buttons has-addons" id="show-entries-buttons" hx-swap-oob="true">
+  <button
+    title="Show all entries"
+    class="button is-small{{if eq .ShowEntries "ALL"}} is-active{{end}}"
+    hx-post="/feeds/preferences/show-entries"
+    hx-target="#entry-list"
+    hx-swap="outerHTML"
+    hx-vals='{{toJSON "show" "ALL" "urlPath" .URLPath "search" .SearchTerms}}'
+  >
+    <span class="icon"><i class="fas fa-globe"></i></span>
+    <span>All</span>
+  </button>
+
+  <button
+    title="Show only read entries"
+    class="button is-small{{if eq .ShowEntries "READ"}} is-active{{end}}"
+    hx-post="/feeds/preferences/show-entries"
+    hx-target="#entry-list"
+    hx-swap="outerHTML"
+    hx-vals='{{toJSON "show" "READ" "urlPath" .URLPath "search" .SearchTerms}}'
+  >
+    <span class="icon"><i class="fas fa-check-circle"></i></span>
+    <span>Read</span>
+  </button>
+
+  <button
+    title="Show only unread entries"
+    class="button is-small{{if eq .ShowEntries "UNREAD"}} is-active{{end}}"
+    hx-post="/feeds/preferences/show-entries"
+    hx-target="#entry-list"
+    hx-swap="outerHTML"
+    hx-vals='{{toJSON "show" "UNREAD" "urlPath" .URLPath "search" .SearchTerms}}'
+  >
+    <span class="icon"><i class="fas fa-envelope"></i></span>
+    <span>Unread</span>
+  </button>
+</div>
+{{end}}
+
+{{define "paginationTop"}}<div id="pagination-top" hx-swap-oob="true">{{template "pagination" .}}</div>{{end}}
+
+{{define "paginationBottom"}}<div id="pagination-bottom" hx-swap-oob="true">{{template "pagination" .}}</div>{{end}}

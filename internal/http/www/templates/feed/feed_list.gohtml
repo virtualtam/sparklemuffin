@@ -69,7 +69,10 @@
               <button
                 title="Mark all entries as read"
                 class="button is-small"
-                hx-post="{{$.URLPath}}/entries/mark-all-read"
+                hx-post="{{.URLPath}}/entries/mark-all-read"
+                hx-target="#entry-list"
+                hx-swap="outerHTML"
+                hx-vals='{{toJSON "urlPath" .URLPath "search" .Page.SearchTerms}}'
               >
                 <span class="icon">
                   <i class="fa-solid fa-eye-slash"></i>

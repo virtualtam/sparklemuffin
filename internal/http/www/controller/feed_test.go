@@ -97,6 +97,24 @@ func newFeedPostRequest(t *testing.T, path string, ctxUser user.User, form url.V
 	return r.WithContext(ctx)
 }
 
+// newFeedSlugPostRequest builds a POST request against a route with a chi
+// "slug" URL param (e.g. the category/subscription mark-all-read endpoints).
+func newFeedSlugPostRequest(t *testing.T, path string, slug string, ctxUser user.User, form url.Values) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, path, strings.NewReader(form.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	r.Header.Set("Referer", "/feeds")
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("slug", slug)
+
+	ctx := context.WithValue(r.Context(), chi.RouteCtxKey, rctx)
+	ctx = httpcontext.WithUser(ctx, ctxUser)
+
+	return r.WithContext(ctx)
+}
+
 func TestHandleFeedEntryToggleRead(t *testing.T) {
 	ctxUser := testCtxUser
 	entry := testEntry
@@ -343,6 +361,185 @@ func TestHandlePreferencesToggleShowEntrySummaries(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		fc.handlePreferencesToggleShowEntrySummaries()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d", w.Code)
+		}
+		if got := w.Header().Get("Location"); got != "/feeds" {
+			t.Errorf("want redirect to %q, got %q", "/feeds", got)
+		}
+
+		foundFlashCookie := false
+		for _, cookie := range w.Result().Cookies() {
+			if cookie.Name == "flash" {
+				foundFlashCookie = true
+			}
+		}
+		if !foundFlashCookie {
+			t.Error("want a flash cookie to be set")
+		}
+	})
+}
+
+func TestHandleEntryMetadataMarkAllAsRead(t *testing.T) {
+	ctxUser := testCtxUser
+	entry := testEntry
+
+	t.Run("success, list is re-rendered and now-read entries drop from the Unread view", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityUnread}, testUnreadMetadata())
+
+		form := url.Values{"urlPath": {"/feeds"}, "search": {""}}
+		r := newFeedPostRequest(t, "/feeds/entries/mark-all-read", ctxUser, form)
+		w := httptest.NewRecorder()
+
+		fc.handleEntryMetadataMarkAllAsRead()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("HX-Refresh"); got != "" {
+			t.Errorf("want no HX-Refresh header, got %q", got)
+		}
+
+		body := w.Body.String()
+
+		if strings.Contains(body, `id="feed-entry-`+entry.UID+`"`) {
+			t.Errorf("want the now-read entry dropped from the Unread-only view, got:\n%s", body)
+		}
+
+		wantContains := []string{
+			`<ol id="entry-list"`,
+			`id="unread-count-all"`,
+			`id="entry-count"`,
+			`id="pagination-top"`,
+			`id="pagination-bottom"`,
+		}
+		for _, want := range wantContains {
+			if !strings.Contains(body, want) {
+				t.Errorf("want body to contain %q, got:\n%s", want, body)
+			}
+		}
+	})
+
+	t.Run("error falls back to a full reload", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityAll}, nil)
+
+		unknownUser := user.User{UUID: "no-such-user"}
+		form := url.Values{"urlPath": {"/feeds"}, "search": {""}}
+		r := newFeedPostRequest(t, "/feeds/entries/mark-all-read", unknownUser, form)
+		w := httptest.NewRecorder()
+
+		fc.handleEntryMetadataMarkAllAsRead()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d", w.Code)
+		}
+		if got := w.Header().Get("Location"); got != "/feeds" {
+			t.Errorf("want redirect to %q, got %q", "/feeds", got)
+		}
+
+		foundFlashCookie := false
+		for _, cookie := range w.Result().Cookies() {
+			if cookie.Name == "flash" {
+				foundFlashCookie = true
+			}
+		}
+		if !foundFlashCookie {
+			t.Error("want a flash cookie to be set")
+		}
+	})
+}
+
+func TestHandleEntryMetadataMarkAllAsReadByCategory(t *testing.T) {
+	ctxUser := testCtxUser
+	entry := testEntry
+
+	t.Run("success, list is re-rendered for the category view", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityUnread}, testUnreadMetadata())
+
+		form := url.Values{"urlPath": {"/feeds/categories/" + testCategory.Slug}, "search": {""}}
+		r := newFeedSlugPostRequest(t, "/feeds/categories/"+testCategory.Slug+"/entries/mark-all-read", testCategory.Slug, ctxUser, form)
+		w := httptest.NewRecorder()
+
+		fc.handleEntryMetadataMarkAllAsReadByCategory()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+
+		if strings.Contains(body, `id="feed-entry-`+entry.UID+`"`) {
+			t.Errorf("want the now-read entry dropped from the Unread-only view, got:\n%s", body)
+		}
+		if !strings.Contains(body, `<ol id="entry-list"`) {
+			t.Errorf("want the entry list re-rendered, got:\n%s", body)
+		}
+	})
+
+	t.Run("error falls back to a full reload", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityAll}, nil)
+
+		form := url.Values{"urlPath": {"/feeds/categories/does-not-exist"}, "search": {""}}
+		r := newFeedSlugPostRequest(t, "/feeds/categories/does-not-exist/entries/mark-all-read", "does-not-exist", ctxUser, form)
+		w := httptest.NewRecorder()
+
+		fc.handleEntryMetadataMarkAllAsReadByCategory()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d", w.Code)
+		}
+		if got := w.Header().Get("Location"); got != "/feeds" {
+			t.Errorf("want redirect to %q, got %q", "/feeds", got)
+		}
+
+		foundFlashCookie := false
+		for _, cookie := range w.Result().Cookies() {
+			if cookie.Name == "flash" {
+				foundFlashCookie = true
+			}
+		}
+		if !foundFlashCookie {
+			t.Error("want a flash cookie to be set")
+		}
+	})
+}
+
+func TestHandleEntryMetadataMarkAllAsReadByFeed(t *testing.T) {
+	ctxUser := testCtxUser
+	entry := testEntry
+
+	t.Run("success, list is re-rendered for the subscription view", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityUnread}, testUnreadMetadata())
+
+		form := url.Values{"urlPath": {"/feeds/subscriptions/" + testFeed.Slug}, "search": {""}}
+		r := newFeedSlugPostRequest(t, "/feeds/subscriptions/"+testFeed.Slug+"/entries/mark-all-read", testFeed.Slug, ctxUser, form)
+		w := httptest.NewRecorder()
+
+		fc.handleEntryMetadataMarkAllAsReadByFeed()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+
+		if strings.Contains(body, `id="feed-entry-`+entry.UID+`"`) {
+			t.Errorf("want the now-read entry dropped from the Unread-only view, got:\n%s", body)
+		}
+		if !strings.Contains(body, `<ol id="entry-list"`) {
+			t.Errorf("want the entry list re-rendered, got:\n%s", body)
+		}
+	})
+
+	t.Run("error falls back to a full reload", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityAll}, nil)
+
+		form := url.Values{"urlPath": {"/feeds/subscriptions/does-not-exist"}, "search": {""}}
+		r := newFeedSlugPostRequest(t, "/feeds/subscriptions/does-not-exist/entries/mark-all-read", "does-not-exist", ctxUser, form)
+		w := httptest.NewRecorder()
+
+		fc.handleEntryMetadataMarkAllAsReadByFeed()(w, r)
 
 		if w.Code != http.StatusSeeOther {
 			t.Fatalf("want status 303, got %d", w.Code)

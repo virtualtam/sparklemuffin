@@ -17,7 +17,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/opml-go"
 
-	"github.com/virtualtam/sparklemuffin/internal/http/www/htmx"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
@@ -907,6 +906,11 @@ func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWrite
 }
 
 // handleEntryMetadataMarkAllAsRead handles a request to mark all feed entries as read.
+//
+// On success, it responds with the re-rendered entry list (reset to page 1,
+// since marking everything read can shrink or empty an Unread-only view)
+// plus every fragment that depends on it. On error, it falls back to the
+// same flash+redirect behavior used throughout this file.
 func (fc *feedController) handleEntryMetadataMarkAllAsRead() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -919,15 +923,31 @@ func (fc *feedController) handleEntryMetadataMarkAllAsRead() func(w http.Respons
 			return
 		}
 
-		w.Header().Set(htmx.HeaderRefresh, "true")
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("OK")); err != nil {
-			log.Error().Err(err).Msg("failed to write response")
+		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve account preferences")
+			view.PutFlashError(w, "There was an error retrieving your preferences")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
 		}
+
+		if err := r.ParseForm(); err != nil {
+			log.Error().Err(err).Msg("failed to parse request form")
+			view.PutFlashError(w, "There was an error processing the request")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		urlPath := r.PostForm.Get("urlPath")
+		searchTerms := r.PostForm.Get("search")
+
+		fc.renderFeedListUpdate(w, r, ctxUser.UUID, preferences, urlPath, searchTerms, 1)
 	}
 }
 
 // handleEntryMetadataMarkAllAsReadByCategory handles a request to mark all feed entries as read for a given category.
+//
+// See handleEntryMetadataMarkAllAsRead for the response behavior.
 func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -949,15 +969,31 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w ht
 			return
 		}
 
-		w.Header().Set(htmx.HeaderRefresh, "true")
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("OK")); err != nil {
-			log.Error().Err(err).Msg("failed to write response")
+		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve account preferences")
+			view.PutFlashError(w, "There was an error retrieving your preferences")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
 		}
+
+		if err := r.ParseForm(); err != nil {
+			log.Error().Err(err).Msg("failed to parse request form")
+			view.PutFlashError(w, "There was an error processing the request")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		urlPath := r.PostForm.Get("urlPath")
+		searchTerms := r.PostForm.Get("search")
+
+		fc.renderFeedListUpdate(w, r, ctxUser.UUID, preferences, urlPath, searchTerms, 1)
 	}
 }
 
 // handleEntryMetadataMarkAllAsReadByFeed handles a request to mark all feed entries as read for a given feed.
+//
+// See handleEntryMetadataMarkAllAsRead for the response behavior.
 func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -987,11 +1023,25 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.R
 			return
 		}
 
-		w.Header().Set(htmx.HeaderRefresh, "true")
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("OK")); err != nil {
-			log.Error().Err(err).Msg("failed to write response")
+		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve account preferences")
+			view.PutFlashError(w, "There was an error retrieving your preferences")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
 		}
+
+		if err := r.ParseForm(); err != nil {
+			log.Error().Err(err).Msg("failed to parse request form")
+			view.PutFlashError(w, "There was an error processing the request")
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		urlPath := r.PostForm.Get("urlPath")
+		searchTerms := r.PostForm.Get("search")
+
+		fc.renderFeedListUpdate(w, r, ctxUser.UUID, preferences, urlPath, searchTerms, 1)
 	}
 }
 

@@ -33,9 +33,11 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### WWW
 - Add helper to render a single named HTML template
 - Add method to retrieve a given feed entry
-- Use HTMX to toggle a feed entry's read status and partially re-render the feed list view
-- Use HTMX to partially refresh the feed list on changing the `All / Read / Unread` filter
-- Use HTMX to partially refresh the feed list on toggling entry summaries
+- Use HTMX to partially refresh the feed list on:
+    - Changing the `All / Read / Unread` filter
+    - Toggling entry summaries
+    - Marking all entries as read
+    - Toggling an entry's read status
 
 ## [v0.6.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.1) - 2026-04-23
 ### Security

@@ -5,7 +5,6 @@ package feed
 
 import (
 	"context"
-	"errors"
 	"slices"
 
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -183,16 +182,71 @@ func (r *FakeRepository) feedEntryExists(entryUID string) bool {
 	return false
 }
 
+// markEntryRead sets an entry's metadata to "read" for a given user, updating
+// the existing row in place if one exists, or appending a new one otherwise.
+func (r *FakeRepository) markEntryRead(userUUID string, entryUID string) {
+	for i, entryMetadata := range r.EntriesMetadata {
+		if entryMetadata.UserUUID == userUUID && entryMetadata.EntryUID == entryUID {
+			r.EntriesMetadata[i].Read = true
+			return
+		}
+	}
+
+	r.EntriesMetadata = append(r.EntriesMetadata, EntryMetadata{UserUUID: userUUID, EntryUID: entryUID, Read: true})
+}
+
 func (r *FakeRepository) FeedEntryMarkAllAsRead(_ context.Context, userUUID string) error {
-	return errors.New("not implemented")
+	for _, subscription := range r.Subscriptions {
+		if subscription.UserUUID != userUUID {
+			continue
+		}
+
+		for _, entry := range r.Entries {
+			if entry.FeedUUID != subscription.FeedUUID {
+				continue
+			}
+
+			r.markEntryRead(userUUID, entry.UID)
+		}
+	}
+
+	return nil
 }
 
 func (r *FakeRepository) FeedEntryMarkAllAsReadByCategory(_ context.Context, userUUID string, categoryUUID string) error {
-	return errors.New("not implemented")
+	for _, subscription := range r.Subscriptions {
+		if subscription.UserUUID != userUUID || subscription.CategoryUUID != categoryUUID {
+			continue
+		}
+
+		for _, entry := range r.Entries {
+			if entry.FeedUUID != subscription.FeedUUID {
+				continue
+			}
+
+			r.markEntryRead(userUUID, entry.UID)
+		}
+	}
+
+	return nil
 }
 
 func (r *FakeRepository) FeedEntryMarkAllAsReadBySubscription(_ context.Context, userUUID string, subscriptionUUID string) error {
-	return errors.New("not implemented")
+	for _, subscription := range r.Subscriptions {
+		if subscription.UserUUID != userUUID || subscription.UUID != subscriptionUUID {
+			continue
+		}
+
+		for _, entry := range r.Entries {
+			if entry.FeedUUID != subscription.FeedUUID {
+				continue
+			}
+
+			r.markEntryRead(userUUID, entry.UID)
+		}
+	}
+
+	return nil
 }
 
 func (r *FakeRepository) FeedEntryMetadataCreate(_ context.Context, newEntryMetadata EntryMetadata) error {

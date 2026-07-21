@@ -117,17 +117,14 @@
 
       {{template "feedSearchForm" .}}
 
-      <ol start="{{.Page.ItemOffset}}">
-        {{- range .Entries}}
-          {{template "feedEntry" (dict
-            "Entry" .
-            "ShowEntrySummaries" $.Preferences.ShowEntrySummaries
-            "URLPath" $.URLPath
-            "SearchTerms" $.Page.SearchTerms
-            "PageNumber" $.Page.PageNumber
-          )}}
-        {{- end}}
-      </ol>
+      {{template "entryList" (dict
+        "Entries" .Entries
+        "ItemOffset" .Page.ItemOffset
+        "ShowEntrySummaries" .Preferences.ShowEntrySummaries
+        "URLPath" .URLPath
+        "SearchTerms" .Page.SearchTerms
+        "PageNumber" .Page.PageNumber
+      )}}
     </div>
   </div>
   <nav class="level">
@@ -204,6 +201,20 @@
     </div>
   </div>
 </nav>
+{{end}}
+
+{{define "entryList"}}
+<ol id="entry-list" start="{{.ItemOffset}}">
+  {{- range .Entries}}
+    {{template "feedEntry" (dict
+      "Entry" .
+      "ShowEntrySummaries" $.ShowEntrySummaries
+      "URLPath" $.URLPath
+      "SearchTerms" $.SearchTerms
+      "PageNumber" $.PageNumber
+    )}}
+  {{- end}}
+</ol>
 {{end}}
 
 {{define "feedEntry"}}

@@ -73,6 +73,7 @@ func newToggleReadRequest(t *testing.T, entryUID string, ctxUser user.User, refe
 	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/feeds/entries/"+entryUID+"/toggle-read", strings.NewReader(form.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	r.Header.Set("Referer", referer)
+	r.Header.Set("HX-Request", "true")
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("uid", entryUID)
@@ -91,6 +92,7 @@ func newFeedPostRequest(t *testing.T, path string, ctxUser user.User, form url.V
 	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, path, strings.NewReader(form.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	r.Header.Set("Referer", "/feeds")
+	r.Header.Set("HX-Request", "true")
 
 	ctx := httpcontext.WithUser(r.Context(), ctxUser)
 
@@ -105,6 +107,7 @@ func newFeedSlugPostRequest(t *testing.T, path string, slug string, ctxUser user
 	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, path, strings.NewReader(form.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	r.Header.Set("Referer", "/feeds")
+	r.Header.Set("HX-Request", "true")
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("slug", slug)
@@ -142,7 +145,19 @@ func assertHXRedirectOnError(t *testing.T, w *httptest.ResponseRecorder, wantRed
 	}
 }
 
-func TestHandleFeedEntryToggleRead(t *testing.T) {
+// assertRejectsNonHxRequest checks that a request missing HX-Request is
+// rejected outright: these handlers only ever render an HTML fragment, never
+// a full page layout, so a request that isn't provably htmx-issued has no
+// well-defined response to send.
+func assertRejectsNonHxRequest(t *testing.T, w *httptest.ResponseRecorder) {
+	t.Helper()
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("want status 400, got %d, body:\n%s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandleHxFeedEntryToggleRead(t *testing.T) {
 	ctxUser := testCtxUser
 	entry := testEntry
 
@@ -153,7 +168,7 @@ func TestHandleFeedEntryToggleRead(t *testing.T) {
 		r := newToggleReadRequest(t, entry.UID, ctxUser, "/feeds", form)
 		w := httptest.NewRecorder()
 
-		fc.handleFeedEntryToggleRead()(w, r)
+		fc.handleHxFeedEntryToggleRead()(w, r)
 
 		if w.Code != http.StatusOK {
 			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
@@ -189,7 +204,7 @@ func TestHandleFeedEntryToggleRead(t *testing.T) {
 		r := newToggleReadRequest(t, entry.UID, ctxUser, "/feeds", form)
 		w := httptest.NewRecorder()
 
-		fc.handleFeedEntryToggleRead()(w, r)
+		fc.handleHxFeedEntryToggleRead()(w, r)
 
 		if w.Code != http.StatusOK {
 			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
@@ -211,7 +226,7 @@ func TestHandleFeedEntryToggleRead(t *testing.T) {
 		r := newToggleReadRequest(t, entry.UID, ctxUser, "/feeds/categories/tech", form)
 		w := httptest.NewRecorder()
 
-		fc.handleFeedEntryToggleRead()(w, r)
+		fc.handleHxFeedEntryToggleRead()(w, r)
 
 		if w.Code != http.StatusOK {
 			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
@@ -229,7 +244,7 @@ func TestHandleFeedEntryToggleRead(t *testing.T) {
 		r := newToggleReadRequest(t, "does-not-exist", ctxUser, "/feeds", form)
 		w := httptest.NewRecorder()
 
-		fc.handleFeedEntryToggleRead()(w, r)
+		fc.handleHxFeedEntryToggleRead()(w, r)
 
 		assertHXRedirectOnError(t, w, "/feeds")
 	})
@@ -244,7 +259,7 @@ func TestHandleFeedEntryToggleRead(t *testing.T) {
 		r := newToggleReadRequest(t, "does-not-exist", ctxUser, "/feeds/categories/tech", form)
 		w := httptest.NewRecorder()
 
-		fc.handleFeedEntryToggleRead()(w, r)
+		fc.handleHxFeedEntryToggleRead()(w, r)
 
 		assertHXRedirectOnError(t, w, "/feeds/categories/tech")
 	})
@@ -259,13 +274,26 @@ func TestHandleFeedEntryToggleRead(t *testing.T) {
 		r := newToggleReadRequest(t, entry.UID, ctxUser, "/feeds/categories/does-not-exist", form)
 		w := httptest.NewRecorder()
 
-		fc.handleFeedEntryToggleRead()(w, r)
+		fc.handleHxFeedEntryToggleRead()(w, r)
 
 		assertHXRedirectOnError(t, w, "/feeds")
 	})
+
+	t.Run("rejects requests missing HX-Request", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityAll}, testUnreadMetadata())
+
+		form := url.Values{"urlPath": {"/feeds"}, "search": {""}, "page": {"1"}}
+		r := newToggleReadRequest(t, entry.UID, ctxUser, "/feeds", form)
+		r.Header.Del("HX-Request")
+		w := httptest.NewRecorder()
+
+		fc.handleHxFeedEntryToggleRead()(w, r)
+
+		assertRejectsNonHxRequest(t, w)
+	})
 }
 
-func TestHandlePreferencesFeedShowEntriesUpdate(t *testing.T) {
+func TestHandleHxPreferencesFeedShowEntriesUpdate(t *testing.T) {
 	ctxUser := testCtxUser
 	entry := testEntry
 
@@ -279,7 +307,7 @@ func TestHandlePreferencesFeedShowEntriesUpdate(t *testing.T) {
 		r := newFeedPostRequest(t, "/feeds/preferences/show-entries", ctxUser, form)
 		w := httptest.NewRecorder()
 
-		fc.handlePreferencesFeedShowEntriesUpdate()(w, r)
+		fc.handleHxPreferencesFeedShowEntriesUpdate()(w, r)
 
 		if w.Code != http.StatusOK {
 			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
@@ -326,13 +354,26 @@ func TestHandlePreferencesFeedShowEntriesUpdate(t *testing.T) {
 		r := newFeedPostRequest(t, "/feeds/preferences/show-entries", unknownUser, form)
 		w := httptest.NewRecorder()
 
-		fc.handlePreferencesFeedShowEntriesUpdate()(w, r)
+		fc.handleHxPreferencesFeedShowEntriesUpdate()(w, r)
 
 		assertHXRedirectOnError(t, w, "/feeds")
 	})
+
+	t.Run("rejects requests missing HX-Request", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityAll}, nil)
+
+		form := url.Values{"show": {"UNREAD"}, "urlPath": {"/feeds"}, "search": {""}}
+		r := newFeedPostRequest(t, "/feeds/preferences/show-entries", ctxUser, form)
+		r.Header.Del("HX-Request")
+		w := httptest.NewRecorder()
+
+		fc.handleHxPreferencesFeedShowEntriesUpdate()(w, r)
+
+		assertRejectsNonHxRequest(t, w)
+	})
 }
 
-func TestHandlePreferencesToggleShowEntrySummaries(t *testing.T) {
+func TestHandleHxPreferencesToggleShowEntrySummaries(t *testing.T) {
 	ctxUser := testCtxUser
 
 	t.Run("success, list is re-rendered and the current page is preserved", func(t *testing.T) {
@@ -346,7 +387,7 @@ func TestHandlePreferencesToggleShowEntrySummaries(t *testing.T) {
 		r := newFeedPostRequest(t, "/feeds/preferences/toggle-show-entry-summaries", ctxUser, form)
 		w := httptest.NewRecorder()
 
-		fc.handlePreferencesToggleShowEntrySummaries()(w, r)
+		fc.handleHxPreferencesToggleShowEntrySummaries()(w, r)
 
 		if w.Code != http.StatusOK {
 			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
@@ -387,13 +428,26 @@ func TestHandlePreferencesToggleShowEntrySummaries(t *testing.T) {
 		r := newFeedPostRequest(t, "/feeds/preferences/toggle-show-entry-summaries", unknownUser, form)
 		w := httptest.NewRecorder()
 
-		fc.handlePreferencesToggleShowEntrySummaries()(w, r)
+		fc.handleHxPreferencesToggleShowEntrySummaries()(w, r)
 
 		assertHXRedirectOnError(t, w, "/feeds")
 	})
+
+	t.Run("rejects requests missing HX-Request", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID}, nil)
+
+		form := url.Values{"urlPath": {"/feeds"}, "search": {""}, "page": {"1"}}
+		r := newFeedPostRequest(t, "/feeds/preferences/toggle-show-entry-summaries", ctxUser, form)
+		r.Header.Del("HX-Request")
+		w := httptest.NewRecorder()
+
+		fc.handleHxPreferencesToggleShowEntrySummaries()(w, r)
+
+		assertRejectsNonHxRequest(t, w)
+	})
 }
 
-func TestHandleEntryMetadataMarkAllAsRead(t *testing.T) {
+func TestHandleHxEntryMetadataMarkAllAsRead(t *testing.T) {
 	ctxUser := testCtxUser
 	entry := testEntry
 
@@ -404,7 +458,7 @@ func TestHandleEntryMetadataMarkAllAsRead(t *testing.T) {
 		r := newFeedPostRequest(t, "/feeds/entries/mark-all-read", ctxUser, form)
 		w := httptest.NewRecorder()
 
-		fc.handleEntryMetadataMarkAllAsRead()(w, r)
+		fc.handleHxEntryMetadataMarkAllAsRead()(w, r)
 
 		if w.Code != http.StatusOK {
 			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
@@ -441,13 +495,26 @@ func TestHandleEntryMetadataMarkAllAsRead(t *testing.T) {
 		r := newFeedPostRequest(t, "/feeds/entries/mark-all-read", unknownUser, form)
 		w := httptest.NewRecorder()
 
-		fc.handleEntryMetadataMarkAllAsRead()(w, r)
+		fc.handleHxEntryMetadataMarkAllAsRead()(w, r)
 
 		assertHXRedirectOnError(t, w, "/feeds")
 	})
+
+	t.Run("rejects requests missing HX-Request", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityUnread}, testUnreadMetadata())
+
+		form := url.Values{"urlPath": {"/feeds"}, "search": {""}}
+		r := newFeedPostRequest(t, "/feeds/entries/mark-all-read", ctxUser, form)
+		r.Header.Del("HX-Request")
+		w := httptest.NewRecorder()
+
+		fc.handleHxEntryMetadataMarkAllAsRead()(w, r)
+
+		assertRejectsNonHxRequest(t, w)
+	})
 }
 
-func TestHandleEntryMetadataMarkAllAsReadByCategory(t *testing.T) {
+func TestHandleHxEntryMetadataMarkAllAsReadByCategory(t *testing.T) {
 	ctxUser := testCtxUser
 	entry := testEntry
 
@@ -458,7 +525,7 @@ func TestHandleEntryMetadataMarkAllAsReadByCategory(t *testing.T) {
 		r := newFeedSlugPostRequest(t, "/feeds/categories/"+testCategory.Slug+"/entries/mark-all-read", testCategory.Slug, ctxUser, form)
 		w := httptest.NewRecorder()
 
-		fc.handleEntryMetadataMarkAllAsReadByCategory()(w, r)
+		fc.handleHxEntryMetadataMarkAllAsReadByCategory()(w, r)
 
 		if w.Code != http.StatusOK {
 			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
@@ -481,13 +548,26 @@ func TestHandleEntryMetadataMarkAllAsReadByCategory(t *testing.T) {
 		r := newFeedSlugPostRequest(t, "/feeds/categories/does-not-exist/entries/mark-all-read", "does-not-exist", ctxUser, form)
 		w := httptest.NewRecorder()
 
-		fc.handleEntryMetadataMarkAllAsReadByCategory()(w, r)
+		fc.handleHxEntryMetadataMarkAllAsReadByCategory()(w, r)
 
 		assertHXRedirectOnError(t, w, "/feeds")
 	})
+
+	t.Run("rejects requests missing HX-Request", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityUnread}, testUnreadMetadata())
+
+		form := url.Values{"urlPath": {"/feeds/categories/" + testCategory.Slug}, "search": {""}}
+		r := newFeedSlugPostRequest(t, "/feeds/categories/"+testCategory.Slug+"/entries/mark-all-read", testCategory.Slug, ctxUser, form)
+		r.Header.Del("HX-Request")
+		w := httptest.NewRecorder()
+
+		fc.handleHxEntryMetadataMarkAllAsReadByCategory()(w, r)
+
+		assertRejectsNonHxRequest(t, w)
+	})
 }
 
-func TestHandleEntryMetadataMarkAllAsReadByFeed(t *testing.T) {
+func TestHandleHxEntryMetadataMarkAllAsReadByFeed(t *testing.T) {
 	ctxUser := testCtxUser
 	entry := testEntry
 
@@ -498,7 +578,7 @@ func TestHandleEntryMetadataMarkAllAsReadByFeed(t *testing.T) {
 		r := newFeedSlugPostRequest(t, "/feeds/subscriptions/"+testFeed.Slug+"/entries/mark-all-read", testFeed.Slug, ctxUser, form)
 		w := httptest.NewRecorder()
 
-		fc.handleEntryMetadataMarkAllAsReadByFeed()(w, r)
+		fc.handleHxEntryMetadataMarkAllAsReadByFeed()(w, r)
 
 		if w.Code != http.StatusOK {
 			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
@@ -521,8 +601,21 @@ func TestHandleEntryMetadataMarkAllAsReadByFeed(t *testing.T) {
 		r := newFeedSlugPostRequest(t, "/feeds/subscriptions/does-not-exist/entries/mark-all-read", "does-not-exist", ctxUser, form)
 		w := httptest.NewRecorder()
 
-		fc.handleEntryMetadataMarkAllAsReadByFeed()(w, r)
+		fc.handleHxEntryMetadataMarkAllAsReadByFeed()(w, r)
 
 		assertHXRedirectOnError(t, w, "/feeds")
+	})
+
+	t.Run("rejects requests missing HX-Request", func(t *testing.T) {
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityUnread}, testUnreadMetadata())
+
+		form := url.Values{"urlPath": {"/feeds/subscriptions/" + testFeed.Slug}, "search": {""}}
+		r := newFeedSlugPostRequest(t, "/feeds/subscriptions/"+testFeed.Slug+"/entries/mark-all-read", testFeed.Slug, ctxUser, form)
+		r.Header.Del("HX-Request")
+		w := httptest.NewRecorder()
+
+		fc.handleHxEntryMetadataMarkAllAsReadByFeed()(w, r)
+
+		assertRejectsNonHxRequest(t, w)
 	})
 }

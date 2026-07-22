@@ -15,4 +15,12 @@ const (
 	// redirect (window.location) rather than swapping the response into the
 	// requesting element's target.
 	HeaderRedirect = "HX-Redirect"
+
+	// HTMX request headers
+	// See https://htmx.org/reference/#request_headers
+
+	// HeaderRequest is set to "true" by htmx on every request it issues,
+	// letting the server tell an htmx-initiated request apart from a plain
+	// browser request.
+	HeaderRequest = "HX-Request"
 )

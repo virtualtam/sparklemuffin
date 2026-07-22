@@ -81,17 +81,17 @@ func RegisterFeedHandlers(
 			sr.Post("/{uuid}/edit", fc.handleFeedCategoryEdit())
 
 			sr.Get("/{slug}", fc.handleFeedListByCategoryView())
-			sr.Post("/{slug}/entries/mark-all-read", fc.handleEntryMetadataMarkAllAsReadByCategory())
+			sr.Post("/{slug}/entries/mark-all-read", fc.handleHxEntryMetadataMarkAllAsReadByCategory())
 		})
 
 		r.Route("/entries", func(sr chi.Router) {
-			sr.Post("/mark-all-read", fc.handleEntryMetadataMarkAllAsRead())
-			sr.Post("/{uid}/toggle-read", fc.handleFeedEntryToggleRead())
+			sr.Post("/mark-all-read", fc.handleHxEntryMetadataMarkAllAsRead())
+			sr.Post("/{uid}/toggle-read", fc.handleHxFeedEntryToggleRead())
 		})
 
 		r.Route("/preferences", func(sr chi.Router) {
-			sr.Post("/show-entries", fc.handlePreferencesFeedShowEntriesUpdate())
-			sr.Post("/toggle-show-entry-summaries", fc.handlePreferencesToggleShowEntrySummaries())
+			sr.Post("/show-entries", fc.handleHxPreferencesFeedShowEntriesUpdate())
+			sr.Post("/toggle-show-entry-summaries", fc.handleHxPreferencesToggleShowEntrySummaries())
 		})
 
 		r.Route("/subscriptions", func(sr chi.Router) {
@@ -107,7 +107,7 @@ func RegisterFeedHandlers(
 			sr.Post("/{uuid}/edit", fc.handleFeedSubscriptionEdit())
 
 			sr.Get("/{slug}", fc.handleFeedListBySubscriptionView())
-			sr.Post("/{slug}/entries/mark-all-read", fc.handleEntryMetadataMarkAllAsReadByFeed())
+			sr.Post("/{slug}/entries/mark-all-read", fc.handleHxEntryMetadataMarkAllAsReadByFeed())
 		})
 	})
 }
@@ -455,6 +455,24 @@ func (fc *feedController) redirectWithFlashError(w http.ResponseWriter, redirect
 	w.WriteHeader(http.StatusOK)
 }
 
+// requireHxRequest rejects a request that carries no proof of having been
+// issued by htmx (the HX-Request header), returning true if the caller
+// should continue handling it.
+//
+// The handlers guarded by this only ever render an HTML fragment: they have
+// no full-page layout to fall back to, so a request that isn't htmx-issued
+// (e.g. a direct hit on the route, or a non-JS client) has no well-defined
+// response to send.
+func (fc *feedController) requireHxRequest(w http.ResponseWriter, r *http.Request) bool {
+	if r.Header.Get(htmx.HeaderRequest) == "true" {
+		return true
+	}
+
+	log.Error().Err(htmx.ErrMissingRequestHeader).Msg("rejected non-htmx request")
+	http.Error(w, htmx.ErrMissingRequestHeader.Error(), http.StatusBadRequest)
+	return false
+}
+
 // feedPageForContext returns the FeedPage matching the view the user was on (All,
 // a category, or a subscription, with an optional search query), so that counts
 // derived from it (unread badges, entry count) stay consistent with that view.
@@ -605,15 +623,19 @@ func (fc *feedController) renderFeedListUpdate(
 	}
 }
 
-// handleFeedEntryToggleRead handles a request to toggle the read status of a feed entry.
+// handleHxFeedEntryToggleRead handles a request to toggle the read status of a feed entry.
 //
 // On success, it responds with an HTML fragment: the re-rendered entry (or nothing,
 // if the entry no longer matches the current read/unread filter, so htmx removes it),
 // plus out-of-band fragments refreshing the unread badges and entry count that the
 // toggle affects. On error, it falls back to the same flash+redirect behavior used
 // throughout this file, which htmx follows as a full page reload.
-func (fc *feedController) handleFeedEntryToggleRead() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleHxFeedEntryToggleRead() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !fc.requireHxRequest(w, r) {
+			return
+		}
+
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 		entryUID := chi.URLParam(r, "uid")
@@ -915,14 +937,18 @@ func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWrite
 	}
 }
 
-// handleEntryMetadataMarkAllAsRead handles a request to mark all feed entries as read.
+// handleHxEntryMetadataMarkAllAsRead handles a request to mark all feed entries as read.
 //
 // On success, it responds with the re-rendered entry list (reset to page 1,
 // since marking everything read can shrink or empty an Unread-only view)
 // plus every fragment that depends on it. On error, it falls back to the
 // same flash+redirect behavior used throughout this file.
-func (fc *feedController) handleEntryMetadataMarkAllAsRead() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleHxEntryMetadataMarkAllAsRead() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !fc.requireHxRequest(w, r) {
+			return
+		}
+
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 
@@ -952,11 +978,15 @@ func (fc *feedController) handleEntryMetadataMarkAllAsRead() func(w http.Respons
 	}
 }
 
-// handleEntryMetadataMarkAllAsReadByCategory handles a request to mark all feed entries as read for a given category.
+// handleHxEntryMetadataMarkAllAsReadByCategory handles a request to mark all feed entries as read for a given category.
 //
-// See handleEntryMetadataMarkAllAsRead for the response behavior.
-func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w http.ResponseWriter, r *http.Request) {
+// See handleHxEntryMetadataMarkAllAsRead for the response behavior.
+func (fc *feedController) handleHxEntryMetadataMarkAllAsReadByCategory() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !fc.requireHxRequest(w, r) {
+			return
+		}
+
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 		categorySlug := chi.URLParam(r, "slug")
@@ -994,11 +1024,15 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w ht
 	}
 }
 
-// handleEntryMetadataMarkAllAsReadByFeed handles a request to mark all feed entries as read for a given feed.
+// handleHxEntryMetadataMarkAllAsReadByFeed handles a request to mark all feed entries as read for a given feed.
 //
-// See handleEntryMetadataMarkAllAsRead for the response behavior.
-func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.ResponseWriter, r *http.Request) {
+// See handleHxEntryMetadataMarkAllAsRead for the response behavior.
+func (fc *feedController) handleHxEntryMetadataMarkAllAsReadByFeed() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !fc.requireHxRequest(w, r) {
+			return
+		}
+
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 		feedSlug := chi.URLParam(r, "slug")
@@ -1173,8 +1207,12 @@ func (fc *feedController) handleFeedImport() func(w http.ResponseWriter, r *http
 // which entries match or how many pages there are), plus every fragment that
 // depends on it. On error, it falls back to the same flash+redirect behavior
 // used throughout this file.
-func (fc *feedController) handlePreferencesToggleShowEntrySummaries() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleHxPreferencesToggleShowEntrySummaries() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !fc.requireHxRequest(w, r) {
+			return
+		}
+
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 
@@ -1218,7 +1256,7 @@ func (fc *feedController) handlePreferencesToggleShowEntrySummaries() func(w htt
 // since the current page may no longer make sense for the new filter) plus
 // every fragment that depends on it. On error, it falls back to the same
 // flash+redirect behavior used throughout this file.
-func (fc *feedController) handlePreferencesFeedShowEntriesUpdate() func(w http.ResponseWriter, r *http.Request) {
+func (fc *feedController) handleHxPreferencesFeedShowEntriesUpdate() func(w http.ResponseWriter, r *http.Request) {
 	type feedShowEntriesForm struct {
 		ShowEntries string `schema:"show"`
 		URLPath     string `schema:"urlPath"`
@@ -1226,6 +1264,10 @@ func (fc *feedController) handlePreferencesFeedShowEntriesUpdate() func(w http.R
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		if !fc.requireHxRequest(w, r) {
+			return
+		}
+
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 

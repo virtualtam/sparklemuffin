@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jaswdr/faker/v2"
+	"github.com/segmentio/ksuid"
 
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
@@ -414,5 +416,212 @@ func TestHandleTagEdit(t *testing.T) {
 		if got := w.Header().Get("HX-Trigger"); got != "modal:close" {
 			t.Errorf("want HX-Trigger modal:close, got %q", got)
 		}
+	})
+}
+
+// newTestBookmarkControllerForBookmarkEdit wires a bookmarkController
+// against the given bookmark, for exercising the bookmark edit handlers.
+func newTestBookmarkControllerForBookmarkEdit(ctxUser user.User, b bookmark.Bookmark) bookmarkController {
+	repo := &bookmark.FakeRepository{Bookmarks: []bookmark.Bookmark{b}}
+
+	queryingRepo := &bookmarkquerying.FakeRepository{
+		Bookmarks: []bookmark.Bookmark{b},
+		Users:     []user.User{ctxUser},
+	}
+
+	return bookmarkController{
+		bookmarkService:  bookmark.NewService(repo),
+		queryingService:  bookmarkquerying.NewService(queryingRepo),
+		bookmarkListView: view.New("bookmark/bookmark_list.gohtml"),
+		bookmarkEditView: view.New("bookmark/bookmark_edit.gohtml"),
+	}
+}
+
+// newBookmarkEditViewRequest builds a GET request against
+// /bookmarks/{uid}/edit.
+func newBookmarkEditViewRequest(t *testing.T, ctxUser user.User, bookmarkUID string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/bookmarks/"+bookmarkUID+"/edit", nil)
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uid", bookmarkUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+// newBookmarkEditPostRequest builds a POST request against
+// /bookmarks/{uid}/edit.
+func newBookmarkEditPostRequest(t *testing.T, ctxUser user.User, bookmarkUID string, form url.Values, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/bookmarks/"+bookmarkUID+"/edit", strings.NewReader(form.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uid", bookmarkUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+func TestHandleBookmarkEditView(t *testing.T) {
+	fake := faker.New()
+	ctxUser := user.User{UUID: fake.UUID().V4(), NickName: fake.Internet().User(), DisplayName: fake.Person().Name()}
+
+	newFixture := func() bookmark.Bookmark {
+		return bookmark.Bookmark{
+			UID:      ksuid.New().String(),
+			UserUUID: ctxUser.UUID,
+			URL:      fake.Internet().URL(),
+			Title:    fake.Lorem().Text(10),
+		}
+	}
+
+	t.Run("plain browser request renders the full page", func(t *testing.T) {
+		b := newFixture()
+		bc := newTestBookmarkControllerForBookmarkEdit(ctxUser, b)
+		r := newBookmarkEditViewRequest(t, ctxUser, b.UID, false)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkEditView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a full page (with layout), got:\n%s", body)
+		}
+		if !strings.Contains(body, `value="`+b.Title+`"`) {
+			t.Errorf("want the bookmark title pre-filled, got:\n%s", body)
+		}
+		if strings.Contains(body, "hx-post") {
+			t.Errorf("want a plain form with no htmx attributes on the full page, got:\n%s", body)
+		}
+	})
+
+	t.Run("htmx request renders only the form fragment", func(t *testing.T) {
+		b := newFixture()
+		bc := newTestBookmarkControllerForBookmarkEdit(ctxUser, b)
+		r := newBookmarkEditViewRequest(t, ctxUser, b.UID, true)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkEditView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a fragment with no layout, got:\n%s", body)
+		}
+		if !strings.Contains(body, `value="`+b.Title+`"`) {
+			t.Errorf("want the bookmark title pre-filled, got:\n%s", body)
+		}
+		if !strings.Contains(body, `hx-post="/bookmarks/`) {
+			t.Errorf("want the modal fragment's form to be htmx-enhanced, got:\n%s", body)
+		}
+	})
+
+	t.Run("unknown bookmark, htmx request uses HX-Redirect", func(t *testing.T) {
+		b := newFixture()
+		bc := newTestBookmarkControllerForBookmarkEdit(ctxUser, b)
+		unknownUID := ksuid.New().String()
+		r := newBookmarkEditViewRequest(t, ctxUser, unknownUID, true)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkEditView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/bookmarks/"+unknownUID+"/edit")
+	})
+}
+
+func TestHandleBookmarkEdit(t *testing.T) {
+	fake := faker.New()
+	ctxUser := user.User{UUID: fake.UUID().V4(), NickName: fake.Internet().User(), DisplayName: fake.Person().Name()}
+
+	newFixture := func() bookmark.Bookmark {
+		return bookmark.Bookmark{
+			UID:      ksuid.New().String(),
+			UserUUID: ctxUser.UUID,
+			URL:      fake.Internet().URL(),
+			Title:    fake.Lorem().Text(10),
+		}
+	}
+
+	t.Run("plain browser request edits and redirects", func(t *testing.T) {
+		b := newFixture()
+		bc := newTestBookmarkControllerForBookmarkEdit(ctxUser, b)
+		form := url.Values{"url": {b.URL}, "title": {fake.Lorem().Text(10)}}
+		r := newBookmarkEditPostRequest(t, ctxUser, b.UID, form, false)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkEdit()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("Location"); got != "/bookmarks" {
+			t.Errorf("want redirect to /bookmarks, got %q", got)
+		}
+	})
+
+	t.Run("htmx request retargets the response into the bookmark's row and closes the modal", func(t *testing.T) {
+		b := newFixture()
+		bc := newTestBookmarkControllerForBookmarkEdit(ctxUser, b)
+		newTitle := fake.Lorem().Text(10)
+		form := url.Values{"url": {b.URL}, "title": {newTitle}}
+		r := newBookmarkEditPostRequest(t, ctxUser, b.UID, form, true)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkEdit()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("HX-Retarget"); got != "#bookmark-row-"+b.UID {
+			t.Errorf("want HX-Retarget to the bookmark's row, got %q", got)
+		}
+		if got := w.Header().Get("HX-Reswap"); got != "outerHTML" {
+			t.Errorf("want HX-Reswap outerHTML, got %q", got)
+		}
+		if got := w.Header().Get("HX-Trigger"); got != "modal:close" {
+			t.Errorf("want HX-Trigger modal:close, got %q", got)
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, `id="bookmark-row-`+b.UID+`"`) {
+			t.Errorf("want the bookmark's row rendered, got:\n%s", body)
+		}
+		if !strings.Contains(body, newTitle) {
+			t.Errorf("want the new title rendered, got:\n%s", body)
+		}
+	})
+
+	t.Run("unknown bookmark, htmx request uses HX-Redirect", func(t *testing.T) {
+		b := newFixture()
+		bc := newTestBookmarkControllerForBookmarkEdit(ctxUser, b)
+		unknownUID := ksuid.New().String()
+		form := url.Values{"url": {b.URL}, "title": {fake.Lorem().Text(10)}}
+		r := newBookmarkEditPostRequest(t, ctxUser, unknownUID, form, true)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkEdit()(w, r)
+
+		assertHXRedirectOnError(t, w, "/bookmarks/"+unknownUID+"/edit")
 	})
 }

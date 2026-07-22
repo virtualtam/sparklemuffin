@@ -7,88 +7,95 @@
     </ul>
   </nav>
 
-  <form action="/bookmarks/{{.Bookmark.UID}}/edit" autocomplete="off" method="POST">
-    <div class="field is-horizontal">
-      <div class="field-label is-normal">
-        <label class="label" for="url">URL</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <input class="input" type="url" id="url" name="url" placeholder="URL" value="{{.Bookmark.URL}}" required="">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="field is-horizontal">
-      <div class="field-label is-normal">
-        <label class="label" for="title">Title</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <input class="input" type="text" id="title" name="title" placeholder="Title" value="{{.Bookmark.Title}}"
-              required="">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="field is-horizontal">
-      <div class="field-label is-normal">
-        <label class="label" for="description">Description</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <textarea class="textarea" id="description" name="description" placeholder="Description" rows="10"
-              data-easymde>{{.Bookmark.Description}}</textarea>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="field is-horizontal">
-      <div class="field-label is-normal">
-        <label class="label" for="tags">Tags</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <input class="input" type="text" id="tags" name="tags" placeholder="Tags, separated by spaces"
-              value="{{Join .Bookmark.Tags " "}}" data-list="{{Join .Tags ","}}">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="field is-horizontal">
-      <div class="field-label">
-        <label class="label" for="private">Private?</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <input type="checkbox" id="private" name="private" {{if .Bookmark.Private}}checked{{end}}>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="field is-horizontal">
-      <div class="field-label"></div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <button type="submit" class="button is-primary">Save changes</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </form>
+  {{template "bookmarkEditForm" (dict "Bookmark" .Bookmark "Tags" .Tags "InModal" false)}}
 </section>
 {{end}}
+
+{{/* InModal enables htmx attributes; only true when loaded into the bookmark list page's edit modal. */}}
+{{define "bookmarkEditForm"}}
+<form action="/bookmarks/{{.Bookmark.UID}}/edit" autocomplete="off" method="POST"
+  {{if .InModal}}hx-post="/bookmarks/{{.Bookmark.UID}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>
+  <div class="field is-horizontal">
+    <div class="field-label is-normal">
+      <label class="label" for="url">URL</label>
+    </div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <input class="input" type="url" id="url" name="url" placeholder="URL" value="{{.Bookmark.URL}}" required="">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field is-horizontal">
+    <div class="field-label is-normal">
+      <label class="label" for="title">Title</label>
+    </div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <input class="input" type="text" id="title" name="title" placeholder="Title" value="{{.Bookmark.Title}}"
+            required="">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field is-horizontal">
+    <div class="field-label is-normal">
+      <label class="label" for="description">Description</label>
+    </div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <textarea class="textarea" id="description" name="description" placeholder="Description" rows="10"
+            data-easymde>{{.Bookmark.Description}}</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field is-horizontal">
+    <div class="field-label is-normal">
+      <label class="label" for="tags">Tags</label>
+    </div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <input class="input" type="text" id="tags" name="tags" placeholder="Tags, separated by spaces"
+            value="{{Join .Bookmark.Tags " "}}" data-list="{{Join .Tags ","}}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field is-horizontal">
+    <div class="field-label">
+      <label class="label" for="private">Private?</label>
+    </div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <input type="checkbox" id="private" name="private" {{if .Bookmark.Private}}checked{{end}}>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field is-horizontal">
+    <div class="field-label"></div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <button type="submit" class="button is-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{{end}}
+
 {{define "scripts"}}
   <script nonce="{{.Nonce}}" src="/static/complete-tags.min.js"></script>
   <script nonce="{{.Nonce}}" src="/static/easymde-init.min.js"></script>

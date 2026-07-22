@@ -239,6 +239,10 @@ func (bc *bookmarkController) handleBookmarkDelete() func(w http.ResponseWriter,
 }
 
 // handleBookmarkEditView renders the bookmark edition form.
+//
+// On an htmx request, it responds with only the form fragment, meant to be
+// loaded into the bookmark list page's edit modal. On a plain request, it
+// renders the full page as usual, so the URL stays independently navigable.
 func (bc *bookmarkController) handleBookmarkEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		bookmarkUID := chi.URLParam(r, "uid")
@@ -248,16 +252,23 @@ func (bc *bookmarkController) handleBookmarkEditView() func(w http.ResponseWrite
 		tags, err := bc.queryingService.TagNamesByCount(ctx, ctxUser.UUID, bookmarkquerying.VisibilityAll)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
-			view.PutFlashError(w, "failed to retrieve existing tags")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve existing tags")
 			return
 		}
 
 		bookmarkToEdit, err := bc.bookmarkService.ByUID(ctx, ctxUser.UUID, bookmarkUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmark")
-			view.PutFlashError(w, "failed to retrieve bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve bookmark")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			formData := map[string]any{"Bookmark": &bookmarkToEdit, "Tags": tags, "InModal": true}
+			if err := bc.bookmarkEditView.RenderTemplate(w, "bookmarkEditForm", formData); err != nil {
+				log.Error().Err(err).Msg("failed to render bookmark edit form fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -274,6 +285,15 @@ func (bc *bookmarkController) handleBookmarkEditView() func(w http.ResponseWrite
 }
 
 // handleBookmarkEdit processes the bookmark edition form.
+//
+// On success:
+//   - htmx request: re-renders the bookmark's row and retargets/reswaps the
+//     response into it (outerHTML), and fires a "modal:close" client-side
+//     event so the bookmark list page's edit modal closes.
+//   - plain request: redirect to the bookmark list, as before.
+//
+// On error, it falls back to the same flash+redirect (or HX-Redirect, for
+// htmx requests) behavior used throughout this file.
 func (bc *bookmarkController) handleBookmarkEdit() func(w http.ResponseWriter, r *http.Request) {
 	type bookmarkEditForm struct {
 		URL         string `schema:"url"`
@@ -291,8 +311,7 @@ func (bc *bookmarkController) handleBookmarkEdit() func(w http.ResponseWriter, r
 		var form bookmarkEditForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse bookmark edition form")
-			view.PutFlashError(w, "failed to process form")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to process form")
 			return
 		}
 
@@ -308,8 +327,29 @@ func (bc *bookmarkController) handleBookmarkEdit() func(w http.ResponseWriter, r
 
 		if err := bc.bookmarkService.Update(ctx, editedBookmark); err != nil {
 			log.Error().Err(err).Msg("failed to edit bookmark")
-			view.PutFlashError(w, "failed to edit bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to edit bookmark")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			updated, err := bc.bookmarkService.ByUID(ctx, ctxUser.UUID, bookmarkUID)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to retrieve bookmark")
+				view.RedirectOnError(w, r, "/bookmarks", "failed to retrieve bookmark")
+				return
+			}
+
+			owner := bookmarkquerying.Owner{UUID: ctxUser.UUID, NickName: ctxUser.NickName, DisplayName: ctxUser.DisplayName}
+
+			w.Header().Set(htmx.HeaderRetarget, "#bookmark-row-"+bookmarkUID)
+			w.Header().Set(htmx.HeaderReswap, "outerHTML")
+			w.Header().Set(htmx.HeaderTrigger, "modal:close")
+
+			rowData := map[string]any{"Bookmark": updated, "Owner": owner}
+			if err := bc.bookmarkListView.RenderTemplate(w, "bookmarkRow", rowData); err != nil {
+				log.Error().Err(err).Msg("failed to render bookmark row fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 

@@ -61,6 +61,11 @@ a:hover {
   border-end-end-radius: var(--bulma-modal-card-foot-radius);
 }
 
+/* Wider modal-card, for content that needs more room (e.g. long URLs, a Markdown editor). */
+.modal.is-wide {
+  --bulma-modal-content-width: 60rem;
+}
+
 code {
   font-family: firacode, monospace;
   font-size: 14px;

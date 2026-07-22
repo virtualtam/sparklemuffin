@@ -161,6 +161,7 @@ func TestContentSecurityPolicy(t *testing.T) {
 	wantPolicy := "default-src 'none'; " +
 		"script-src 'self' 'unsafe-eval' 'nonce-" + gotNonce + "'; " +
 		"style-src 'self'; " +
+		"style-src-attr 'unsafe-inline'; " +
 		"img-src 'self'; " +
 		"font-src 'self'; " +
 		"connect-src 'self'; " +

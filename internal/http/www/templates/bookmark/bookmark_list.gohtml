@@ -1,95 +1,17 @@
 {{define "content"}}
-<section class="section pt-3" id="bookmark-list-content">
+{{/*
+  Unlike the tag/category/subscription edit modals, this one is opened after
+  the edit form has swapped in (htmx:after-swap) rather than on click: opening
+  an empty modal and growing it once the (much taller, EasyMDE-bearing) form
+  arrives caused a visible resize jump.
+*/}}
+<section class="section pt-3" id="bookmark-list-content" x-data="{ bookmarkEditModalOpen: false }"
+  @modal:close.window="bookmarkEditModalOpen = false"
+  @htmx:after-swap.window="if ($event.detail.target.id === 'bookmark-edit-modal-body') bookmarkEditModalOpen = true">
   {{template "bookmarkSearchForm" .}}
   <ol start="{{.Page.ItemOffset}}">
     {{range .Bookmarks}}
-    <li class="bookmark mb-5">
-      <div class="level mb-1">
-        <div class="level-left">
-          <div class="level-item">
-            <strong>
-              {{- if .Private}}
-              <span class="has-text-danger-30">[Private]</span>
-              {{- end}}
-              <a class="bookmark-title" href="{{.URL}}">{{.Title}}</a>
-            </strong>
-          </div>
-        </div>
-        <div class="level-right">
-          <div class="level-item">
-            <strong>
-              <time>{{.CreatedAt.Format "2006-01-02"}}</time>
-            </strong>
-          </div>
-        </div>
-      </div>
-      <div class="level mb-1">
-        <div class="level-left">
-          <div class="level-item">
-            <span class="icon">
-              <i class="fa-solid fa-tags"></i>
-            </span>
-            <div class="tags">
-              {{- range .Tags}}
-              <span class="tag">
-                <a href="/bookmarks?search={{.}}">{{.}}</a>
-              </span>
-              {{- end}}
-            </div>
-          </div>
-        </div>
-        <div class="level-right">
-          <div class="level-item">
-            <div class="dropdown is-hoverable is-right">
-              <div class="dropdown-trigger">
-                <button class="button is-small" aria-haspopup="true" aria-controls="dropdown-menu-{{.UID}}">
-                  <span>Actions</span>
-                  <span class="icon is-small">
-                    <i class="fa-solid fa-chevron-down"></i>
-                  </span>
-                </button>
-              </div>
-              <div class="dropdown-menu" id="dropdown-menu-{{.UID}}" role="menu">
-                <div class="dropdown-content">
-                  <a href="/bookmarks/{{.UID}}/edit" class="dropdown-item px-4">
-                    <span class="icon-text">
-                      <span class="icon">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                      </span>
-                      <span>Edit</span>
-                    </span>
-                  </a>
-                  <a href="/bookmarks/{{.UID}}/delete" class="dropdown-item px-4">
-                    <span class="icon-text">
-                      <span class="icon">
-                        <i class="fa-solid fa-trash"></i>
-                      </span>
-                      <span>Delete</span>
-                    </span>
-                  </a>
-                  {{- if not .Private}}
-                  <hr class="dropdown-divider">
-                  <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}" class="dropdown-item px-4">
-                    <span class="icon-text">
-                      <span class="icon">
-                        <i class="fa-solid fa-link"></i>
-                      </span>
-                      <span>Permalink</span>
-                    </span>
-                  </a>
-                  {{- end}}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {{- with .Description}}
-      <div class="content">
-        {{. | MarkdownToHTML}}
-      </div>
-      {{- end}}
-    </li>
+    {{template "bookmarkRow" (dict "Bookmark" . "Owner" $.Owner)}}
     {{end}}
   </ol>
   <nav class="level">
@@ -111,7 +33,109 @@
       </div>
     </div>
   </nav>
+
+  <div class="modal is-wide" :class="{ 'is-active': bookmarkEditModalOpen }">
+    <div class="modal-background" @click="bookmarkEditModalOpen = false"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Edit bookmark</p>
+        <button class="delete" aria-label="close" @click="bookmarkEditModalOpen = false"></button>
+      </header>
+      <section class="modal-card-body" id="bookmark-edit-modal-body"></section>
+    </div>
+  </div>
 </section>
+{{end}}
+
+{{define "bookmarkRow"}}
+<li class="bookmark mb-5" id="bookmark-row-{{.Bookmark.UID}}">
+  <div class="level mb-1">
+    <div class="level-left">
+      <div class="level-item">
+        <strong>
+          {{- if .Bookmark.Private}}
+          <span class="has-text-danger-30">[Private]</span>
+          {{- end}}
+          <a class="bookmark-title" href="{{.Bookmark.URL}}">{{.Bookmark.Title}}</a>
+        </strong>
+      </div>
+    </div>
+    <div class="level-right">
+      <div class="level-item">
+        <strong>
+          <time>{{.Bookmark.CreatedAt.Format "2006-01-02"}}</time>
+        </strong>
+      </div>
+    </div>
+  </div>
+  <div class="level mb-1">
+    <div class="level-left">
+      <div class="level-item">
+        <span class="icon">
+          <i class="fa-solid fa-tags"></i>
+        </span>
+        <div class="tags">
+          {{- range .Bookmark.Tags}}
+          <span class="tag">
+            <a href="/bookmarks?search={{.}}">{{.}}</a>
+          </span>
+          {{- end}}
+        </div>
+      </div>
+    </div>
+    <div class="level-right">
+      <div class="level-item">
+        <div class="dropdown is-hoverable is-right">
+          <div class="dropdown-trigger">
+            <button class="button is-small" aria-haspopup="true" aria-controls="dropdown-menu-{{.Bookmark.UID}}">
+              <span>Actions</span>
+              <span class="icon is-small">
+                <i class="fa-solid fa-chevron-down"></i>
+              </span>
+            </button>
+          </div>
+          <div class="dropdown-menu" id="dropdown-menu-{{.Bookmark.UID}}" role="menu">
+            <div class="dropdown-content">
+              <a href="/bookmarks/{{.Bookmark.UID}}/edit" class="dropdown-item px-4"
+                hx-get="/bookmarks/{{.Bookmark.UID}}/edit" hx-target="#bookmark-edit-modal-body" hx-swap="innerHTML">
+                <span class="icon-text">
+                  <span class="icon">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </span>
+                  <span>Edit</span>
+                </span>
+              </a>
+              <a href="/bookmarks/{{.Bookmark.UID}}/delete" class="dropdown-item px-4">
+                <span class="icon-text">
+                  <span class="icon">
+                    <i class="fa-solid fa-trash"></i>
+                  </span>
+                  <span>Delete</span>
+                </span>
+              </a>
+              {{- if not .Bookmark.Private}}
+              <hr class="dropdown-divider">
+              <a href="/u/{{.Owner.NickName}}/bookmarks/{{.Bookmark.UID}}" class="dropdown-item px-4">
+                <span class="icon-text">
+                  <span class="icon">
+                    <i class="fa-solid fa-link"></i>
+                  </span>
+                  <span>Permalink</span>
+                </span>
+              </a>
+              {{- end}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{- with .Bookmark.Description}}
+  <div class="content">
+    {{. | MarkdownToHTML}}
+  </div>
+  {{- end}}
+</li>
 {{end}}
 
 {{define "bookmarkSearchForm"}}
@@ -147,4 +171,9 @@
     </div>
   </div>
 </nav>
+{{end}}
+
+{{define "scripts"}}
+  <script nonce="{{.Nonce}}" src="/static/complete-tags.min.js"></script>
+  <script nonce="{{.Nonce}}" src="/static/easymde-init.min.js"></script>
 {{end}}

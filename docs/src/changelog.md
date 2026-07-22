@@ -45,9 +45,11 @@ project adheres to [Semantic Versioning](https://semver.org/).
     - Navigating pages
     - Searching entries
 - Rework edition forms as modals:
+    - Bookmark edition form
     - Bookmark tag edition form
     - Feed category edition form
     - Feed subscription edition form
+- Homogenize form layout
 
 ## [v0.6.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.1) - 2026-04-23
 ### Security

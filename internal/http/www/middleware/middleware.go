@@ -95,6 +95,11 @@ func ContentSecurityPolicy(h http.Handler) http.Handler {
 		policy := "default-src 'none'; " +
 			"script-src 'self' 'unsafe-eval' 'nonce-" + nonce + "'; " +
 			"style-src 'self'; " +
+			// EasyMDE's CodeMirror editor sets inline style attributes
+			// (cursor/gutter/scroll positioning) dynamically in JS; these
+			// values vary per render, so a nonce or fixed hash allowlist
+			// isn't workable here.
+			"style-src-attr 'unsafe-inline'; " +
 			"img-src 'self'; " +
 			"font-src 'self'; " +
 			"connect-src 'self'; " +

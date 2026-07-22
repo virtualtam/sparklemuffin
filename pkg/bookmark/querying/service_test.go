@@ -248,9 +248,9 @@ func TestServiceByPage(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
-				bookmarks: tc.repositoryBookmarks,
-				users:     testRepositoryUsers,
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+				Users:     testRepositoryUsers,
 			}
 
 			s := NewService(r)
@@ -350,9 +350,9 @@ func TestServicePublicBookmarkByUID(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
-				bookmarks: tc.repositoryBookmarks,
-				users:     testRepositoryUsers,
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+				Users:     testRepositoryUsers,
 			}
 
 			s := NewService(r)
@@ -522,9 +522,9 @@ func TestServiceBookmarksBySearchQueryAndPage(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
-				bookmarks: tc.repositoryBookmarks,
-				users:     testRepositoryUsers,
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+				Users:     testRepositoryUsers,
 			}
 
 			s := NewService(r)
@@ -618,9 +618,9 @@ func TestServicePublicBookmarksBySearchQueryAndPage(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
-				bookmarks: tc.repositoryBookmarks,
-				users:     testRepositoryUsers,
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+				Users:     testRepositoryUsers,
 			}
 
 			s := NewService(r)
@@ -714,9 +714,9 @@ func TestServicePublicBookmarksByPage(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
-				bookmarks: tc.repositoryBookmarks,
-				users:     testRepositoryUsers,
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+				Users:     testRepositoryUsers,
 			}
 
 			s := NewService(r)
@@ -792,9 +792,9 @@ func TestServiceTags(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
-				bookmarks: tc.repositoryBookmarks,
-				users:     testRepositoryUsers,
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+				Users:     testRepositoryUsers,
 			}
 
 			s := NewService(r)
@@ -864,9 +864,9 @@ func TestServiceTagNamesByCount(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
-				bookmarks: tc.repositoryBookmarks,
-				users:     testRepositoryUsers,
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+				Users:     testRepositoryUsers,
 			}
 
 			s := NewService(r)
@@ -990,9 +990,9 @@ func TestServiceTagsByPage(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
-				bookmarks: tc.repositoryBookmarks,
-				users:     testRepositoryUsers,
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+				Users:     testRepositoryUsers,
 			}
 
 			s := NewService(r)
@@ -1115,9 +1115,9 @@ func TestServiceTagsByFilterQueryAndPage(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
-			r := &fakeRepository{
-				bookmarks: tc.repositoryBookmarks,
-				users:     testRepositoryUsers,
+			r := &FakeRepository{
+				Bookmarks: tc.repositoryBookmarks,
+				Users:     testRepositoryUsers,
 			}
 
 			s := NewService(r)

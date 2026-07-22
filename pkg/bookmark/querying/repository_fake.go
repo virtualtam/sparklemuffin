@@ -12,11 +12,11 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
-var _ Repository = &fakeRepository{}
+var _ Repository = &FakeRepository{}
 
-type fakeRepository struct {
-	bookmarks []bookmark.Bookmark
-	users     []user.User
+type FakeRepository struct {
+	Bookmarks []bookmark.Bookmark
+	Users     []user.User
 }
 
 func visibilityMatches(visibility Visibility, private bool) bool {
@@ -30,10 +30,10 @@ func visibilityMatches(visibility Visibility, private bool) bool {
 	}
 }
 
-func (r *fakeRepository) BookmarkGetN(_ context.Context, userUUID string, visibility Visibility, n uint, offset uint) ([]bookmark.Bookmark, error) {
+func (r *FakeRepository) BookmarkGetN(_ context.Context, userUUID string, visibility Visibility, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	var userBookmarks []bookmark.Bookmark
 
-	for _, b := range r.bookmarks {
+	for _, b := range r.Bookmarks {
 		if b.UserUUID == userUUID {
 			if !visibilityMatches(visibility, b.Private) {
 				continue
@@ -51,10 +51,10 @@ func (r *fakeRepository) BookmarkGetN(_ context.Context, userUUID string, visibi
 	return userBookmarks[offset : offset+nBookmarks], nil
 }
 
-func (r *fakeRepository) BookmarkGetCount(_ context.Context, userUUID string, visibility Visibility) (uint, error) {
+func (r *FakeRepository) BookmarkGetCount(_ context.Context, userUUID string, visibility Visibility) (uint, error) {
 	var userBookmarkCount uint
 
-	for _, b := range r.bookmarks {
+	for _, b := range r.Bookmarks {
 		if b.UserUUID == userUUID {
 			if !visibilityMatches(visibility, b.Private) {
 				continue
@@ -66,8 +66,8 @@ func (r *fakeRepository) BookmarkGetCount(_ context.Context, userUUID string, vi
 	return userBookmarkCount, nil
 }
 
-func (r *fakeRepository) BookmarkGetPublicByUID(_ context.Context, userUUID, uid string) (bookmark.Bookmark, error) {
-	for _, b := range r.bookmarks {
+func (r *FakeRepository) BookmarkGetPublicByUID(_ context.Context, userUUID, uid string) (bookmark.Bookmark, error) {
+	for _, b := range r.Bookmarks {
 		if b.UserUUID == userUUID && b.UID == uid && !b.Private {
 			return b, nil
 		}
@@ -96,10 +96,10 @@ func bookmarkMatchesSearch(b bookmark.Bookmark, searchTerms string) bool {
 	return false
 }
 
-func (r *fakeRepository) bookmarkSearchMatches(userUUID string, visibility Visibility, searchTerms string) []bookmark.Bookmark {
+func (r *FakeRepository) bookmarkSearchMatches(userUUID string, visibility Visibility, searchTerms string) []bookmark.Bookmark {
 	var matches []bookmark.Bookmark
 
-	for _, b := range r.bookmarks {
+	for _, b := range r.Bookmarks {
 		if b.UserUUID != userUUID {
 			continue
 		}
@@ -118,11 +118,11 @@ func (r *fakeRepository) bookmarkSearchMatches(userUUID string, visibility Visib
 	return matches
 }
 
-func (r *fakeRepository) BookmarkSearchCount(_ context.Context, userUUID string, visibility Visibility, searchTerms string) (uint, error) {
+func (r *FakeRepository) BookmarkSearchCount(_ context.Context, userUUID string, visibility Visibility, searchTerms string) (uint, error) {
 	return uint(len(r.bookmarkSearchMatches(userUUID, visibility, searchTerms))), nil
 }
 
-func (r *fakeRepository) BookmarkSearchN(_ context.Context, userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]bookmark.Bookmark, error) {
+func (r *FakeRepository) BookmarkSearchN(_ context.Context, userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	matches := r.bookmarkSearchMatches(userUUID, visibility, searchTerms)
 
 	if offset >= uint(len(matches)) {
@@ -133,8 +133,8 @@ func (r *fakeRepository) BookmarkSearchN(_ context.Context, userUUID string, vis
 	return matches[offset:end], nil
 }
 
-func (r *fakeRepository) OwnerGetByUUID(_ context.Context, userUUID string) (Owner, error) {
-	for _, u := range r.users {
+func (r *FakeRepository) OwnerGetByUUID(_ context.Context, userUUID string) (Owner, error) {
+	for _, u := range r.Users {
 		if u.UUID == userUUID {
 			owner := Owner{
 				UUID:        u.UUID,
@@ -148,10 +148,10 @@ func (r *fakeRepository) OwnerGetByUUID(_ context.Context, userUUID string) (Own
 	return Owner{}, ErrOwnerNotFound
 }
 
-func (r *fakeRepository) aggregateTags(userUUID string, visibility Visibility) []Tag {
+func (r *FakeRepository) aggregateTags(userUUID string, visibility Visibility) []Tag {
 	counts := map[string]uint{}
 
-	for _, b := range r.bookmarks {
+	for _, b := range r.Bookmarks {
 		if b.UserUUID != userUUID {
 			continue
 		}
@@ -178,15 +178,15 @@ func (r *fakeRepository) aggregateTags(userUUID string, visibility Visibility) [
 	return tags
 }
 
-func (r *fakeRepository) BookmarkTagGetAll(_ context.Context, userUUID string, visibility Visibility) ([]Tag, error) {
+func (r *FakeRepository) BookmarkTagGetAll(_ context.Context, userUUID string, visibility Visibility) ([]Tag, error) {
 	return r.aggregateTags(userUUID, visibility), nil
 }
 
-func (r *fakeRepository) BookmarkTagGetCount(_ context.Context, userUUID string, visibility Visibility) (uint, error) {
+func (r *FakeRepository) BookmarkTagGetCount(_ context.Context, userUUID string, visibility Visibility) (uint, error) {
 	return uint(len(r.aggregateTags(userUUID, visibility))), nil
 }
 
-func (r *fakeRepository) BookmarkTagGetN(_ context.Context, userUUID string, visibility Visibility, n uint, offset uint) ([]Tag, error) {
+func (r *FakeRepository) BookmarkTagGetN(_ context.Context, userUUID string, visibility Visibility, n uint, offset uint) ([]Tag, error) {
 	tags := r.aggregateTags(userUUID, visibility)
 
 	if offset >= uint(len(tags)) {
@@ -197,7 +197,7 @@ func (r *fakeRepository) BookmarkTagGetN(_ context.Context, userUUID string, vis
 	return tags[offset:end], nil
 }
 
-func (r *fakeRepository) filterTags(userUUID string, visibility Visibility, filterTerm string) []Tag {
+func (r *FakeRepository) filterTags(userUUID string, visibility Visibility, filterTerm string) []Tag {
 	all := r.aggregateTags(userUUID, visibility)
 
 	filtered := all[:0]
@@ -210,11 +210,11 @@ func (r *fakeRepository) filterTags(userUUID string, visibility Visibility, filt
 	return filtered
 }
 
-func (r *fakeRepository) BookmarkTagFilterCount(_ context.Context, userUUID string, visibility Visibility, filterTerm string) (uint, error) {
+func (r *FakeRepository) BookmarkTagFilterCount(_ context.Context, userUUID string, visibility Visibility, filterTerm string) (uint, error) {
 	return uint(len(r.filterTags(userUUID, visibility, filterTerm))), nil
 }
 
-func (r *fakeRepository) BookmarkTagFilterN(_ context.Context, userUUID string, visibility Visibility, filterTerm string, n uint, offset uint) ([]Tag, error) {
+func (r *FakeRepository) BookmarkTagFilterN(_ context.Context, userUUID string, visibility Visibility, filterTerm string, n uint, offset uint) ([]Tag, error) {
 	tags := r.filterTags(userUUID, visibility, filterTerm)
 
 	if offset >= uint(len(tags)) {

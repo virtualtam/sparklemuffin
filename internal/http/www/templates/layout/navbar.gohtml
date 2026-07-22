@@ -1,16 +1,17 @@
 {{define "navbar"}}
 <header>
-  <nav class="navbar has-shadow is-fixed-top is-light" role="navigation" aria-label="main navigation">
+  <nav class="navbar has-shadow is-fixed-top is-light" role="navigation" aria-label="main navigation"
+       x-data="{ open: false }">
     <div class="navbar-brand">
-      <a role="button" class="navbar-burger" id="navbarBurger" aria-label="menu" aria-expanded="false"
-         data-target="navbarMenu">
+      <a role="button" class="navbar-burger" :class="{ 'is-active': open }" @click="open = !open"
+         aria-label="menu" :aria-expanded="open">
         <span aria-hidden="true"></span>
         <span aria-hidden="true"></span>
         <span aria-hidden="true"></span>
         <span aria-hidden="true"></span>
       </a>
     </div>
-    <div id="navbarMenu" class="navbar-menu">
+    <div class="navbar-menu" :class="{ 'is-active': open }">
       <div class="navbar-start">
         {{- if .User}}
         <div class="navbar-item has-dropdown is-hoverable">

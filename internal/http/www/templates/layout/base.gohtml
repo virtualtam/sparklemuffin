@@ -29,17 +29,8 @@
     </main>
 
     {{template "footer"}}
-    <script nonce="{{.CSP.Nonce}}">
-      document.addEventListener('DOMContentLoaded', () => {
-        const navbarBurger = document.querySelector('#navbarBurger');
-        const menu = document.getElementById(navbarBurger.dataset.target);
-
-        navbarBurger.addEventListener('click', () => {
-          navbarBurger.classList.toggle('is-active');
-          menu.classList.toggle('is-active');
-        });
-      });
-    </script>
+    <script nonce="{{.CSP.Nonce}}" src="/static/alpinejs.min.js" defer></script>
+    <script nonce="{{.CSP.Nonce}}" src="/static/htmx.min.js"></script>
     {{template "scripts" .CSP}}
   </body>
 </html>

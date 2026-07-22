@@ -160,6 +160,146 @@ func assertRejectsNonHxRequest(t *testing.T, w *httptest.ResponseRecorder) {
 	}
 }
 
+// newFeedListRequest builds a GET request against a feed list view path
+// (/feeds, /feeds/categories/{slug}, /feeds/subscriptions/{slug}), optionally
+// carrying HX-Request and a chi "slug" URL param, with the given user set in
+// context.
+func newFeedListRequest(t *testing.T, ctxUser user.User, urlPath string, slug string, rawQuery string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	target := urlPath
+	if rawQuery != "" {
+		target += "?" + rawQuery
+	}
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, target, nil)
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	if slug != "" {
+		rctx.URLParams.Add("slug", slug)
+	}
+
+	ctx := context.WithValue(r.Context(), chi.RouteCtxKey, rctx)
+	ctx = httpcontext.WithUser(ctx, ctxUser)
+
+	return r.WithContext(ctx)
+}
+
+func TestHandleFeedListView(t *testing.T) {
+	ctxUser := testCtxUser
+	preferences := feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityAll}
+
+	t.Run("plain browser request renders the full page", func(t *testing.T) {
+		fc := newTestFeedController(preferences, testUnreadMetadata())
+		r := newFeedListRequest(t, ctxUser, "/feeds", "", "", false)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedListAllView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a full page (with layout), got:\n%s", body)
+		}
+		if !strings.Contains(body, `id="feed-list-content"`) {
+			t.Errorf("want the feed list content, got:\n%s", body)
+		}
+	})
+
+	t.Run("htmx request renders only the fragment, plus the pagination-bottom OOB fragment", func(t *testing.T) {
+		fc := newTestFeedController(preferences, testUnreadMetadata())
+		r := newFeedListRequest(t, ctxUser, "/feeds", "", "", true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedListAllView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a fragment with no layout, got:\n%s", body)
+		}
+		if !strings.Contains(body, `id="feed-list-content"`) {
+			t.Errorf("want the feed list content, got:\n%s", body)
+		}
+		if !strings.Contains(body, `id="pagination-bottom"`) {
+			t.Errorf("want the pagination-bottom fragment appended, got:\n%s", body)
+		}
+		if !strings.Contains(body, `hx-swap-oob="true"`) {
+			t.Errorf("want pagination-bottom to be an out-of-band fragment, got:\n%s", body)
+		}
+		if !strings.Contains(body, `hx-get="?page=1"`) {
+			t.Errorf("want pagination links to be htmx-wired instead of triggering a full page reload, got:\n%s", body)
+		}
+	})
+
+	t.Run("invalid page number, plain request falls back to a real redirect", func(t *testing.T) {
+		fc := newTestFeedController(preferences, testUnreadMetadata())
+		r := newFeedListRequest(t, ctxUser, "/feeds", "", "page=notanumber", false)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedListAllView()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d", w.Code)
+		}
+		if got := w.Header().Get("Location"); got != "/feeds" {
+			t.Errorf("want redirect to /feeds, got %q", got)
+		}
+	})
+
+	t.Run("invalid page number, htmx request uses HX-Redirect", func(t *testing.T) {
+		fc := newTestFeedController(preferences, testUnreadMetadata())
+		r := newFeedListRequest(t, ctxUser, "/feeds", "", "page=notanumber", true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedListAllView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds")
+	})
+
+	t.Run("page number out of bounds, htmx request uses HX-Redirect", func(t *testing.T) {
+		fc := newTestFeedController(preferences, testUnreadMetadata())
+		r := newFeedListRequest(t, ctxUser, "/feeds", "", "page=99", true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedListAllView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds")
+	})
+
+	t.Run("error retrieving preferences, htmx request uses HX-Redirect", func(t *testing.T) {
+		fc := newTestFeedController(preferences, testUnreadMetadata())
+		otherUser := user.User{UUID: "does-not-exist"}
+		r := newFeedListRequest(t, otherUser, "/feeds", "", "", true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedListAllView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds")
+	})
+
+	t.Run("error retrieving feeds, htmx request redirects back to the view the user was on", func(t *testing.T) {
+		// The category lookup fails, so the redirect target must reflect where
+		// the user actually was (the category view), not a generic "/feeds".
+		fc := newTestFeedController(preferences, testUnreadMetadata())
+		r := newFeedListRequest(t, ctxUser, "/feeds/categories/does-not-exist", "does-not-exist", "", true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedListByCategoryView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds/categories/does-not-exist")
+	})
+}
+
 func TestHandleHxFeedEntryToggleRead(t *testing.T) {
 	ctxUser := testCtxUser
 	entry := testEntry

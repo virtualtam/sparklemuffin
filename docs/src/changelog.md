@@ -47,6 +47,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
     - Toggling an entry's read status
     - Navigating result pages
     - Searching entries
+    - Selecting a given category
+    - Selecting a given subscription
 - Rework edition forms as modals:
     - Bookmark edition form
     - Bookmark tag edition form

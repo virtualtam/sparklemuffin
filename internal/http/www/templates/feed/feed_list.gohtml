@@ -4,7 +4,8 @@
     <div class="column is-one-quarter pl-0">
       <aside class="menu" x-data="feedMenu()" x-init="loadState()">
         <p class="menu-label mb-0">
-          <a class="pl-0" href="/feeds">
+          <a class="pl-0" href="/feeds"
+            hx-get="/feeds" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">
             <strong>
               All
               {{template "unreadCountAll" .Unread}}
@@ -23,7 +24,8 @@
                 >
                   <i class="fa-regular" :class="open['{{.Slug}}'] ? 'fa-square-minus' : 'fa-square-plus'"></i>
                 </span>
-                <span><a class="pl-0" href="/feeds/categories/{{.Slug}}">{{.Name}}</a></span>
+                <span><a class="pl-0" href="/feeds/categories/{{.Slug}}"
+                  hx-get="/feeds/categories/{{.Slug}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">{{.Name}}</a></span>
               </span>
               {{template "unreadCountCategory" .}}
             </strong>
@@ -31,7 +33,8 @@
           <ul class="menu-list" x-cloak x-show="open['{{.Slug}}']">
             {{- range .SubscribedFeeds}}
               <li>
-                <a class="pr-0" href="/feeds/subscriptions/{{.Slug}}">{{or .Alias .Title}}
+                <a class="pr-0" href="/feeds/subscriptions/{{.Slug}}"
+                  hx-get="/feeds/subscriptions/{{.Slug}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">{{or .Alias .Title}}
                   {{template "unreadCountFeed" .}}
                 </a>
               </li>
@@ -41,64 +44,7 @@
       </aside>
     </div>
 
-    <div class="column">
-      <div class="level mb-3">
-        <div class="level-left">
-          <div class="level-item">
-            <h2 class="title is-4">{{.PageTitle}}</h2>
-          </div>
-        </div>
-        <div class="level-right">
-          <div class="level-item">
-            {{template "showEntriesButtons" (dict
-              "ShowEntries" .Preferences.ShowEntries
-              "URLPath" .URLPath
-              "SearchTerms" .Page.SearchTerms
-            )}}
-          </div>
-          <div class="level-item">
-            {{template "compactButton" (dict
-              "ShowEntrySummaries" .Preferences.ShowEntrySummaries
-              "URLPath" .URLPath
-              "SearchTerms" .Page.SearchTerms
-              "PageNumber" .Page.PageNumber
-            )}}
-          </div>
-          <div class="level-item">
-            <div class="buttons has-addons">
-              <button
-                title="Mark all entries as read"
-                class="button is-small"
-                hx-post="{{.URLPath}}/entries/mark-all-read"
-                hx-target="#entry-list"
-                hx-swap="outerHTML"
-                hx-vals='{{toJSON "urlPath" .URLPath "search" .Page.SearchTerms}}'
-              >
-                <span class="icon">
-                  <i class="fa-solid fa-eye-slash"></i>
-                </span>
-                <span>Mark all as read</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {{with .Description}}
-      <h3 class="subtitle is-6">{{.}}</h3>
-      {{end}}
-
-      {{template "feedSearchForm" .}}
-
-      {{template "entryList" (dict
-        "Entries" .Entries
-        "ItemOffset" .Page.ItemOffset
-        "ShowEntrySummaries" .Preferences.ShowEntrySummaries
-        "URLPath" .URLPath
-        "SearchTerms" .Page.SearchTerms
-        "PageNumber" .Page.PageNumber
-      )}}
-    </div>
+    {{template "feedListContent" .}}
   </div>
   <nav class="level">
     <div class="level-left">
@@ -120,6 +66,67 @@
     </div>
   </nav>
 </section>
+{{end}}
+
+{{define "feedListContent"}}
+<div class="column" id="feed-list-content">
+  <div class="level mb-3">
+    <div class="level-left">
+      <div class="level-item">
+        <h2 class="title is-4">{{.PageTitle}}</h2>
+      </div>
+    </div>
+    <div class="level-right">
+      <div class="level-item">
+        {{template "showEntriesButtons" (dict
+          "ShowEntries" .Preferences.ShowEntries
+          "URLPath" .URLPath
+          "SearchTerms" .Page.SearchTerms
+        )}}
+      </div>
+      <div class="level-item">
+        {{template "compactButton" (dict
+          "ShowEntrySummaries" .Preferences.ShowEntrySummaries
+          "URLPath" .URLPath
+          "SearchTerms" .Page.SearchTerms
+          "PageNumber" .Page.PageNumber
+        )}}
+      </div>
+      <div class="level-item">
+        <div class="buttons has-addons">
+          <button
+            title="Mark all entries as read"
+            class="button is-small"
+            hx-post="{{.URLPath}}/entries/mark-all-read"
+            hx-target="#entry-list"
+            hx-swap="outerHTML"
+            hx-vals='{{toJSON "urlPath" .URLPath "search" .Page.SearchTerms}}'
+          >
+            <span class="icon">
+              <i class="fa-solid fa-eye-slash"></i>
+            </span>
+            <span>Mark all as read</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{with .Description}}
+  <h3 class="subtitle is-6">{{.}}</h3>
+  {{end}}
+
+  {{template "feedSearchForm" .}}
+
+  {{template "entryList" (dict
+    "Entries" .Entries
+    "ItemOffset" .Page.ItemOffset
+    "ShowEntrySummaries" .Preferences.ShowEntrySummaries
+    "URLPath" .URLPath
+    "SearchTerms" .Page.SearchTerms
+    "PageNumber" .Page.PageNumber
+  )}}
+</div>
 {{end}}
 
 {{define "scripts"}}
@@ -150,7 +157,8 @@
 <nav class="level">
   <div class="level-left">
     <div class="level-item">
-      <form action="{{.URLPath}}" method="GET">
+      <form action="{{.URLPath}}" method="GET"
+        hx-get="{{.URLPath}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">
         <div class="field has-addons">
           <div class="control">
             <input class="input" type="text" id="searchTerms" name="search" placeholder="Search terms"
@@ -326,6 +334,6 @@
 </div>
 {{end}}
 
-{{define "paginationTop"}}<div id="pagination-top" hx-swap-oob="true">{{template "pagination" (dict "Page" .)}}</div>{{end}}
+{{define "paginationTop"}}<div id="pagination-top" hx-swap-oob="true">{{template "pagination" (dict "Page" . "HxTarget" "#feed-list-content")}}</div>{{end}}
 
-{{define "paginationBottom"}}<div id="pagination-bottom" hx-swap-oob="true">{{template "pagination" (dict "Page" .)}}</div>{{end}}
+{{define "paginationBottom"}}<div id="pagination-bottom" hx-swap-oob="true">{{template "pagination" (dict "Page" . "HxTarget" "#feed-list-content")}}</div>{{end}}

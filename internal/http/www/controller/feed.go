@@ -151,8 +151,7 @@ func (fc *feedController) handleFeedListView(
 		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve account preferences")
-			view.PutFlashError(w, "There was an error retrieving your preferences")
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "There was an error retrieving your preferences")
 			return
 		}
 
@@ -165,8 +164,7 @@ func (fc *feedController) handleFeedListView(
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
 			log.Warn().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
-			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, fmt.Sprintf("invalid page number: %q", pageNumberStr))
 			return
 		}
 
@@ -176,13 +174,11 @@ func (fc *feedController) handleFeedListView(
 			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Warn().Err(err).Msg(msg)
-				view.PutFlashError(w, msg)
-				http.Redirect(w, r, "/feeds", http.StatusSeeOther)
+				view.RedirectOnError(w, r, r.URL.Path, msg)
 				return
 			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve feeds")
-				view.PutFlashError(w, "failed to retrieve feeds")
-				http.Redirect(w, r, "/", http.StatusSeeOther)
+				view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve feeds")
 				return
 			}
 
@@ -193,18 +189,38 @@ func (fc *feedController) handleFeedListView(
 			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Warn().Err(err).Msg(msg)
-				view.PutFlashError(w, msg)
-				http.Redirect(w, r, "/feeds", http.StatusSeeOther)
+				view.RedirectOnError(w, r, r.URL.Path, msg)
 				return
 			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve feeds")
-				view.PutFlashError(w, "failed to retrieve feeds")
-				http.Redirect(w, r, "/", http.StatusSeeOther)
+				view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve feeds")
 				return
 			}
 
 			viewData.Title = fmt.Sprintf("Feed search in %s: %q", feedPage.PageTitle, searchQuery)
 			feedQueryingPage.FeedPage = feedPage
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			var buf bytes.Buffer
+
+			if err := fc.feedListView.Template.ExecuteTemplate(&buf, "feedListContent", feedQueryingPage); err != nil {
+				log.Error().Err(err).Msg("failed to render feed list content fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+				return
+			}
+
+			if err := fc.feedListView.Template.ExecuteTemplate(&buf, "paginationBottom", feedQueryingPage.Page); err != nil {
+				log.Error().Err(err).Msg("failed to render pagination fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+				return
+			}
+
+			w.Header().Set("Content-Type", "text/html")
+			if _, err := buf.WriteTo(w); err != nil {
+				log.Error().Err(err).Msg("failed to write response")
+			}
+			return
 		}
 
 		viewData.Content = feedQueryingPage

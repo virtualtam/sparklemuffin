@@ -75,7 +75,7 @@
     </div>
     <div class="level-right">
       <div class="level-item">
-        {{template "pagination" .Page}}
+        {{template "pagination" (dict "Page" .Page)}}
       </div>
     </div>
   </nav>
@@ -110,7 +110,7 @@
   </div>
   <div class="level-right">
     <div class="level-item">
-      {{template "pagination" .Page}}
+      {{template "pagination" (dict "Page" .Page)}}
     </div>
   </div>
 </nav>

@@ -328,6 +328,6 @@
 </div>
 {{end}}
 
-{{define "paginationTop"}}<div id="pagination-top" hx-swap-oob="true">{{template "pagination" .}}</div>{{end}}
+{{define "paginationTop"}}<div id="pagination-top" hx-swap-oob="true">{{template "pagination" (dict "Page" .)}}</div>{{end}}
 
-{{define "paginationBottom"}}<div id="pagination-bottom" hx-swap-oob="true">{{template "pagination" .}}</div>{{end}}
+{{define "paginationBottom"}}<div id="pagination-bottom" hx-swap-oob="true">{{template "pagination" (dict "Page" .)}}</div>{{end}}

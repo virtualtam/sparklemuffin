@@ -1,45 +1,51 @@
 {{define "pagination"}}
 <nav class="pagination is-small">
-  <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}"
-    class="pagination-previous{{if eq .PreviousPageNumber .PageNumber }} is-disabled{{end}}">Previous</a>
-  <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}"
-    class="pagination-next{{if eq .NextPageNumber .PageNumber }} is-disabled{{end}}">Next</a>
+  <a href="?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.PreviousPageNumber}}"
+    {{if .HxTarget}}hx-get="?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.PreviousPageNumber}}" hx-target="{{.HxTarget}}" hx-swap="outerHTML" hx-push-url="true"{{end}}
+    class="pagination-previous{{if eq .Page.PreviousPageNumber .Page.PageNumber }} is-disabled{{end}}">Previous</a>
+  <a href="?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.NextPageNumber}}"
+    {{if .HxTarget}}hx-get="?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.NextPageNumber}}" hx-target="{{.HxTarget}}" hx-swap="outerHTML" hx-push-url="true"{{end}}
+    class="pagination-next{{if eq .Page.NextPageNumber .Page.PageNumber }} is-disabled{{end}}">Next</a>
   <ul class="pagination-list">
-    {{if gt .PageNumber 1}}
+    {{if gt .Page.PageNumber 1}}
     <li>
-      <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page=1" class="pagination-link"
-        aria-label="Goto page 1">1</a>
+      <a href="?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page=1"
+        {{if .HxTarget}}hx-get="?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page=1" hx-target="{{.HxTarget}}" hx-swap="outerHTML" hx-push-url="true"{{end}}
+        class="pagination-link" aria-label="Goto page 1">1</a>
     </li>
     {{end}}
-    {{if gt .PageNumber 3}}
+    {{if gt .Page.PageNumber 3}}
     <li>
       <span class="pagination-ellipsis">&hellip;</span>
     </li>
     {{end}}
-    {{if gt .PageNumber 2}}
+    {{if gt .Page.PageNumber 2}}
     <li>
-      <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.PreviousPageNumber}}"
-        class="pagination-link" aria-label="Goto page {{.PreviousPageNumber}}">{{.PreviousPageNumber}}</a>
+      <a href="?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.PreviousPageNumber}}"
+        {{if .HxTarget}}hx-get="?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.PreviousPageNumber}}" hx-target="{{.HxTarget}}" hx-swap="outerHTML" hx-push-url="true"{{end}}
+        class="pagination-link" aria-label="Goto page {{.Page.PreviousPageNumber}}">{{.Page.PreviousPageNumber}}</a>
     </li>
     {{end}}
     <li>
-      <a class="pagination-link is-current" aria-label="Page {{.PageNumber}}" aria-current="page">{{.PageNumber}}</a>
+      <a class="pagination-link is-current" aria-label="Page {{.Page.PageNumber}}" aria-current="page">{{.Page.PageNumber}}</a>
     </li>
-    {{if lt .NextPageNumber .TotalPages}}
+    {{if lt .Page.NextPageNumber .Page.TotalPages}}
     <li>
-      <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.NextPageNumber}}" class="pagination-link"
-        aria-label="Goto page {{.NextPageNumber}}">{{.NextPageNumber}}</a>
+      <a href="?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.NextPageNumber}}"
+        {{if .HxTarget}}hx-get="?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.NextPageNumber}}" hx-target="{{.HxTarget}}" hx-swap="outerHTML" hx-push-url="true"{{end}}
+        class="pagination-link" aria-label="Goto page {{.Page.NextPageNumber}}">{{.Page.NextPageNumber}}</a>
     </li>
     {{end}}
-    {{if gt .PagesLeft 2}}
+    {{if gt .Page.PagesLeft 2}}
     <li>
       <span class="pagination-ellipsis">&hellip;</span>
     </li>
     {{end}}
-    {{if lt .PageNumber .TotalPages}}
+    {{if lt .Page.PageNumber .Page.TotalPages}}
     <li>
-      <a href="?{{if .SearchTerms}}search={{.SearchTerms}}&amp;{{end}}page={{.TotalPages}}" class="pagination-link"
-        aria-label="Goto page {{.TotalPages}}">{{.TotalPages}}</a>
+      <a href="?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.TotalPages}}"
+        {{if .HxTarget}}hx-get="?{{if .Page.SearchTerms}}search={{.Page.SearchTerms}}&amp;{{end}}page={{.Page.TotalPages}}" hx-target="{{.HxTarget}}" hx-swap="outerHTML" hx-push-url="true"{{end}}
+        class="pagination-link" aria-label="Goto page {{.Page.TotalPages}}">{{.Page.TotalPages}}</a>
     </li>
     {{end}}
   </ul>

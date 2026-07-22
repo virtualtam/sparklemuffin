@@ -1,5 +1,5 @@
 {{define "content"}}
-<section class="section pt-3">
+<section class="section pt-3" id="bookmark-list-content">
   {{template "bookmarkSearchForm" .}}
   <ol start="{{.Page.ItemOffset}}">
     {{range .Bookmarks}}
@@ -107,7 +107,7 @@
     </div>
     <div class="level-right">
       <div class="level-item">
-        {{template "pagination" .Page}}
+        {{template "pagination" (dict "Page" .Page "HxTarget" "#bookmark-list-content")}}
       </div>
     </div>
   </nav>
@@ -118,7 +118,8 @@
 <nav class="level">
   <div class="level-left">
     <div class="level-item">
-      <form action="/bookmarks" method="GET">
+      <form action="/bookmarks" method="GET"
+        hx-get="/bookmarks" hx-target="#bookmark-list-content" hx-swap="outerHTML" hx-push-url="true">
         <div class="field has-addons">
           <div class="control">
             <input class="input" type="text" id="searchTerms" name="search" placeholder="Search terms"
@@ -142,7 +143,7 @@
   </div>
   <div class="level-right">
     <div class="level-item">
-      {{template "pagination" .Page}}
+      {{template "pagination" (dict "Page" .Page "HxTarget" "#bookmark-list-content")}}
     </div>
   </div>
 </nav>

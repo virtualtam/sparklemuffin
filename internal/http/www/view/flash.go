@@ -10,6 +10,8 @@ import (
 	"net/http"
 
 	"github.com/rs/zerolog/log"
+
+	"github.com/virtualtam/sparklemuffin/internal/http/www/htmx"
 )
 
 // flashLevel represents the severity level of a Flash message that will be
@@ -98,4 +100,19 @@ func PutFlashSuccess(w http.ResponseWriter, message string) {
 // PutFlashWarning sets a Flash that will be rendered as a warning message.
 func PutFlashWarning(w http.ResponseWriter, message string) {
 	putFlash(w, flashLevelWarning, fmt.Sprintf("Warning: %s", message))
+}
+
+// RedirectWithFlashError sets a flash error message and forces a full
+// client-side navigation to redirectURL via HX-Redirect.
+//
+// A plain http.Redirect must not be used for a request that targets an htmx
+// fragment (hx-target + hx-swap): the browser follows a 3xx transparently
+// before htmx ever sees it, and htmx would swap the *final* response
+// (typically a full HTML page) into the fragment's target, corrupting the
+// DOM. HX-Redirect is handled by htmx itself, unconditionally, as a
+// client-side window.location redirect.
+func RedirectWithFlashError(w http.ResponseWriter, redirectURL string, message string) {
+	PutFlashError(w, message)
+	w.Header().Set(htmx.HeaderRedirect, redirectURL)
+	w.WriteHeader(http.StatusOK)
 }

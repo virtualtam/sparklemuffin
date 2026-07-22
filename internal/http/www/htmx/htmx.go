@@ -10,4 +10,9 @@ const (
 
 	// HeaderRefresh indicates to the client-side whether to do a full refresh of the page.
 	HeaderRefresh = "HX-Refresh"
+
+	// HeaderRedirect instructs the client-side to do a full client-side
+	// redirect (window.location) rather than swapping the response into the
+	// requesting element's target.
+	HeaderRedirect = "HX-Redirect"
 )

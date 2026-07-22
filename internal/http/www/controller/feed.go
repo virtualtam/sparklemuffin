@@ -17,6 +17,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/virtualtam/opml-go"
 
+	"github.com/virtualtam/sparklemuffin/internal/http/www/htmx"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
@@ -437,6 +438,23 @@ func (fc *feedController) handleFeedCategoryEdit() func(w http.ResponseWriter, r
 	}
 }
 
+// redirectWithFlashError sets a flash error message and forces a full
+// client-side navigation to redirectURL via HX-Redirect.
+//
+// A plain http.Redirect must not be used here: these handlers are only ever
+// reached via hx-post requests targeting a fragment container (hx-target +
+// hx-swap="outerHTML"), and the browser follows a 3xx response to such a
+// request transparently before htmx ever sees it. htmx would then swap the
+// *final* response (typically a full HTML page) into that fragment
+// container instead of triggering a real navigation, corrupting the DOM.
+// HX-Redirect is handled by htmx itself, unconditionally, as a client-side
+// window.location redirect.
+func (fc *feedController) redirectWithFlashError(w http.ResponseWriter, redirectURL string, message string) {
+	view.PutFlashError(w, message)
+	w.Header().Set(htmx.HeaderRedirect, redirectURL)
+	w.WriteHeader(http.StatusOK)
+}
+
 // feedPageForContext returns the FeedPage matching the view the user was on (All,
 // a category, or a subscription, with an optional search query), so that counts
 // derived from it (unread badges, entry count) stay consistent with that view.
@@ -507,8 +525,7 @@ func (fc *feedController) renderFeedListUpdate(
 	ctxPage, err := fc.feedPageForContext(ctx, userUUID, preferences, urlPath, searchTerms, pageNumber)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to retrieve feeds")
-		view.PutFlashError(w, "failed to retrieve feeds")
-		http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+		fc.redirectWithFlashError(w, "/feeds", "failed to retrieve feeds")
 		return
 	}
 
@@ -517,8 +534,7 @@ func (fc *feedController) renderFeedListUpdate(
 	renderFragment := func(name string, data any) bool {
 		if err := fc.feedListView.Template.ExecuteTemplate(&buf, name, data); err != nil {
 			log.Error().Err(err).Msg("failed to render feed fragment")
-			view.PutFlashError(w, "failed to render feed fragment")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "failed to render feed fragment")
 			return false
 		}
 		return true
@@ -604,31 +620,27 @@ func (fc *feedController) handleFeedEntryToggleRead() func(w http.ResponseWriter
 
 		if err := fc.feedService.ToggleEntryRead(ctx, ctxUser.UUID, entryUID); err != nil {
 			log.Error().Err(err).Msg("failed to set entry metadata")
-			view.PutFlashError(w, "failed to set entry metadata")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "failed to set entry metadata")
 			return
 		}
 
 		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve account preferences")
-			view.PutFlashError(w, "There was an error retrieving your preferences")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "There was an error retrieving your preferences")
 			return
 		}
 
 		entry, err := fc.queryingService.SubscribedFeedEntryByUID(ctx, ctxUser.UUID, entryUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed entry")
-			view.PutFlashError(w, "failed to retrieve feed entry")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "failed to retrieve feed entry")
 			return
 		}
 
 		if err := r.ParseForm(); err != nil {
 			log.Error().Err(err).Msg("failed to parse request form")
-			view.PutFlashError(w, "There was an error processing the request")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "There was an error processing the request")
 			return
 		}
 
@@ -643,8 +655,7 @@ func (fc *feedController) handleFeedEntryToggleRead() func(w http.ResponseWriter
 		ctxPage, err := fc.feedPageForContext(ctx, ctxUser.UUID, preferences, urlPath, searchTerms, pageNumber)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feeds")
-			view.PutFlashError(w, "failed to retrieve feeds")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, "/feeds", "failed to retrieve feeds")
 			return
 		}
 
@@ -653,8 +664,7 @@ func (fc *feedController) handleFeedEntryToggleRead() func(w http.ResponseWriter
 		renderFragment := func(name string, data any) bool {
 			if err := fc.feedListView.Template.ExecuteTemplate(&buf, name, data); err != nil {
 				log.Error().Err(err).Msg("failed to render feed fragment")
-				view.PutFlashError(w, "failed to render feed fragment")
-				http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+				fc.redirectWithFlashError(w, r.Referer(), "failed to render feed fragment")
 				return false
 			}
 			return true
@@ -918,23 +928,20 @@ func (fc *feedController) handleEntryMetadataMarkAllAsRead() func(w http.Respons
 
 		if err := fc.feedService.MarkAllEntriesAsRead(ctx, ctxUser.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to mark feed entries as read")
-			view.PutFlashError(w, "failed to mark feed entries as read")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "failed to mark feed entries as read")
 			return
 		}
 
 		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve account preferences")
-			view.PutFlashError(w, "There was an error retrieving your preferences")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "There was an error retrieving your preferences")
 			return
 		}
 
 		if err := r.ParseForm(); err != nil {
 			log.Error().Err(err).Msg("failed to parse request form")
-			view.PutFlashError(w, "There was an error processing the request")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "There was an error processing the request")
 			return
 		}
 
@@ -957,30 +964,26 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByCategory() func(w ht
 		category, err := fc.feedService.CategoryBySlug(ctx, ctxUser.UUID, categorySlug)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed category")
-			view.PutFlashError(w, "failed to retrieve feed category")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, "/feeds", "failed to retrieve feed category")
 			return
 		}
 
 		if err := fc.feedService.MarkAllEntriesAsReadByCategory(ctx, ctxUser.UUID, category.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to mark feed entries as read")
-			view.PutFlashError(w, "failed to mark feed entries as read")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "failed to mark feed entries as read")
 			return
 		}
 
 		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve account preferences")
-			view.PutFlashError(w, "There was an error retrieving your preferences")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "There was an error retrieving your preferences")
 			return
 		}
 
 		if err := r.ParseForm(); err != nil {
 			log.Error().Err(err).Msg("failed to parse request form")
-			view.PutFlashError(w, "There was an error processing the request")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "There was an error processing the request")
 			return
 		}
 
@@ -1003,38 +1006,33 @@ func (fc *feedController) handleEntryMetadataMarkAllAsReadByFeed() func(w http.R
 		f, err := fc.feedService.FeedBySlug(ctx, feedSlug)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed")
-			view.PutFlashError(w, "failed to retrieve feed")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, "/feeds", "failed to retrieve feed")
 			return
 		}
 
 		subscription, err := fc.feedService.SubscriptionByFeed(ctx, ctxUser.UUID, f.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
-			view.PutFlashError(w, "failed to retrieve feed subscription")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, "/feeds", "failed to retrieve feed subscription")
 			return
 		}
 
 		if err := fc.feedService.MarkAllEntriesAsReadBySubscription(ctx, ctxUser.UUID, subscription.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to mark feed entries as read")
-			view.PutFlashError(w, "failed to mark feed entries as read")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "failed to mark feed entries as read")
 			return
 		}
 
 		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve account preferences")
-			view.PutFlashError(w, "There was an error retrieving your preferences")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "There was an error retrieving your preferences")
 			return
 		}
 
 		if err := r.ParseForm(); err != nil {
 			log.Error().Err(err).Msg("failed to parse request form")
-			view.PutFlashError(w, "There was an error processing the request")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "There was an error processing the request")
 			return
 		}
 
@@ -1182,16 +1180,14 @@ func (fc *feedController) handlePreferencesToggleShowEntrySummaries() func(w htt
 
 		if err := r.ParseForm(); err != nil {
 			log.Error().Err(err).Msg("failed to parse request form")
-			view.PutFlashError(w, "There was an error processing the request")
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), "There was an error processing the request")
 			return
 		}
 
 		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve account preferences")
-			view.PutFlashError(w, fmt.Sprintf("There was an error updating your preferences: %s", err))
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), fmt.Sprintf("There was an error updating your preferences: %s", err))
 			return
 		}
 
@@ -1199,8 +1195,7 @@ func (fc *feedController) handlePreferencesToggleShowEntrySummaries() func(w htt
 
 		if err := fc.feedService.UpdatePreferences(ctx, preferences); err != nil {
 			log.Error().Err(err).Msg("failed to update account preferences")
-			view.PutFlashError(w, fmt.Sprintf("There was an error updating your preferences: %s", err))
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), fmt.Sprintf("There was an error updating your preferences: %s", err))
 			return
 		}
 
@@ -1244,8 +1239,7 @@ func (fc *feedController) handlePreferencesFeedShowEntriesUpdate() func(w http.R
 		preferences, err := fc.feedService.PreferencesByUserUUID(ctx, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve account preferences")
-			view.PutFlashError(w, fmt.Sprintf("There was an error updating your preferences: %s", err))
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), fmt.Sprintf("There was an error updating your preferences: %s", err))
 			return
 		}
 
@@ -1253,8 +1247,7 @@ func (fc *feedController) handlePreferencesFeedShowEntriesUpdate() func(w http.R
 
 		if err := fc.feedService.UpdatePreferences(ctx, preferences); err != nil {
 			log.Error().Err(err).Msg("failed to update account preferences")
-			view.PutFlashError(w, fmt.Sprintf("There was an error updating your preferences: %s", err))
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			fc.redirectWithFlashError(w, r.Referer(), fmt.Sprintf("There was an error updating your preferences: %s", err))
 			return
 		}
 

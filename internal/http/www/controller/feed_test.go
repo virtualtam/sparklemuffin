@@ -115,6 +115,33 @@ func newFeedSlugPostRequest(t *testing.T, path string, slug string, ctxUser user
 	return r.WithContext(ctx)
 }
 
+// assertHXRedirectOnError checks the error-fallback contract shared by every
+// htmx fragment endpoint in this file: on failure, the response must force a
+// full client-side navigation via HX-Redirect (a plain 3xx would instead get
+// silently followed by the browser and have the *target* page's full HTML
+// swapped into the fragment's hx-target, corrupting the DOM), carrying a
+// flash message the user will see once that navigation lands.
+func assertHXRedirectOnError(t *testing.T, w *httptest.ResponseRecorder, wantRedirectTo string) {
+	t.Helper()
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+	}
+	if got := w.Header().Get("HX-Redirect"); got != wantRedirectTo {
+		t.Errorf("want HX-Redirect to %q, got %q", wantRedirectTo, got)
+	}
+
+	foundFlashCookie := false
+	for _, cookie := range w.Result().Cookies() {
+		if cookie.Name == "flash" {
+			foundFlashCookie = true
+		}
+	}
+	if !foundFlashCookie {
+		t.Error("want a flash cookie to be set")
+	}
+}
+
 func TestHandleFeedEntryToggleRead(t *testing.T) {
 	ctxUser := testCtxUser
 	entry := testEntry
@@ -204,22 +231,37 @@ func TestHandleFeedEntryToggleRead(t *testing.T) {
 
 		fc.handleFeedEntryToggleRead()(w, r)
 
-		if w.Code != http.StatusSeeOther {
-			t.Fatalf("want status 303, got %d", w.Code)
-		}
-		if got := w.Header().Get("Location"); got != "/feeds" {
-			t.Errorf("want redirect to %q, got %q", "/feeds", got)
-		}
+		assertHXRedirectOnError(t, w, "/feeds")
+	})
 
-		foundFlashCookie := false
-		for _, cookie := range w.Result().Cookies() {
-			if cookie.Name == "flash" {
-				foundFlashCookie = true
-			}
-		}
-		if !foundFlashCookie {
-			t.Error("want a flash cookie to be set")
-		}
+	t.Run("error retrieving the entry falls back to the referring page", func(t *testing.T) {
+		// The entry lookup failure isn't caused by which view the user was on,
+		// so unlike a feedPageForContext failure, this must redirect back to
+		// wherever the user came from rather than bouncing to the feeds root.
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityAll}, nil)
+
+		form := url.Values{"urlPath": {"/feeds/categories/tech"}, "search": {""}, "page": {"1"}}
+		r := newToggleReadRequest(t, "does-not-exist", ctxUser, "/feeds/categories/tech", form)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedEntryToggleRead()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds/categories/tech")
+	})
+
+	t.Run("error resolving the view context falls back to the feeds root", func(t *testing.T) {
+		// A bad category slug in urlPath means the view itself is broken, so
+		// redirecting back to it (via Referer) would just fail again: this
+		// must always bounce to the feeds root instead, regardless of Referer.
+		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityAll}, testUnreadMetadata())
+
+		form := url.Values{"urlPath": {"/feeds/categories/does-not-exist"}, "search": {""}, "page": {"1"}}
+		r := newToggleReadRequest(t, entry.UID, ctxUser, "/feeds/categories/does-not-exist", form)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedEntryToggleRead()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds")
 	})
 }
 
@@ -286,22 +328,7 @@ func TestHandlePreferencesFeedShowEntriesUpdate(t *testing.T) {
 
 		fc.handlePreferencesFeedShowEntriesUpdate()(w, r)
 
-		if w.Code != http.StatusSeeOther {
-			t.Fatalf("want status 303, got %d", w.Code)
-		}
-		if got := w.Header().Get("Location"); got != "/feeds" {
-			t.Errorf("want redirect to %q, got %q", "/feeds", got)
-		}
-
-		foundFlashCookie := false
-		for _, cookie := range w.Result().Cookies() {
-			if cookie.Name == "flash" {
-				foundFlashCookie = true
-			}
-		}
-		if !foundFlashCookie {
-			t.Error("want a flash cookie to be set")
-		}
+		assertHXRedirectOnError(t, w, "/feeds")
 	})
 }
 
@@ -362,22 +389,7 @@ func TestHandlePreferencesToggleShowEntrySummaries(t *testing.T) {
 
 		fc.handlePreferencesToggleShowEntrySummaries()(w, r)
 
-		if w.Code != http.StatusSeeOther {
-			t.Fatalf("want status 303, got %d", w.Code)
-		}
-		if got := w.Header().Get("Location"); got != "/feeds" {
-			t.Errorf("want redirect to %q, got %q", "/feeds", got)
-		}
-
-		foundFlashCookie := false
-		for _, cookie := range w.Result().Cookies() {
-			if cookie.Name == "flash" {
-				foundFlashCookie = true
-			}
-		}
-		if !foundFlashCookie {
-			t.Error("want a flash cookie to be set")
-		}
+		assertHXRedirectOnError(t, w, "/feeds")
 	})
 }
 
@@ -431,22 +443,7 @@ func TestHandleEntryMetadataMarkAllAsRead(t *testing.T) {
 
 		fc.handleEntryMetadataMarkAllAsRead()(w, r)
 
-		if w.Code != http.StatusSeeOther {
-			t.Fatalf("want status 303, got %d", w.Code)
-		}
-		if got := w.Header().Get("Location"); got != "/feeds" {
-			t.Errorf("want redirect to %q, got %q", "/feeds", got)
-		}
-
-		foundFlashCookie := false
-		for _, cookie := range w.Result().Cookies() {
-			if cookie.Name == "flash" {
-				foundFlashCookie = true
-			}
-		}
-		if !foundFlashCookie {
-			t.Error("want a flash cookie to be set")
-		}
+		assertHXRedirectOnError(t, w, "/feeds")
 	})
 }
 
@@ -486,22 +483,7 @@ func TestHandleEntryMetadataMarkAllAsReadByCategory(t *testing.T) {
 
 		fc.handleEntryMetadataMarkAllAsReadByCategory()(w, r)
 
-		if w.Code != http.StatusSeeOther {
-			t.Fatalf("want status 303, got %d", w.Code)
-		}
-		if got := w.Header().Get("Location"); got != "/feeds" {
-			t.Errorf("want redirect to %q, got %q", "/feeds", got)
-		}
-
-		foundFlashCookie := false
-		for _, cookie := range w.Result().Cookies() {
-			if cookie.Name == "flash" {
-				foundFlashCookie = true
-			}
-		}
-		if !foundFlashCookie {
-			t.Error("want a flash cookie to be set")
-		}
+		assertHXRedirectOnError(t, w, "/feeds")
 	})
 }
 
@@ -541,21 +523,6 @@ func TestHandleEntryMetadataMarkAllAsReadByFeed(t *testing.T) {
 
 		fc.handleEntryMetadataMarkAllAsReadByFeed()(w, r)
 
-		if w.Code != http.StatusSeeOther {
-			t.Fatalf("want status 303, got %d", w.Code)
-		}
-		if got := w.Header().Get("Location"); got != "/feeds" {
-			t.Errorf("want redirect to %q, got %q", "/feeds", got)
-		}
-
-		foundFlashCookie := false
-		for _, cookie := range w.Result().Cookies() {
-			if cookie.Name == "flash" {
-				foundFlashCookie = true
-			}
-		}
-		if !foundFlashCookie {
-			t.Error("want a flash cookie to be set")
-		}
+		assertHXRedirectOnError(t, w, "/feeds")
 	})
 }

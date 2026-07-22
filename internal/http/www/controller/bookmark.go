@@ -837,6 +837,10 @@ func (bc *bookmarkController) handleTagDelete() func(w http.ResponseWriter, r *h
 }
 
 // handleTagEditView renders the tag edition form.
+//
+// On an htmx request, it responds with only the form fragment, meant to be
+// loaded into the tag list page's edit modal. On a plain request, it renders
+// the full page as usual, so the URL stays independently navigable.
 func (bc *bookmarkController) handleTagEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		nameBase64 := chi.URLParam(r, "name")
@@ -844,13 +848,21 @@ func (bc *bookmarkController) handleTagEditView() func(w http.ResponseWriter, r 
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
 			log.Error().Err(err).Msg("invalid tag")
-			view.PutFlashError(w, "invalid tag")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			bc.redirectOnError(w, r, r.URL.Path, "invalid tag")
 			return
 		}
 
 		name := string(nameBytes)
 		tag := bookmarkquerying.NewTag(name, 0)
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			formData := map[string]any{"Tag": tag, "InModal": true}
+			if err := bc.tagEditView.RenderTemplate(w, "tagEditForm", formData); err != nil {
+				log.Error().Err(err).Msg("failed to render tag edit form fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
+			return
+		}
 
 		viewData := view.Data{
 			Content: tag,
@@ -862,6 +874,15 @@ func (bc *bookmarkController) handleTagEditView() func(w http.ResponseWriter, r 
 }
 
 // handleTagEdit processes the tag edition form.
+//
+// On success:
+//   - htmx request: re-renders the tag's row and retargets/reswaps the
+//     response into it (outerHTML), and fires a "modal:close" client-side
+//     event so the tag list page's edit modal closes.
+//   - plain request: flash + redirect to the tag list, as before.
+//
+// On error, it falls back to the same flash+redirect (or HX-Redirect, for
+// htmx requests) behavior used throughout this file.
 func (bc *bookmarkController) handleTagEdit() func(w http.ResponseWriter, r *http.Request) {
 	type tagEditForm struct {
 		Name string `schema:"name"`
@@ -871,8 +892,7 @@ func (bc *bookmarkController) handleTagEdit() func(w http.ResponseWriter, r *htt
 		var form tagEditForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse tag edition form")
-			view.PutFlashError(w, "failed to process form")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			bc.redirectOnError(w, r, r.URL.Path, "failed to process form")
 			return
 		}
 
@@ -881,8 +901,7 @@ func (bc *bookmarkController) handleTagEdit() func(w http.ResponseWriter, r *htt
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
 			log.Error().Err(err).Msg("invalid tag")
-			view.PutFlashError(w, "invalid tag")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			bc.redirectOnError(w, r, r.URL.Path, "invalid tag")
 			return
 		}
 
@@ -900,8 +919,23 @@ func (bc *bookmarkController) handleTagEdit() func(w http.ResponseWriter, r *htt
 		updated, err := bc.bookmarkService.UpdateTag(ctx, tagNameUpdate)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to rename tag")
-			view.PutFlashError(w, "failed to rename tag")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			bc.redirectOnError(w, r, r.URL.Path, "failed to rename tag")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			updatedTag := bookmarkquerying.NewTag(form.Name, uint(updated))
+
+			// nameBase64 (pre-rename) identifies the row still in the DOM;
+			// an attribute selector tolerates the "=" padding base64 may add.
+			w.Header().Set(htmx.HeaderRetarget, fmt.Sprintf("[id='tag-row-%s']", nameBase64))
+			w.Header().Set(htmx.HeaderReswap, "outerHTML")
+			w.Header().Set(htmx.HeaderTrigger, "modal:close")
+
+			if err := bc.tagListView.RenderTemplate(w, "tagRow", updatedTag); err != nil {
+				log.Error().Err(err).Msg("failed to render tag row fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 

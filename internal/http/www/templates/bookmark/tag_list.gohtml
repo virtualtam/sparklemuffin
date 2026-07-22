@@ -1,5 +1,6 @@
 {{define "content"}}
-<section id="top" class="section pt-3">
+<section id="top" class="section pt-3" x-data="{ tagEditModalOpen: false }"
+  @modal:close.window="tagEditModalOpen = false">
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
       <li><a href="/bookmarks">Bookmarks</a></li>
@@ -15,33 +16,7 @@
     {{- if ne $i 0 }}</div>{{end}}
   <div class="column is-full-mobile is-half-tablet is-one-third-desktop">
     {{- end}}
-    <div class="level is-mobile">
-      <div class="level-left">
-        <span class="level-item tag-count">
-          <span class="tag is-light">{{$tag.Count}}</span>
-        </span>
-        <span class="level-item tag">
-          <a href="/bookmarks?search={{$tag.Name}}" title="Bookmarks tagged {{$tag.Name}}">
-            <span class="icon-text">
-              <span class="icon"><i class="fa-solid fa-tag"></i></span>
-              <span>{{$tag.Name}}</span>
-            </span>
-          </a>
-        </span>
-      </div>
-      <div class="level-right">
-        <div class="level-item buttons has-addons">
-          <a class="button is-small is-info is-light" href="/bookmarks/tags/{{$tag.EncodedName}}/edit"
-            title="Edit tag: {{$tag.Name}}">
-            <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
-          </a>
-          <a class="button is-small is-danger is-light" href="/bookmarks/tags/{{$tag.EncodedName}}/delete"
-            title="Delete tag: {{$tag.Name}}">
-            <span class="icon"><i class="fa-solid fa-trash"></i></span>
-          </a>
-        </div>
-      </div>
-    </div>
+    {{template "tagRow" $tag}}
     {{- end}}
   </div>
   </div>
@@ -64,7 +39,50 @@
       </div>
     </div>
   </nav>
+
+  <div class="modal" :class="{ 'is-active': tagEditModalOpen }">
+    <div class="modal-background" @click="tagEditModalOpen = false"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Edit tag</p>
+        <button class="delete" aria-label="close" @click="tagEditModalOpen = false"></button>
+      </header>
+      <section class="modal-card-body" id="tag-edit-modal-body"></section>
+    </div>
+  </div>
 </section>
+{{end}}
+
+{{define "tagRow"}}
+<div class="level is-mobile" id="tag-row-{{.EncodedName}}">
+  <div class="level-left">
+    <span class="level-item tag-count">
+      <span class="tag is-light">{{.Count}}</span>
+    </span>
+    <span class="level-item tag">
+      <a href="/bookmarks?search={{.Name}}" title="Bookmarks tagged {{.Name}}">
+        <span class="icon-text">
+          <span class="icon"><i class="fa-solid fa-tag"></i></span>
+          <span>{{.Name}}</span>
+        </span>
+      </a>
+    </span>
+  </div>
+  <div class="level-right">
+    <div class="level-item buttons has-addons">
+      <a class="button is-small is-info is-light" href="/bookmarks/tags/{{.EncodedName}}/edit"
+        title="Edit tag: {{.Name}}"
+        hx-get="/bookmarks/tags/{{.EncodedName}}/edit" hx-target="#tag-edit-modal-body" hx-swap="innerHTML"
+        @click="tagEditModalOpen = true">
+        <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
+      </a>
+      <a class="button is-small is-danger is-light" href="/bookmarks/tags/{{.EncodedName}}/delete"
+        title="Delete tag: {{.Name}}">
+        <span class="icon"><i class="fa-solid fa-trash"></i></span>
+      </a>
+    </div>
+  </div>
+</div>
 {{end}}
 
 {{define "tagFilterForm"}}

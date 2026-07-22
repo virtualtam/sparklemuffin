@@ -785,17 +785,35 @@ func TestServiceUpdateTag(t *testing.T) {
 			},
 			wantErr: ErrTagNameContainsWhitespace,
 		},
+
+		// nominal cases
 		{
-			tname: "new tag equals current tag",
+			tname: "new tag equals current tag is a no-op",
+			repositoryBookmarks: []Bookmark{
+				{
+					UID:      "27L4DoEZaRASKhQKygRCrvVAwkr",
+					UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+					URL:      "https://domain.tld",
+					Tags:     []string{"tag1"},
+					Title:    "Example Domain",
+				},
+			},
 			tagNameUpdate: TagUpdateQuery{
 				UserUUID:    "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
 				CurrentName: "tag1",
 				NewName:     "tag1",
 			},
-			wantErr: ErrTagNewNameEqualsCurrentName,
+			want: 1,
+			wantRepositoryBookmarks: []Bookmark{
+				{
+					UID:      "27L4DoEZaRASKhQKygRCrvVAwkr",
+					UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+					URL:      "https://domain.tld",
+					Tags:     []string{"tag1"},
+					Title:    "Example Domain",
+				},
+			},
 		},
-
-		// nominal cases
 		{
 			tname: "no bookmark with this tag",
 			tagNameUpdate: TagUpdateQuery{

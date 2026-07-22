@@ -175,7 +175,6 @@ func (s *Service) UpdateTag(ctx context.Context, uq TagUpdateQuery) (int64, erro
 		uq.ensureCurrentNameHasNoWhitespace,
 		uq.requireNewName,
 		uq.ensureNewNameHasNoWhitespace,
-		uq.ensureNewNameIsNotEqualToCurrentName,
 	}
 
 	for _, fn := range fns {
@@ -187,6 +186,10 @@ func (s *Service) UpdateTag(ctx context.Context, uq TagUpdateQuery) (int64, erro
 	bookmarks, err := s.r.BookmarkGetByTag(ctx, uq.UserUUID, uq.CurrentName)
 	if err != nil {
 		return 0, err
+	}
+
+	if uq.NewName == uq.CurrentName {
+		return int64(len(bookmarks)), nil
 	}
 
 	for i, bookmark := range bookmarks {

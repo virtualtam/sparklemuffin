@@ -16,6 +16,18 @@ const (
 	// requesting element's target.
 	HeaderRedirect = "HX-Redirect"
 
+	// HeaderRetarget instructs the client-side to swap the response into a
+	// different target element than the one that made the request.
+	HeaderRetarget = "HX-Retarget"
+
+	// HeaderReswap instructs the client-side to use a different swap style
+	// than the one declared by the element that made the request.
+	HeaderReswap = "HX-Reswap"
+
+	// HeaderTrigger instructs the client-side to fire one or more named
+	// client-side events after the response has been processed.
+	HeaderTrigger = "HX-Trigger"
+
 	// HTMX request headers
 	// See https://htmx.org/reference/#request_headers
 

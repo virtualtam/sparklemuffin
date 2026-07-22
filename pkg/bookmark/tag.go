@@ -61,13 +61,6 @@ func (uq *TagUpdateQuery) ensureNewNameHasNoWhitespace() error {
 	return nil
 }
 
-func (uq *TagUpdateQuery) ensureNewNameIsNotEqualToCurrentName() error {
-	if uq.CurrentName == uq.NewName {
-		return ErrTagNewNameEqualsCurrentName
-	}
-	return nil
-}
-
 func (uq *TagUpdateQuery) normalize() {
 	uq.CurrentName = strings.TrimSpace(uq.CurrentName)
 	uq.NewName = strings.TrimSpace(uq.NewName)

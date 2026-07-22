@@ -50,6 +50,17 @@ a:hover {
   text-decoration: underline;
 }
 
+/*
+ * Bulma rounds the top corners of .modal-card-head and the bottom corners of
+ * .modal-card-foot, but a modal-card with no foot (actions living in the
+ * body instead, e.g. a form's own submit button) is left with square bottom
+ * corners on .modal-card-body. Round them to match when it's the last child.
+ */
+.modal-card-body:last-child {
+  border-end-start-radius: var(--bulma-modal-card-foot-radius);
+  border-end-end-radius: var(--bulma-modal-card-foot-radius);
+}
+
 code {
   font-family: firacode, monospace;
   font-size: 14px;

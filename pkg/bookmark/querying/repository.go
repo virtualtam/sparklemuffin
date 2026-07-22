@@ -42,10 +42,10 @@ type Repository interface {
 	// a given offset.
 	BookmarkTagGetN(ctx context.Context, userUUID string, visibility Visibility, n uint, offset uint) ([]Tag, error)
 
-	// BookmarkTagFilterCount returns the number of tags for a given user and
-	// filter term.
-	BookmarkTagFilterCount(ctx context.Context, userUUID string, visibility Visibility, filterTerm string) (uint, error)
+	// BookmarkTagSearchCount returns the number of tags for a given user and
+	// search terms.
+	BookmarkTagSearchCount(ctx context.Context, userUUID string, visibility Visibility, searchTerms string) (uint, error)
 
-	// BookmarkTagFilterN returns at most n tags for a given user and filter term, starting at a given offset.
-	BookmarkTagFilterN(ctx context.Context, userUUID string, visibility Visibility, filterTerm string, n uint, offset uint) ([]Tag, error)
+	// BookmarkTagSearchN returns at most n tags for a given user and search terms, starting at a given offset.
+	BookmarkTagSearchN(ctx context.Context, userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]Tag, error)
 }

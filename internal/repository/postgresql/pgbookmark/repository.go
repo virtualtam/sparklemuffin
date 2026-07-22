@@ -612,7 +612,7 @@ func (r *Repository) BookmarkTagGetN(ctx context.Context, userUUID string, visib
 	return r.tagGetQuery(ctx, query, userUUID, n, offset)
 }
 
-func (r *Repository) BookmarkTagFilterCount(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility, filterTerm string) (uint, error) {
+func (r *Repository) BookmarkTagSearchCount(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility, searchTerms string) (uint, error) {
 	var query string
 
 	switch visibility {
@@ -655,7 +655,7 @@ func (r *Repository) BookmarkTagFilterCount(ctx context.Context, userUUID string
 		ctx,
 		query,
 		userUUID,
-		"%"+filterTerm+"%",
+		"%"+searchTerms+"%",
 	).Scan(&count)
 	if err != nil {
 		return 0, err
@@ -664,7 +664,7 @@ func (r *Repository) BookmarkTagFilterCount(ctx context.Context, userUUID string
 	return count, nil
 }
 
-func (r *Repository) BookmarkTagFilterN(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility, filterTerm string, n uint, offset uint) ([]bookmarkquerying.Tag, error) {
+func (r *Repository) BookmarkTagSearchN(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility, searchTerms string, n uint, offset uint) ([]bookmarkquerying.Tag, error) {
 	var query string
 
 	switch visibility {
@@ -710,5 +710,5 @@ func (r *Repository) BookmarkTagFilterN(ctx context.Context, userUUID string, vi
 		LIMIT $3 OFFSET $4`
 	}
 
-	return r.tagGetQuery(ctx, query, userUUID, "%"+filterTerm+"%", n, offset)
+	return r.tagGetQuery(ctx, query, userUUID, "%"+searchTerms+"%", n, offset)
 }

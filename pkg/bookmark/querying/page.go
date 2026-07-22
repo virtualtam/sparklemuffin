@@ -72,8 +72,8 @@ func NewTagPage(number uint, totalPages uint, tagCount uint, tags []Tag) TagPage
 	return page
 }
 
-// NewTagFilterResultPage initializes and returns a new bookmark Page containing filtered results.
-func NewTagFilterResultPage(searchTerms string, tagCount uint, number uint, totalPages uint, tags []Tag) TagPage {
+// NewTagSearchResultPage initializes and returns a new bookmark Page containing search results.
+func NewTagSearchResultPage(searchTerms string, tagCount uint, number uint, totalPages uint, tags []Tag) TagPage {
 	page := NewTagPage(number, totalPages, tagCount, tags)
 	page.SearchTerms = searchTerms
 

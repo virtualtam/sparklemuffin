@@ -197,12 +197,12 @@ func (r *FakeRepository) BookmarkTagGetN(_ context.Context, userUUID string, vis
 	return tags[offset:end], nil
 }
 
-func (r *FakeRepository) filterTags(userUUID string, visibility Visibility, filterTerm string) []Tag {
+func (r *FakeRepository) tagSearchMatches(userUUID string, visibility Visibility, searchTerms string) []Tag {
 	all := r.aggregateTags(userUUID, visibility)
 
 	filtered := all[:0]
 	for _, tag := range all {
-		if strings.Contains(strings.ToLower(tag.Name), strings.ToLower(filterTerm)) {
+		if strings.Contains(strings.ToLower(tag.Name), strings.ToLower(searchTerms)) {
 			filtered = append(filtered, tag)
 		}
 	}
@@ -210,12 +210,12 @@ func (r *FakeRepository) filterTags(userUUID string, visibility Visibility, filt
 	return filtered
 }
 
-func (r *FakeRepository) BookmarkTagFilterCount(_ context.Context, userUUID string, visibility Visibility, filterTerm string) (uint, error) {
-	return uint(len(r.filterTags(userUUID, visibility, filterTerm))), nil
+func (r *FakeRepository) BookmarkTagSearchCount(_ context.Context, userUUID string, visibility Visibility, searchTerms string) (uint, error) {
+	return uint(len(r.tagSearchMatches(userUUID, visibility, searchTerms))), nil
 }
 
-func (r *FakeRepository) BookmarkTagFilterN(_ context.Context, userUUID string, visibility Visibility, filterTerm string, n uint, offset uint) ([]Tag, error) {
-	tags := r.filterTags(userUUID, visibility, filterTerm)
+func (r *FakeRepository) BookmarkTagSearchN(_ context.Context, userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]Tag, error) {
+	tags := r.tagSearchMatches(userUUID, visibility, searchTerms)
 
 	if offset >= uint(len(tags)) {
 		return []Tag{}, nil

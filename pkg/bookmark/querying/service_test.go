@@ -1018,24 +1018,24 @@ func TestServiceTagsByPage(t *testing.T) {
 	}
 }
 
-func TestServiceTagsByFilterQueryAndPage(t *testing.T) {
+func TestServiceTagsBySearchQueryAndPage(t *testing.T) {
 	cases := []struct {
 		tname               string
 		repositoryBookmarks []bookmark.Bookmark
 		ownerUUID           string
 		visibility          Visibility
-		filterTerm          string
+		searchTerms         string
 		pageNumber          uint
 		want                TagPage
 		wantErr             error
 	}{
 		// nominal cases
 		{
-			tname:      "0 matches",
-			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
-			visibility: VisibilityAll,
-			filterTerm: "notfound",
-			pageNumber: 1,
+			tname:       "0 matches",
+			ownerUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:  VisibilityAll,
+			searchTerms: "notfound",
+			pageNumber:  1,
 			want: TagPage{
 				Page: paginate.Page{
 					PageNumber:         1,
@@ -1052,7 +1052,7 @@ func TestServiceTagsByFilterQueryAndPage(t *testing.T) {
 			repositoryBookmarks: testRepositoryBookmarksWithTags,
 			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility:          VisibilityAll,
-			filterTerm:          "test",
+			searchTerms:         "test",
 			pageNumber:          1,
 			want: TagPage{
 				Page: paginate.Page{
@@ -1074,7 +1074,7 @@ func TestServiceTagsByFilterQueryAndPage(t *testing.T) {
 			repositoryBookmarks: testRepositoryBookmarksWithTags,
 			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility:          VisibilityAll,
-			filterTerm:          "o",
+			searchTerms:         "o",
 			pageNumber:          1,
 			want: TagPage{
 				Page: paginate.Page{
@@ -1095,19 +1095,19 @@ func TestServiceTagsByFilterQueryAndPage(t *testing.T) {
 
 		// error cases
 		{
-			tname:      "zeroth page",
-			ownerUUID:  "5d75c769-059c-4b36-9db6-1c82619e704a",
-			visibility: VisibilityAll,
-			filterTerm: "go",
-			pageNumber: 0,
-			wantErr:    paginate.ErrPageNumberOutOfBounds,
+			tname:       "zeroth page",
+			ownerUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
+			visibility:  VisibilityAll,
+			searchTerms: "go",
+			pageNumber:  0,
+			wantErr:     paginate.ErrPageNumberOutOfBounds,
 		},
 		{
 			tname:               "page number out of bounds",
 			repositoryBookmarks: testRepositoryBookmarksWithTags,
 			ownerUUID:           "5d75c769-059c-4b36-9db6-1c82619e704a",
 			visibility:          VisibilityAll,
-			filterTerm:          "go",
+			searchTerms:         "go",
 			pageNumber:          18,
 			wantErr:             paginate.ErrPageNumberOutOfBounds,
 		},
@@ -1122,7 +1122,7 @@ func TestServiceTagsByFilterQueryAndPage(t *testing.T) {
 
 			s := NewService(r)
 
-			got, err := s.TagsByFilterQueryAndPage(t.Context(), tc.ownerUUID, tc.visibility, tc.filterTerm, tc.pageNumber)
+			got, err := s.TagsBySearchQueryAndPage(t.Context(), tc.ownerUUID, tc.visibility, tc.searchTerms, tc.pageNumber)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

@@ -1020,7 +1020,7 @@ func (bc *bookmarkController) handleTagListView() func(w http.ResponseWriter, r 
 		filterTermParam := r.URL.Query().Get("filter")
 
 		if filterTermParam != "" {
-			tagSearchPage, err := bc.queryingService.TagsByFilterQueryAndPage(
+			tagSearchPage, err := bc.queryingService.TagsBySearchQueryAndPage(
 				ctx,
 				ctxUser.UUID,
 				bookmarkquerying.VisibilityAll,

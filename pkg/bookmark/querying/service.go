@@ -185,14 +185,14 @@ func (s *Service) TagsByPage(ctx context.Context, ownerUUID string, visibility V
 	return NewTagPage(number, totalPages, tagCount, tags), nil
 }
 
-// TagsByFilterQueryAndPage returns a TagSearchPage containing a limited and offset
-// number of tags for a given filter term.
-func (s *Service) TagsByFilterQueryAndPage(ctx context.Context, ownerUUID string, visibility Visibility, filterTerm string, number uint) (TagPage, error) {
+// TagsBySearchQueryAndPage returns a TagSearchPage containing a limited and offset
+// number of tags for a given set of search terms.
+func (s *Service) TagsBySearchQueryAndPage(ctx context.Context, ownerUUID string, visibility Visibility, searchTerms string, number uint) (TagPage, error) {
 	if number < 1 {
 		return TagPage{}, paginate.ErrPageNumberOutOfBounds
 	}
 
-	tagCount, err := s.r.BookmarkTagFilterCount(ctx, ownerUUID, visibility, filterTerm)
+	tagCount, err := s.r.BookmarkTagSearchCount(ctx, ownerUUID, visibility, searchTerms)
 	if err != nil {
 		return TagPage{}, err
 	}
@@ -205,15 +205,15 @@ func (s *Service) TagsByFilterQueryAndPage(ctx context.Context, ownerUUID string
 
 	if tagCount == 0 {
 		// early return: nothing to display
-		return NewTagFilterResultPage(filterTerm, 0, 1, 1, []Tag{}), nil
+		return NewTagSearchResultPage(searchTerms, 0, 1, 1, []Tag{}), nil
 	}
 
 	dbOffset := (number - 1) * tagsPerPage
 
-	tags, err := s.r.BookmarkTagFilterN(ctx, ownerUUID, visibility, filterTerm, tagsPerPage, dbOffset)
+	tags, err := s.r.BookmarkTagSearchN(ctx, ownerUUID, visibility, searchTerms, tagsPerPage, dbOffset)
 	if err != nil {
 		return TagPage{}, err
 	}
 
-	return NewTagFilterResultPage(filterTerm, tagCount, number, totalPages, tags), nil
+	return NewTagSearchResultPage(searchTerms, tagCount, number, totalPages, tags), nil
 }

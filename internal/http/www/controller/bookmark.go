@@ -1001,7 +1001,12 @@ func (bc *bookmarkController) handleTagEdit() func(w http.ResponseWriter, r *htt
 	}
 }
 
-// handleTagListView renders the tag list view for the current authenticated user.
+// handleTagListView renders the tag list for the current authenticated user.
+//
+// On an htmx request, it responds with only the list content fragment
+// (search form, tags, pagination), so that searching or paginating swaps the
+// list in place instead of reloading the full page. On a plain request, it
+// renders the full page as usual.
 func (bc *bookmarkController) handleTagListView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var viewData view.Data
@@ -1012,36 +1017,32 @@ func (bc *bookmarkController) handleTagListView() func(w http.ResponseWriter, r 
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
 			log.Warn().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
-			view.PutFlashError(w, fmt.Sprintf("invalid page number: %q", pageNumberStr))
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, "/bookmarks/tags", fmt.Sprintf("invalid page number: %q", pageNumberStr))
 			return
 		}
 
-		filterTermParam := r.URL.Query().Get("filter")
-
-		if filterTermParam != "" {
+		searchTermsParam := r.URL.Query().Get("search")
+		if searchTermsParam != "" {
 			tagSearchPage, err := bc.queryingService.TagsBySearchQueryAndPage(
 				ctx,
 				ctxUser.UUID,
 				bookmarkquerying.VisibilityAll,
-				filterTermParam,
+				searchTermsParam,
 				pageNumber,
 			)
 
 			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
-				view.PutFlashError(w, msg)
-				http.Redirect(w, r, "/bookmarks/tags", http.StatusSeeOther)
+				view.RedirectOnError(w, r, "/bookmarks/tags", msg)
 				return
 			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve tags")
-				view.PutFlashError(w, "failed to retrieve tags")
-				http.Redirect(w, r, "/", http.StatusSeeOther)
+				view.RedirectOnError(w, r, "/bookmarks/tags", "failed to retrieve tags")
 				return
 			}
 
-			viewData.Title = fmt.Sprintf("Tag search: %s", filterTermParam)
+			viewData.Title = fmt.Sprintf("Tag search: %s", searchTermsParam)
 			viewData.Content = tagSearchPage
 
 		} else {
@@ -1055,18 +1056,24 @@ func (bc *bookmarkController) handleTagListView() func(w http.ResponseWriter, r 
 			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
-				view.PutFlashError(w, msg)
-				http.Redirect(w, r, "/bookmarks/tags", http.StatusSeeOther)
+				view.RedirectOnError(w, r, "/bookmarks/tags", msg)
 				return
 			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve tags")
-				view.PutFlashError(w, "failed to retrieve tags")
-				http.Redirect(w, r, "/", http.StatusSeeOther)
+				view.RedirectOnError(w, r, "/bookmarks/tags", "failed to retrieve tags")
 				return
 			}
 
 			viewData.Title = "Tags"
 			viewData.Content = tagPage
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			if err := bc.tagListView.RenderTemplate(w, "content", viewData.Content); err != nil {
+				log.Error().Err(err).Msg("failed to render tag list fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
+			return
 		}
 
 		bc.tagListView.Render(w, r, viewData)

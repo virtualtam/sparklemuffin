@@ -35,14 +35,17 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Add method to retrieve a given feed entry
 - Use Alpine.js to show/hide navbar menus on hover
 - Use HTMX to partially refresh the bookmarks list on:
-    - Navigating pages
+    - Navigating result pages
     - Searching bookmarks
+- Use HTMX to partially refresh the tag list page on:
+    - Navigating result pages
+    - Searching tags
 - Use HTMX to partially refresh the feed list on:
     - Changing the `All / Read / Unread` filter
     - Toggling entry summaries
     - Marking all entries as read
     - Toggling an entry's read status
-    - Navigating pages
+    - Navigating result pages
     - Searching entries
 - Rework edition forms as modals:
     - Bookmark edition form

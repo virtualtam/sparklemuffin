@@ -1,5 +1,5 @@
 {{define "content"}}
-<section id="top" class="section pt-3" x-data="{ tagEditModalOpen: false, tagDeleteModalOpen: false }"
+<section id="tag-list-content" class="section pt-3" x-data="{ tagEditModalOpen: false, tagDeleteModalOpen: false }"
   @modal:close.window="tagEditModalOpen = false; tagDeleteModalOpen = false">
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
@@ -23,7 +23,7 @@
   <nav class="level is-mobile">
     <div class="level-left">
       <div class="level-item">
-        <a href="#top" class="button is-small">
+        <a href="#tag-list-content" class="button is-small">
           <span class="icon-text">
             <span class="icon">
               <i class="fa-solid fa-chevron-up"></i>
@@ -35,7 +35,7 @@
     </div>
     <div class="level-right">
       <div class="level-item">
-        {{template "pagination" (dict "Page" .Page)}}
+        {{template "pagination" (dict "Page" .Page "HxTarget" "#tag-list-content")}}
       </div>
     </div>
   </nav>
@@ -102,10 +102,11 @@
 <nav class="level">
   <div class="level-left">
     <div class="level-item">
-      <form action="/bookmarks/tags" method="GET">
+      <form action="/bookmarks/tags" method="GET"
+        hx-get="/bookmarks/tags" hx-target="#tag-list-content" hx-swap="outerHTML" hx-push-url="true">
         <div class="field has-addons">
           <div class="control is-expanded">
-            <input class="input" type="text" id="filterTerm" name="filter" placeholder="Filter by name"
+            <input class="input" type="text" id="filterTerm" name="search" placeholder="Filter by name"
               value="{{.Page.SearchTerms}}">
           </div>
           <div class="control">
@@ -129,7 +130,7 @@
   </div>
   <div class="level-right">
     <div class="level-item">
-      {{template "pagination" (dict "Page" .Page)}}
+      {{template "pagination" (dict "Page" .Page "HxTarget" "#tag-list-content")}}
     </div>
   </div>
 </nav>

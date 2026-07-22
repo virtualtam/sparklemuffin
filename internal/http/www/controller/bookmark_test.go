@@ -199,6 +199,153 @@ func TestHandleBookmarkListView(t *testing.T) {
 	})
 }
 
+// newTestBookmarkControllerForTagList wires a bookmarkController against a
+// querying fake repository seeded with the given bookmarks, owned by
+// testBookmarkCtxUser, for exercising the tag list handler.
+func newTestBookmarkControllerForTagList(bookmarks []bookmark.Bookmark) bookmarkController {
+	queryingRepo := &bookmarkquerying.FakeRepository{
+		Bookmarks: bookmarks,
+		Users:     []user.User{testBookmarkCtxUser},
+	}
+
+	return bookmarkController{
+		queryingService: bookmarkquerying.NewService(queryingRepo),
+		tagListView:     view.New("bookmark/tag_list.gohtml"),
+	}
+}
+
+// newTagListRequest builds a GET request against /bookmarks/tags, optionally
+// carrying HX-Request, with the given user set in context.
+func newTagListRequest(t *testing.T, ctxUser user.User, rawQuery string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	target := "/bookmarks/tags"
+	if rawQuery != "" {
+		target += "?" + rawQuery
+	}
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, target, nil)
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	return r.WithContext(ctx)
+}
+
+func TestHandleTagListView(t *testing.T) {
+	ctxUser := testBookmarkCtxUser
+
+	t.Run("plain browser request renders the full page", func(t *testing.T) {
+		bc := newTestBookmarkControllerForTagList([]bookmark.Bookmark{testBookmarkEntry})
+		r := newTagListRequest(t, ctxUser, "", false)
+		w := httptest.NewRecorder()
+
+		bc.handleTagListView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a full page (with layout), got:\n%s", body)
+		}
+		if !strings.Contains(body, `id="tag-list-content"`) {
+			t.Errorf("want the tag list content, got:\n%s", body)
+		}
+		if !strings.Contains(body, "example") {
+			t.Errorf("want the tag rendered, got:\n%s", body)
+		}
+	})
+
+	t.Run("htmx request renders only the fragment", func(t *testing.T) {
+		bc := newTestBookmarkControllerForTagList([]bookmark.Bookmark{testBookmarkEntry})
+		r := newTagListRequest(t, ctxUser, "", true)
+		w := httptest.NewRecorder()
+
+		bc.handleTagListView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a fragment with no layout, got:\n%s", body)
+		}
+		if !strings.Contains(body, `id="tag-list-content"`) {
+			t.Errorf("want the tag list content, got:\n%s", body)
+		}
+		if !strings.Contains(body, "example") {
+			t.Errorf("want the tag rendered, got:\n%s", body)
+		}
+	})
+
+	t.Run("htmx search request filters the fragment", func(t *testing.T) {
+		other := bookmark.Bookmark{
+			UID:       "bookmark-2",
+			UserUUID:  ctxUser.UUID,
+			URL:       "https://different-domain.test/2",
+			Title:     "Something else entirely",
+			Tags:      []string{"golang"},
+			CreatedAt: time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC),
+		}
+		bc := newTestBookmarkControllerForTagList([]bookmark.Bookmark{testBookmarkEntry, other})
+		r := newTagListRequest(t, ctxUser, "search=example", true)
+		w := httptest.NewRecorder()
+
+		bc.handleTagListView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "example") {
+			t.Errorf("want the matching tag rendered, got:\n%s", body)
+		}
+		if strings.Contains(body, "golang") {
+			t.Errorf("want the non-matching tag excluded, got:\n%s", body)
+		}
+	})
+
+	t.Run("invalid page number, plain request falls back to a real redirect", func(t *testing.T) {
+		bc := newTestBookmarkControllerForTagList([]bookmark.Bookmark{testBookmarkEntry})
+		r := newTagListRequest(t, ctxUser, "page=notanumber", false)
+		w := httptest.NewRecorder()
+
+		bc.handleTagListView()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d", w.Code)
+		}
+		if got := w.Header().Get("Location"); got != "/bookmarks/tags" {
+			t.Errorf("want redirect to /bookmarks/tags, got %q", got)
+		}
+	})
+
+	t.Run("invalid page number, htmx request uses HX-Redirect", func(t *testing.T) {
+		bc := newTestBookmarkControllerForTagList([]bookmark.Bookmark{testBookmarkEntry})
+		r := newTagListRequest(t, ctxUser, "page=notanumber", true)
+		w := httptest.NewRecorder()
+
+		bc.handleTagListView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/bookmarks/tags")
+	})
+
+	t.Run("page number out of bounds, htmx request uses HX-Redirect", func(t *testing.T) {
+		bc := newTestBookmarkControllerForTagList([]bookmark.Bookmark{testBookmarkEntry})
+		r := newTagListRequest(t, ctxUser, "page=99", true)
+		w := httptest.NewRecorder()
+
+		bc.handleTagListView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/bookmarks/tags")
+	})
+}
+
 // newTestBookmarkControllerForTagEdit wires a bookmarkController against a
 // bookmark fake repository seeded with the given bookmarks, for exercising
 // the tag rename handlers (which only need bookmarkService).

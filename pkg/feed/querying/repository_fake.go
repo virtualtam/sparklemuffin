@@ -405,7 +405,27 @@ func (r *FakeRepository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(_ conte
 }
 
 func (r *FakeRepository) FeedQueryingSubscriptionByUUID(_ context.Context, userUUID string, subscriptionUUID string) (Subscription, error) {
-	return Subscription{}, errors.New("not implemented")
+	for _, s := range r.Subscriptions {
+		if s.UserUUID != userUUID || s.UUID != subscriptionUUID {
+			continue
+		}
+
+		for _, f := range r.Feeds {
+			if f.UUID == s.FeedUUID {
+				return Subscription{
+					UUID:            s.UUID,
+					CategoryUUID:    s.CategoryUUID,
+					Alias:           s.Alias,
+					FeedTitle:       f.Title,
+					FeedDescription: f.Description,
+				}, nil
+			}
+		}
+
+		return Subscription{}, feed.ErrSubscriptionNotFound
+	}
+
+	return Subscription{}, feed.ErrSubscriptionNotFound
 }
 
 func (r *FakeRepository) FeedQueryingSubscriptionsByCategory(_ context.Context, userUUID string) ([]SubscriptionsByCategory, error) {

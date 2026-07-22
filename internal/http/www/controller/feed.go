@@ -889,6 +889,10 @@ func (fc *feedController) handleFeedSubscriptionDelete() func(w http.ResponseWri
 }
 
 // handleFeedSubscriptionEditView renders the feed subscription edition form.
+//
+// On an htmx request, it responds with only the form fragment, meant to be
+// loaded into the subscriptions page's edit modal. On a plain request, it
+// renders the full page as usual, so the URL stays independently navigable.
 func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionEditFormContent struct {
 		Subscription feedquerying.Subscription
@@ -903,16 +907,23 @@ func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseW
 		subscription, err := fc.queryingService.SubscriptionByUUID(ctx, ctxUser.UUID, subscriptionUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
-			view.PutFlashError(w, "failed to retrieve feed subscription")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve feed subscription")
 			return
 		}
 
 		categories, err := fc.feedService.Categories(ctx, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed categories")
-			view.PutFlashError(w, "failed to retrieve feed categories")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve feed categories")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			formData := map[string]any{"Subscription": subscription, "Categories": categories, "InModal": true}
+			if err := fc.feedSubscriptionEditView.RenderTemplate(w, "subscriptionEditForm", formData); err != nil {
+				log.Error().Err(err).Msg("failed to render subscription edit form fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -929,6 +940,19 @@ func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseW
 }
 
 // handleFeedSubscriptionEdit processes the feed subscription edition form.
+//
+// On success:
+//   - htmx request, category unchanged: re-renders the subscription's row
+//     and retargets/reswaps the response into it (outerHTML), and fires a
+//     "modal:close" client-side event so the subscriptions page's edit
+//     modal closes.
+//   - htmx request, category changed: the subscription moves to a different
+//     category's panel, which a row swap can't relocate, so responds with
+//     HX-Refresh instead to reload the whole page.
+//   - plain request: redirect to the subscriptions page, as before.
+//
+// On error, it falls back to the same flash+redirect (or HX-Redirect, for
+// htmx requests) behavior used throughout this file.
 func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWriter, r *http.Request) {
 	type feedSubscriptionEditForm struct {
 		Alias        string `schema:"alias"`
@@ -943,8 +967,14 @@ func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWrite
 		var form feedSubscriptionEditForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse feed subscription edition form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "There was an error processing the form")
+			return
+		}
+
+		existing, err := fc.queryingService.SubscriptionByUUID(ctx, ctxUser.UUID, subscriptionUUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve feed subscription")
+			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve feed subscription")
 			return
 		}
 
@@ -957,8 +987,32 @@ func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWrite
 
 		if err := fc.feedService.UpdateSubscription(ctx, updatedSubscription); err != nil {
 			log.Error().Err(err).Msg("failed to edit feed subscription")
-			view.PutFlashError(w, "failed to edit feed subscription")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to edit feed subscription")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			if existing.CategoryUUID != form.CategoryUUID {
+				w.Header().Set(htmx.HeaderRefresh, "true")
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			refreshed, err := fc.queryingService.SubscriptionByUUID(ctx, ctxUser.UUID, subscriptionUUID)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to retrieve feed subscription")
+				view.RedirectOnError(w, r, "/feeds/subscriptions", "failed to retrieve feed subscription")
+				return
+			}
+
+			w.Header().Set(htmx.HeaderRetarget, "#subscription-"+subscriptionUUID)
+			w.Header().Set(htmx.HeaderReswap, "outerHTML")
+			w.Header().Set(htmx.HeaderTrigger, "modal:close")
+
+			if err := fc.feedSubscriptionListView.RenderTemplate(w, "subscriptionRow", refreshed); err != nil {
+				log.Error().Err(err).Msg("failed to render subscription row fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 

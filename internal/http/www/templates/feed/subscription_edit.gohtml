@@ -8,68 +8,74 @@
     </ul>
   </nav>
 
-  <form action="/feeds/subscriptions/{{.Subscription.UUID}}/edit" method="POST">
-    <div class="field is-horizontal">
-      <div class="field-label">
-        <label class="label" for="title">Title</label>
-      </div>
-      <div class="field-body">
-        <p>{{.Subscription.FeedTitle}}</p>
-      </div>
-    </div>
-
-    <div class="field is-horizontal">
-      <div class="field-label is-normal">
-        <label class="label" for="alias">Alias</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <input class="input" type="text" id="alias" name="alias"
-              placeholder="An optional alias to be displayed instead of the feed title" value="{{.Subscription.Alias}}">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="field is-horizontal">
-      <div class="field-label">
-        <label class="label" for="description">Description</label>
-      </div>
-      <div class="field-body">
-        <span id="description">{{.Subscription.FeedDescription}}</span>
-      </div>
-    </div>
-
-    <div class="field is-horizontal">
-      <div class="field-label is-normal">
-        <label class="label" for="category">Category</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <div class="select">
-              <select name="category" id="category">
-                {{- range .Categories}}
-                <option value="{{.UUID}}" {{if eq .UUID $.Subscription.CategoryUUID}} selected{{end}}>{{.Name}}</option>
-                {{- end}}
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="field is-horizontal">
-      <div class="field-label"></div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <button type="submit" class="button is-primary">Save</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </form>
+  {{template "subscriptionEditForm" (dict "Subscription" .Subscription "Categories" .Categories "InModal" false)}}
 </section>
+{{end}}
+
+{{/* InModal enables htmx attributes; only true when loaded into the subscriptions page's edit modal. */}}
+{{define "subscriptionEditForm"}}
+<form action="/feeds/subscriptions/{{.Subscription.UUID}}/edit" method="POST"
+  {{if .InModal}}hx-post="/feeds/subscriptions/{{.Subscription.UUID}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>
+  <div class="field is-horizontal">
+    <div class="field-label">
+      <label class="label" for="title">Title</label>
+    </div>
+    <div class="field-body">
+      <p>{{.Subscription.FeedTitle}}</p>
+    </div>
+  </div>
+
+  <div class="field is-horizontal">
+    <div class="field-label is-normal">
+      <label class="label" for="alias">Alias</label>
+    </div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <input class="input" type="text" id="alias" name="alias"
+            placeholder="An optional alias to be displayed instead of the feed title" value="{{.Subscription.Alias}}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field is-horizontal">
+    <div class="field-label">
+      <label class="label" for="description">Description</label>
+    </div>
+    <div class="field-body">
+      <span id="description">{{.Subscription.FeedDescription}}</span>
+    </div>
+  </div>
+
+  <div class="field is-horizontal">
+    <div class="field-label is-normal">
+      <label class="label" for="category">Category</label>
+    </div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <div class="select">
+            <select name="category" id="category">
+              {{- range .Categories}}
+              <option value="{{.UUID}}" {{if eq .UUID $.Subscription.CategoryUUID}} selected{{end}}>{{.Name}}</option>
+              {{- end}}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field is-horizontal">
+    <div class="field-label"></div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <button type="submit" class="button is-primary">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
 {{end}}

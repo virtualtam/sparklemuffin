@@ -123,7 +123,15 @@ func (r *FakeRepository) FeedCategoryGetByUUID(_ context.Context, userUUID strin
 }
 
 func (r *FakeRepository) FeedCategoryGetMany(_ context.Context, userUUID string) ([]Category, error) {
-	panic("unimplemented")
+	var categories []Category
+
+	for _, category := range r.Categories {
+		if category.UserUUID == userUUID {
+			categories = append(categories, category)
+		}
+	}
+
+	return categories, nil
 }
 
 func (r *FakeRepository) FeedCategoryNameAndSlugAreRegistered(_ context.Context, userUUID string, name string, slug string) (bool, error) {

@@ -815,3 +815,249 @@ func TestHandleFeedCategoryEdit(t *testing.T) {
 		assertHXRedirectOnError(t, w, "/feeds/categories/"+unknownUUID+"/edit")
 	})
 }
+
+// newTestFeedControllerForSubscriptionEdit wires a feedController against
+// the given subscription/feed/categories, for exercising the subscription
+// edit handlers.
+func newTestFeedControllerForSubscriptionEdit(subscription feed.Subscription, subscribedFeed feed.Feed, categories []feed.Category) feedController {
+	feedRepo := &feed.FakeRepository{
+		Categories:    categories,
+		Feeds:         []feed.Feed{subscribedFeed},
+		Subscriptions: []feed.Subscription{subscription},
+	}
+
+	queryingRepo := &feedquerying.FakeRepository{
+		Categories:    categories,
+		Feeds:         []feed.Feed{subscribedFeed},
+		Subscriptions: []feed.Subscription{subscription},
+	}
+
+	return feedController{
+		feedService:              feed.NewService(feedRepo, nil),
+		queryingService:          feedquerying.NewService(queryingRepo),
+		feedSubscriptionListView: view.New("feed/subscription_list.gohtml"),
+		feedSubscriptionEditView: view.New("feed/subscription_edit.gohtml"),
+	}
+}
+
+// newSubscriptionEditViewRequest builds a GET request against
+// /feeds/subscriptions/{uuid}/edit.
+func newSubscriptionEditViewRequest(t *testing.T, ctxUser user.User, subscriptionUUID string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/feeds/subscriptions/"+subscriptionUUID+"/edit", nil)
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uuid", subscriptionUUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+// newSubscriptionEditPostRequest builds a POST request against
+// /feeds/subscriptions/{uuid}/edit.
+func newSubscriptionEditPostRequest(t *testing.T, ctxUser user.User, subscriptionUUID string, form url.Values, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/feeds/subscriptions/"+subscriptionUUID+"/edit", strings.NewReader(form.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uuid", subscriptionUUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+func TestHandleFeedSubscriptionEditView(t *testing.T) {
+	fake := faker.New()
+	ctxUser := testCtxUser
+
+	newFixture := func() (feed.Subscription, feed.Feed, []feed.Category) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		subscribedFeed := feed.Feed{UUID: fake.UUID().V4(), Title: fake.Lorem().Text(10)}
+		subscription := feed.Subscription{
+			UUID:         fake.UUID().V4(),
+			UserUUID:     ctxUser.UUID,
+			FeedUUID:     subscribedFeed.UUID,
+			CategoryUUID: category.UUID,
+			Alias:        fake.Lorem().Text(10),
+		}
+		return subscription, subscribedFeed, []feed.Category{category}
+	}
+
+	t.Run("plain browser request renders the full page", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionEdit(subscription, subscribedFeed, categories)
+		r := newSubscriptionEditViewRequest(t, ctxUser, subscription.UUID, false)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionEditView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a full page (with layout), got:\n%s", body)
+		}
+		if !strings.Contains(body, `value="`+subscription.Alias+`"`) {
+			t.Errorf("want the subscription alias pre-filled, got:\n%s", body)
+		}
+		if strings.Contains(body, "hx-post") {
+			t.Errorf("want a plain form with no htmx attributes on the full page, got:\n%s", body)
+		}
+	})
+
+	t.Run("htmx request renders only the form fragment", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionEdit(subscription, subscribedFeed, categories)
+		r := newSubscriptionEditViewRequest(t, ctxUser, subscription.UUID, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionEditView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a fragment with no layout, got:\n%s", body)
+		}
+		if !strings.Contains(body, `value="`+subscription.Alias+`"`) {
+			t.Errorf("want the subscription alias pre-filled, got:\n%s", body)
+		}
+		if !strings.Contains(body, `hx-post="/feeds/subscriptions/`) {
+			t.Errorf("want the modal fragment's form to be htmx-enhanced, got:\n%s", body)
+		}
+	})
+
+	t.Run("unknown subscription, htmx request uses HX-Redirect", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionEdit(subscription, subscribedFeed, categories)
+		unknownUUID := fake.UUID().V4()
+		r := newSubscriptionEditViewRequest(t, ctxUser, unknownUUID, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionEditView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds/subscriptions/"+unknownUUID+"/edit")
+	})
+}
+
+func TestHandleFeedSubscriptionEdit(t *testing.T) {
+	fake := faker.New()
+	ctxUser := testCtxUser
+
+	newFixture := func() (feed.Subscription, feed.Feed, []feed.Category) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		subscribedFeed := feed.Feed{UUID: fake.UUID().V4(), Title: fake.Lorem().Text(10)}
+		subscription := feed.Subscription{
+			UUID:         fake.UUID().V4(),
+			UserUUID:     ctxUser.UUID,
+			FeedUUID:     subscribedFeed.UUID,
+			CategoryUUID: category.UUID,
+			Alias:        fake.Lorem().Text(10),
+		}
+		return subscription, subscribedFeed, []feed.Category{category}
+	}
+
+	t.Run("plain browser request edits and redirects", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionEdit(subscription, subscribedFeed, categories)
+		form := url.Values{"alias": {fake.Lorem().Text(10)}, "category": {subscription.CategoryUUID}}
+		r := newSubscriptionEditPostRequest(t, ctxUser, subscription.UUID, form, false)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionEdit()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("Location"); got != "/feeds/subscriptions" {
+			t.Errorf("want redirect to /feeds/subscriptions, got %q", got)
+		}
+	})
+
+	t.Run("htmx request, alias-only change retargets the response into the subscription's row and closes the modal", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionEdit(subscription, subscribedFeed, categories)
+		newAlias := fake.Lorem().Text(10)
+		form := url.Values{"alias": {newAlias}, "category": {subscription.CategoryUUID}}
+		r := newSubscriptionEditPostRequest(t, ctxUser, subscription.UUID, form, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionEdit()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("HX-Refresh"); got != "" {
+			t.Errorf("want no HX-Refresh header, got %q", got)
+		}
+		if got := w.Header().Get("HX-Retarget"); got != "#subscription-"+subscription.UUID {
+			t.Errorf("want HX-Retarget to the subscription's row, got %q", got)
+		}
+		if got := w.Header().Get("HX-Reswap"); got != "outerHTML" {
+			t.Errorf("want HX-Reswap outerHTML, got %q", got)
+		}
+		if got := w.Header().Get("HX-Trigger"); got != "modal:close" {
+			t.Errorf("want HX-Trigger modal:close, got %q", got)
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, `id="subscription-`+subscription.UUID+`"`) {
+			t.Errorf("want the subscription's row rendered, got:\n%s", body)
+		}
+		if !strings.Contains(body, newAlias) {
+			t.Errorf("want the new alias rendered, got:\n%s", body)
+		}
+	})
+
+	t.Run("htmx request, category change forces a full reload instead of retargeting", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		newCategory := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		categories = append(categories, newCategory)
+		fc := newTestFeedControllerForSubscriptionEdit(subscription, subscribedFeed, categories)
+		form := url.Values{"alias": {subscription.Alias}, "category": {newCategory.UUID}}
+		r := newSubscriptionEditPostRequest(t, ctxUser, subscription.UUID, form, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionEdit()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("HX-Refresh"); got != "true" {
+			t.Errorf("want HX-Refresh true, got %q", got)
+		}
+		if got := w.Header().Get("HX-Retarget"); got != "" {
+			t.Errorf("want no HX-Retarget on a category change, got %q", got)
+		}
+	})
+
+	t.Run("unknown subscription, htmx request uses HX-Redirect", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionEdit(subscription, subscribedFeed, categories)
+		unknownUUID := fake.UUID().V4()
+		form := url.Values{"alias": {fake.Lorem().Text(10)}, "category": {subscription.CategoryUUID}}
+		r := newSubscriptionEditPostRequest(t, ctxUser, unknownUUID, form, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionEdit()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds/subscriptions/"+unknownUUID+"/edit")
+	})
+}

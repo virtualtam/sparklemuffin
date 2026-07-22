@@ -1,6 +1,6 @@
 {{define "content"}}
-<section class="section pt-3" x-data="{ categoryEditModalOpen: false }"
-  @modal:close.window="categoryEditModalOpen = false">
+<section class="section pt-3" x-data="{ categoryEditModalOpen: false, subscriptionEditModalOpen: false }"
+  @modal:close.window="categoryEditModalOpen = false; subscriptionEditModalOpen = false">
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
       <li><a href="/feeds">Feeds</a></li>
@@ -14,26 +14,7 @@
       <nav class="panel is-light">
         {{template "categoryHeading" .}}
         {{- range .Subscriptions}}
-        <div class="panel-block level is-mobile">
-          <div class="level-left">
-            <span class="level-item">
-              <span class="panel-icon"><i class="fa-solid fa-rss"></i></span>
-              {{or .Alias .FeedTitle}}
-            </span>
-          </div>
-          <div class="level-right">
-            <div class="level-item buttons has-addons">
-              <a class="button is-small is-info is-light" href="/feeds/subscriptions/{{.UUID}}/edit"
-                title="Edit subscription: {{.FeedTitle}}">
-                <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
-              </a>
-              <a class="button is-small is-danger is-light" href="/feeds/subscriptions/{{.UUID}}/delete"
-                title="Delete subscription: {{.FeedTitle}}">
-                <span class="icon"><i class="fa-solid fa-trash"></i></span>
-              </a>
-            </div>
-          </div>
-        </div>
+        {{template "subscriptionRow" .}}
         {{- end}}
       </nav>
     </div>
@@ -48,6 +29,17 @@
         <button class="delete" aria-label="close" @click="categoryEditModalOpen = false"></button>
       </header>
       <section class="modal-card-body" id="category-edit-modal-body"></section>
+    </div>
+  </div>
+
+  <div class="modal" :class="{ 'is-active': subscriptionEditModalOpen }">
+    <div class="modal-background" @click="subscriptionEditModalOpen = false"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Edit subscription</p>
+        <button class="delete" aria-label="close" @click="subscriptionEditModalOpen = false"></button>
+      </header>
+      <section class="modal-card-body" id="subscription-edit-modal-body"></section>
     </div>
   </div>
 </section>
@@ -68,6 +60,31 @@
       </a>
       <a class="button is-small is-danger is-light" href="/feeds/categories/{{.UUID}}/delete"
         title="Delete category: {{.Name}}">
+        <span class="icon"><i class="fa-solid fa-trash"></i></span>
+      </a>
+    </div>
+  </div>
+</div>
+{{end}}
+
+{{define "subscriptionRow"}}
+<div class="panel-block level is-mobile" id="subscription-{{.UUID}}">
+  <div class="level-left">
+    <span class="level-item">
+      <span class="panel-icon"><i class="fa-solid fa-rss"></i></span>
+      {{or .Alias .FeedTitle}}
+    </span>
+  </div>
+  <div class="level-right">
+    <div class="level-item buttons has-addons">
+      <a class="button is-small is-info is-light" href="/feeds/subscriptions/{{.UUID}}/edit"
+        title="Edit subscription: {{.FeedTitle}}"
+        hx-get="/feeds/subscriptions/{{.UUID}}/edit" hx-target="#subscription-edit-modal-body" hx-swap="innerHTML"
+        @click="subscriptionEditModalOpen = true">
+        <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
+      </a>
+      <a class="button is-small is-danger is-light" href="/feeds/subscriptions/{{.UUID}}/delete"
+        title="Delete subscription: {{.FeedTitle}}">
         <span class="icon"><i class="fa-solid fa-trash"></i></span>
       </a>
     </div>

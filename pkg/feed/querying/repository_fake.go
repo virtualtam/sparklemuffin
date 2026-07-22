@@ -409,5 +409,38 @@ func (r *FakeRepository) FeedQueryingSubscriptionByUUID(_ context.Context, userU
 }
 
 func (r *FakeRepository) FeedQueryingSubscriptionsByCategory(_ context.Context, userUUID string) ([]SubscriptionsByCategory, error) {
-	return []SubscriptionsByCategory{}, errors.New("not implemented")
+	feedsByUUID := make(map[string]feed.Feed, len(r.Feeds))
+	for _, f := range r.Feeds {
+		feedsByUUID[f.UUID] = f
+	}
+
+	var result []SubscriptionsByCategory
+
+	for _, category := range r.Categories {
+		if category.UserUUID != userUUID {
+			continue
+		}
+
+		byCategory := SubscriptionsByCategory{Category: category}
+
+		for _, s := range r.Subscriptions {
+			if s.UserUUID != userUUID || s.CategoryUUID != category.UUID {
+				continue
+			}
+
+			f := feedsByUUID[s.FeedUUID]
+
+			byCategory.Subscriptions = append(byCategory.Subscriptions, Subscription{
+				UUID:            s.UUID,
+				CategoryUUID:    s.CategoryUUID,
+				Alias:           s.Alias,
+				FeedTitle:       f.Title,
+				FeedDescription: f.Description,
+			})
+		}
+
+		result = append(result, byCategory)
+	}
+
+	return result, nil
 }

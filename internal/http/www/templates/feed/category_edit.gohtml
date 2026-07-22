@@ -7,31 +7,37 @@
     </ul>
   </nav>
 
-  <form action="/feeds/categories/{{.UUID}}/edit" method="POST">
-    <div class="field is-horizontal">
-      <div class="field-label is-normal">
-        <label class="label" for="name">Name</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <input class="input" type="text" id="name" name="name" placeholder="Name" value="{{.Name}}"
-              required="">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="field is-horizontal">
-      <div class="field-label"></div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <button type="submit" class="button is-primary">Save</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </form>
+  {{template "categoryEditForm" (dict "Category" . "InModal" false)}}
 </section>
+{{end}}
+
+{{/* InModal enables htmx attributes; only true when loaded into the subscriptions page's edit modal. */}}
+{{define "categoryEditForm"}}
+<form action="/feeds/categories/{{.Category.UUID}}/edit" method="POST"
+  {{if .InModal}}hx-post="/feeds/categories/{{.Category.UUID}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>
+  <div class="field is-horizontal">
+    <div class="field-label is-normal">
+      <label class="label" for="name">Name</label>
+    </div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <input class="input" type="text" id="name" name="name" placeholder="Name" value="{{.Category.Name}}"
+            required="">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field is-horizontal">
+    <div class="field-label"></div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <button type="submit" class="button is-primary">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
 {{end}}

@@ -378,6 +378,10 @@ func (fc *feedController) handleFeedCategoryDelete() func(w http.ResponseWriter,
 }
 
 // handleFeedCategoryEditView renders the feed category edition form.
+//
+// On an htmx request, it responds with only the form fragment, meant to be
+// loaded into the subscriptions page's edit modal. On a plain request, it
+// renders the full page as usual, so the URL stays independently navigable.
 func (fc *feedController) handleFeedCategoryEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -388,8 +392,16 @@ func (fc *feedController) handleFeedCategoryEditView() func(w http.ResponseWrite
 		category, err := fc.feedService.CategoryByUUID(ctx, ctxUser.UUID, categoryUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed category")
-			view.PutFlashError(w, "failed to retrieve feed category")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve feed category")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			formData := map[string]any{"Category": category, "InModal": true}
+			if err := fc.feedCategoryEditView.RenderTemplate(w, "categoryEditForm", formData); err != nil {
+				log.Error().Err(err).Msg("failed to render category edit form fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -403,6 +415,15 @@ func (fc *feedController) handleFeedCategoryEditView() func(w http.ResponseWrite
 }
 
 // handleFeedCategoryEdit processes the feed category edition form.
+//
+// On success:
+//   - htmx request: re-renders the category's heading and retargets/reswaps
+//     the response into it (outerHTML), and fires a "modal:close" client-side
+//     event so the subscriptions page's edit modal closes.
+//   - plain request: redirect to the subscriptions page, as before.
+//
+// On error, it falls back to the same flash+redirect (or HX-Redirect, for
+// htmx requests) behavior used throughout this file.
 func (fc *feedController) handleFeedCategoryEdit() func(w http.ResponseWriter, r *http.Request) {
 	type feedCategoryEditForm struct {
 		Name string `schema:"name"`
@@ -416,8 +437,7 @@ func (fc *feedController) handleFeedCategoryEdit() func(w http.ResponseWriter, r
 		var form feedCategoryEditForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse feed category edition form")
-			view.PutFlashError(w, "There was an error processing the form")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "There was an error processing the form")
 			return
 		}
 
@@ -429,8 +449,34 @@ func (fc *feedController) handleFeedCategoryEdit() func(w http.ResponseWriter, r
 
 		if err := fc.feedService.UpdateCategory(ctx, updatedCategory); err != nil {
 			log.Error().Err(err).Msg("failed to edit feed category")
-			view.PutFlashError(w, "failed to edit feed category")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to edit feed category")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			subscriptionsByCategory, err := fc.queryingService.SubscriptionsByCategory(ctx, ctxUser.UUID)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to retrieve feed categories")
+				view.RedirectOnError(w, r, "/feeds/subscriptions", "failed to retrieve feed categories")
+				return
+			}
+
+			var updated feedquerying.SubscriptionsByCategory
+			for _, c := range subscriptionsByCategory {
+				if c.UUID == categoryUUID {
+					updated = c
+					break
+				}
+			}
+
+			w.Header().Set(htmx.HeaderRetarget, "#category-"+categoryUUID)
+			w.Header().Set(htmx.HeaderReswap, "outerHTML")
+			w.Header().Set(htmx.HeaderTrigger, "modal:close")
+
+			if err := fc.feedSubscriptionListView.RenderTemplate(w, "categoryHeading", updated); err != nil {
+				log.Error().Err(err).Msg("failed to render category heading fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 

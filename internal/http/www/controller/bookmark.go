@@ -317,30 +317,6 @@ func (bc *bookmarkController) handleBookmarkEdit() func(w http.ResponseWriter, r
 	}
 }
 
-// redirectOnError reports an error to the user and redirects them to
-// redirectURL.
-//
-// If the request was issued by htmx, a plain http.Redirect must not be used:
-// this handler may be rendering an htmx fragment (hx-target + hx-swap), and
-// the browser follows a 3xx response to such a request transparently before
-// htmx ever sees it, which would swap the *final* response (typically a
-// full HTML page) into the fragment's target instead of triggering a real
-// navigation. HX-Redirect avoids this by having htmx itself perform a
-// client-side window.location redirect.
-//
-// For a plain (non-htmx) request, this handler may also be rendering the
-// full page directly (no fragment involved), so the original flash+redirect
-// behavior is preserved as-is.
-func (bc *bookmarkController) redirectOnError(w http.ResponseWriter, r *http.Request, redirectURL string, message string) {
-	if r.Header.Get(htmx.HeaderRequest) == "true" {
-		view.RedirectWithFlashError(w, redirectURL, message)
-		return
-	}
-
-	view.PutFlashError(w, message)
-	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
-}
-
 // handleBookmarkListView renders the bookmark list for the current authenticated user.
 //
 // On an htmx request, it responds with only the list content fragment
@@ -356,7 +332,7 @@ func (bc *bookmarkController) handleBookmarkListView() func(w http.ResponseWrite
 		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
 		if err != nil {
 			log.Warn().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
-			bc.redirectOnError(w, r, "/bookmarks", fmt.Sprintf("invalid page number: %q", pageNumberStr))
+			view.RedirectOnError(w, r, "/bookmarks", fmt.Sprintf("invalid page number: %q", pageNumberStr))
 			return
 		}
 
@@ -372,11 +348,11 @@ func (bc *bookmarkController) handleBookmarkListView() func(w http.ResponseWrite
 			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
-				bc.redirectOnError(w, r, "/bookmarks", msg)
+				view.RedirectOnError(w, r, "/bookmarks", msg)
 				return
 			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve bookmarks")
-				bc.redirectOnError(w, r, "/bookmarks", "failed to retrieve bookmarks")
+				view.RedirectOnError(w, r, "/bookmarks", "failed to retrieve bookmarks")
 				return
 			}
 
@@ -393,11 +369,11 @@ func (bc *bookmarkController) handleBookmarkListView() func(w http.ResponseWrite
 			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
 				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
 				log.Error().Err(err).Msg(msg)
-				bc.redirectOnError(w, r, "/bookmarks", msg)
+				view.RedirectOnError(w, r, "/bookmarks", msg)
 				return
 			} else if err != nil {
 				log.Error().Err(err).Msg("failed to retrieve bookmarks")
-				bc.redirectOnError(w, r, "/bookmarks", "failed to retrieve bookmarks")
+				view.RedirectOnError(w, r, "/bookmarks", "failed to retrieve bookmarks")
 				return
 			}
 
@@ -848,7 +824,7 @@ func (bc *bookmarkController) handleTagEditView() func(w http.ResponseWriter, r 
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
 			log.Error().Err(err).Msg("invalid tag")
-			bc.redirectOnError(w, r, r.URL.Path, "invalid tag")
+			view.RedirectOnError(w, r, r.URL.Path, "invalid tag")
 			return
 		}
 
@@ -892,7 +868,7 @@ func (bc *bookmarkController) handleTagEdit() func(w http.ResponseWriter, r *htt
 		var form tagEditForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse tag edition form")
-			bc.redirectOnError(w, r, r.URL.Path, "failed to process form")
+			view.RedirectOnError(w, r, r.URL.Path, "failed to process form")
 			return
 		}
 
@@ -901,7 +877,7 @@ func (bc *bookmarkController) handleTagEdit() func(w http.ResponseWriter, r *htt
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
 			log.Error().Err(err).Msg("invalid tag")
-			bc.redirectOnError(w, r, r.URL.Path, "invalid tag")
+			view.RedirectOnError(w, r, r.URL.Path, "invalid tag")
 			return
 		}
 
@@ -919,7 +895,7 @@ func (bc *bookmarkController) handleTagEdit() func(w http.ResponseWriter, r *htt
 		updated, err := bc.bookmarkService.UpdateTag(ctx, tagNameUpdate)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to rename tag")
-			bc.redirectOnError(w, r, r.URL.Path, "failed to rename tag")
+			view.RedirectOnError(w, r, r.URL.Path, "failed to rename tag")
 			return
 		}
 

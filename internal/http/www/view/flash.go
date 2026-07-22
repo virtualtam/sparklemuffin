@@ -116,3 +116,16 @@ func RedirectWithFlashError(w http.ResponseWriter, redirectURL string, message s
 	w.Header().Set(htmx.HeaderRedirect, redirectURL)
 	w.WriteHeader(http.StatusOK)
 }
+
+// RedirectOnError reports an error to the user and redirects them to
+// redirectURL, using HX-Redirect for htmx requests (see RedirectWithFlashError)
+// and a plain http.Redirect otherwise.
+func RedirectOnError(w http.ResponseWriter, r *http.Request, redirectURL string, message string) {
+	if r.Header.Get(htmx.HeaderRequest) == "true" {
+		RedirectWithFlashError(w, redirectURL, message)
+		return
+	}
+
+	PutFlashError(w, message)
+	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+}

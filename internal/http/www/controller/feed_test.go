@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jaswdr/faker/v2"
 
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
@@ -57,9 +58,11 @@ func newTestFeedController(preferences feed.Preferences, entriesMetadata []feed.
 	}
 
 	return feedController{
-		feedService:     feed.NewService(feedRepo, nil),
-		queryingService: feedquerying.NewService(queryingRepo),
-		feedListView:    view.New("feed/feed_list.gohtml"),
+		feedService:              feed.NewService(feedRepo, nil),
+		queryingService:          feedquerying.NewService(queryingRepo),
+		feedListView:             view.New("feed/feed_list.gohtml"),
+		feedSubscriptionListView: view.New("feed/subscription_list.gohtml"),
+		feedCategoryEditView:     view.New("feed/category_edit.gohtml"),
 	}
 }
 
@@ -617,5 +620,198 @@ func TestHandleHxEntryMetadataMarkAllAsReadByFeed(t *testing.T) {
 		fc.handleHxEntryMetadataMarkAllAsReadByFeed()(w, r)
 
 		assertRejectsNonHxRequest(t, w)
+	})
+}
+
+// newTestFeedControllerForCategoryEdit wires a feedController against the
+// given category (needs a real UUID, unlike testCategory's "category-1",
+// to satisfy CategoryByUUID/UpdateCategory's UUID format validation), for
+// exercising the category rename handlers.
+func newTestFeedControllerForCategoryEdit(category feed.Category) feedController {
+	feedRepo := &feed.FakeRepository{
+		Categories: []feed.Category{category},
+	}
+
+	queryingRepo := &feedquerying.FakeRepository{
+		Categories: []feed.Category{category},
+	}
+
+	return feedController{
+		feedService:              feed.NewService(feedRepo, nil),
+		queryingService:          feedquerying.NewService(queryingRepo),
+		feedSubscriptionListView: view.New("feed/subscription_list.gohtml"),
+		feedCategoryEditView:     view.New("feed/category_edit.gohtml"),
+	}
+}
+
+// newCategoryEditViewRequest builds a GET request against
+// /feeds/categories/{uuid}/edit.
+func newCategoryEditViewRequest(t *testing.T, ctxUser user.User, categoryUUID string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/feeds/categories/"+categoryUUID+"/edit", nil)
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uuid", categoryUUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+// newCategoryEditPostRequest builds a POST request against
+// /feeds/categories/{uuid}/edit.
+func newCategoryEditPostRequest(t *testing.T, ctxUser user.User, categoryUUID string, form url.Values, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/feeds/categories/"+categoryUUID+"/edit", strings.NewReader(form.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uuid", categoryUUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+func TestHandleFeedCategoryEditView(t *testing.T) {
+	fake := faker.New()
+	ctxUser := testCtxUser
+
+	t.Run("plain browser request renders the full page", func(t *testing.T) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		fc := newTestFeedControllerForCategoryEdit(category)
+		r := newCategoryEditViewRequest(t, ctxUser, category.UUID, false)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedCategoryEditView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a full page (with layout), got:\n%s", body)
+		}
+		if !strings.Contains(body, `value="`+category.Name+`"`) {
+			t.Errorf("want the category name pre-filled, got:\n%s", body)
+		}
+		if strings.Contains(body, "hx-post") {
+			t.Errorf("want a plain form with no htmx attributes on the full page, got:\n%s", body)
+		}
+	})
+
+	t.Run("htmx request renders only the form fragment", func(t *testing.T) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		fc := newTestFeedControllerForCategoryEdit(category)
+		r := newCategoryEditViewRequest(t, ctxUser, category.UUID, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedCategoryEditView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a fragment with no layout, got:\n%s", body)
+		}
+		if !strings.Contains(body, `value="`+category.Name+`"`) {
+			t.Errorf("want the category name pre-filled, got:\n%s", body)
+		}
+		if !strings.Contains(body, `hx-post="/feeds/categories/`) {
+			t.Errorf("want the modal fragment's form to be htmx-enhanced, got:\n%s", body)
+		}
+	})
+
+	t.Run("unknown category, htmx request uses HX-Redirect", func(t *testing.T) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		fc := newTestFeedControllerForCategoryEdit(category)
+		unknownUUID := fake.UUID().V4()
+		r := newCategoryEditViewRequest(t, ctxUser, unknownUUID, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedCategoryEditView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds/categories/"+unknownUUID+"/edit")
+	})
+}
+
+func TestHandleFeedCategoryEdit(t *testing.T) {
+	fake := faker.New()
+	ctxUser := testCtxUser
+
+	t.Run("plain browser request renames and redirects", func(t *testing.T) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		fc := newTestFeedControllerForCategoryEdit(category)
+		form := url.Values{"name": {fake.Lorem().Text(10)}}
+		r := newCategoryEditPostRequest(t, ctxUser, category.UUID, form, false)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedCategoryEdit()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("Location"); got != "/feeds/subscriptions" {
+			t.Errorf("want redirect to /feeds/subscriptions, got %q", got)
+		}
+	})
+
+	t.Run("htmx request retargets the response into the category's heading and closes the modal", func(t *testing.T) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		fc := newTestFeedControllerForCategoryEdit(category)
+		newName := fake.Lorem().Text(10)
+		form := url.Values{"name": {newName}}
+		r := newCategoryEditPostRequest(t, ctxUser, category.UUID, form, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedCategoryEdit()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		if got := w.Header().Get("HX-Retarget"); got != "#category-"+category.UUID {
+			t.Errorf("want HX-Retarget to the category's heading, got %q", got)
+		}
+		if got := w.Header().Get("HX-Reswap"); got != "outerHTML" {
+			t.Errorf("want HX-Reswap outerHTML, got %q", got)
+		}
+		if got := w.Header().Get("HX-Trigger"); got != "modal:close" {
+			t.Errorf("want HX-Trigger modal:close, got %q", got)
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, `id="category-`+category.UUID+`"`) {
+			t.Errorf("want the category's heading rendered, got:\n%s", body)
+		}
+		if !strings.Contains(body, newName) {
+			t.Errorf("want the new category name rendered, got:\n%s", body)
+		}
+	})
+
+	t.Run("unknown category, htmx request uses HX-Redirect", func(t *testing.T) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		fc := newTestFeedControllerForCategoryEdit(category)
+		unknownUUID := fake.UUID().V4()
+		form := url.Values{"name": {fake.Lorem().Text(10)}}
+		r := newCategoryEditPostRequest(t, ctxUser, unknownUUID, form, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedCategoryEdit()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds/categories/"+unknownUUID+"/edit")
 	})
 }

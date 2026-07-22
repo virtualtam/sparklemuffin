@@ -1,6 +1,6 @@
 {{define "content"}}
-<section id="top" class="section pt-3" x-data="{ tagEditModalOpen: false }"
-  @modal:close.window="tagEditModalOpen = false">
+<section id="top" class="section pt-3" x-data="{ tagEditModalOpen: false, tagDeleteModalOpen: false }"
+  @modal:close.window="tagEditModalOpen = false; tagDeleteModalOpen = false">
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
       <li><a href="/bookmarks">Bookmarks</a></li>
@@ -50,6 +50,17 @@
       <section class="modal-card-body" id="tag-edit-modal-body"></section>
     </div>
   </div>
+
+  <div class="modal" :class="{ 'is-active': tagDeleteModalOpen }">
+    <div class="modal-background" @click="tagDeleteModalOpen = false"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Delete tag</p>
+        <button class="delete" aria-label="close" @click="tagDeleteModalOpen = false"></button>
+      </header>
+      <section class="modal-card-body" id="tag-delete-modal-body"></section>
+    </div>
+  </div>
 </section>
 {{end}}
 
@@ -77,7 +88,9 @@
         <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
       </a>
       <a class="button is-small is-danger is-light" href="/bookmarks/tags/{{.EncodedName}}/delete"
-        title="Delete tag: {{.Name}}">
+        title="Delete tag: {{.Name}}"
+        hx-get="/bookmarks/tags/{{.EncodedName}}/delete" hx-target="#tag-delete-modal-body" hx-swap="innerHTML"
+        @click="tagDeleteModalOpen = true">
         <span class="icon"><i class="fa-solid fa-trash"></i></span>
       </a>
     </div>

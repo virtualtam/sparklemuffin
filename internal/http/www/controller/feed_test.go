@@ -1061,3 +1061,381 @@ func TestHandleFeedSubscriptionEdit(t *testing.T) {
 		assertHXRedirectOnError(t, w, "/feeds/subscriptions/"+unknownUUID+"/edit")
 	})
 }
+
+// newTestFeedControllerForCategoryDelete wires a feedController against the
+// given category, for exercising the category delete handlers.
+func newTestFeedControllerForCategoryDelete(category feed.Category) feedController {
+	feedRepo := &feed.FakeRepository{
+		Categories: []feed.Category{category},
+	}
+
+	return feedController{
+		feedService:            feed.NewService(feedRepo, nil),
+		feedCategoryDeleteView: view.New("feed/category_delete.gohtml"),
+	}
+}
+
+// newCategoryDeleteViewRequest builds a GET request against
+// /feeds/categories/{uuid}/delete.
+func newCategoryDeleteViewRequest(t *testing.T, ctxUser user.User, categoryUUID string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/feeds/categories/"+categoryUUID+"/delete", nil)
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uuid", categoryUUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+// newCategoryDeletePostRequest builds a POST request against
+// /feeds/categories/{uuid}/delete.
+func newCategoryDeletePostRequest(t *testing.T, ctxUser user.User, categoryUUID string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/feeds/categories/"+categoryUUID+"/delete", strings.NewReader(""))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uuid", categoryUUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+func TestHandleFeedCategoryDeleteView(t *testing.T) {
+	fake := faker.New()
+	ctxUser := testCtxUser
+
+	t.Run("plain browser request renders the full page", func(t *testing.T) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		fc := newTestFeedControllerForCategoryDelete(category)
+		r := newCategoryDeleteViewRequest(t, ctxUser, category.UUID, false)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedCategoryDeleteView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a full page (with layout), got:\n%s", body)
+		}
+		if !strings.Contains(body, category.Name) {
+			t.Errorf("want the category name rendered, got:\n%s", body)
+		}
+		if strings.Contains(body, "hx-post") {
+			t.Errorf("want a plain form with no htmx attributes on the full page, got:\n%s", body)
+		}
+	})
+
+	t.Run("htmx request renders only the form fragment", func(t *testing.T) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		fc := newTestFeedControllerForCategoryDelete(category)
+		r := newCategoryDeleteViewRequest(t, ctxUser, category.UUID, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedCategoryDeleteView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a fragment with no layout, got:\n%s", body)
+		}
+		if !strings.Contains(body, category.Name) {
+			t.Errorf("want the category name rendered, got:\n%s", body)
+		}
+		if !strings.Contains(body, `hx-post="/feeds/categories/`) {
+			t.Errorf("want the modal fragment's form to be htmx-enhanced, got:\n%s", body)
+		}
+	})
+
+	t.Run("unknown category, htmx request uses HX-Redirect", func(t *testing.T) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		fc := newTestFeedControllerForCategoryDelete(category)
+		unknownUUID := fake.UUID().V4()
+		r := newCategoryDeleteViewRequest(t, ctxUser, unknownUUID, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedCategoryDeleteView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds/categories/"+unknownUUID+"/delete")
+	})
+}
+
+// TestHandleFeedCategoryDelete does not cover an "unknown category" case:
+// unlike DeleteSubscription, feedService.DeleteCategory deletes by match with
+// no prior existence check, so deleting an unknown category succeeds as a
+// no-op rather than erroring.
+func TestHandleFeedCategoryDelete(t *testing.T) {
+	fake := faker.New()
+	ctxUser := testCtxUser
+
+	t.Run("plain browser request deletes and redirects", func(t *testing.T) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		fc := newTestFeedControllerForCategoryDelete(category)
+		r := newCategoryDeletePostRequest(t, ctxUser, category.UUID, false)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedCategoryDelete()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("Location"); got != "/feeds" {
+			t.Errorf("want redirect to /feeds, got %q", got)
+		}
+	})
+
+	t.Run("htmx request retargets an empty response into the category's column and closes the modal", func(t *testing.T) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		fc := newTestFeedControllerForCategoryDelete(category)
+		r := newCategoryDeletePostRequest(t, ctxUser, category.UUID, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedCategoryDelete()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("HX-Retarget"); got != "#category-column-"+category.UUID {
+			t.Errorf("want HX-Retarget to the category's column, got %q", got)
+		}
+		if got := w.Header().Get("HX-Reswap"); got != "outerHTML" {
+			t.Errorf("want HX-Reswap outerHTML, got %q", got)
+		}
+		if got := w.Header().Get("HX-Trigger"); got != "modal:close" {
+			t.Errorf("want HX-Trigger modal:close, got %q", got)
+		}
+		if w.Body.String() != "" {
+			t.Errorf("want an empty response body to remove the column, got:\n%s", w.Body.String())
+		}
+	})
+}
+
+// newTestFeedControllerForSubscriptionDelete wires a feedController against
+// the given subscription/feed/categories, for exercising the subscription
+// delete handlers.
+func newTestFeedControllerForSubscriptionDelete(subscription feed.Subscription, subscribedFeed feed.Feed, categories []feed.Category) feedController {
+	feedRepo := &feed.FakeRepository{
+		Categories:    categories,
+		Feeds:         []feed.Feed{subscribedFeed},
+		Subscriptions: []feed.Subscription{subscription},
+	}
+
+	queryingRepo := &feedquerying.FakeRepository{
+		Categories:    categories,
+		Feeds:         []feed.Feed{subscribedFeed},
+		Subscriptions: []feed.Subscription{subscription},
+	}
+
+	return feedController{
+		feedService:                feed.NewService(feedRepo, nil),
+		queryingService:            feedquerying.NewService(queryingRepo),
+		feedSubscriptionDeleteView: view.New("feed/subscription_delete.gohtml"),
+	}
+}
+
+// newSubscriptionDeleteViewRequest builds a GET request against
+// /feeds/subscriptions/{uuid}/delete.
+func newSubscriptionDeleteViewRequest(t *testing.T, ctxUser user.User, subscriptionUUID string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/feeds/subscriptions/"+subscriptionUUID+"/delete", nil)
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uuid", subscriptionUUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+// newSubscriptionDeletePostRequest builds a POST request against
+// /feeds/subscriptions/{uuid}/delete.
+func newSubscriptionDeletePostRequest(t *testing.T, ctxUser user.User, subscriptionUUID string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/feeds/subscriptions/"+subscriptionUUID+"/delete", strings.NewReader(""))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uuid", subscriptionUUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+func TestHandleFeedSubscriptionDeleteView(t *testing.T) {
+	fake := faker.New()
+	ctxUser := testCtxUser
+
+	newFixture := func() (feed.Subscription, feed.Feed, []feed.Category) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		subscribedFeed := feed.Feed{UUID: fake.UUID().V4(), Title: fake.Lorem().Text(10)}
+		subscription := feed.Subscription{
+			UUID:         fake.UUID().V4(),
+			UserUUID:     ctxUser.UUID,
+			FeedUUID:     subscribedFeed.UUID,
+			CategoryUUID: category.UUID,
+			Alias:        fake.Lorem().Text(10),
+		}
+		return subscription, subscribedFeed, []feed.Category{category}
+	}
+
+	t.Run("plain browser request renders the full page", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionDelete(subscription, subscribedFeed, categories)
+		r := newSubscriptionDeleteViewRequest(t, ctxUser, subscription.UUID, false)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionDeleteView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a full page (with layout), got:\n%s", body)
+		}
+		if !strings.Contains(body, subscription.Alias) {
+			t.Errorf("want the subscription alias rendered, got:\n%s", body)
+		}
+		if strings.Contains(body, "hx-post") {
+			t.Errorf("want a plain form with no htmx attributes on the full page, got:\n%s", body)
+		}
+	})
+
+	t.Run("htmx request renders only the form fragment", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionDelete(subscription, subscribedFeed, categories)
+		r := newSubscriptionDeleteViewRequest(t, ctxUser, subscription.UUID, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionDeleteView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a fragment with no layout, got:\n%s", body)
+		}
+		if !strings.Contains(body, subscription.Alias) {
+			t.Errorf("want the subscription alias rendered, got:\n%s", body)
+		}
+		if !strings.Contains(body, `hx-post="/feeds/subscriptions/`) {
+			t.Errorf("want the modal fragment's form to be htmx-enhanced, got:\n%s", body)
+		}
+	})
+
+	t.Run("unknown subscription, htmx request uses HX-Redirect", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionDelete(subscription, subscribedFeed, categories)
+		unknownUUID := fake.UUID().V4()
+		r := newSubscriptionDeleteViewRequest(t, ctxUser, unknownUUID, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionDeleteView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds/subscriptions/"+unknownUUID+"/delete")
+	})
+}
+
+func TestHandleFeedSubscriptionDelete(t *testing.T) {
+	fake := faker.New()
+	ctxUser := testCtxUser
+
+	newFixture := func() (feed.Subscription, feed.Feed, []feed.Category) {
+		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+		subscribedFeed := feed.Feed{UUID: fake.UUID().V4(), Title: fake.Lorem().Text(10)}
+		subscription := feed.Subscription{
+			UUID:         fake.UUID().V4(),
+			UserUUID:     ctxUser.UUID,
+			FeedUUID:     subscribedFeed.UUID,
+			CategoryUUID: category.UUID,
+			Alias:        fake.Lorem().Text(10),
+		}
+		return subscription, subscribedFeed, []feed.Category{category}
+	}
+
+	t.Run("plain browser request deletes and redirects", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionDelete(subscription, subscribedFeed, categories)
+		r := newSubscriptionDeletePostRequest(t, ctxUser, subscription.UUID, false)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionDelete()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("Location"); got != "/feeds" {
+			t.Errorf("want redirect to /feeds, got %q", got)
+		}
+	})
+
+	t.Run("htmx request retargets an empty response into the subscription's row and closes the modal", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionDelete(subscription, subscribedFeed, categories)
+		r := newSubscriptionDeletePostRequest(t, ctxUser, subscription.UUID, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionDelete()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("HX-Retarget"); got != "#subscription-"+subscription.UUID {
+			t.Errorf("want HX-Retarget to the subscription's row, got %q", got)
+		}
+		if got := w.Header().Get("HX-Reswap"); got != "outerHTML" {
+			t.Errorf("want HX-Reswap outerHTML, got %q", got)
+		}
+		if got := w.Header().Get("HX-Trigger"); got != "modal:close" {
+			t.Errorf("want HX-Trigger modal:close, got %q", got)
+		}
+		if w.Body.String() != "" {
+			t.Errorf("want an empty response body to remove the row, got:\n%s", w.Body.String())
+		}
+	})
+
+	t.Run("unknown subscription, htmx request uses HX-Redirect", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionDelete(subscription, subscribedFeed, categories)
+		unknownUUID := fake.UUID().V4()
+		r := newSubscriptionDeletePostRequest(t, ctxUser, unknownUUID, true)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionDelete()(w, r)
+
+		assertHXRedirectOnError(t, w, "/feeds/subscriptions/"+unknownUUID+"/delete")
+	})
+}

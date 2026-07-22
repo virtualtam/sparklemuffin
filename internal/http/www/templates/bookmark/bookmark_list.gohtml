@@ -5,8 +5,9 @@
   an empty modal and growing it once the (much taller, EasyMDE-bearing) form
   arrives caused a visible resize jump.
 */}}
-<section class="section pt-3" id="bookmark-list-content" x-data="{ bookmarkEditModalOpen: false }"
-  @modal:close.window="bookmarkEditModalOpen = false"
+<section class="section pt-3" id="bookmark-list-content"
+  x-data="{ bookmarkEditModalOpen: false, bookmarkDeleteModalOpen: false }"
+  @modal:close.window="bookmarkEditModalOpen = false; bookmarkDeleteModalOpen = false"
   @htmx:after-swap.window="if ($event.detail.target.id === 'bookmark-edit-modal-body') bookmarkEditModalOpen = true">
   {{template "bookmarkSearchForm" .}}
   <ol start="{{.Page.ItemOffset}}">
@@ -42,6 +43,17 @@
         <button class="delete" aria-label="close" @click="bookmarkEditModalOpen = false"></button>
       </header>
       <section class="modal-card-body" id="bookmark-edit-modal-body"></section>
+    </div>
+  </div>
+
+  <div class="modal" :class="{ 'is-active': bookmarkDeleteModalOpen }">
+    <div class="modal-background" @click="bookmarkDeleteModalOpen = false"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Delete bookmark</p>
+        <button class="delete" aria-label="close" @click="bookmarkDeleteModalOpen = false"></button>
+      </header>
+      <section class="modal-card-body" id="bookmark-delete-modal-body"></section>
     </div>
   </div>
 </section>
@@ -105,7 +117,9 @@
                   <span>Edit</span>
                 </span>
               </a>
-              <a href="/bookmarks/{{.Bookmark.UID}}/delete" class="dropdown-item px-4">
+              <a href="/bookmarks/{{.Bookmark.UID}}/delete" class="dropdown-item px-4"
+                hx-get="/bookmarks/{{.Bookmark.UID}}/delete" hx-target="#bookmark-delete-modal-body" hx-swap="innerHTML"
+                @click="bookmarkDeleteModalOpen = true">
                 <span class="icon-text">
                   <span class="icon">
                     <i class="fa-solid fa-trash"></i>

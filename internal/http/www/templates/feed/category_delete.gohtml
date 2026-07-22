@@ -7,12 +7,18 @@
     </ul>
   </nav>
 
-  <p class="mb-4">Delete feed category and subscriptions: <strong>{{.Name}}</strong>?</p>
-
-  <form action="/feeds/categories/{{.UUID}}/delete" method="POST">
-    <p>
-      <button type="submit" class="button is-danger">Delete</button>
-    </p>
-  </form>
+  {{template "categoryDeleteForm" (dict "Category" . "InModal" false)}}
 </section>
+{{end}}
+
+{{/* InModal enables htmx attributes; only true when loaded into the subscriptions page's delete modal. */}}
+{{define "categoryDeleteForm"}}
+<p class="mb-4">Delete feed category and subscriptions: <strong>{{.Category.Name}}</strong>?</p>
+
+<form action="/feeds/categories/{{.Category.UUID}}/delete" method="POST"
+  {{if .InModal}}hx-post="/feeds/categories/{{.Category.UUID}}/delete" hx-target="this" hx-swap="outerHTML"{{end}}>
+  <p>
+    <button type="submit" class="button is-danger">Delete</button>
+  </p>
+</form>
 {{end}}

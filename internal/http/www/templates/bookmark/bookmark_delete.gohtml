@@ -7,12 +7,18 @@
     </ul>
   </nav>
 
-  <p class="mb-4">Delete bookmark: <a href="{{.URL}}">{{.Title}}</a>?</p>
-
-  <form action="/bookmarks/{{.UID}}/delete" method="POST">
-    <div class="field">
-      <button type="submit" class="button is-danger">Delete</button>
-    </div>
-  </form>
+  {{template "bookmarkDeleteForm" (dict "Bookmark" . "InModal" false)}}
 </section>
+{{end}}
+
+{{/* InModal enables htmx attributes; only true when loaded into the bookmark list page's delete modal. */}}
+{{define "bookmarkDeleteForm"}}
+<p class="mb-4">Delete bookmark: <a href="{{.Bookmark.URL}}">{{.Bookmark.Title}}</a>?</p>
+
+<form action="/bookmarks/{{.Bookmark.UID}}/delete" method="POST"
+  {{if .InModal}}hx-post="/bookmarks/{{.Bookmark.UID}}/delete" hx-target="this" hx-swap="outerHTML"{{end}}>
+  <div class="field">
+    <button type="submit" class="button is-danger">Delete</button>
+  </div>
+</form>
 {{end}}

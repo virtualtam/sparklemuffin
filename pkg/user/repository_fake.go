@@ -23,6 +23,7 @@ func (r *FakeRepository) UserDeleteByUUID(_ context.Context, userUUID string) er
 	for index, user := range r.Users {
 		if user.UUID == userUUID {
 			r.Users = slices.Delete(r.Users, index, index+1)
+			return nil
 		}
 	}
 

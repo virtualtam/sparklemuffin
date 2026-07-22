@@ -209,6 +209,7 @@ func newTestBookmarkControllerForTagEdit(bookmarks []bookmark.Bookmark) bookmark
 		bookmarkService: bookmark.NewService(repo),
 		tagListView:     view.New("bookmark/tag_list.gohtml"),
 		tagEditView:     view.New("bookmark/tag_edit.gohtml"),
+		tagDeleteView:   view.New("bookmark/tag_delete.gohtml"),
 	}
 }
 
@@ -419,6 +420,209 @@ func TestHandleTagEdit(t *testing.T) {
 	})
 }
 
+// newTagDeleteViewRequest builds a GET request against
+// /bookmarks/tags/{name}/delete, with the tag name chi URL param
+// base64-encoded as the real routes expect.
+func newTagDeleteViewRequest(t *testing.T, ctxUser user.User, tagName string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	encodedName := base64.URLEncoding.EncodeToString([]byte(tagName))
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/bookmarks/tags/"+encodedName+"/delete", nil)
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("name", encodedName)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+// newTagDeleteViewRequestRaw builds a GET request against
+// /bookmarks/tags/{name}/delete using rawEncodedName verbatim as the chi URL
+// param, without base64-encoding it first: used to exercise the invalid-tag
+// error path.
+func newTagDeleteViewRequestRaw(t *testing.T, ctxUser user.User, rawEncodedName string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/bookmarks/tags/"+rawEncodedName+"/delete", nil)
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("name", rawEncodedName)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+// newTagDeletePostRequest builds a POST request against
+// /bookmarks/tags/{name}/delete.
+func newTagDeletePostRequest(t *testing.T, ctxUser user.User, tagName string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	encodedName := base64.URLEncoding.EncodeToString([]byte(tagName))
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/bookmarks/tags/"+encodedName+"/delete", strings.NewReader(""))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("name", encodedName)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+// newTagDeletePostRequestRaw builds a POST request against
+// /bookmarks/tags/{name}/delete using rawEncodedName verbatim as the chi URL
+// param, without base64-encoding it first: used to exercise the invalid-tag
+// error path.
+func newTagDeletePostRequestRaw(t *testing.T, ctxUser user.User, rawEncodedName string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/bookmarks/tags/"+rawEncodedName+"/delete", strings.NewReader(""))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("name", rawEncodedName)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+func TestHandleTagDeleteView(t *testing.T) {
+	ctxUser := testBookmarkCtxUser
+
+	t.Run("plain browser request renders the full page", func(t *testing.T) {
+		bc := newTestBookmarkControllerForTagEdit(nil)
+		r := newTagDeleteViewRequest(t, ctxUser, "example", false)
+		w := httptest.NewRecorder()
+
+		bc.handleTagDeleteView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a full page (with layout), got:\n%s", body)
+		}
+		if !strings.Contains(body, "example") {
+			t.Errorf("want the tag name rendered, got:\n%s", body)
+		}
+		if strings.Contains(body, "hx-post") {
+			t.Errorf("want a plain form with no htmx attributes on the full page, got:\n%s", body)
+		}
+	})
+
+	t.Run("htmx request renders only the form fragment", func(t *testing.T) {
+		bc := newTestBookmarkControllerForTagEdit(nil)
+		r := newTagDeleteViewRequest(t, ctxUser, "example", true)
+		w := httptest.NewRecorder()
+
+		bc.handleTagDeleteView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a fragment with no layout, got:\n%s", body)
+		}
+		if !strings.Contains(body, "example") {
+			t.Errorf("want the tag name rendered, got:\n%s", body)
+		}
+		if !strings.Contains(body, `hx-post="/bookmarks/tags/`) {
+			t.Errorf("want the modal fragment's form to be htmx-enhanced, got:\n%s", body)
+		}
+	})
+
+	t.Run("invalid tag, htmx request uses HX-Redirect", func(t *testing.T) {
+		bc := newTestBookmarkControllerForTagEdit(nil)
+		r := newTagDeleteViewRequestRaw(t, ctxUser, "not-valid-base64!!", true)
+		w := httptest.NewRecorder()
+
+		bc.handleTagDeleteView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/bookmarks/tags/not-valid-base64!!/delete")
+	})
+}
+
+func TestHandleTagDelete(t *testing.T) {
+	ctxUser := testBookmarkCtxUser
+
+	t.Run("plain browser request deletes and redirects", func(t *testing.T) {
+		bc := newTestBookmarkControllerForTagEdit([]bookmark.Bookmark{testBookmarkEntry})
+		r := newTagDeletePostRequest(t, ctxUser, "example", false)
+		w := httptest.NewRecorder()
+
+		bc.handleTagDelete()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("Location"); got != "/bookmarks/tags" {
+			t.Errorf("want redirect to /bookmarks/tags, got %q", got)
+		}
+	})
+
+	t.Run("htmx request retargets an empty response into the tag's row and closes the modal", func(t *testing.T) {
+		bc := newTestBookmarkControllerForTagEdit([]bookmark.Bookmark{testBookmarkEntry})
+		r := newTagDeletePostRequest(t, ctxUser, "example", true)
+		w := httptest.NewRecorder()
+
+		bc.handleTagDelete()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		encodedName := base64.URLEncoding.EncodeToString([]byte("example"))
+
+		if got := w.Header().Get("HX-Retarget"); got != fmt.Sprintf("[id='tag-row-%s']", encodedName) {
+			t.Errorf("want HX-Retarget to the tag's row, got %q", got)
+		}
+		if got := w.Header().Get("HX-Reswap"); got != "outerHTML" {
+			t.Errorf("want HX-Reswap outerHTML, got %q", got)
+		}
+		if got := w.Header().Get("HX-Trigger"); got != "modal:close" {
+			t.Errorf("want HX-Trigger modal:close, got %q", got)
+		}
+		if w.Body.String() != "" {
+			t.Errorf("want an empty response body to remove the row, got:\n%s", w.Body.String())
+		}
+	})
+
+	t.Run("invalid tag, htmx request uses HX-Redirect", func(t *testing.T) {
+		bc := newTestBookmarkControllerForTagEdit(nil)
+		r := newTagDeletePostRequestRaw(t, ctxUser, "not-valid-base64!!", true)
+		w := httptest.NewRecorder()
+
+		bc.handleTagDelete()(w, r)
+
+		assertHXRedirectOnError(t, w, "/bookmarks/tags/not-valid-base64!!/delete")
+	})
+}
+
 // newTestBookmarkControllerForBookmarkEdit wires a bookmarkController
 // against the given bookmark, for exercising the bookmark edit handlers.
 func newTestBookmarkControllerForBookmarkEdit(ctxUser user.User, b bookmark.Bookmark) bookmarkController {
@@ -623,5 +827,196 @@ func TestHandleBookmarkEdit(t *testing.T) {
 		bc.handleBookmarkEdit()(w, r)
 
 		assertHXRedirectOnError(t, w, "/bookmarks/"+unknownUID+"/edit")
+	})
+}
+
+// newTestBookmarkControllerForBookmarkDelete wires a bookmarkController
+// against the given bookmark, for exercising the bookmark delete handlers.
+func newTestBookmarkControllerForBookmarkDelete(b bookmark.Bookmark) bookmarkController {
+	repo := &bookmark.FakeRepository{Bookmarks: []bookmark.Bookmark{b}}
+
+	return bookmarkController{
+		bookmarkService:    bookmark.NewService(repo),
+		bookmarkDeleteView: view.New("bookmark/bookmark_delete.gohtml"),
+	}
+}
+
+// newBookmarkDeleteViewRequest builds a GET request against
+// /bookmarks/{uid}/delete.
+func newBookmarkDeleteViewRequest(t *testing.T, ctxUser user.User, bookmarkUID string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/bookmarks/"+bookmarkUID+"/delete", nil)
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uid", bookmarkUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+// newBookmarkDeletePostRequest builds a POST request against
+// /bookmarks/{uid}/delete.
+func newBookmarkDeletePostRequest(t *testing.T, ctxUser user.User, bookmarkUID string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/bookmarks/"+bookmarkUID+"/delete", strings.NewReader(""))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uid", bookmarkUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
+func TestHandleBookmarkDeleteView(t *testing.T) {
+	fake := faker.New()
+	ctxUser := user.User{UUID: fake.UUID().V4(), NickName: fake.Internet().User(), DisplayName: fake.Person().Name()}
+
+	newFixture := func() bookmark.Bookmark {
+		return bookmark.Bookmark{
+			UID:      ksuid.New().String(),
+			UserUUID: ctxUser.UUID,
+			URL:      fake.Internet().URL(),
+			Title:    fake.Lorem().Text(10),
+		}
+	}
+
+	t.Run("plain browser request renders the full page", func(t *testing.T) {
+		b := newFixture()
+		bc := newTestBookmarkControllerForBookmarkDelete(b)
+		r := newBookmarkDeleteViewRequest(t, ctxUser, b.UID, false)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkDeleteView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a full page (with layout), got:\n%s", body)
+		}
+		if !strings.Contains(body, b.Title) {
+			t.Errorf("want the bookmark title rendered, got:\n%s", body)
+		}
+		if strings.Contains(body, "hx-post") {
+			t.Errorf("want a plain form with no htmx attributes on the full page, got:\n%s", body)
+		}
+	})
+
+	t.Run("htmx request renders only the form fragment", func(t *testing.T) {
+		b := newFixture()
+		bc := newTestBookmarkControllerForBookmarkDelete(b)
+		r := newBookmarkDeleteViewRequest(t, ctxUser, b.UID, true)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkDeleteView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a fragment with no layout, got:\n%s", body)
+		}
+		if !strings.Contains(body, b.Title) {
+			t.Errorf("want the bookmark title rendered, got:\n%s", body)
+		}
+		if !strings.Contains(body, `hx-post="/bookmarks/`) {
+			t.Errorf("want the modal fragment's form to be htmx-enhanced, got:\n%s", body)
+		}
+	})
+
+	t.Run("unknown bookmark, htmx request uses HX-Redirect", func(t *testing.T) {
+		b := newFixture()
+		bc := newTestBookmarkControllerForBookmarkDelete(b)
+		unknownUID := ksuid.New().String()
+		r := newBookmarkDeleteViewRequest(t, ctxUser, unknownUID, true)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkDeleteView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/bookmarks/"+unknownUID+"/delete")
+	})
+}
+
+func TestHandleBookmarkDelete(t *testing.T) {
+	fake := faker.New()
+	ctxUser := user.User{UUID: fake.UUID().V4(), NickName: fake.Internet().User(), DisplayName: fake.Person().Name()}
+
+	newFixture := func() bookmark.Bookmark {
+		return bookmark.Bookmark{
+			UID:      ksuid.New().String(),
+			UserUUID: ctxUser.UUID,
+			URL:      fake.Internet().URL(),
+			Title:    fake.Lorem().Text(10),
+		}
+	}
+
+	t.Run("plain browser request deletes and redirects", func(t *testing.T) {
+		b := newFixture()
+		bc := newTestBookmarkControllerForBookmarkDelete(b)
+		r := newBookmarkDeletePostRequest(t, ctxUser, b.UID, false)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkDelete()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("Location"); got != "/bookmarks" {
+			t.Errorf("want redirect to /bookmarks, got %q", got)
+		}
+	})
+
+	t.Run("htmx request retargets an empty response into the bookmark's row and closes the modal", func(t *testing.T) {
+		b := newFixture()
+		bc := newTestBookmarkControllerForBookmarkDelete(b)
+		r := newBookmarkDeletePostRequest(t, ctxUser, b.UID, true)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkDelete()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("HX-Retarget"); got != "#bookmark-row-"+b.UID {
+			t.Errorf("want HX-Retarget to the bookmark's row, got %q", got)
+		}
+		if got := w.Header().Get("HX-Reswap"); got != "outerHTML" {
+			t.Errorf("want HX-Reswap outerHTML, got %q", got)
+		}
+		if got := w.Header().Get("HX-Trigger"); got != "modal:close" {
+			t.Errorf("want HX-Trigger modal:close, got %q", got)
+		}
+		if w.Body.String() != "" {
+			t.Errorf("want an empty response body to remove the row, got:\n%s", w.Body.String())
+		}
+	})
+
+	t.Run("unknown bookmark, htmx request uses HX-Redirect", func(t *testing.T) {
+		b := newFixture()
+		bc := newTestBookmarkControllerForBookmarkDelete(b)
+		unknownUID := ksuid.New().String()
+		r := newBookmarkDeletePostRequest(t, ctxUser, unknownUID, true)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkDelete()(w, r)
+
+		assertHXRedirectOnError(t, w, "/bookmarks/"+unknownUID+"/delete")
 	})
 }

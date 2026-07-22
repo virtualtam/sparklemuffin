@@ -43,8 +43,6 @@ The roadmap is based on the Now / Next / Later format to communicate current foc
 - Database: Review connection pool transaction and timeout usage
 
 ### API
-- API: /health endpoint
-- API: /healthcheck endpoint
 - API: OpenAPI or gRPC?
 - API: Authentication flow
 

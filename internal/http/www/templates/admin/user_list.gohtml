@@ -1,5 +1,6 @@
 {{define "content"}}
-<section class="section pt-3">
+<section class="section pt-3" x-data="{ userDeleteModalOpen: false }"
+  @modal:close.window="userDeleteModalOpen = false">
   <nav class="breadcrumb" aria-label="breadcrumbs">
     <ul>
       <li class="is-active"><a href="#" aria-current="page">Administration</a></li>
@@ -8,41 +9,54 @@
   </nav>
 
   {{template "userTable" .}}
-  {{end}}
 
-  {{define "userTable"}}
-  <table class="table is-striped is-hoverable">
-    <thead>
-      <tr>
-        <th>Email</th>
-        <th>Nickname</th>
-        <th>Display Name</th>
-        <th>Is Admin?</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{range .}}
-      {{template "userRow" .}}
-      {{end}}
-    </tbody>
-  </table>
-  {{end}}
-
-  {{define "userRow"}}
-  <tr>
-    <td>{{.Email}}</td>
-    <td>{{.NickName}}</td>
-    <td>{{.DisplayName}}</td>
-    <td>{{if .IsAdmin}}yes{{else}}no{{end}}</td>
-    <td>
-      <a href="/admin/users/{{.UUID}}" title="Edit user">
-        <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
-      </a>
-      <a class="has-text-danger" href="/admin/users/{{.UUID}}/delete" title="Delete user">
-        <span class="icon"><i class="fa-solid fa-trash"></i></span>
-      </a>
-    </td>
-  </tr>
+  <div class="modal" :class="{ 'is-active': userDeleteModalOpen }">
+    <div class="modal-background" @click="userDeleteModalOpen = false"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Delete user</p>
+        <button class="delete" aria-label="close" @click="userDeleteModalOpen = false"></button>
+      </header>
+      <section class="modal-card-body" id="user-delete-modal-body"></section>
+    </div>
+  </div>
 </section>
+{{end}}
+
+{{define "userTable"}}
+<table class="table is-striped is-hoverable">
+  <thead>
+    <tr>
+      <th>Email</th>
+      <th>Nickname</th>
+      <th>Display Name</th>
+      <th>Is Admin?</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .}}
+    {{template "userRow" .}}
+    {{end}}
+  </tbody>
+</table>
+{{end}}
+
+{{define "userRow"}}
+<tr id="user-row-{{.UUID}}">
+  <td>{{.Email}}</td>
+  <td>{{.NickName}}</td>
+  <td>{{.DisplayName}}</td>
+  <td>{{if .IsAdmin}}yes{{else}}no{{end}}</td>
+  <td>
+    <a href="/admin/users/{{.UUID}}" title="Edit user">
+      <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
+    </a>
+    <a class="has-text-danger" href="/admin/users/{{.UUID}}/delete" title="Delete user"
+      hx-get="/admin/users/{{.UUID}}/delete" hx-target="#user-delete-modal-body" hx-swap="innerHTML"
+      @click="userDeleteModalOpen = true">
+      <span class="icon"><i class="fa-solid fa-trash"></i></span>
+    </a>
+  </td>
+</tr>
 {{end}}

@@ -337,6 +337,10 @@ func (fc *feedController) handleFeedCategoryAdd() func(w http.ResponseWriter, r 
 }
 
 // handleFeedCategoryDeleteView renders the feed category deletion form.
+//
+// On an htmx request, it responds with only the form fragment, meant to be
+// loaded into the subscriptions page's delete modal. On a plain request, it
+// renders the full page as usual, so the URL stays independently navigable.
 func (fc *feedController) handleFeedCategoryDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		categoryUUID := chi.URLParam(r, "uuid")
@@ -346,8 +350,16 @@ func (fc *feedController) handleFeedCategoryDeleteView() func(w http.ResponseWri
 		category, err := fc.feedService.CategoryByUUID(ctx, ctxUser.UUID, categoryUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed category")
-			view.PutFlashError(w, "failed to retrieve feed category")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve feed category")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			formData := map[string]any{"Category": category, "InModal": true}
+			if err := fc.feedCategoryDeleteView.RenderTemplate(w, "categoryDeleteForm", formData); err != nil {
+				log.Error().Err(err).Msg("failed to render category delete form fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -360,6 +372,17 @@ func (fc *feedController) handleFeedCategoryDeleteView() func(w http.ResponseWri
 	}
 }
 
+// handleFeedCategoryDelete processes the feed category deletion form.
+//
+// On success:
+//   - htmx request: retargets/reswaps an empty response into the category's
+//     column (outerHTML), removing it and its subscriptions, and fires a
+//     "modal:close" client-side event so the subscriptions page's delete
+//     modal closes.
+//   - plain request: redirect to the feeds page, as before.
+//
+// On error, it falls back to the same flash+redirect (or HX-Redirect, for
+// htmx requests) behavior used throughout this file.
 func (fc *feedController) handleFeedCategoryDelete() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		categoryUUID := chi.URLParam(r, "uuid")
@@ -368,8 +391,14 @@ func (fc *feedController) handleFeedCategoryDelete() func(w http.ResponseWriter,
 
 		if err := fc.feedService.DeleteCategory(ctx, ctxUser.UUID, categoryUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete feed category")
-			view.PutFlashError(w, "failed to delete feed category")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to delete feed category")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			w.Header().Set(htmx.HeaderRetarget, "#category-column-"+categoryUUID)
+			w.Header().Set(htmx.HeaderReswap, "outerHTML")
+			w.Header().Set(htmx.HeaderTrigger, "modal:close")
 			return
 		}
 
@@ -847,6 +876,12 @@ func (fc *feedController) handleFeedSubscriptionAdd() func(w http.ResponseWriter
 }
 
 // handleFeedSubscriptionDeleteView renders the feed subscription deletion form.
+// handleFeedSubscriptionDeleteView renders the feed subscription deletion
+// form.
+//
+// On an htmx request, it responds with only the form fragment, meant to be
+// loaded into the subscriptions page's delete modal. On a plain request, it
+// renders the full page as usual, so the URL stays independently navigable.
 func (fc *feedController) handleFeedSubscriptionDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		subscriptionUUID := chi.URLParam(r, "uuid")
@@ -856,8 +891,16 @@ func (fc *feedController) handleFeedSubscriptionDeleteView() func(w http.Respons
 		subscription, err := fc.queryingService.SubscriptionByUUID(ctx, ctxUser.UUID, subscriptionUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve feed subscription")
-			view.PutFlashError(w, "failed to retrieve feed subscription")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve feed subscription")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			formData := map[string]any{"Subscription": subscription, "InModal": true}
+			if err := fc.feedSubscriptionDeleteView.RenderTemplate(w, "subscriptionDeleteForm", formData); err != nil {
+				log.Error().Err(err).Msg("failed to render subscription delete form fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -871,6 +914,15 @@ func (fc *feedController) handleFeedSubscriptionDeleteView() func(w http.Respons
 }
 
 // handleFeedSubscriptionDelete processes the feed subscription deletion form.
+//
+// On success:
+//   - htmx request: retargets/reswaps an empty response into the
+//     subscription's row (outerHTML), removing it, and fires a "modal:close"
+//     client-side event so the subscriptions page's delete modal closes.
+//   - plain request: redirect to the feeds page, as before.
+//
+// On error, it falls back to the same flash+redirect (or HX-Redirect, for
+// htmx requests) behavior used throughout this file.
 func (fc *feedController) handleFeedSubscriptionDelete() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		subscriptionUUID := chi.URLParam(r, "uuid")
@@ -879,8 +931,14 @@ func (fc *feedController) handleFeedSubscriptionDelete() func(w http.ResponseWri
 
 		if err := fc.feedService.DeleteSubscription(ctx, ctxUser.UUID, subscriptionUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete feed subscription")
-			view.PutFlashError(w, "failed to delete feed subscription")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to delete feed subscription")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			w.Header().Set(htmx.HeaderRetarget, "#subscription-"+subscriptionUUID)
+			w.Header().Set(htmx.HeaderReswap, "outerHTML")
+			w.Header().Set(htmx.HeaderTrigger, "modal:close")
 			return
 		}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 
+	"github.com/virtualtam/sparklemuffin/internal/http/www/htmx"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -124,6 +125,10 @@ func (ac *adminController) handleUserAdd() func(w http.ResponseWriter, r *http.R
 }
 
 // handleUserDeleteView renders the user deletion form.
+//
+// On an htmx request, it responds with only the form fragment, meant to be
+// loaded into the user list page's delete modal. On a plain request, it
+// renders the full page as usual, so the URL stays independently navigable.
 func (ac *adminController) handleUserDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -132,8 +137,16 @@ func (ac *adminController) handleUserDeleteView() func(w http.ResponseWriter, r 
 		userToDelete, err := ac.userService.ByUUID(ctx, userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
-			view.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, err.Error())
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			formData := map[string]any{"User": userToDelete, "InModal": true}
+			if err := ac.adminUserDeleteView.RenderTemplate(w, "userDeleteForm", formData); err != nil {
+				log.Error().Err(err).Msg("failed to render user delete form fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -147,6 +160,15 @@ func (ac *adminController) handleUserDeleteView() func(w http.ResponseWriter, r 
 }
 
 // handleUserDelete processes the user deletion form.
+//
+// On success:
+//   - htmx request: retargets/reswaps an empty response into the user's row
+//     (outerHTML), removing it, and fires a "modal:close" client-side event
+//     so the user list page's delete modal closes.
+//   - plain request: flash + redirect to the user list, as before.
+//
+// On error, it falls back to the same flash+redirect (or HX-Redirect, for
+// htmx requests) behavior used throughout this file.
 func (ac *adminController) handleUserDelete() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -155,15 +177,20 @@ func (ac *adminController) handleUserDelete() func(w http.ResponseWriter, r *htt
 		userToDelete, err := ac.userService.ByUUID(ctx, userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
-			view.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, err.Error())
 			return
 		}
 
 		if err := ac.userService.DeleteByUUID(ctx, userUUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete user")
-			view.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, err.Error())
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			w.Header().Set(htmx.HeaderRetarget, "#user-row-"+userUUID)
+			w.Header().Set(htmx.HeaderReswap, "outerHTML")
+			w.Header().Set(htmx.HeaderTrigger, "modal:close")
 			return
 		}
 

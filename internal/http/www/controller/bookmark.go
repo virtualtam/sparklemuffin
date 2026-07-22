@@ -197,6 +197,10 @@ func (bc *bookmarkController) handleBookmarkAdd() func(w http.ResponseWriter, r 
 }
 
 // handleBookmarkDeleteView renders the bookmark deletion form.
+//
+// On an htmx request, it responds with only the form fragment, meant to be
+// loaded into the bookmark list page's delete modal. On a plain request, it
+// renders the full page as usual, so the URL stays independently navigable.
 func (bc *bookmarkController) handleBookmarkDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		bookmarkUID := chi.URLParam(r, "uid")
@@ -206,8 +210,16 @@ func (bc *bookmarkController) handleBookmarkDeleteView() func(w http.ResponseWri
 		bookmarkToDelete, err := bc.bookmarkService.ByUID(ctx, ctxUser.UUID, bookmarkUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve bookmark")
-			view.PutFlashError(w, "failed to retrieve bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve bookmark")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			formData := map[string]any{"Bookmark": &bookmarkToDelete, "InModal": true}
+			if err := bc.bookmarkDeleteView.RenderTemplate(w, "bookmarkDeleteForm", formData); err != nil {
+				log.Error().Err(err).Msg("failed to render bookmark delete form fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -221,6 +233,15 @@ func (bc *bookmarkController) handleBookmarkDeleteView() func(w http.ResponseWri
 }
 
 // handleBookmarkDelete processes the bookmark deletion form.
+//
+// On success:
+//   - htmx request: retargets/reswaps an empty response into the bookmark's
+//     row (outerHTML), removing it, and fires a "modal:close" client-side
+//     event so the bookmark list page's delete modal closes.
+//   - plain request: redirect to the bookmark list, as before.
+//
+// On error, it falls back to the same flash+redirect (or HX-Redirect, for
+// htmx requests) behavior used throughout this file.
 func (bc *bookmarkController) handleBookmarkDelete() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		bookmarkUID := chi.URLParam(r, "uid")
@@ -229,8 +250,14 @@ func (bc *bookmarkController) handleBookmarkDelete() func(w http.ResponseWriter,
 
 		if err := bc.bookmarkService.Delete(ctx, ctxUser.UUID, bookmarkUID); err != nil {
 			log.Error().Err(err).Msg("failed to delete bookmark")
-			view.PutFlashError(w, "failed to delete bookmark")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to delete bookmark")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			w.Header().Set(htmx.HeaderRetarget, "#bookmark-row-"+bookmarkUID)
+			w.Header().Set(htmx.HeaderReswap, "outerHTML")
+			w.Header().Set(htmx.HeaderTrigger, "modal:close")
 			return
 		}
 
@@ -780,6 +807,10 @@ func (bc *bookmarkController) handlePublicBookmarkFeedAtom() func(w http.Respons
 }
 
 // handleTagDeleteView renders the tag deletion form.
+//
+// On an htmx request, it responds with only the form fragment, meant to be
+// loaded into the tag list page's delete modal. On a plain request, it
+// renders the full page as usual, so the URL stays independently navigable.
 func (bc *bookmarkController) handleTagDeleteView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		nameBase64 := chi.URLParam(r, "name")
@@ -787,13 +818,21 @@ func (bc *bookmarkController) handleTagDeleteView() func(w http.ResponseWriter, 
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
 			log.Error().Err(err).Msg("invalid tag")
-			view.PutFlashError(w, "invalid tag")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "invalid tag")
 			return
 		}
 
 		name := string(nameBytes)
 		tag := bookmarkquerying.NewTag(name, 0)
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			formData := map[string]any{"Tag": tag, "InModal": true}
+			if err := bc.tagDeleteView.RenderTemplate(w, "tagDeleteForm", formData); err != nil {
+				log.Error().Err(err).Msg("failed to render tag delete form fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
+			return
+		}
 
 		viewData := view.Data{
 			Content: tag,
@@ -805,27 +844,23 @@ func (bc *bookmarkController) handleTagDeleteView() func(w http.ResponseWriter, 
 }
 
 // handleTagDelete processes the tag deletion form.
+//
+// On success:
+//   - htmx request: retargets/reswaps an empty response into the tag's row
+//     (outerHTML), removing it, and fires a "modal:close" client-side event
+//     so the tag list page's delete modal closes.
+//   - plain request: flash + redirect to the tag list, as before.
+//
+// On error, it falls back to the same flash+redirect (or HX-Redirect, for
+// htmx requests) behavior used throughout this file.
 func (bc *bookmarkController) handleTagDelete() func(w http.ResponseWriter, r *http.Request) {
-	type tagDeleteForm struct {
-		Name string `schema:"name"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
-		var form tagDeleteForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse tag deletion form")
-			view.PutFlashError(w, "failed to process form")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
-			return
-		}
-
 		nameBase64 := chi.URLParam(r, "name")
 
 		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
 		if err != nil {
 			log.Error().Err(err).Msg("invalid tag")
-			view.PutFlashError(w, "invalid tag")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "invalid tag")
 			return
 		}
 
@@ -842,8 +877,14 @@ func (bc *bookmarkController) handleTagDelete() func(w http.ResponseWriter, r *h
 		updated, err := bc.bookmarkService.DeleteTag(ctx, tagDelete)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to delete tag")
-			view.PutFlashError(w, "failed to delete tag")
-			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, "failed to delete tag")
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			w.Header().Set(htmx.HeaderRetarget, fmt.Sprintf("[id='tag-row-%s']", nameBase64))
+			w.Header().Set(htmx.HeaderReswap, "outerHTML")
+			w.Header().Set(htmx.HeaderTrigger, "modal:close")
 			return
 		}
 

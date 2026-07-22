@@ -10,14 +10,20 @@
 
   <h2 class="title">Delete user - {{.Email}}</h2>
 
-  <p class="mb-4">
-    Delete user <strong>{{.Email}}</strong> and all associated data?
-  </p>
-
-  <form action="/admin/users/{{.UUID}}/delete" method="POST">
-    <div class="field">
-      <button type="submit" class="button is-danger">Delete</button>
-    </div>
-  </form>
+  {{template "userDeleteForm" (dict "User" . "InModal" false)}}
 </section>
+{{end}}
+
+{{/* InModal enables htmx attributes; only true when loaded into the user list page's delete modal. */}}
+{{define "userDeleteForm"}}
+<p class="mb-4">
+  Delete user <strong>{{.User.Email}}</strong> and all associated data?
+</p>
+
+<form action="/admin/users/{{.User.UUID}}/delete" method="POST"
+  {{if .InModal}}hx-post="/admin/users/{{.User.UUID}}/delete" hx-target="this" hx-swap="outerHTML"{{end}}>
+  <div class="field">
+    <button type="submit" class="button is-danger">Delete</button>
+  </div>
+</form>
 {{end}}

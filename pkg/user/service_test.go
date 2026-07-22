@@ -443,7 +443,6 @@ func TestServiceDeleteByUUID(t *testing.T) {
 				{UUID: "ebd1bec1-e15f-4502-ae97-a631f7d7df91"},
 			},
 			userUUID: "ebd1bec1-e15f-4502-ae97-a631f7d7df91",
-			wantErr:  ErrNotFound,
 		},
 	}
 

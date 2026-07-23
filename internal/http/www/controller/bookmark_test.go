@@ -770,6 +770,208 @@ func TestHandleTagDelete(t *testing.T) {
 	})
 }
 
+// newTestBookmarkControllerForBookmarkAdd wires a bookmarkController against
+// the given user, seeded with existingBookmarks, for exercising the bookmark
+// add handler, including its duplicate-URL conflict path.
+func newTestBookmarkControllerForBookmarkAdd(ctxUser user.User, existingBookmarks []bookmark.Bookmark) bookmarkController {
+	repo := &bookmark.FakeRepository{Bookmarks: existingBookmarks}
+
+	queryingRepo := &bookmarkquerying.FakeRepository{
+		Bookmarks: existingBookmarks,
+		Users:     []user.User{ctxUser},
+	}
+
+	return bookmarkController{
+		bookmarkService:  bookmark.NewService(repo),
+		queryingService:  bookmarkquerying.NewService(queryingRepo),
+		bookmarkAddView:  view.New("bookmark/bookmark_add.gohtml"),
+		bookmarkEditView: view.New("bookmark/bookmark_edit.gohtml"),
+	}
+}
+
+// newBookmarkAddPostRequest builds a POST request against /bookmarks/add.
+func newBookmarkAddPostRequest(t *testing.T, ctxUser user.User, form url.Values) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/bookmarks/add", strings.NewReader(form.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	return r.WithContext(ctx)
+}
+
+func TestHandleBookmarkAdd(t *testing.T) {
+	fake := faker.New()
+	ctxUser := user.User{UUID: fake.UUID().V4(), NickName: fake.Internet().User(), DisplayName: fake.Person().Name()}
+
+	t.Run("plain browser request adds and redirects", func(t *testing.T) {
+		bc := newTestBookmarkControllerForBookmarkAdd(ctxUser, nil)
+		form := url.Values{
+			"url":   {fake.Internet().URL()},
+			"title": {fake.Lorem().Text(10)},
+		}
+		r := newBookmarkAddPostRequest(t, ctxUser, form)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkAdd()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("Location"); got != "/bookmarks" {
+			t.Errorf("want redirect to /bookmarks, got %q", got)
+		}
+	})
+
+	t.Run("invalid form data flashes an error and redirects back to the form", func(t *testing.T) {
+		bc := newTestBookmarkControllerForBookmarkAdd(ctxUser, nil)
+		r := newBookmarkAddPostRequest(t, ctxUser, url.Values{"private": {"not-a-bool"}})
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkAdd()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("Location"); got != "/bookmarks/add" {
+			t.Errorf("want redirect back to the form, got %q", got)
+		}
+	})
+
+	t.Run("other validation error flashes and redirects back to the form", func(t *testing.T) {
+		bc := newTestBookmarkControllerForBookmarkAdd(ctxUser, nil)
+		form := url.Values{"url": {fake.Internet().URL()}} // no title: fails ValidateForAddition
+		r := newBookmarkAddPostRequest(t, ctxUser, form)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkAdd()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("Location"); got != "/bookmarks/add" {
+			t.Errorf("want redirect back to the form, got %q", got)
+		}
+	})
+
+	t.Run("duplicate URL renders a conflict-resolution form for the existing bookmark", func(t *testing.T) {
+		existing := bookmark.Bookmark{
+			UID:         ksuid.New().String(),
+			UserUUID:    ctxUser.UUID,
+			URL:         "https://example.com/duplicate",
+			Title:       "Existing title",
+			Description: "Existing description",
+			Tags:        []string{"existing-tag"},
+		}
+		bc := newTestBookmarkControllerForBookmarkAdd(ctxUser, []bookmark.Bookmark{existing})
+
+		form := url.Values{
+			"url":         {existing.URL},
+			"title":       {"Newly submitted title"},
+			"description": {"Newly submitted description"},
+			"tags":        {"new-tag"},
+		}
+		r := newBookmarkAddPostRequest(t, ctxUser, form)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkAdd()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a full page (with layout), got:\n%s", body)
+		}
+		if !strings.Contains(body, "already exists") {
+			t.Errorf("want a banner informing the user the bookmark already exists, got:\n%s", body)
+		}
+		if !strings.Contains(body, `action="/bookmarks/`+existing.UID+`/edit"`) {
+			t.Errorf("want the form to submit to the existing bookmark's edit endpoint, got:\n%s", body)
+		}
+		if !strings.Contains(body, `value="`+existing.Title+`"`) {
+			t.Errorf("want the existing bookmark's title pre-filled (not the newly submitted one), got:\n%s", body)
+		}
+		if strings.Contains(body, `value="Newly submitted title"`) {
+			t.Errorf("want the newly submitted title discarded in favor of the existing one, got:\n%s", body)
+		}
+		if !strings.Contains(body, ">"+existing.Description+"<") {
+			t.Errorf("want the editable Markdown field pre-filled with the existing description, got:\n%s", body)
+		}
+		if !strings.Contains(body, "Newly submitted description") {
+			t.Errorf("want the newly submitted description shown as a read-only reference, got:\n%s", body)
+		}
+		if !strings.Contains(body, "existing-tag") || !strings.Contains(body, "new-tag") {
+			t.Errorf("want tags merged from both the existing bookmark and the new submission, got:\n%s", body)
+		}
+		if !strings.Contains(body, `id="new-description" rows="1"`) {
+			t.Errorf("want the read-only new-description textarea sized to its single-line content, got:\n%s", body)
+		}
+	})
+
+	t.Run("duplicate URL, multi-line submitted description sizes the read-only textarea to its line count", func(t *testing.T) {
+		existing := bookmark.Bookmark{
+			UID:      ksuid.New().String(),
+			UserUUID: ctxUser.UUID,
+			URL:      "https://example.com/duplicate",
+			Title:    "Existing title",
+		}
+		bc := newTestBookmarkControllerForBookmarkAdd(ctxUser, []bookmark.Bookmark{existing})
+
+		form := url.Values{
+			"url":         {existing.URL},
+			"title":       {"Newly submitted title"},
+			"description": {"Line one\nLine two\nLine three"},
+		}
+		r := newBookmarkAddPostRequest(t, ctxUser, form)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkAdd()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, `id="new-description" rows="3"`) {
+			t.Errorf("want the read-only new-description textarea sized to its 3 lines of content, got:\n%s", body)
+		}
+	})
+
+	t.Run("duplicate URL with no submitted description shows a placeholder in the read-only reference field", func(t *testing.T) {
+		existing := bookmark.Bookmark{
+			UID:         ksuid.New().String(),
+			UserUUID:    ctxUser.UUID,
+			URL:         "https://example.com/duplicate",
+			Title:       "Existing title",
+			Description: "Existing description",
+		}
+		bc := newTestBookmarkControllerForBookmarkAdd(ctxUser, []bookmark.Bookmark{existing})
+
+		form := url.Values{
+			"url":   {existing.URL},
+			"title": {"Newly submitted title"},
+		}
+		r := newBookmarkAddPostRequest(t, ctxUser, form)
+		w := httptest.NewRecorder()
+
+		bc.handleBookmarkAdd()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, `id="new-description" rows="1"`) {
+			t.Errorf("want the read-only new-description textarea to have a single row when nothing was submitted, got:\n%s", body)
+		}
+		if !strings.Contains(body, ">"+existing.Description+"<") {
+			t.Errorf("want the editable field to still be pre-filled with the existing description, got:\n%s", body)
+		}
+	})
+}
+
 // newTestBookmarkControllerForBookmarkEdit wires a bookmarkController
 // against the given bookmark, for exercising the bookmark edit handlers.
 func newTestBookmarkControllerForBookmarkEdit(ctxUser user.User, b bookmark.Bookmark) bookmarkController {

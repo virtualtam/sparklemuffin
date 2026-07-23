@@ -128,6 +128,19 @@ type bookmarkController struct {
 type bookmarkFormContent struct {
 	Bookmark *bookmark.Bookmark
 	Tags     []string
+	Conflict *bookmarkFormConflict
+}
+
+// bookmarkFormConflict is set when a bookmark add attempt collided with an
+// existing bookmark's URL, so the edition form rendered from this content
+// knows to display it as a conflict to resolve rather than a plain edit.
+type bookmarkFormConflict struct {
+	NewDescription string
+
+	// NewDescriptionRows sizes the read-only textarea used to display
+	// NewDescription so its height matches its content, with no extra blank
+	// space.
+	NewDescriptionRows int
 }
 
 // handleBookmarkAddView renders the bookmark addition form.
@@ -186,6 +199,11 @@ func (bc *bookmarkController) handleBookmarkAdd() func(w http.ResponseWriter, r 
 		}
 
 		if err := bc.bookmarkService.Add(ctx, newBookmark); err != nil {
+			if errors.Is(err, bookmark.ErrURLAlreadyRegistered) {
+				bc.renderBookmarkAddConflict(w, r, ctxUser, newBookmark)
+				return
+			}
+
 			log.Error().Err(err).Msg("failed to add bookmark")
 			view.PutFlashError(w, "failed to add bookmark")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -194,6 +212,61 @@ func (bc *bookmarkController) handleBookmarkAdd() func(w http.ResponseWriter, r 
 
 		http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
 	}
+}
+
+// renderBookmarkAddConflict renders the existing bookmark's edition form when
+// a bookmark add attempt collided with its URL, pre-filled with a merge of
+// the existing bookmark's data and what was just submitted, so the user's
+// newly-typed description and tags aren't lost.
+//
+// Title, the private flag and description default to the existing
+// bookmark's current values, since overwriting them carries no data-loss
+// risk to guard against; the newly submitted description is instead shown
+// as a read-only reference the user can copy from. Tags are the
+// deduplicated union of both.
+func (bc *bookmarkController) renderBookmarkAddConflict(w http.ResponseWriter, r *http.Request, ctxUser *user.User, submitted bookmark.Bookmark) {
+	ctx := r.Context()
+
+	existingBookmark, err := bc.bookmarkService.ByURL(ctx, ctxUser.UUID, submitted.URL)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to retrieve existing bookmark")
+		view.PutFlashError(w, "failed to add bookmark")
+		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+		return
+	}
+
+	tags, err := bc.queryingService.TagNamesByCount(ctx, ctxUser.UUID, bookmarkquerying.VisibilityAll)
+	if err != nil {
+		log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
+		view.PutFlashError(w, "failed to add bookmark")
+		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+		return
+	}
+
+	mergedBookmark := bookmark.Bookmark{
+		UserUUID:    ctxUser.UUID,
+		UID:         existingBookmark.UID,
+		URL:         existingBookmark.URL,
+		Title:       existingBookmark.Title,
+		Description: existingBookmark.Description,
+		Private:     existingBookmark.Private,
+		Tags:        append(append([]string{}, existingBookmark.Tags...), submitted.Tags...),
+	}
+	mergedBookmark.Normalize()
+
+	viewData := view.Data{
+		Content: bookmarkFormContent{
+			Bookmark: &mergedBookmark,
+			Tags:     tags,
+			Conflict: &bookmarkFormConflict{
+				NewDescription:     submitted.Description,
+				NewDescriptionRows: strings.Count(submitted.Description, "\n") + 1,
+			},
+		},
+		Title: fmt.Sprintf("Edit bookmark: %s", existingBookmark.Title),
+	}
+
+	bc.bookmarkEditView.Render(w, r, viewData)
 }
 
 // handleBookmarkDeleteView renders the bookmark deletion form.

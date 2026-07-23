@@ -506,6 +506,30 @@ func TestServiceUpdate(t *testing.T) {
 			},
 			wantErr: ErrNotFound,
 		},
+		{
+			tname: "duplicate URL",
+			repositoryBookmarks: []Bookmark{
+				{
+					UID:      "27L4DoEZaRASKhQKygRCrvVAwkr",
+					UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+					URL:      "https://domain.tld",
+					Title:    "Example Domain",
+				},
+				{
+					UID:      "27L4E2rjhme3vNvpjjw5CyCn2xI",
+					UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+					URL:      "https://duplicate.domain.tld",
+					Title:    "Duplicate Domain",
+				},
+			},
+			bookmark: Bookmark{
+				UID:      "27L4DoEZaRASKhQKygRCrvVAwkr",
+				UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+				URL:      "https://duplicate.domain.tld",
+				Title:    "Example Domain",
+			},
+			wantErr: ErrURLAlreadyRegistered,
+		},
 
 		// nominal cases
 		{

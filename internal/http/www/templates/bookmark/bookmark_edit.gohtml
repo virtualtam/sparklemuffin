@@ -7,7 +7,7 @@
     </ul>
   </nav>
 
-  {{template "bookmarkEditForm" (dict "Bookmark" .Bookmark "Tags" .Tags "InModal" false)}}
+  {{template "bookmarkEditForm" (dict "Bookmark" .Bookmark "Tags" .Tags "InModal" false "Conflict" .Conflict)}}
 </section>
 {{end}}
 
@@ -15,6 +15,12 @@
 {{define "bookmarkEditForm"}}
 <form action="/bookmarks/{{.Bookmark.UID}}/edit" autocomplete="off" method="POST"
   {{if .InModal}}hx-post="/bookmarks/{{.Bookmark.UID}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>
+  {{if .Conflict}}
+  <div class="notification is-warning">
+    A bookmark for this URL already exists. You're editing it now.
+  </div>
+  {{end}}
+
   <div class="field is-horizontal">
     <div class="field-label is-normal">
       <label class="label" for="url">URL</label>
@@ -41,6 +47,22 @@
       </div>
     </div>
   </div>
+
+  {{if .Conflict}}
+  <div class="field is-horizontal">
+    <div class="field-label is-normal">
+      <label class="label" for="new-description">Description (New)</label>
+    </div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <textarea class="textarea has-text-grey" id="new-description" rows="{{.Conflict.NewDescriptionRows}}"
+            readonly placeholder="No description">{{.Conflict.NewDescription}}</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{end}}
 
   <div class="field is-horizontal">
     <div class="field-label is-normal">

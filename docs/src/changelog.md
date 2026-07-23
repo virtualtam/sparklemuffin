@@ -26,6 +26,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 #### Bookmarks
 - Improve test coverage for bookmark operations
+- When attempting to add a bookmark for a URL that belongs to an existing bookmark, display a conflict resolution form
 
 #### Feeds
 - Improve test coverage for feed operations

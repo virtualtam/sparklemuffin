@@ -23,7 +23,7 @@ func TestUserService(t *testing.T) {
 	s := user.NewService(r)
 
 	fr := pgfeed.NewRepository(pool)
-	fs := feed.NewService(fr, nil)
+	fs := feed.NewService(fr, nil, nil)
 
 	fake := faker.New()
 

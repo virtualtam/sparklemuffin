@@ -8,6 +8,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ## UNRELEASED
 ### Security
 - Update Chi HTTP middleware to read the remote client IP address from a header set by a reverse proxy
+- Prevent the HTTP client used to fetch syndication feeds from performing requests to unroutable or blocked IP address ranges.
 
 ### Fixed
 #### Packaging and automation

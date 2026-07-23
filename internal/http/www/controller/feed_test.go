@@ -58,7 +58,7 @@ func newTestFeedController(preferences feed.Preferences, entriesMetadata []feed.
 	}
 
 	return feedController{
-		feedService:              feed.NewService(feedRepo, nil),
+		feedService:              feed.NewService(feedRepo, nil, nil),
 		queryingService:          feedquerying.NewService(queryingRepo),
 		feedListView:             view.New("feed/feed_list.gohtml"),
 		feedSubscriptionListView: view.New("feed/subscription_list.gohtml"),
@@ -777,7 +777,7 @@ func newTestFeedControllerForCategoryEdit(category feed.Category) feedController
 	}
 
 	return feedController{
-		feedService:              feed.NewService(feedRepo, nil),
+		feedService:              feed.NewService(feedRepo, nil, nil),
 		queryingService:          feedquerying.NewService(queryingRepo),
 		feedSubscriptionListView: view.New("feed/subscription_list.gohtml"),
 		feedCategoryEditView:     view.New("feed/category_edit.gohtml"),
@@ -973,7 +973,7 @@ func newTestFeedControllerForSubscriptionEdit(subscription feed.Subscription, su
 	}
 
 	return feedController{
-		feedService:              feed.NewService(feedRepo, nil),
+		feedService:              feed.NewService(feedRepo, nil, nil),
 		queryingService:          feedquerying.NewService(queryingRepo),
 		feedSubscriptionListView: view.New("feed/subscription_list.gohtml"),
 		feedSubscriptionEditView: view.New("feed/subscription_edit.gohtml"),
@@ -1210,7 +1210,7 @@ func newTestFeedControllerForCategoryDelete(category feed.Category) feedControll
 	}
 
 	return feedController{
-		feedService:            feed.NewService(feedRepo, nil),
+		feedService:            feed.NewService(feedRepo, nil, nil),
 		feedCategoryDeleteView: view.New("feed/category_delete.gohtml"),
 	}
 }
@@ -1386,7 +1386,7 @@ func newTestFeedControllerForSubscriptionDelete(subscription feed.Subscription, 
 	}
 
 	return feedController{
-		feedService:                feed.NewService(feedRepo, nil),
+		feedService:                feed.NewService(feedRepo, nil, nil),
 		queryingService:            feedquerying.NewService(queryingRepo),
 		feedSubscriptionDeleteView: view.New("feed/subscription_delete.gohtml"),
 	}

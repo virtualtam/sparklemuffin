@@ -4,6 +4,7 @@
 package importing
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -135,7 +136,9 @@ func TestServiceImportFromOPMLDocument(t *testing.T) {
 			}
 			feedClient := fetching.NewClient(testHTTPClient, "sparklemuffin/test")
 
-			feedService := feed.NewService(r, feedClient)
+			// avoid a real DNS lookup for tc.outlines' test-only hostnames
+			noopURLValidator := func(_ context.Context, _ string) error { return nil }
+			feedService := feed.NewService(r, feedClient, noopURLValidator)
 			s := NewService(feedService)
 
 			document := &opml.Document{

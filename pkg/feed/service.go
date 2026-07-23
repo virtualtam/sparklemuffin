@@ -12,6 +12,7 @@ import (
 	"github.com/mmcdole/gofeed"
 	"github.com/rs/zerolog/log"
 
+	"github.com/virtualtam/sparklemuffin/internal/http/httpsafe"
 	"github.com/virtualtam/sparklemuffin/internal/textkit"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 )
@@ -22,15 +23,20 @@ type Service struct {
 
 	client *fetching.Client
 
+	// validateURL may be nil (destination-blocking check skipped); pass
+	// httpsafe.ValidateURL for production use.
+	validateURL func(ctx context.Context, rawURL string) error
+
 	textRanker       *textkit.TextRanker
 	textRankMaxTerms int
 }
 
 // NewService initializes and returns a Feed Service.
-func NewService(r Repository, client *fetching.Client) *Service {
+func NewService(r Repository, client *fetching.Client, validateURL func(ctx context.Context, rawURL string) error) *Service {
 	return &Service{
 		r:                r,
 		client:           client,
+		validateURL:      validateURL,
 		textRanker:       textkit.NewTextRanker(),
 		textRankMaxTerms: EntryTextRankMaxTerms,
 	}
@@ -330,6 +336,13 @@ func (s *Service) GetOrCreateFeedAndEntries(ctx context.Context, feedURL string)
 
 	if err := newFeed.ValidateURL(); err != nil {
 		return Feed{}, false, err
+	}
+
+	// Fast pre-check only; httpsafe.NewSafeTransport is the real guard.
+	if s.validateURL != nil {
+		if err := s.validateURL(ctx, newFeed.FeedURL); errors.Is(err, httpsafe.ErrIPBlocked) {
+			return Feed{}, false, ErrFeedURLBlocked
+		}
 	}
 
 	var feed Feed

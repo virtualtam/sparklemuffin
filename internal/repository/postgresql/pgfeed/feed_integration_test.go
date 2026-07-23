@@ -4,6 +4,7 @@
 package pgfeed_test
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
@@ -46,7 +47,10 @@ func TestFeedService(t *testing.T) {
 	feedClient := fetching.NewClient(testHTTPClient, "sparklemuffin/test")
 
 	r := pgfeed.NewRepository(pool)
-	fs := feed.NewService(r, feedClient)
+
+	// avoid a real DNS lookup for these tests' test-only hostnames
+	noopURLValidator := func(_ context.Context, _ string) error { return nil }
+	fs := feed.NewService(r, feedClient, noopURLValidator)
 
 	ur := pguser.NewRepository(pool)
 	us := user.NewService(ur)

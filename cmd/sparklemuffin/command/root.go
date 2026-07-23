@@ -208,7 +208,7 @@ func NewRootCommand() *cobra.Command {
 			bookmarkQueryingService = bookmarkquerying.NewService(bookmarkRepository)
 
 			feedRepository := pgfeed.NewRepository(pgxPool)
-			feedService = feed.NewService(feedRepository, feedClient)
+			feedService = feed.NewService(feedRepository, feedClient, httpsafe.ValidateURL)
 			feedExportingService = feedexporting.NewService(feedRepository)
 			feedQueryingService = feedquerying.NewService(feedRepository)
 			feedImportingService = feedimporting.NewService(feedService)

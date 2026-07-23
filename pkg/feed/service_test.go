@@ -4,6 +4,7 @@
 package feed
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/mmcdole/gofeed"
 	"github.com/segmentio/ksuid"
 
+	"github.com/virtualtam/sparklemuffin/internal/http/httpsafe"
 	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -123,7 +125,7 @@ func TestServiceAddCategory(t *testing.T) {
 			r := &FakeRepository{
 				Categories: tc.repositoryCategories,
 			}
-			s := NewService(r, nil)
+			s := NewService(r, nil, nil)
 
 			got, err := s.CreateCategory(t.Context(), userUUID, tc.name)
 
@@ -213,7 +215,7 @@ func TestServiceCategoryBySlug(t *testing.T) {
 			r := &FakeRepository{
 				Categories: tc.repositoryCategories,
 			}
-			s := NewService(r, nil)
+			s := NewService(r, nil, nil)
 
 			got, err := s.CategoryBySlug(t.Context(), userUUID, tc.slug)
 
@@ -298,7 +300,7 @@ func TestServiceCategoryByUUID(t *testing.T) {
 			r := &FakeRepository{
 				Categories: tc.repositoryCategories,
 			}
-			s := NewService(r, nil)
+			s := NewService(r, nil, nil)
 
 			got, err := s.CategoryByUUID(t.Context(), userUUID, tc.categoryUUID)
 
@@ -337,7 +339,7 @@ func TestServiceDeleteCategory(t *testing.T) {
 		r := &FakeRepository{
 			Categories: []Category{emptyCategory},
 		}
-		s := NewService(r, nil)
+		s := NewService(r, nil, nil)
 
 		if err := s.DeleteCategory(t.Context(), userUUID, emptyCategory.UUID); err != nil {
 			t.Fatalf("want no error, got %q", err)
@@ -395,7 +397,7 @@ func TestServiceDeleteCategory(t *testing.T) {
 			Entries:       entries,
 			Subscriptions: subscriptions,
 		}
-		s := NewService(r, nil)
+		s := NewService(r, nil, nil)
 
 		if err := s.DeleteCategory(t.Context(), userUUID, category.UUID); err != nil {
 			t.Fatalf("want no error, got %q", err)
@@ -452,7 +454,7 @@ func TestServiceDeleteCategoryValidation(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
 			r := &FakeRepository{}
-			s := NewService(r, nil)
+			s := NewService(r, nil, nil)
 
 			err := s.DeleteCategory(t.Context(), tc.userUUID, tc.categoryUUID)
 
@@ -569,7 +571,7 @@ func TestServiceUpdateCategory(t *testing.T) {
 					existingCategory,
 				},
 			}
-			s := NewService(r, nil)
+			s := NewService(r, nil, nil)
 
 			err := s.UpdateCategory(t.Context(), tc.updatedCategory)
 
@@ -725,7 +727,7 @@ In the second half of the 20th century, aluminium gained usage in transportation
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
 			r := &FakeRepository{}
-			s := NewService(r, nil)
+			s := NewService(r, nil, nil)
 
 			err := s.createEntries(t.Context(), feedUUID, feedURL, tc.feedItems)
 
@@ -910,7 +912,8 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			}
 			feedClient := fetching.NewClient(testHTTPClient, "sparklemuffin/test")
 
-			s := NewService(r, feedClient)
+			// avoid a real DNS lookup for tc.feedURL's test-only hostnames
+			s := NewService(r, feedClient, noopURLValidator)
 
 			gotFeed, gotIsCreated, err := s.GetOrCreateFeedAndEntries(t.Context(), tc.feedURL)
 
@@ -947,6 +950,26 @@ func TestServiceGetOrCreateFeedAndEntries(t *testing.T) {
 			AssertFeedEquals(t, gotFeed, tc.wantFeed)
 			AssertEntriesEqual(t, r.Entries, tc.wantEntries)
 		})
+	}
+}
+
+// avoids a real DNS lookup for test-only hostnames (e.g. "test.local").
+func noopURLValidator(_ context.Context, _ string) error {
+	return nil
+}
+
+// uses a literal IP, so no real DNS resolution is needed.
+func TestServiceGetOrCreateFeedAndEntries_BlockedDestination(t *testing.T) {
+	r := &FakeRepository{}
+	transport := feedtest.NewRoundTripperFromFeed(t, feedtest.GenerateDummyFeed(t, time.Now().UTC()))
+	feedClient := fetching.NewClient(&http.Client{Transport: transport}, "sparklemuffin/test")
+
+	s := NewService(r, feedClient, httpsafe.ValidateURL)
+
+	_, _, err := s.GetOrCreateFeedAndEntries(t.Context(), "http://127.0.0.1/feed")
+
+	if !errors.Is(err, ErrFeedURLBlocked) {
+		t.Fatalf("want error %q, got %q", ErrFeedURLBlocked, err)
 	}
 }
 
@@ -1033,7 +1056,7 @@ func TestServiceToggleEntryRead(t *testing.T) {
 				Entries:         tc.repositoryEntries,
 				EntriesMetadata: tc.repositoryEntriesMetadata,
 			}
-			s := NewService(r, nil)
+			s := NewService(r, nil, nil)
 
 			err := s.ToggleEntryRead(t.Context(), userUUID, tc.entryUID)
 
@@ -1110,7 +1133,7 @@ func TestServiceUpdatePreferences(t *testing.T) {
 			r := &FakeRepository{
 				Preferences: tc.repositoryPreferences,
 			}
-			s := NewService(r, nil)
+			s := NewService(r, nil, nil)
 
 			err := s.UpdatePreferences(t.Context(), tc.preferences)
 
@@ -1194,7 +1217,7 @@ func TestServiceCreateSubscription(t *testing.T) {
 				Feeds:         repositoryFeeds,
 				Subscriptions: repositorySubscriptions,
 			}
-			s := NewService(r, nil)
+			s := NewService(r, nil, nil)
 
 			_, err := s.createSubscription(t.Context(), tc.subscription)
 
@@ -1255,7 +1278,7 @@ func TestServiceDeleteSubscription(t *testing.T) {
 			Entries:       entries,
 			Subscriptions: []Subscription{subscription},
 		}
-		s := NewService(r, nil)
+		s := NewService(r, nil, nil)
 
 		if err := s.DeleteSubscription(t.Context(), userUUID, subscription.UUID); err != nil {
 			t.Fatalf("want no error, got %q", err)
@@ -1276,7 +1299,7 @@ func TestServiceDeleteSubscriptionNotFound(t *testing.T) {
 	userUUID := fake.UUID().V4()
 
 	r := &FakeRepository{}
-	s := NewService(r, nil)
+	s := NewService(r, nil, nil)
 
 	err := s.DeleteSubscription(t.Context(), userUUID, fake.UUID().V4())
 
@@ -1396,7 +1419,7 @@ func TestServiceUpdateSubscription(t *testing.T) {
 			r := &FakeRepository{
 				Subscriptions: tc.repositorySubscriptions,
 			}
-			s := NewService(r, nil)
+			s := NewService(r, nil, nil)
 
 			err := s.UpdateSubscription(t.Context(), tc.subscription)
 

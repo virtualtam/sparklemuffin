@@ -698,14 +698,36 @@ In the second half of the 20th century, aluminium gained usage in transportation
 				},
 			},
 		},
+		{
+			tname: "entry with a relative URL is resolved against the feed URL",
+			feedItems: []*gofeed.Item{
+				{
+					Link:            "/2026/05/04/im-sunny",
+					Title:           "Hi, I'm Sunny",
+					PublishedParsed: &now,
+					UpdatedParsed:   &now,
+				},
+			},
+			want: []Entry{
+				{
+					FeedUUID:    feedUUID,
+					URL:         "http://test.local/2026/05/04/im-sunny",
+					Title:       "Hi, I'm Sunny",
+					PublishedAt: now,
+					UpdatedAt:   now,
+				},
+			},
+		},
 	}
+
+	feedURL := "http://test.local"
 
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
 			r := &FakeRepository{}
 			s := NewService(r, nil)
 
-			err := s.createEntries(t.Context(), feedUUID, tc.feedItems)
+			err := s.createEntries(t.Context(), feedUUID, feedURL, tc.feedItems)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

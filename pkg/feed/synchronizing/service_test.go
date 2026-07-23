@@ -72,6 +72,33 @@ func TestServiceSynchronize(t *testing.T) {
 	}
 	invalidEntryFeedETag := feedtest.HashETag(invalidEntryFeedStr)
 
+	relativeURLFeed := feeds.Feed{
+		Title:       atomFeed.Title,
+		Description: atomFeed.Description,
+		Updated:     tomorrow,
+		Items: []*feeds.Item{
+			{
+				// Item with a URL path only (no scheme or host), as found in
+				// some real-world Atom feeds (e.g. mcyoung.xyz/atom.xml):
+				// resolved against the feed URL rather than skipped.
+				Id:    "/relative-post",
+				Title: "Relative URL Entry",
+				Link: &feeds.Link{
+					Href: "/relative-post",
+				},
+				Created: today,
+				Updated: today,
+			},
+			atomFeed.Items[0],
+			atomFeed.Items[1],
+		},
+	}
+	relativeURLFeedStr, err := relativeURLFeed.ToAtom()
+	if err != nil {
+		t.Fatalf("failed to encode relative URL feed: %q", err)
+	}
+	relativeURLFeedETag := feedtest.HashETag(relativeURLFeedStr)
+
 	repositoryFeed := feed.Feed{
 		UUID:         fake.UUID().V4(),
 		FeedURL:      "http://test.local",
@@ -248,6 +275,50 @@ func TestServiceSynchronize(t *testing.T) {
 				},
 			},
 			wantEntries: []feed.Entry{secondEntry, firstEntry},
+		},
+
+		// nominal cases: entry with a relative URL resolved against the feed URL
+		{
+			tname: "feed has an entry with a relative URL: entry is resolved and created",
+			repositoryFeeds: []feed.Feed{
+				{
+					UUID:        repositoryFeed.UUID,
+					FeedURL:     repositoryFeed.FeedURL,
+					Title:       repositoryFeed.Title,
+					Description: repositoryFeed.Description,
+					Slug:        repositoryFeed.Slug,
+					FetchedAt:   yesterday,
+					CreatedAt:   yesterday,
+				},
+			},
+			repositoryEntries: []feed.Entry{secondEntry, firstEntry},
+			atomFeed:          relativeURLFeed,
+			wantFeeds: []feed.Feed{
+				{
+					UUID:         repositoryFeed.UUID,
+					FeedURL:      repositoryFeed.FeedURL,
+					Title:        repositoryFeed.Title,
+					Description:  repositoryFeed.Description,
+					Slug:         repositoryFeed.Slug,
+					ETag:         relativeURLFeedETag,
+					LastModified: tomorrow,
+					Hash:         0, // fake does not update Hash in FeedUpdateMetadata
+					CreatedAt:    yesterday,
+					UpdatedAt:    now,
+					FetchedAt:    now,
+				},
+			},
+			wantEntries: []feed.Entry{
+				secondEntry,
+				firstEntry,
+				{
+					FeedUUID:    repositoryFeed.UUID,
+					URL:         "http://test.local/relative-post",
+					Title:       "Relative URL Entry",
+					PublishedAt: today,
+					UpdatedAt:   today,
+				},
+			},
 		},
 
 		// nominal cases

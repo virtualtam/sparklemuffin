@@ -43,7 +43,10 @@ type Entry struct {
 }
 
 // NewEntryFromItem creates and initializes a new Entry from a gofeed.Item.
-func NewEntryFromItem(feedUUID string, now time.Time, item *gofeed.Item) Entry {
+//
+// feedURL is used as the base to resolve entry URLs that are provided as
+// relative references (e.g. some Atom feeds only set a URL path on entries).
+func NewEntryFromItem(feedUUID, feedURL string, now time.Time, item *gofeed.Item) Entry {
 	uid := ksuid.New().String()
 
 	publishedAt := now
@@ -66,6 +69,7 @@ func NewEntryFromItem(feedUUID string, now time.Time, item *gofeed.Item) Entry {
 		PublishedAt: publishedAt,
 		UpdatedAt:   updatedAt,
 	}
+	entry.resolveURL(feedURL)
 	entry.Normalize()
 
 	return entry
@@ -124,6 +128,31 @@ func (e *Entry) normalizeTitle() {
 
 func (e *Entry) normalizeURL() {
 	e.URL = strings.TrimSpace(e.URL)
+}
+
+// resolveURL resolves e.URL against feedURL when e.URL is a relative
+// reference (e.g. a URL path or a protocol-relative URL). Absolute URLs are
+// left unchanged. If feedURL or e.URL cannot be parsed, e.URL is left as-is,
+// to be rejected by later validation.
+func (e *Entry) resolveURL(feedURL string) {
+	if strings.TrimSpace(e.URL) == "" {
+		// Leave empty URLs untouched: url.Parse("") succeeds and resolving it
+		// against feedURL would resolve to the feed's own URL, masking a
+		// missing entry URL instead of letting requireURL reject it.
+		return
+	}
+
+	base, err := url.Parse(feedURL)
+	if err != nil {
+		return
+	}
+
+	ref, err := url.Parse(e.URL)
+	if err != nil {
+		return
+	}
+
+	e.URL = base.ResolveReference(ref).String()
 }
 
 func (e *Entry) normalizeDescription() {

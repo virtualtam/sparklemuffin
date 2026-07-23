@@ -260,12 +260,12 @@ func (s *Service) UpdateSubscription(ctx context.Context, subscription Subscript
 	return s.r.FeedSubscriptionUpdate(ctx, subscriptionToUpdate)
 }
 
-func (s *Service) createEntries(ctx context.Context, feedUUID string, items []*gofeed.Item) error {
+func (s *Service) createEntries(ctx context.Context, feedUUID, feedURL string, items []*gofeed.Item) error {
 	var entries []Entry
 	now := time.Now().UTC()
 
 	for _, item := range items {
-		entry := NewEntryFromItem(feedUUID, now, item)
+		entry := NewEntryFromItem(feedUUID, feedURL, now, item)
 		entry.ExtractTextRankTerms(s.textRanker, s.textRankMaxTerms)
 
 		if err := entry.ValidateForAddition(now); err != nil {
@@ -314,7 +314,7 @@ func (s *Service) createFeedAndEntries(ctx context.Context, feed Feed) (Feed, er
 		return Feed{}, err
 	}
 
-	if err := s.createEntries(ctx, feed.UUID, feedStatus.Feed.Items); err != nil {
+	if err := s.createEntries(ctx, feed.UUID, feed.FeedURL, feedStatus.Feed.Items); err != nil {
 		return Feed{}, err
 	}
 

@@ -29,6 +29,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 #### Feeds
 - Improve test coverage for feed operations
+- Bump gofeed to v1.4.0
+- If a feed entry URL only consists in a relative path, attempt to build its full URL from the feed's base URL
 
 #### WWW
 - Add helper to render a single named HTML template

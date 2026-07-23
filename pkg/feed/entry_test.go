@@ -307,11 +307,15 @@ func TestNewEntryFromItem(t *testing.T) {
 	fake := faker.New()
 	feedUUID := fake.UUID().V4()
 
+	const defaultFeedURL = "https://example.com/"
+
 	cases := []struct {
 		name        string
+		feedURL     string
 		item        *gofeed.Item
 		wantContent string
 		wantDesc    string
+		wantURL     string
 	}{
 		{
 			name: "item with content and description",
@@ -323,6 +327,7 @@ func TestNewEntryFromItem(t *testing.T) {
 			},
 			wantContent: "Full content",
 			wantDesc:    "Short description",
+			wantURL:     "https://example.com/post",
 		},
 		{
 			name: "item with description only",
@@ -332,6 +337,7 @@ func TestNewEntryFromItem(t *testing.T) {
 				Description: "<p>Short description</p>",
 			},
 			wantDesc: "Short description",
+			wantURL:  "https://example.com/post",
 		},
 		{
 			name: "item with content only",
@@ -341,12 +347,43 @@ func TestNewEntryFromItem(t *testing.T) {
 				Content: "<p>Full content</p>",
 			},
 			wantContent: "Full content",
+			wantURL:     "https://example.com/post",
+		},
+		{
+			name: "item with a relative URL is resolved against the feed URL",
+			item: &gofeed.Item{
+				Title: "Test Title",
+				Link:  "/2026/05/04/im-sunny",
+			},
+			wantURL: "https://example.com/2026/05/04/im-sunny",
+		},
+		{
+			name: "item with a protocol-relative URL is resolved against the feed URL scheme",
+			item: &gofeed.Item{
+				Title: "Test Title",
+				Link:  "//other.example.com/post",
+			},
+			wantURL: "https://other.example.com/post",
+		},
+		{
+			name:    "item with a relative URL and an unparsable feed URL is left unresolved",
+			feedURL: "://bad-url",
+			item: &gofeed.Item{
+				Title: "Test Title",
+				Link:  "/2026/05/04/im-sunny",
+			},
+			wantURL: "/2026/05/04/im-sunny",
 		},
 	}
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			entry := NewEntryFromItem(feedUUID, now, tt.item)
+			feedURL := tt.feedURL
+			if feedURL == "" {
+				feedURL = defaultFeedURL
+			}
+
+			entry := NewEntryFromItem(feedUUID, feedURL, now, tt.item)
 
 			if entry.content != tt.wantContent {
 				t.Errorf("want %q, got %q", tt.wantContent, entry.content)
@@ -364,8 +401,8 @@ func TestNewEntryFromItem(t *testing.T) {
 				t.Errorf("want %q, got %q", tt.item.Title, entry.Title)
 			}
 
-			if entry.URL != tt.item.Link {
-				t.Errorf("want %q, got %q", tt.item.Link, entry.URL)
+			if entry.URL != tt.wantURL {
+				t.Errorf("want %q, got %q", tt.wantURL, entry.URL)
 			}
 		})
 	}

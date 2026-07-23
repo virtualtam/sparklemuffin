@@ -225,7 +225,7 @@ func (s *Service) createOrUpdateEntries(ctx context.Context, f feed.Feed, now ti
 	var entries []feed.Entry
 
 	for _, item := range items {
-		entry := feed.NewEntryFromItem(f.UUID, now, item)
+		entry := feed.NewEntryFromItem(f.UUID, f.FeedURL, now, item)
 		entry.ExtractTextRankTerms(s.textRanker, s.textRankMaxTerms)
 
 		if err := entry.ValidateForAddition(now); err != nil {

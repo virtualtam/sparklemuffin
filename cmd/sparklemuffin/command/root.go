@@ -24,6 +24,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/virtualtam/sparklemuffin/cmd/sparklemuffin/config"
+	"github.com/virtualtam/sparklemuffin/internal/http/httpsafe"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbookmark"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgsession"
@@ -176,11 +177,28 @@ func NewRootCommand() *cobra.Command {
 				Msg("database: successfully created connection pool")
 
 			// HTTP client used to perform requests
-			httpClient := &http.Client{
-				Timeout: 30 * time.Second,
-			}
+			//
+			// Guarded against Server-Side Request Forgery by default: it
+			// refuses to connect to loopback, link-local, private,
+			// unspecified or multicast destination addresses. This guard is
+			// incompatible with an HTTP(S) forward proxy (see
+			// httpsafe.NewSafeTransport) -- if one is configured in the
+			// environment, fall back to a plain client that honors it, since
+			// that's a deliberate, trusted routing decision made by whoever
+			// is operating this instance.
 			userAgent := fmt.Sprintf("%s/%s", rootCmdName, versionDetails.Short)
-			feedClient := feedfetching.NewClient(httpClient, userAgent)
+
+			var feedClient *feedfetching.Client
+			if httpsafe.ProxyConfigured() {
+				log.Warn().Msg("feeds: HTTP(S) proxy detected in the environment, using a proxy-aware HTTP client with no built-in SSRF protection")
+				feedClient = feedfetching.NewClient(&http.Client{Timeout: 30 * time.Second}, userAgent)
+			} else {
+				feedClient, err = feedfetching.NewSafeClient(userAgent, 30*time.Second)
+				if err != nil {
+					log.Error().Err(err).Msg("feeds: failed to create HTTP client")
+					return err
+				}
+			}
 
 			// SparkleMuffin services
 			bookmarkRepository := pgbookmark.NewRepository(pgxPool)

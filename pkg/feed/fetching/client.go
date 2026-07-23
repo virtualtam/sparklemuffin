@@ -16,6 +16,8 @@ import (
 
 	"github.com/cespare/xxhash/v2"
 	"github.com/mmcdole/gofeed"
+
+	"github.com/virtualtam/sparklemuffin/internal/http/httpsafe"
 )
 
 // A Client performs outgoing HTTP requests to get remote feed data.
@@ -29,13 +31,35 @@ type Client struct {
 	feedParser *gofeed.Parser
 }
 
-// NewClient initializes and returns a Client.
+// NewClient initializes and returns a Client using httpClient to perform requests as-is.
+//
+// This client must only be used when HTTP/HTTPS traffic goes through a proxy, or for testing.
 func NewClient(httpClient *http.Client, userAgent string) *Client {
 	return &Client{
 		httpClient: httpClient,
 		userAgent:  userAgent,
 		feedParser: gofeed.NewParser(),
 	}
+}
+
+// NewSafeClient initializes and returns a Client backed by an SSRF-guarded http.Client.
+//
+// This client is recommended for production usage, as it will return an error when attempting
+// to perform requests to hosts / IP addresses that belong to unroutable address ranges.
+//
+// It MUST NOT be used when HTTP/HTTPS traffic goes through a proxy (otherwise all requests will be blocked).
+func NewSafeClient(userAgent string, timeout time.Duration) (*Client, error) {
+	transport, err := httpsafe.NewSafeTransport()
+	if err != nil {
+		return nil, err
+	}
+
+	httpClient := &http.Client{
+		Timeout:   timeout,
+		Transport: transport,
+	}
+
+	return NewClient(httpClient, userAgent), nil
 }
 
 // Fetch performs an HTTP request to get feed data and parses it.

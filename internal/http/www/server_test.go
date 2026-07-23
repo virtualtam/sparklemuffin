@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/virtualtam/sparklemuffin/internal/http/www/controller"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
@@ -38,8 +39,9 @@ func TestServerRememberUser(t *testing.T) {
 			tname: "remember token cookie set, corresponding user found",
 			repositorySessions: []session.Session{
 				{
-					UserUUID:          "9c9903c3-d583-4d42-9687-dccdfc77fc3a",
-					RememberTokenHash: "W3o3hteHwgT5EGSxhpyotYHNtBhEYlzfkVxViAglBuk=",
+					UserUUID:               "9c9903c3-d583-4d42-9687-dccdfc77fc3a",
+					RememberTokenHash:      "W3o3hteHwgT5EGSxhpyotYHNtBhEYlzfkVxViAglBuk=",
+					RememberTokenExpiresAt: time.Now().UTC().Add(1 * time.Hour),
 				},
 			},
 			repositoryUsers: []user.User{

@@ -14,6 +14,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
+	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -21,11 +22,13 @@ import (
 func RegisterAccountHandlers(
 	r *chi.Mux,
 	feedService *feed.Service,
+	sessionService *session.Service,
 	userService *user.Service,
 ) {
 	ac := accountController{
-		feedService: feedService,
-		userService: userService,
+		feedService:    feedService,
+		sessionService: sessionService,
+		userService:    userService,
 
 		accountInfoView:        view.New("account/info.gohtml"),
 		accountPasswordView:    view.New("account/password.gohtml"),
@@ -48,8 +51,9 @@ func RegisterAccountHandlers(
 }
 
 type accountController struct {
-	feedService *feed.Service
-	userService *user.Service
+	feedService    *feed.Service
+	sessionService *session.Service
+	userService    *user.Service
 
 	accountInfoView        *view.View
 	accountPasswordView    *view.View
@@ -139,6 +143,14 @@ func (ac *accountController) handlePasswordUpdate() func(w http.ResponseWriter, 
 		if err := ac.userService.UpdatePassword(ctx, userPassword); err != nil {
 			log.Error().Err(err).Msg("failed to update account password")
 			view.PutFlashError(w, fmt.Sprintf("There was an error updating your password: %s", err))
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		// a changed password must invalidate any remember-me token stolen before the change
+		if err := ac.sessionService.DeleteByUserUUID(ctx, ctxUser.UUID); err != nil {
+			log.Error().Err(err).Msg("failed to revoke user sessions")
+			view.PutFlashWarning(w, "Your password was updated, but other active sessions could not be revoked; please log out of other devices manually")
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}

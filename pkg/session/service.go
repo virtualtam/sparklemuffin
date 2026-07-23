@@ -62,6 +62,36 @@ func (s *Service) ByRememberToken(ctx context.Context, rememberToken string) (Se
 	return s.r.SessionGetByRememberTokenHash(ctx, session.RememberTokenHash)
 }
 
+// DeleteByRememberToken deletes the Session corresponding to a given
+// RememberToken.
+func (s *Service) DeleteByRememberToken(ctx context.Context, rememberToken string) error {
+	session := Session{RememberToken: rememberToken}
+
+	err := s.runValidationFuncs(
+		&session,
+		s.requireRememberToken,
+		s.hashRememberToken,
+		s.requireRememberTokenHash,
+	)
+	if err != nil {
+		return err
+	}
+
+	return s.r.SessionDeleteByRememberTokenHash(ctx, session.RememberTokenHash)
+}
+
+// DeleteByUserUUID deletes all Sessions belonging to a given user, e.g. after
+// a password change, to revoke any previously issued remember tokens.
+func (s *Service) DeleteByUserUUID(ctx context.Context, userUUID string) error {
+	session := Session{UserUUID: userUUID}
+
+	if err := s.requireUserUUID(&session); err != nil {
+		return err
+	}
+
+	return s.r.SessionDeleteByUserUUID(ctx, session.UserUUID)
+}
+
 func (s *Service) hashRememberToken(session *Session) error {
 	if session.RememberToken == "" {
 		return nil
@@ -85,7 +115,7 @@ func (s *Service) requireRememberToken(session *Session) error {
 }
 
 func (s *Service) requireRememberTokenHash(session *Session) error {
-	if session.RememberToken == "" {
+	if session.RememberTokenHash == "" {
 		return ErrRememberTokenHashRequired
 	}
 	return nil

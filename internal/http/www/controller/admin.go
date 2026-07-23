@@ -13,16 +13,19 @@ import (
 	"github.com/virtualtam/sparklemuffin/internal/http/www/htmx"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
+	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 // RegisterAdminHandlers registers handlers for administration operations.
 func RegisterAdminHandlers(
 	r *chi.Mux,
+	sessionService *session.Service,
 	userService *user.Service,
 ) {
 	ac := adminController{
-		userService: userService,
+		sessionService: sessionService,
+		userService:    userService,
 
 		adminUserAddView:    view.New("admin/user_add.gohtml"),
 		adminUserDeleteView: view.New("admin/user_delete.gohtml"),
@@ -47,7 +50,8 @@ func RegisterAdminHandlers(
 }
 
 type adminController struct {
-	userService *user.Service
+	sessionService *session.Service
+	userService    *user.Service
 
 	adminUserAddView    *view.View
 	adminUserDeleteView *view.View
@@ -255,6 +259,14 @@ func (ac *adminController) handleUserEdit() func(w http.ResponseWriter, r *http.
 		if err := ac.userService.Update(ctx, editedUser); err != nil {
 			log.Error().Err(err).Msg("failed to update user")
 			view.PutFlashError(w, err.Error())
+			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			return
+		}
+
+		// an admin-initiated edit always rewrites the password hash, so revoke the edited user's sessions too
+		if err := ac.sessionService.DeleteByUserUUID(ctx, editedUser.UUID); err != nil {
+			log.Error().Err(err).Msg("failed to revoke user sessions")
+			view.PutFlashWarning(w, fmt.Sprintf("user %q was updated, but their other active sessions could not be revoked", editedUser.Email))
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}

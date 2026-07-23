@@ -55,9 +55,10 @@ func (r *Repository) SessionAdd(ctx context.Context, sess session.Session) error
 
 func (r *Repository) SessionGetByRememberTokenHash(ctx context.Context, hash string) (session.Session, error) {
 	query := `
-	SELECT user_uuid, remember_token_hash
+	SELECT user_uuid, remember_token_hash, remember_token_expires_at
 	FROM sessions
-	WHERE remember_token_hash=$1`
+	WHERE remember_token_hash=$1
+	AND remember_token_expires_at > NOW()`
 
 	dbSession := &DBSession{}
 
@@ -81,7 +82,28 @@ func (r *Repository) SessionGetByRememberTokenHash(ctx context.Context, hash str
 	}
 
 	return session.Session{
-		UserUUID:          dbSession.UserUUID,
-		RememberTokenHash: dbSession.RememberTokenHash,
+		UserUUID:               dbSession.UserUUID,
+		RememberTokenHash:      dbSession.RememberTokenHash,
+		RememberTokenExpiresAt: dbSession.RememberTokenExpiresAt,
 	}, nil
+}
+
+func (r *Repository) SessionDeleteByRememberTokenHash(ctx context.Context, hash string) error {
+	query := `DELETE FROM sessions WHERE remember_token_hash=@remember_token_hash`
+
+	args := pgx.NamedArgs{
+		"remember_token_hash": hash,
+	}
+
+	return r.QueryTx(ctx, domain, "SessionDeleteByRememberTokenHash", query, args)
+}
+
+func (r *Repository) SessionDeleteByUserUUID(ctx context.Context, userUUID string) error {
+	query := `DELETE FROM sessions WHERE user_uuid=@user_uuid`
+
+	args := pgx.NamedArgs{
+		"user_uuid": userUUID,
+	}
+
+	return r.QueryTx(ctx, domain, "SessionDeleteByUserUUID", query, args)
 }

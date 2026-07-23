@@ -11,7 +11,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 
-	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 	"github.com/virtualtam/sparklemuffin/internal/rand"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
@@ -86,7 +85,8 @@ func (sc *sessionController) handleUserLogin() func(w http.ResponseWriter, r *ht
 	}
 }
 
-// handleUserLogout logs a user out and clears their session data.
+// handleUserLogout logs a user out, revoking their server-side session and
+// clearing the session cookie.
 func (sc *sessionController) handleUserLogout() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie := http.Cookie{
@@ -98,30 +98,10 @@ func (sc *sessionController) handleUserLogout() func(w http.ResponseWriter, r *h
 		}
 		http.SetCookie(w, &cookie)
 
-		ctx := r.Context()
-		ctxUser := httpcontext.UserValue(ctx)
-		if ctxUser == nil {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-
-		token, err := rand.RandomBase64URLString(UserRememberTokenNBytes)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to generate a remember token")
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-
-		userSession := session.Session{
-			UserUUID:      ctxUser.UUID,
-			RememberToken: token,
-		}
-
-		err = sc.sessionService.Add(ctx, userSession)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to save user session")
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
+		if requestCookie, err := r.Cookie(UserRememberTokenCookieName); err == nil {
+			if err := sc.sessionService.DeleteByRememberToken(r.Context(), requestCookie.Value); err != nil {
+				log.Error().Err(err).Msg("failed to revoke user session")
+			}
 		}
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)

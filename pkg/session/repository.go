@@ -15,4 +15,11 @@ type Repository interface {
 	// SessionGetByRememberTokenHash returns the Session corresponding to a
 	// given remember token hash.
 	SessionGetByRememberTokenHash(ctx context.Context, hash string) (Session, error)
+
+	// SessionDeleteByRememberTokenHash deletes the Session corresponding to a
+	// given remember token hash.
+	SessionDeleteByRememberTokenHash(ctx context.Context, hash string) error
+
+	// SessionDeleteByUserUUID deletes all Sessions belonging to a given user.
+	SessionDeleteByUserUUID(ctx context.Context, userUUID string) error
 }

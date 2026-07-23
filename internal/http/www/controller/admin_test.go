@@ -5,8 +5,10 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -15,6 +17,7 @@ import (
 
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
+	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -66,6 +69,137 @@ func newUserDeletePostRequest(t *testing.T, ctxUser user.User, userUUID string, 
 	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
 
 	return r.WithContext(ctx)
+}
+
+func TestHandleUserEdit(t *testing.T) {
+	fake := faker.New()
+	ctxUser := user.User{UUID: fake.UUID().V4(), IsAdmin: true}
+
+	t.Run("editing a user revokes their existing sessions", func(t *testing.T) {
+		userRepo := &user.FakeRepository{}
+		userService := user.NewService(userRepo)
+
+		targetUser := user.User{
+			Email:       "target@example.com",
+			NickName:    "target1",
+			DisplayName: "Target One",
+			Password:    "original-password1234",
+		}
+		if err := userService.Add(t.Context(), targetUser); err != nil {
+			t.Fatalf("failed to seed user: %q", err)
+		}
+		seededUser, err := userService.ByNickName(t.Context(), targetUser.NickName)
+		if err != nil {
+			t.Fatalf("failed to retrieve seeded user: %q", err)
+		}
+
+		sessionRepo := &session.FakeRepository{
+			Sessions: []session.Session{
+				{UserUUID: seededUser.UUID, RememberTokenHash: "hash-1"},
+				{UserUUID: "another-user", RememberTokenHash: "hash-2"},
+			},
+		}
+		sessionService, err := session.NewService(sessionRepo, "hmac-key")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		ac := adminController{
+			userService:    userService,
+			sessionService: sessionService,
+		}
+
+		form := url.Values{}
+		form.Set("email", seededUser.Email)
+		form.Set("nick_name", seededUser.NickName)
+		form.Set("display_name", seededUser.DisplayName)
+		form.Set("password", "admin-reset-password1234")
+
+		r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/admin/users/"+seededUser.UUID, strings.NewReader(form.Encode()))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("uuid", seededUser.UUID)
+		ctx := context.WithValue(r.Context(), chi.RouteCtxKey, rctx)
+		ctx = httpcontext.WithUser(ctx, ctxUser)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+
+		ac.handleUserEdit()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status %d, got %d, body:\n%s", http.StatusSeeOther, w.Code, w.Body.String())
+		}
+
+		if len(sessionRepo.Sessions) != 1 {
+			t.Fatalf("want 1 remaining session, got %d", len(sessionRepo.Sessions))
+		}
+		if sessionRepo.Sessions[0].UserUUID != "another-user" {
+			t.Errorf("want the other user's session to remain, got session for %q", sessionRepo.Sessions[0].UserUUID)
+		}
+
+		if got := decodedFlashLevel(t, w); got != "success" {
+			t.Errorf("want a success flash, got %q", got)
+		}
+	})
+
+	t.Run("session revocation failure still redirects but flashes a warning instead of success", func(t *testing.T) {
+		userRepo := &user.FakeRepository{}
+		userService := user.NewService(userRepo)
+
+		targetUser := user.User{
+			Email:       "target2@example.com",
+			NickName:    "target2",
+			DisplayName: "Target Two",
+			Password:    "original-password1234",
+		}
+		if err := userService.Add(t.Context(), targetUser); err != nil {
+			t.Fatalf("failed to seed user: %q", err)
+		}
+		seededUser, err := userService.ByNickName(t.Context(), targetUser.NickName)
+		if err != nil {
+			t.Fatalf("failed to retrieve seeded user: %q", err)
+		}
+
+		sessionRepo := &session.FakeRepository{
+			SessionDeleteByUserUUIDErr: errors.New("connection reset"),
+		}
+		sessionService, err := session.NewService(sessionRepo, "hmac-key")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		ac := adminController{
+			userService:    userService,
+			sessionService: sessionService,
+		}
+
+		form := url.Values{}
+		form.Set("email", seededUser.Email)
+		form.Set("nick_name", seededUser.NickName)
+		form.Set("display_name", seededUser.DisplayName)
+		form.Set("password", "admin-reset-password1234")
+
+		r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/admin/users/"+seededUser.UUID, strings.NewReader(form.Encode()))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("uuid", seededUser.UUID)
+		ctx := context.WithValue(r.Context(), chi.RouteCtxKey, rctx)
+		ctx = httpcontext.WithUser(ctx, ctxUser)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+
+		ac.handleUserEdit()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status %d, got %d, body:\n%s", http.StatusSeeOther, w.Code, w.Body.String())
+		}
+
+		if got := decodedFlashLevel(t, w); got != "warning" {
+			t.Errorf("want a warning flash when session revocation fails, got %q", got)
+		}
+	})
 }
 
 func TestHandleUserDeleteView(t *testing.T) {

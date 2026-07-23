@@ -1,4 +1,9 @@
 /**
+ * Copyright VirtualTam 2022, 2026
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * EasyMDE Initialization Script
  *
  * Initializes EasyMDE markdown editors on textareas marked with the

@@ -38,7 +38,9 @@ func NewScheduler(service *Service, locker sync.Locker) *Scheduler {
 // Run periodically synchronizes all syndication feeds.
 func (sc *Scheduler) Run(ctx context.Context) {
 	ticker := time.NewTicker(sc.interval)
-	log.Info().Dur("interval_seconds", sc.interval).Msg("feeds: synchronization scheduler started")
+	log.Info().
+		Dur("interval", sc.interval).
+		Msg("feeds: synchronization scheduler started")
 
 	for {
 		<-ticker.C

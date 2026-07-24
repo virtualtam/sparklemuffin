@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coder/quartz"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -92,6 +93,8 @@ func NewRootCommand() *cobra.Command {
 	)
 
 	var (
+		ctx = context.Background()
+
 		hmacKey string
 	)
 
@@ -149,7 +152,7 @@ func NewRootCommand() *cobra.Command {
 				databaseSSLMode,
 			)
 
-			pgxPool, err = pgxpool.New(context.Background(), databaseURI)
+			pgxPool, err = pgxpool.New(ctx, databaseURI)
 			if err != nil {
 				log.Error().
 					Err(err).
@@ -160,7 +163,7 @@ func NewRootCommand() *cobra.Command {
 				return err
 			}
 
-			if err := pgxPool.Ping(context.Background()); err != nil {
+			if err := pgxPool.Ping(ctx); err != nil {
 				log.Error().
 					Err(err).
 					Str("database_driver", databaseDriver).
@@ -214,7 +217,7 @@ func NewRootCommand() *cobra.Command {
 			feedImportingService = feedimporting.NewService(feedService)
 			feedSynchronizingService = feedsynchronizing.NewService(feedRepository, feedClient, rootCmdName)
 
-			sessionRepository := pgsession.NewRepository(pgxPool)
+			sessionRepository := pgsession.NewRepository(ctx, pgxPool, quartz.NewReal())
 			sessionService, err = session.NewService(sessionRepository, hmacKey)
 			if err != nil {
 				log.Error().Err(err).Msg("session: failed to create session service")

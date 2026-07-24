@@ -10,6 +10,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Update Chi HTTP middleware to read the remote client IP address from a header set by a reverse proxy
 - Prevent the HTTP client used to fetch syndication feeds from performing requests to unroutable or blocked IP address ranges.
 - Fully invalidate user sessions on logout and password change
+- Periodically invalidate expired user sessions
 
 ### Fixed
 #### Packaging and automation

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/coder/quartz"
 	"github.com/jaswdr/faker/v2"
 
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
@@ -34,7 +35,7 @@ func TestRepository(t *testing.T) {
 		t.Fatalf("failed to retrieve user: %q", err)
 	}
 
-	r := pgsession.NewRepository(pool)
+	r := pgsession.NewRepository(t.Context(), pool, quartz.NewReal())
 
 	t.Run("expired sessions are not returned", func(t *testing.T) {
 		sess := session.Session{
@@ -140,4 +141,67 @@ func TestRepository(t *testing.T) {
 			t.Errorf("want user UUID %q, got %q", retrievedOtherUser.UUID, got.UserUUID)
 		}
 	})
+}
+
+func TestRepository_InvalidateSessions(t *testing.T) {
+	pool := pgbase.CreateAndMigrateTestDatabase(t)
+
+	ur := pguser.NewRepository(pool)
+	us := user.NewService(ur)
+
+	u := pgbase.GenerateFakeUser(t, new(faker.New()))
+	if err := us.Add(t.Context(), u); err != nil {
+		t.Fatalf("failed to create user: %q", err)
+	}
+
+	testUser, err := us.ByNickName(t.Context(), u.NickName)
+	if err != nil {
+		t.Fatalf("failed to retrieve user: %q", err)
+	}
+
+	mClock := quartz.NewMock(t)
+	r := pgsession.NewRepository(t.Context(), pool, mClock)
+
+	expiredSess := session.Session{
+		UserUUID:               testUser.UUID,
+		RememberTokenHash:      "periodic-cleanup-expired",
+		RememberTokenExpiresAt: time.Now().UTC().Add(-1 * time.Hour),
+	}
+	if err := r.SessionAdd(t.Context(), expiredSess); err != nil {
+		t.Fatalf("failed to add session: %q", err)
+	}
+
+	validSess := session.Session{
+		UserUUID:               testUser.UUID,
+		RememberTokenHash:      "periodic-cleanup-valid",
+		RememberTokenExpiresAt: time.Now().UTC().Add(1 * time.Hour),
+	}
+	if err := r.SessionAdd(t.Context(), validSess); err != nil {
+		t.Fatalf("failed to add session: %q", err)
+	}
+
+	_, waiter := mClock.AdvanceNext()
+	waiter.MustWait(t.Context())
+
+	const (
+		countSessionsQuery = "SELECT COUNT(*) FROM sessions WHERE remember_token_hash=$1"
+	)
+
+	var expiredCount int
+	expiredRow := pool.QueryRow(t.Context(), countSessionsQuery, "periodic-cleanup-expired")
+	if err := expiredRow.Scan(&expiredCount); err != nil {
+		t.Fatalf("failed to count sessions: %q", err)
+	}
+	if expiredCount != 0 {
+		t.Errorf("want expired session to be physically deleted, got %d remaining", expiredCount)
+	}
+
+	var validCount int
+	validRow := pool.QueryRow(t.Context(), countSessionsQuery, "periodic-cleanup-valid")
+	if err := validRow.Scan(&validCount); err != nil {
+		t.Fatalf("failed to count sessions: %q", err)
+	}
+	if validCount != 1 {
+		t.Errorf("want non-expired session to remain, got %d remaining", validCount)
+	}
 }

@@ -7,6 +7,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.27.0
 	github.com/anyascii/go v0.3.3
 	github.com/cespare/xxhash/v2 v2.3.0
+	github.com/coder/quartz v0.3.1
 	github.com/earthboundkid/versioninfo/v2 v2.24.1
 	github.com/georgysavva/scany/v2 v2.1.4
 	github.com/go-chi/chi/v5 v5.3.1

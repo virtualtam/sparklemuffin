@@ -11,6 +11,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Prevent the HTTP client used to fetch syndication feeds from performing requests to unroutable or blocked IP address ranges.
 - Fully invalidate user sessions on logout and password change
 - Periodically invalidate expired user sessions
+- Rate-limit login attempts by resolved client IP and by user email
 
 ### Fixed
 #### Packaging and automation

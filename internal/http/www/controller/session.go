@@ -12,6 +12,7 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/log"
 
+	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 	"github.com/virtualtam/sparklemuffin/internal/rand"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
@@ -38,7 +39,7 @@ func RegisterSessionHandlers(
 
 	// authentication
 	r.Get("/login", sc.userLoginView.Handle)
-	r.Post("/login", sc.handleUserLogin())
+	r.With(middleware.RateLimitLogin).Post("/login", sc.handleUserLogin())
 	r.Post("/logout", sc.handleUserLogout())
 }
 

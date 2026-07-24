@@ -1,3 +1,6 @@
+// Copyright VirtualTam 2022, 2026
+// SPDX-License-Identifier: MIT
+
 package httpsafe
 
 import (

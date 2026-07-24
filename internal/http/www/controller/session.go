@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/log"
 
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
@@ -68,7 +69,11 @@ func (sc *sessionController) handleUserLogin() func(w http.ResponseWriter, r *ht
 
 		authenticatedUser, err := sc.userService.Authenticate(ctx, form.Email, form.Password)
 		if err != nil {
-			log.Error().Err(err).Msg("failed to authenticate user")
+			log.Error().
+				Err(err).
+				Str("client_ip", chimiddleware.GetClientIP(ctx)).
+				Str("email", form.Email).
+				Msg("failed to authenticate user")
 			view.PutFlashError(w, "invalid email or password")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 			return

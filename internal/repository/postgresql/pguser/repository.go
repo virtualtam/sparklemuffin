@@ -209,10 +209,28 @@ func (r *Repository) UserIsEmailRegistered(ctx context.Context, email string) (b
 	)
 }
 
+func (r *Repository) UserIsEmailRegisteredToAnotherUser(ctx context.Context, userUUID, email string) (bool, error) {
+	return r.RowExistsByQuery(
+		ctx,
+		"SELECT 1 FROM users WHERE uuid != $1 AND email=$2",
+		userUUID,
+		email,
+	)
+}
+
 func (r *Repository) UserIsNickNameRegistered(ctx context.Context, nick string) (bool, error) {
 	return r.RowExistsByQuery(
 		ctx,
 		"SELECT 1 FROM users WHERE nick_name=$1",
+		nick,
+	)
+}
+
+func (r *Repository) UserIsNickNameRegisteredToAnotherUser(ctx context.Context, userUUID, nick string) (bool, error) {
+	return r.RowExistsByQuery(
+		ctx,
+		"SELECT 1 FROM users WHERE uuid != $1 AND nick_name=$2",
+		userUUID,
 		nick,
 	)
 }
@@ -253,7 +271,7 @@ func (r *Repository) UserUpdateInfo(ctx context.Context, info user.InfoUpdate) e
 	WHERE uuid=@uuid`
 
 	args := pgx.NamedArgs{
-		"uuid":         info.UUID,
+		"uuid":         info.UserUUID,
 		"email":        info.Email,
 		"nick_name":    info.NickName,
 		"display_name": info.DisplayName,
@@ -272,7 +290,7 @@ func (r *Repository) UserUpdatePasswordHash(ctx context.Context, passwordHash us
 	WHERE uuid=@uuid`
 
 	args := pgx.NamedArgs{
-		"uuid":          passwordHash.UUID,
+		"uuid":          passwordHash.UserUUID,
 		"password_hash": passwordHash.PasswordHash,
 		"updated_at":    passwordHash.UpdatedAt,
 	}

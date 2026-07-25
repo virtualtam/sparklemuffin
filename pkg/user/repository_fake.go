@@ -77,11 +77,37 @@ func (r *FakeRepository) UserIsEmailRegistered(_ context.Context, email string) 
 	return registered, nil
 }
 
+func (r *FakeRepository) UserIsEmailRegisteredToAnotherUser(_ context.Context, userUUID, email string) (bool, error) {
+	registered := false
+
+	for _, user := range r.Users {
+		if user.Email == email && user.UUID != userUUID {
+			registered = true
+			break
+		}
+	}
+
+	return registered, nil
+}
+
 func (r *FakeRepository) UserIsNickNameRegistered(_ context.Context, nick string) (bool, error) {
 	registered := false
 
 	for _, user := range r.Users {
 		if user.NickName == nick {
+			registered = true
+			break
+		}
+	}
+
+	return registered, nil
+}
+
+func (r *FakeRepository) UserIsNickNameRegisteredToAnotherUser(_ context.Context, userUUID, nick string) (bool, error) {
+	registered := false
+
+	for _, user := range r.Users {
+		if user.NickName == nick && user.UUID != userUUID {
 			registered = true
 			break
 		}
@@ -103,7 +129,7 @@ func (r *FakeRepository) UserUpdate(_ context.Context, user User) error {
 
 func (r *FakeRepository) UserUpdateInfo(_ context.Context, info InfoUpdate) error {
 	for index, existingUser := range r.Users {
-		if existingUser.UUID == info.UUID {
+		if existingUser.UUID == info.UserUUID {
 			r.Users[index].Email = info.Email
 			r.Users[index].UpdatedAt = info.UpdatedAt
 			return nil
@@ -115,7 +141,7 @@ func (r *FakeRepository) UserUpdateInfo(_ context.Context, info InfoUpdate) erro
 
 func (r *FakeRepository) UserUpdatePasswordHash(_ context.Context, passwordHash PasswordHashUpdate) error {
 	for index, existingUser := range r.Users {
-		if existingUser.UUID == passwordHash.UUID {
+		if existingUser.UUID == passwordHash.UserUUID {
 			r.Users[index].PasswordHash = passwordHash.PasswordHash
 			r.Users[index].UpdatedAt = passwordHash.UpdatedAt
 			return nil

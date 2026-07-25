@@ -81,7 +81,7 @@ func (ac *accountController) handleInfoUpdate() func(w http.ResponseWriter, r *h
 		}
 
 		userInfo := user.InfoUpdate{
-			UUID:        ctxUser.UUID,
+			UserUUID:    ctxUser.UUID,
 			Email:       form.Email,
 			NickName:    form.NickName,
 			DisplayName: form.DisplayName,
@@ -134,7 +134,7 @@ func (ac *accountController) handlePasswordUpdate() func(w http.ResponseWriter, 
 		}
 
 		userPassword := user.PasswordUpdate{
-			UUID:                    ctxUser.UUID,
+			UserUUID:                ctxUser.UUID,
 			CurrentPassword:         form.CurrentPassword,
 			NewPassword:             form.NewPassword,
 			NewPasswordConfirmation: form.NewPasswordConfirmation,

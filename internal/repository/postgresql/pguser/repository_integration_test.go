@@ -127,7 +127,7 @@ func TestUserService(t *testing.T) {
 		}
 
 		info := user.InfoUpdate{
-			UUID:        gotUser.UUID,
+			UserUUID:    gotUser.UUID,
 			Email:       gotUser.Email,
 			NickName:    gotUser.NickName,
 			DisplayName: gotUser.DisplayName,
@@ -166,7 +166,7 @@ func TestUserService(t *testing.T) {
 		newPerson := fake.Person()
 
 		info := user.InfoUpdate{
-			UUID:        gotUser.UUID,
+			UserUUID:    gotUser.UUID,
 			Email:       newPerson.Contact().Email,
 			NickName:    gotUser.NickName,
 			DisplayName: newPerson.Name(),
@@ -205,7 +205,7 @@ func TestUserService(t *testing.T) {
 		newPassword := fake.Internet().Password()
 
 		passwordUpdate := user.PasswordUpdate{
-			UUID:                    gotUser.UUID,
+			UserUUID:                gotUser.UUID,
 			CurrentPassword:         u.Password,
 			NewPassword:             newPassword,
 			NewPasswordConfirmation: newPassword,

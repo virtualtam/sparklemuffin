@@ -7,8 +7,29 @@ import (
 	"context"
 )
 
+// ValidationRepository provides methods for User validation.
+type ValidationRepository interface {
+	// UserIsEmailRegistered returns whether there is an existing user
+	// registered with this email address.
+	UserIsEmailRegistered(ctx context.Context, email string) (bool, error)
+
+	// UserIsEmailRegisteredToAnotherUser returns whether there is an existing user
+	// registered with this email address.
+	UserIsEmailRegisteredToAnotherUser(ctx context.Context, userUUID, email string) (bool, error)
+
+	// UserIsNickNameRegistered returns whether there is an existing user
+	// registered with this nickname.
+	UserIsNickNameRegistered(ctx context.Context, nick string) (bool, error)
+
+	// UserIsNickNameRegisteredToAnotherUser returns whether there is an existing user
+	// registered with this nickname.
+	UserIsNickNameRegisteredToAnotherUser(ctx context.Context, userUUID, nick string) (bool, error)
+}
+
 // Repository provides access to the User repository.
 type Repository interface {
+	ValidationRepository
+
 	// UserAdd saves a new user.
 	UserAdd(ctx context.Context, u User) error
 
@@ -26,14 +47,6 @@ type Repository interface {
 
 	// UserGetByUUID returns the User corresponding to a given UUID.
 	UserGetByUUID(ctx context.Context, uuid string) (User, error)
-
-	// UserIsEmailRegistered returns whether there is an existing user
-	// registered with this email address.
-	UserIsEmailRegistered(ctx context.Context, email string) (bool, error)
-
-	// UserIsNickNameRegistered returns whether there is an existing user
-	// registered with this nickname.
-	UserIsNickNameRegistered(ctx context.Context, nick string) (bool, error)
 
 	// UserUpdate updates an existing user.
 	UserUpdate(ctx context.Context, u User) error

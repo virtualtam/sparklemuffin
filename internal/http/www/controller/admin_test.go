@@ -80,6 +80,7 @@ func TestHandleUserEdit(t *testing.T) {
 		userService := user.NewService(userRepo)
 
 		targetUser := user.User{
+			UUID:        fake.UUID().V4(),
 			Email:       "target@example.com",
 			NickName:    "target1",
 			DisplayName: "Target One",
@@ -148,6 +149,7 @@ func TestHandleUserEdit(t *testing.T) {
 		userService := user.NewService(userRepo)
 
 		targetUser := user.User{
+			UUID:        fake.UUID().V4(),
 			Email:       "target2@example.com",
 			NickName:    "target2",
 			DisplayName: "Target Two",

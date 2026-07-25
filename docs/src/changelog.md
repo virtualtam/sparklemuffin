@@ -37,6 +37,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Bump gofeed to v1.4.0
 - If a feed entry URL only consists in a relative path, attempt to build its full URL from the feed's base URL
 
+#### User
+- Refactor model validation for user creation and update
+
 #### WWW
 - Add helper to render a single named HTML template
 - Add method to retrieve a given feed entry

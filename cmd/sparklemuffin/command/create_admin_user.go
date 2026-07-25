@@ -14,19 +14,19 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
-const (
-	adminUserPasswordNBytes = 32
-)
-
-var (
-	adminUserEmail       string
-	adminUserNickname    string
-	adminUserDisplayName string
-)
-
 // NewCreateAdminUserCommand initializes a CLI command to create a user
 // with administration privileges.
 func NewCreateAdminUserCommand() *cobra.Command {
+	const (
+		adminUserPasswordNBytes = 32
+	)
+
+	var (
+		email       string
+		nickname    string
+		displayName string
+	)
+
 	cmd := &cobra.Command{
 		Use:   "createadmin",
 		Short: "Create a user with administration privileges",
@@ -37,12 +37,10 @@ func NewCreateAdminUserCommand() *cobra.Command {
 				return err
 			}
 
-			adminUser := user.User{
-				Email:       adminUserEmail,
-				NickName:    adminUserNickname,
-				DisplayName: adminUserDisplayName,
-				Password:    adminUserPassword,
-				IsAdmin:     true,
+			adminUser, err := user.NewAdminUser(email, nickname, displayName, adminUserPassword)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to create admin user")
+				return err
 			}
 
 			if err := userService.Add(context.Background(), adminUser); err != nil {
@@ -51,8 +49,8 @@ func NewCreateAdminUserCommand() *cobra.Command {
 			}
 
 			log.Info().
-				Str("email", adminUserEmail).
-				Str("nickname", adminUserNickname).
+				Str("email", email).
+				Str("nickname", nickname).
 				Msg("admin user successfully created")
 
 			// Display generated password on the CLI
@@ -63,7 +61,7 @@ func NewCreateAdminUserCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(
-		&adminUserEmail,
+		&email,
 		"email",
 		"",
 		"Email address",
@@ -73,7 +71,7 @@ func NewCreateAdminUserCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(
-		&adminUserNickname,
+		&nickname,
 		"nickname",
 		"",
 		"User nickname",
@@ -83,7 +81,7 @@ func NewCreateAdminUserCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(
-		&adminUserDisplayName,
+		&displayName,
 		"displayname",
 		"",
 		"User display name",

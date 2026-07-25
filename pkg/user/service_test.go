@@ -6,9 +6,13 @@ package user
 import (
 	"errors"
 	"testing"
+
+	"github.com/jaswdr/faker/v2"
 )
 
 func TestServiceAdd(t *testing.T) {
+	fake := faker.New()
+
 	cases := []struct {
 		tname           string
 		repositoryUsers []User
@@ -98,6 +102,7 @@ func TestServiceAdd(t *testing.T) {
 		{
 			tname: "valid user",
 			user: User{
+				UUID:        fake.UUID().V4(),
 				Email:       "new@domain.tld",
 				NickName:    "dat-new-pal3",
 				DisplayName: "The New Pal",
@@ -107,6 +112,7 @@ func TestServiceAdd(t *testing.T) {
 		{
 			tname: "valid adminuser",
 			user: User{
+				UUID:        fake.UUID().V4(),
 				Email:       "newadmin@domain.tld",
 				NickName:    "newadmin",
 				DisplayName: "PID One",
@@ -613,7 +619,7 @@ func TestServiceUpdateInfo(t *testing.T) {
 		{
 			tname: "empty email",
 			info: InfoUpdate{
-				UUID: "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				UserUUID: "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
 			},
 			wantErr: ErrEmailRequired,
 		},
@@ -630,8 +636,8 @@ func TestServiceUpdateInfo(t *testing.T) {
 				},
 			},
 			info: InfoUpdate{
-				UUID:  "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
-				Email: "mimic@domain.tld",
+				UserUUID: "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				Email:    "mimic@domain.tld",
 			},
 			wantErr: ErrEmailAlreadyRegistered,
 		},
@@ -644,7 +650,7 @@ func TestServiceUpdateInfo(t *testing.T) {
 				},
 			},
 			info: InfoUpdate{
-				UUID:     "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				UserUUID: "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
 				Email:    "mimic@domain.tld",
 				NickName: "    ",
 			},
@@ -659,7 +665,7 @@ func TestServiceUpdateInfo(t *testing.T) {
 				},
 			},
 			info: InfoUpdate{
-				UUID:     "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				UserUUID: "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
 				Email:    "mimic@domain.tld",
 				NickName: "s p a c e",
 			},
@@ -674,7 +680,7 @@ func TestServiceUpdateInfo(t *testing.T) {
 				},
 			},
 			info: InfoUpdate{
-				UUID:     "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				UserUUID: "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
 				Email:    "mimic@domain.tld",
 				NickName: "s/lash",
 			},
@@ -689,7 +695,7 @@ func TestServiceUpdateInfo(t *testing.T) {
 				},
 			},
 			info: InfoUpdate{
-				UUID:     "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				UserUUID: "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
 				Email:    "mimic@domain.tld",
 				NickName: "s?lash",
 			},
@@ -704,7 +710,7 @@ func TestServiceUpdateInfo(t *testing.T) {
 				},
 			},
 			info: InfoUpdate{
-				UUID:        "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				UserUUID:    "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
 				Email:       "empty@domain.tld",
 				NickName:    "empty",
 				DisplayName: "   ",
@@ -714,7 +720,7 @@ func TestServiceUpdateInfo(t *testing.T) {
 		{
 			tname: "not found",
 			info: InfoUpdate{
-				UUID:        "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				UserUUID:    "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
 				Email:       "ghost@domain.tld",
 				NickName:    "ghost",
 				DisplayName: "Busted Ghost",
@@ -732,7 +738,7 @@ func TestServiceUpdateInfo(t *testing.T) {
 				},
 			},
 			info: InfoUpdate{
-				UUID:        "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				UserUUID:    "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
 				Email:       "mimic@domain.tld",
 				NickName:    "Mimic",
 				DisplayName: "Mimic",
@@ -749,7 +755,7 @@ func TestServiceUpdateInfo(t *testing.T) {
 				},
 			},
 			info: InfoUpdate{
-				UUID:        "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
+				UserUUID:    "2a16ed9e-fdb0-4d8e-a196-3fe4d24d1c34",
 				Email:       "chest@domain.tld",
 				NickName:    "chester",
 				DisplayName: "Chester",
@@ -797,14 +803,14 @@ func TestServiceUpdatePassword(t *testing.T) {
 		{
 			tname: "empty password",
 			passwordUpdate: PasswordUpdate{
-				UUID: "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+				UserUUID: "546e3bff-5dbb-4269-ab01-c35a90c382dc",
 			},
 			wantErr: ErrPasswordRequired,
 		},
 		{
 			tname: "user not found",
 			passwordUpdate: PasswordUpdate{
-				UUID:            "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+				UserUUID:        "546e3bff-5dbb-4269-ab01-c35a90c382dc",
 				CurrentPassword: "test",
 			},
 			wantErr: ErrNotFound,
@@ -819,7 +825,7 @@ func TestServiceUpdatePassword(t *testing.T) {
 				},
 			},
 			passwordUpdate: PasswordUpdate{
-				UUID:            "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+				UserUUID:        "546e3bff-5dbb-4269-ab01-c35a90c382dc",
 				CurrentPassword: "isitnottest?",
 			},
 			wantErr: ErrPasswordIncorrect,
@@ -834,7 +840,7 @@ func TestServiceUpdatePassword(t *testing.T) {
 				},
 			},
 			passwordUpdate: PasswordUpdate{
-				UUID:                    "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+				UserUUID:                "546e3bff-5dbb-4269-ab01-c35a90c382dc",
 				CurrentPassword:         "test",
 				NewPassword:             "asdf",
 				NewPasswordConfirmation: "qsdf",
@@ -851,7 +857,7 @@ func TestServiceUpdatePassword(t *testing.T) {
 				},
 			},
 			passwordUpdate: PasswordUpdate{
-				UUID:                    "546e3bff-5dbb-4269-ab01-c35a90c382dc",
+				UserUUID:                "546e3bff-5dbb-4269-ab01-c35a90c382dc",
 				CurrentPassword:         "test",
 				NewPassword:             "asdf",
 				NewPasswordConfirmation: "asdf",
@@ -867,74 +873,6 @@ func TestServiceUpdatePassword(t *testing.T) {
 			s := NewService(r)
 
 			err := s.UpdatePassword(t.Context(), tc.passwordUpdate)
-
-			if tc.wantErr != nil {
-				if errors.Is(err, tc.wantErr) {
-					return
-				}
-				if err == nil {
-					t.Fatalf("want error %q, got nil", tc.wantErr)
-				}
-				t.Fatalf("want error %q, got %q", tc.wantErr, err)
-			}
-
-			if err != nil {
-				t.Fatalf("want no error, got %q", err)
-			}
-		})
-	}
-}
-
-func TestServiceUpdatePasswordHash(t *testing.T) {
-	cases := []struct {
-		tname           string
-		repositoryUsers []User
-		user            User
-		wantErr         error
-	}{
-		// error cases
-		{
-			tname:   "empty UUID",
-			wantErr: ErrUUIDRequired,
-		},
-		{
-			tname: "empty password hash",
-			user: User{
-				UUID: "546e3bff-5dbb-4269-ab01-c35a90c382dc",
-			},
-			wantErr: ErrPasswordHashRequired,
-		},
-		{
-			tname: "user not found",
-			user: User{
-				UUID:         "546e3bff-5dbb-4269-ab01-c35a90c382dc",
-				PasswordHash: "$2b$10$AIUHvtnoIppMHkhpoTFdROVwedB9YC.iJvGaHpnIXEUesD6VHTLLK",
-			},
-			wantErr: ErrNotFound,
-		},
-
-		// nominal case
-		{
-			tname: "password hash updated",
-			repositoryUsers: []User{
-				{
-					UUID:         "546e3bff-5dbb-4269-ab01-c35a90c382dc",
-					PasswordHash: "$2b$10$AIUHvtnoIppMHkhpoTFdROVwedB9YC.iJvGaHpnIXEUesD6VHTLLK",
-				},
-			},
-			user: User{
-				UUID:         "546e3bff-5dbb-4269-ab01-c35a90c382dc",
-				PasswordHash: "$2b$10$J0z6wKdvrPMmbUgg.uhhROv0Zp4bFQ19GnTshpsazLpK2l5fOnEmy",
-			},
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.tname, func(t *testing.T) {
-			r := &FakeRepository{Users: tc.repositoryUsers}
-			s := NewService(r)
-
-			err := s.UpdatePasswordHash(t.Context(), tc.user)
 
 			if tc.wantErr != nil {
 				if errors.Is(err, tc.wantErr) {

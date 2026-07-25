@@ -13,6 +13,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jaswdr/faker/v2"
+
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
@@ -48,11 +50,14 @@ func decodedFlashLevel(t *testing.T, w *httptest.ResponseRecorder) string {
 }
 
 func TestHandlePasswordUpdate(t *testing.T) {
+	fake := faker.New()
+
 	t.Run("successful update revokes all of the user's sessions", func(t *testing.T) {
 		userRepo := &user.FakeRepository{}
 		userService := user.NewService(userRepo)
 
 		newUser := user.User{
+			UUID:        fake.UUID().V4(),
 			Email:       "user@example.com",
 			NickName:    "user1",
 			DisplayName: "User One",
@@ -117,6 +122,7 @@ func TestHandlePasswordUpdate(t *testing.T) {
 		userService := user.NewService(userRepo)
 
 		newUser := user.User{
+			UUID:        fake.UUID().V4(),
 			Email:       "user2@example.com",
 			NickName:    "user2",
 			DisplayName: "User Two",

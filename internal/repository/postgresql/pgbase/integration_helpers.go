@@ -158,6 +158,7 @@ func GenerateFakeUser(t *testing.T, fake *faker.Faker) user.User {
 	nick := strings.ReplaceAll(internet.User(), ".", "")
 
 	return user.User{
+		UUID:        fake.UUID().V4(),
 		Email:       person.Contact().Email,
 		NickName:    nick,
 		DisplayName: person.Name(),

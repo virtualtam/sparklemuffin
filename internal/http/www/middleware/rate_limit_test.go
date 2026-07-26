@@ -27,7 +27,7 @@ func TestRateLimit_PerAccount(t *testing.T) {
 	userService := user.NewService(&user.FakeRepository{})
 
 	mux := chi.NewMux()
-	controller.RegisterSessionHandlers(mux, sessionService, userService)
+	controller.RegisterSessionHandlers(mux, true, sessionService, userService)
 
 	var lastCode int
 	for range 6 {
@@ -48,7 +48,7 @@ func TestRateLimit_PerIP(t *testing.T) {
 	userService := user.NewService(&user.FakeRepository{})
 
 	mux := chi.NewMux()
-	controller.RegisterSessionHandlers(mux, sessionService, userService)
+	controller.RegisterSessionHandlers(mux, true, sessionService, userService)
 
 	// distinct email per request keeps the per-account limiter from tripping first
 	var lastCode int

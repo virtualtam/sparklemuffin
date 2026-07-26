@@ -12,6 +12,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Fully invalidate user sessions on logout and password change
 - Periodically invalidate expired user sessions
 - Rate-limit login attempts by resolved client IP and by user email
+- Set the Secure and SameSite attributes for session cookies
 
 ### Fixed
 #### Packaging and automation

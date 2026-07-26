@@ -7,6 +7,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -76,7 +77,13 @@ func TestServerRememberUser(t *testing.T) {
 			}
 			userService := user.NewService(userRepository)
 
+			publicURL, err := url.Parse("http://localhost:8080")
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			s, err := NewServer(
+				WithPublicURL(publicURL),
 				WithSessionService(sessionService),
 				WithUserService(userService),
 			)

@@ -155,7 +155,8 @@ func (s *Server) registerHandlers() {
 	})
 
 	// Domain handlers
-	controller.RegisterSessionHandlers(s.router, s.sessionService, s.userService)
+	secure := s.publicURL.Scheme == "https"
+	controller.RegisterSessionHandlers(s.router, secure, s.sessionService, s.userService)
 	controller.RegisterAdminHandlers(s.router, s.sessionService, s.userService)
 	controller.RegisterAccountHandlers(s.router, s.feedService, s.sessionService, s.userService)
 	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.bookmarkExportingService, s.bookmarkImportingService, s.bookmarkQueryingService, s.userService)

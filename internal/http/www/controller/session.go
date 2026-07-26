@@ -27,10 +27,12 @@ const (
 // RegisterSessionHandlers registers handlers for user session management..
 func RegisterSessionHandlers(
 	r *chi.Mux,
+	secure bool,
 	sessionService *session.Service,
 	userService *user.Service,
 ) {
 	sc := sessionController{
+		secure:         secure,
 		sessionService: sessionService,
 		userService:    userService,
 
@@ -44,6 +46,8 @@ func RegisterSessionHandlers(
 }
 
 type sessionController struct {
+	secure bool
+
 	sessionService *session.Service
 	userService    *user.Service
 
@@ -101,6 +105,8 @@ func (sc *sessionController) handleUserLogout() func(w http.ResponseWriter, r *h
 			Path:     "/",
 			Expires:  time.Unix(0, 1),
 			HttpOnly: true,
+			Secure:   sc.secure,
+			SameSite: http.SameSiteLaxMode,
 		}
 		http.SetCookie(w, &cookie)
 
@@ -143,6 +149,8 @@ func (sc *sessionController) setUserRememberToken(ctx context.Context, w http.Re
 		Expires:  expiresAt,
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   sc.secure,
+		SameSite: http.SameSiteLaxMode,
 	}
 
 	http.SetCookie(w, &cookie)

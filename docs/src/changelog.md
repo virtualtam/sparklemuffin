@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## UNRELEASED
+## [v0.7.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.0) - 2026-07-26
 ### Security
 - Update Chi HTTP middleware to read the remote client IP address from a header set by a reverse proxy
 - Prevent the HTTP client used to fetch syndication feeds from performing requests to unroutable or blocked IP address ranges.

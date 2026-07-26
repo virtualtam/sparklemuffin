@@ -29,7 +29,7 @@ func TestUserService(t *testing.T) {
 
 	t.Run("create, retrieve and delete user", func(t *testing.T) {
 		ctx := t.Context()
-		u := pgbase.GenerateFakeUser(t, &fake)
+		u := user.FakeUser(t, &fake)
 
 		// 1. Create user
 		if err := s.Add(ctx, u); err != nil {
@@ -75,7 +75,7 @@ func TestUserService(t *testing.T) {
 
 	t.Run("update user", func(t *testing.T) {
 		ctx := t.Context()
-		u := pgbase.GenerateFakeUser(t, &fake)
+		u := user.FakeUser(t, &fake)
 
 		if err := s.Add(ctx, u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
@@ -115,7 +115,7 @@ func TestUserService(t *testing.T) {
 
 	t.Run("update user info with no change", func(t *testing.T) {
 		ctx := t.Context()
-		u := pgbase.GenerateFakeUser(t, &fake)
+		u := user.FakeUser(t, &fake)
 
 		if err := s.Add(ctx, u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
@@ -152,7 +152,7 @@ func TestUserService(t *testing.T) {
 
 	t.Run("update user info", func(t *testing.T) {
 		ctx := t.Context()
-		u := pgbase.GenerateFakeUser(t, &fake)
+		u := user.FakeUser(t, &fake)
 
 		if err := s.Add(ctx, u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
@@ -191,7 +191,7 @@ func TestUserService(t *testing.T) {
 
 	t.Run("update user password", func(t *testing.T) {
 		ctx := t.Context()
-		u := pgbase.GenerateFakeUser(t, &fake)
+		u := user.FakeUser(t, &fake)
 
 		if err := s.Add(ctx, u); err != nil {
 			t.Fatalf("failed to create user: %q", err)
@@ -227,7 +227,7 @@ func TestUserService(t *testing.T) {
 
 	t.Run("authenticate user", func(t *testing.T) {
 		ctx := t.Context()
-		u := pgbase.GenerateFakeUser(t, &fake)
+		u := user.FakeUser(t, &fake)
 
 		if err := s.Add(ctx, u); err != nil {
 			t.Fatalf("failed to create user: %q", err)

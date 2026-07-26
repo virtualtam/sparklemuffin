@@ -30,7 +30,7 @@ func TestFeedExportingService(t *testing.T) {
 
 	fake := faker.New()
 
-	u := pgbase.GenerateFakeUser(t, &fake)
+	u := user.FakeUser(t, &fake)
 
 	if err := us.Add(t.Context(), u); err != nil {
 		t.Fatalf("failed to create user: %q", err)

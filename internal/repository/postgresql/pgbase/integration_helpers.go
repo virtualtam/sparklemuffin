@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"strings"
 	"testing"
 	"time"
 
@@ -15,7 +14,6 @@ import (
 	migratepgx "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jaswdr/faker/v2"
 	"github.com/moby/moby/api/types/container"
 	"github.com/testcontainers/testcontainers-go"
 	testpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -25,7 +23,6 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/migrations"
-	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 const (
@@ -145,23 +142,4 @@ func getDatabaseMigrater(t *testing.T, db *sql.DB) *migrate.Migrate {
 	}
 
 	return migrater
-}
-
-// GenerateFakeUser generates a new user for testing.
-func GenerateFakeUser(t *testing.T, fake *faker.Faker) user.User {
-	t.Helper()
-
-	person := fake.Person()
-	internet := fake.Internet()
-
-	// Nicknames must match user.nickNameRegex
-	nick := strings.ReplaceAll(internet.User(), ".", "")
-
-	return user.User{
-		UUID:        fake.UUID().V4(),
-		Email:       person.Contact().Email,
-		NickName:    nick,
-		DisplayName: person.Name(),
-		Password:    internet.Password(),
-	}
 }

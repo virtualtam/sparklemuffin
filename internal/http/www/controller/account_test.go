@@ -16,6 +16,7 @@ import (
 	"github.com/jaswdr/faker/v2"
 
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
+	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
@@ -47,6 +48,36 @@ func decodedFlashLevel(t *testing.T, w *httptest.ResponseRecorder) string {
 
 	t.Fatal("want a flash cookie to be set")
 	return ""
+}
+
+func TestHandlePasswordView(t *testing.T) {
+	fake := faker.New()
+	ctxUser := user.User{UUID: fake.UUID().V4(), Email: fake.Internet().Email()}
+
+	ac := accountController{
+		accountPasswordView: view.New("account/password.gohtml"),
+	}
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/account/password", nil)
+	r = r.WithContext(httpcontext.WithUser(r.Context(), ctxUser))
+	w := httptest.NewRecorder()
+
+	ac.handlePasswordView()(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+	}
+
+	body := w.Body.String()
+	if !strings.Contains(body, `id="new_password" name="new_password" minlength="8"`) {
+		t.Errorf("want the new password field to enforce the minimum password length, got:\n%s", body)
+	}
+	if !strings.Contains(body, "Must be at least 8 characters long.") {
+		t.Errorf("want a hint about the minimum password length, got:\n%s", body)
+	}
+	if got := strings.Count(body, "minlength="); got != 1 {
+		t.Errorf("want only the new password field to enforce a minimum length, got %d occurrences of minlength=:\n%s", got, body)
+	}
 }
 
 func TestHandlePasswordUpdate(t *testing.T) {

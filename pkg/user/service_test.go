@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jaswdr/faker/v2"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestServiceAdd(t *testing.T) {
@@ -19,6 +20,30 @@ func TestServiceAdd(t *testing.T) {
 		user            User
 		wantErr         error
 	}{
+		// Nominal cases.
+		{
+			tname: "valid user",
+			user: User{
+				UUID:        fake.UUID().V4(),
+				Email:       "new@domain.tld",
+				NickName:    "dat-new-pal3",
+				DisplayName: "The New Pal",
+				Password:    FakePassword(t, &fake),
+			},
+		},
+		{
+			tname: "valid admin user",
+			user: User{
+				UUID:        fake.UUID().V4(),
+				Email:       "newadmin@domain.tld",
+				NickName:    "newadmin",
+				DisplayName: "PID One",
+				Password:    FakePassword(t, &fake),
+				IsAdmin:     true,
+			},
+		},
+
+		// Error cases.
 		{
 			tname:   "empty user",
 			wantErr: ErrEmailRequired,
@@ -100,25 +125,14 @@ func TestServiceAdd(t *testing.T) {
 			wantErr: ErrPasswordRequired,
 		},
 		{
-			tname: "valid user",
+			tname: "password too short",
 			user: User{
-				UUID:        fake.UUID().V4(),
-				Email:       "new@domain.tld",
-				NickName:    "dat-new-pal3",
-				DisplayName: "The New Pal",
-				Password:    "ImN3w!",
+				Email:       "shortpass@domain.tld",
+				NickName:    "shortpass",
+				DisplayName: "Short Pass",
+				Password:    fake.Lorem().Text(MinPasswordLength - 1),
 			},
-		},
-		{
-			tname: "valid adminuser",
-			user: User{
-				UUID:        fake.UUID().V4(),
-				Email:       "newadmin@domain.tld",
-				NickName:    "newadmin",
-				DisplayName: "PID One",
-				Password:    "ImN3w!",
-				IsAdmin:     true,
-			},
+			wantErr: ErrPasswordTooShort,
 		},
 	}
 
@@ -479,12 +493,42 @@ func TestServiceDeleteByUUID(t *testing.T) {
 }
 
 func TestServiceUpdate(t *testing.T) {
+	fake := faker.New()
+	existingUser := FakeUser(t, &fake)
+
+	newPassword := FakePassword(t, &fake)
+	newPasswordHashBytes, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("failed to generate new password hash: %v", err)
+	}
+
+	newPasswordHash := string(newPasswordHashBytes)
+
+	shortPassword := FakePassword(t, &fake)[:MinPasswordLength-1]
+
 	cases := []struct {
 		tname           string
 		repositoryUsers []User
 		user            User
 		wantErr         error
 	}{
+		// Nominal cases.
+		{
+			tname: "update an existing user",
+			repositoryUsers: []User{
+				existingUser,
+			},
+			user: User{
+				UUID:         existingUser.UUID,
+				Email:        existingUser.Email,
+				NickName:     existingUser.NickName,
+				DisplayName:  existingUser.DisplayName,
+				Password:     newPassword,
+				PasswordHash: newPasswordHash,
+			},
+		},
+
+		// Error cases.
 		{
 			tname:   "empty user",
 			wantErr: ErrUUIDRequired,
@@ -554,27 +598,19 @@ func TestServiceUpdate(t *testing.T) {
 			wantErr: ErrPasswordRequired,
 		},
 		{
-			tname: "not found",
+			tname: "password too short",
 			user: User{
-				UUID:         "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
-				Email:        "ghost@domain.tld",
-				NickName:     "ghost",
-				DisplayName:  "Busted Ghost",
-				Password:     "test",
-				PasswordHash: "$2b$10$LSH.kwYeRt8msI5.5YJv8eqle6SPcevq848BK2vZ2M5FjXTvU1r.e",
+				UUID:        "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
+				NickName:    "nopass",
+				DisplayName: "No Pass",
+				Email:       "nopass@domain.tld",
+				Password:    shortPassword,
 			},
-			wantErr: ErrNotFound,
+			wantErr: ErrPasswordTooShort,
 		},
 		{
-			tname: "update user",
-			user: User{
-				UUID:         "a6548986-5ae4-4ad3-b208-c2cf3fab4e08",
-				Email:        "valid@domain.tld",
-				NickName:     "valid",
-				DisplayName:  "Valid User",
-				Password:     "test",
-				PasswordHash: "$2b$10$LSH.kwYeRt8msI5.5YJv8eqle6SPcevq848BK2vZ2M5FjXTvU1r.e",
-			},
+			tname:   "not found",
+			user:    FakeUser(t, &fake),
 			wantErr: ErrNotFound,
 		},
 	}
@@ -790,12 +826,38 @@ func TestServiceUpdateInfo(t *testing.T) {
 }
 
 func TestServiceUpdatePassword(t *testing.T) {
+	fake := faker.New()
+
+	existingUser := FakeUser(t, &fake)
+	currentPassword := existingUser.Password
+	if err := existingUser.hashPassword(); err != nil {
+		t.Fatal(err)
+	}
+
+	newPassword := FakePassword(t, &fake)
+	shortPassword := FakePassword(t, &fake)[:MinPasswordLength-1]
+
 	cases := []struct {
 		tname           string
 		repositoryUsers []User
 		passwordUpdate  PasswordUpdate
 		wantErr         error
 	}{
+		// Nominal cases.
+		{
+			tname: "password update",
+			repositoryUsers: []User{
+				existingUser,
+			},
+			passwordUpdate: PasswordUpdate{
+				UserUUID:                existingUser.UUID,
+				CurrentPassword:         currentPassword,
+				NewPassword:             newPassword,
+				NewPasswordConfirmation: newPassword,
+			},
+		},
+
+		// Error cases.
 		{
 			tname:   "empty update",
 			wantErr: ErrUUIDRequired,
@@ -848,20 +910,17 @@ func TestServiceUpdatePassword(t *testing.T) {
 			wantErr: ErrPasswordConfirmationMismatch,
 		},
 		{
-			tname: "password update",
+			tname: "password too short",
 			repositoryUsers: []User{
-				{
-					UUID: "546e3bff-5dbb-4269-ab01-c35a90c382dc",
-					// Password: "test"
-					PasswordHash: "$2b$10$AIUHvtnoIppMHkhpoTFdROVwedB9YC.iJvGaHpnIXEUesD6VHTLLK",
-				},
+				existingUser,
 			},
 			passwordUpdate: PasswordUpdate{
-				UserUUID:                "546e3bff-5dbb-4269-ab01-c35a90c382dc",
-				CurrentPassword:         "test",
-				NewPassword:             "asdf",
-				NewPasswordConfirmation: "asdf",
+				UserUUID:                existingUser.UUID,
+				CurrentPassword:         currentPassword,
+				NewPassword:             shortPassword,
+				NewPasswordConfirmation: shortPassword,
 			},
+			wantErr: ErrPasswordTooShort,
 		},
 	}
 

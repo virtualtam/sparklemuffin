@@ -45,7 +45,7 @@ func TestImportingService(t *testing.T) {
 	ur := pguser.NewRepository(pool)
 	us := user.NewService(ur)
 
-	u := pgbase.GenerateFakeUser(t, new(faker.New()))
+	u := user.FakeUser(t, new(faker.New()))
 
 	if err := us.Add(t.Context(), u); err != nil {
 		t.Fatalf("failed to create user: %q", err)

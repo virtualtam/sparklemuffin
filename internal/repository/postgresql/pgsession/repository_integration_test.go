@@ -25,7 +25,7 @@ func TestRepository(t *testing.T) {
 	us := user.NewService(ur)
 
 	fake := faker.New()
-	u := pgbase.GenerateFakeUser(t, &fake)
+	u := user.FakeUser(t, &fake)
 	if err := us.Add(t.Context(), u); err != nil {
 		t.Fatalf("failed to create user: %q", err)
 	}
@@ -93,7 +93,7 @@ func TestRepository(t *testing.T) {
 	})
 
 	t.Run("delete by user UUID removes all sessions for that user", func(t *testing.T) {
-		otherUser := pgbase.GenerateFakeUser(t, &fake)
+		otherUser := user.FakeUser(t, &fake)
 		if err := us.Add(t.Context(), otherUser); err != nil {
 			t.Fatalf("failed to create user: %q", err)
 		}
@@ -149,7 +149,7 @@ func TestRepository_InvalidateSessions(t *testing.T) {
 	ur := pguser.NewRepository(pool)
 	us := user.NewService(ur)
 
-	u := pgbase.GenerateFakeUser(t, new(faker.New()))
+	u := user.FakeUser(t, new(faker.New()))
 	if err := us.Add(t.Context(), u); err != nil {
 		t.Fatalf("failed to create user: %q", err)
 	}

@@ -55,11 +55,12 @@ func New(templateFiles ...string) *View {
 
 	t, err := template.New("base").
 		Funcs(template.FuncMap{
-			"Join":           strings.Join,
-			"MarkdownToHTML": MarkdownToHTMLFunc(),
-			"mod":            func(i, j int) int { return i % j },
-			"dict":           dictFunc,
-			"toJSON":         toJSONFunc,
+			"Join":              strings.Join,
+			"MarkdownToHTML":    MarkdownToHTMLFunc(),
+			"mod":               func(i, j int) int { return i % j },
+			"dict":              dictFunc,
+			"toJSON":            toJSONFunc,
+			"MinPasswordLength": func() int { return user.MinPasswordLength },
 		}).
 		ParseFS(templates.FS, templateFiles...)
 

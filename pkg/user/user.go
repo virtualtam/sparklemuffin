@@ -97,6 +97,7 @@ func (u *User) ValidateForAddition(ctx context.Context, r ValidationRepository) 
 		u.ensureNickNameIsNotRegistered(ctx, r),
 		u.requireDisplayName,
 		u.requirePassword,
+		u.requirePasswordLength,
 		u.hashPassword,
 		u.requirePasswordHash,
 		u.requireUUID,
@@ -122,6 +123,7 @@ func (u *User) ValidateForUpdate(ctx context.Context, r ValidationRepository) er
 		u.ensureNickNameIsNotRegisteredToAnotherUser(ctx, r),
 		u.requireDisplayName,
 		u.requirePassword,
+		u.requirePasswordLength,
 		u.hashPassword,
 		u.requirePasswordHash,
 	}
@@ -162,6 +164,7 @@ func (u *User) ValidateForPasswordHashUpdate() error {
 	fns := []func() error{
 		u.requireUUID,
 		u.requirePassword,
+		u.requirePasswordLength,
 		u.hashPassword,
 		u.requirePasswordHash,
 	}
@@ -213,6 +216,17 @@ func (u *User) requireNickName() error {
 func (u *User) requirePassword() error {
 	if u.Password == "" {
 		return ErrPasswordRequired
+	}
+	return nil
+}
+
+const (
+	MinPasswordLength = 8
+)
+
+func (u *User) requirePasswordLength() error {
+	if len(u.Password) < MinPasswordLength {
+		return ErrPasswordTooShort
 	}
 	return nil
 }

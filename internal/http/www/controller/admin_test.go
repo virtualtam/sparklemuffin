@@ -71,6 +71,61 @@ func newUserDeletePostRequest(t *testing.T, ctxUser user.User, userUUID string, 
 	return r.WithContext(ctx)
 }
 
+func TestHandleUserAddView(t *testing.T) {
+	ac := adminController{
+		adminUserAddView: view.New("admin/user_add.gohtml"),
+	}
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/admin/users/add", nil)
+	w := httptest.NewRecorder()
+
+	ac.handleUserAddView()(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+	}
+
+	body := w.Body.String()
+	if !strings.Contains(body, `id="password" name="password" minlength="8"`) {
+		t.Errorf("want the password field to enforce the minimum password length, got:\n%s", body)
+	}
+	if !strings.Contains(body, "Must be at least 8 characters long.") {
+		t.Errorf("want a hint about the minimum password length, got:\n%s", body)
+	}
+}
+
+func TestHandleUserEditView(t *testing.T) {
+	fake := faker.New()
+	targetUser := user.User{
+		UUID:  fake.UUID().V4(),
+		Email: fake.Internet().Email(),
+	}
+	ac := adminController{
+		userService:       user.NewService(&user.FakeRepository{Users: []user.User{targetUser}}),
+		adminUserEditView: view.New("admin/user_edit.gohtml"),
+	}
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/admin/users/"+targetUser.UUID, nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uuid", targetUser.UUID)
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	w := httptest.NewRecorder()
+
+	ac.handleUserEditView()(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+	}
+
+	body := w.Body.String()
+	if !strings.Contains(body, `id="password" name="password" minlength="8"`) {
+		t.Errorf("want the password field to enforce the minimum password length, got:\n%s", body)
+	}
+	if !strings.Contains(body, "Must be at least 8 characters long.") {
+		t.Errorf("want a hint about the minimum password length, got:\n%s", body)
+	}
+}
+
 func TestHandleUserEdit(t *testing.T) {
 	fake := faker.New()
 	ctxUser := user.User{UUID: fake.UUID().V4(), IsAdmin: true}

@@ -39,6 +39,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 #### User
 - Refactor model validation for user creation and update
+- Require a minimum password length (8 characters)
 
 #### WWW
 - Add helper to render a single named HTML template

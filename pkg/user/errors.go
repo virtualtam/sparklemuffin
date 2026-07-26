@@ -3,7 +3,10 @@
 
 package user
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	ErrNotFound                     = errors.New("user: not found")
@@ -17,5 +20,6 @@ var (
 	ErrPasswordHashRequired         = errors.New("user: password hash required")
 	ErrPasswordIncorrect            = errors.New("user: incorrect password")
 	ErrPasswordRequired             = errors.New("user: password required")
+	ErrPasswordTooShort             = fmt.Errorf("user: password too short (minimum: %d characters)", MinPasswordLength)
 	ErrUUIDRequired                 = errors.New("user: UUID required")
 )

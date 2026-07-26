@@ -118,7 +118,7 @@ func (ac *adminController) handleUserAdd() func(w http.ResponseWriter, r *http.R
 
 		if err := ac.userService.Add(ctx, newUser); err != nil {
 			log.Error().Err(err).Msg("failed to persist user")
-			view.PutFlashError(w, err.Error())
+			view.PutFlashError(w, userFacingError(err))
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}
@@ -258,7 +258,7 @@ func (ac *adminController) handleUserEdit() func(w http.ResponseWriter, r *http.
 
 		if err := ac.userService.Update(ctx, editedUser); err != nil {
 			log.Error().Err(err).Msg("failed to update user")
-			view.PutFlashError(w, err.Error())
+			view.PutFlashError(w, userFacingError(err))
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}

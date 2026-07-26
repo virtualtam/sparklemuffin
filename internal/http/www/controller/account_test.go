@@ -50,6 +50,35 @@ func decodedFlashLevel(t *testing.T, w *httptest.ResponseRecorder) string {
 	return ""
 }
 
+// decodedFlashMessage decodes the "flash" cookie set on the response, if any,
+// and returns its message text.
+func decodedFlashMessage(t *testing.T, w *httptest.ResponseRecorder) string {
+	t.Helper()
+
+	for _, cookie := range w.Result().Cookies() {
+		if cookie.Name != "flash" {
+			continue
+		}
+
+		raw, err := base64.URLEncoding.DecodeString(cookie.Value)
+		if err != nil {
+			t.Fatalf("failed to decode flash cookie: %q", err)
+		}
+
+		var decoded struct {
+			Message string `json:"message"`
+		}
+		if err := json.Unmarshal(raw, &decoded); err != nil {
+			t.Fatalf("failed to unmarshal flash cookie: %q", err)
+		}
+
+		return decoded.Message
+	}
+
+	t.Fatal("want a flash cookie to be set")
+	return ""
+}
+
 func TestHandlePasswordView(t *testing.T) {
 	fake := faker.New()
 	ctxUser := user.User{UUID: fake.UUID().V4(), Email: fake.Internet().Email()}
@@ -200,6 +229,54 @@ func TestHandlePasswordUpdate(t *testing.T) {
 
 		if got := decodedFlashLevel(t, w); got != "warning" {
 			t.Errorf("want a warning flash when session revocation fails, got %q", got)
+		}
+	})
+
+	t.Run("incorrect current password flashes a user-friendly message", func(t *testing.T) {
+		userRepo := &user.FakeRepository{}
+		userService := user.NewService(userRepo)
+
+		newUser := user.User{
+			UUID:        fake.UUID().V4(),
+			Email:       "user3@example.com",
+			NickName:    "user3",
+			DisplayName: "User Three",
+			Password:    "current-password1234",
+		}
+		if err := userService.Add(t.Context(), newUser); err != nil {
+			t.Fatalf("failed to seed user: %q", err)
+		}
+
+		ctxUser, err := userService.ByNickName(t.Context(), newUser.NickName)
+		if err != nil {
+			t.Fatalf("failed to retrieve seeded user: %q", err)
+		}
+
+		ac := accountController{
+			userService: userService,
+		}
+
+		form := url.Values{}
+		form.Set("current_password", "wrong-password1234")
+		form.Set("new_password", "new-password1234")
+		form.Set("new_password_confirmation", "new-password1234")
+
+		r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/account/password", strings.NewReader(form.Encode()))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		ctx := httpcontext.WithUser(r.Context(), ctxUser)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+
+		ac.handlePasswordUpdate()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status %d, got %d, body:\n%s", http.StatusSeeOther, w.Code, w.Body.String())
+		}
+		if got := decodedFlashMessage(t, w); !strings.Contains(got, "Your current password is incorrect.") {
+			t.Errorf("want a user-friendly incorrect-password message, got %q", got)
+		}
+		if strings.Contains(decodedFlashMessage(t, w), "user:") {
+			t.Errorf("want no raw domain error leaked, got %q", decodedFlashMessage(t, w))
 		}
 	})
 }

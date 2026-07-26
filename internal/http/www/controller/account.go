@@ -142,7 +142,7 @@ func (ac *accountController) handlePasswordUpdate() func(w http.ResponseWriter, 
 
 		if err := ac.userService.UpdatePassword(ctx, userPassword); err != nil {
 			log.Error().Err(err).Msg("failed to update account password")
-			view.PutFlashError(w, fmt.Sprintf("There was an error updating your password: %s", err))
+			view.PutFlashError(w, userFacingError(err))
 			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 			return
 		}

@@ -126,6 +126,45 @@ func TestHandleUserEditView(t *testing.T) {
 	}
 }
 
+func TestHandleUserAdd(t *testing.T) {
+	fake := faker.New()
+	ctxUser := user.User{UUID: fake.UUID().V4(), IsAdmin: true}
+
+	t.Run("duplicate email flashes a user-friendly message", func(t *testing.T) {
+		userRepo := &user.FakeRepository{
+			Users: []user.User{
+				{Email: "existing@domain.tld"},
+			},
+		}
+		ac := adminController{
+			userService: user.NewService(userRepo),
+		}
+
+		form := url.Values{}
+		form.Set("email", "existing@domain.tld")
+		form.Set("nick_name", "newuser")
+		form.Set("display_name", "New User")
+		form.Set("password", "new-password1234")
+
+		r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/admin/users", strings.NewReader(form.Encode()))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		r = r.WithContext(httpcontext.WithUser(r.Context(), ctxUser))
+		w := httptest.NewRecorder()
+
+		ac.handleUserAdd()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status %d, got %d, body:\n%s", http.StatusSeeOther, w.Code, w.Body.String())
+		}
+		if got := decodedFlashMessage(t, w); !strings.Contains(got, "This email address is already registered.") {
+			t.Errorf("want a user-friendly duplicate-email message, got %q", got)
+		}
+		if strings.Contains(decodedFlashMessage(t, w), "user:") {
+			t.Errorf("want no raw domain error leaked, got %q", decodedFlashMessage(t, w))
+		}
+	})
+}
+
 func TestHandleUserEdit(t *testing.T) {
 	fake := faker.New()
 	ctxUser := user.User{UUID: fake.UUID().V4(), IsAdmin: true}
@@ -255,6 +294,44 @@ func TestHandleUserEdit(t *testing.T) {
 
 		if got := decodedFlashLevel(t, w); got != "warning" {
 			t.Errorf("want a warning flash when session revocation fails, got %q", got)
+		}
+	})
+
+	t.Run("duplicate email flashes a user-friendly message", func(t *testing.T) {
+		targetUser := user.User{UUID: fake.UUID().V4(), Email: "target3@example.com"}
+		userRepo := &user.FakeRepository{
+			Users: []user.User{
+				targetUser,
+				{UUID: fake.UUID().V4(), Email: "other@example.com"},
+			},
+		}
+		ac := adminController{
+			userService: user.NewService(userRepo),
+		}
+
+		form := url.Values{}
+		form.Set("email", "other@example.com")
+		form.Set("nick_name", "target3")
+		form.Set("display_name", "Target Three")
+		form.Set("password", "admin-reset-password1234")
+
+		r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/admin/users/"+targetUser.UUID, strings.NewReader(form.Encode()))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("uuid", targetUser.UUID)
+		ctx := context.WithValue(r.Context(), chi.RouteCtxKey, rctx)
+		ctx = httpcontext.WithUser(ctx, ctxUser)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+
+		ac.handleUserEdit()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status %d, got %d, body:\n%s", http.StatusSeeOther, w.Code, w.Body.String())
+		}
+		if got := decodedFlashMessage(t, w); !strings.Contains(got, "This email address is already registered.") {
+			t.Errorf("want a user-friendly duplicate-email message, got %q", got)
 		}
 	})
 }

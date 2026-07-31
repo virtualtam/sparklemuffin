@@ -8,7 +8,6 @@ The roadmap is based on the Now / Next / Later format to communicate current foc
 - www: Review OWASP Top 10 checklist
 
 ## Next
-- Bookmark: Handle conflict with an existing bookmark (URL)
 - Feed: Add entry tags, with auto-tagging rules
 - Feed: Bookmark entry
 - Internal: Rework error flow (logging, metadata)

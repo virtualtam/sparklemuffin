@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
 ## UNRELEASED
+### Security
+- Bump GitHub Actions to their latest release, and pin them by SHA + version comment
+
 ### Changed
 #### Packaging and automation
 - Bump golangci-lint

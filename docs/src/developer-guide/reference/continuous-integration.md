@@ -1,5 +1,10 @@
 # Continuous Integration
 ## GitHub Actions Workflows
+Each Action is pinned to a full commit SHA, with the released version as a
+trailing comment (e.g. `actions/checkout@<sha> # v7.0.1`). A tag can be
+moved to point at different code; a commit SHA cannot. This protects
+workflows against a compromised or mistakenly re-tagged Action release.
+
 ### CI Workflow
 This workflow runs when:
 

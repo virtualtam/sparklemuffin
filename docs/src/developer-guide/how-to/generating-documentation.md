@@ -14,7 +14,7 @@ mdbook build docs
 2023-11-05 16:19:04 [INFO] (mdbook::book): Running the html backend
 ```
 
-The generated website will be located under `docs/book`.
+The generated website is at `docs/book`.
 
 ## Checking links
 Check the generated website for broken links with:
@@ -44,8 +44,8 @@ mdbook serve docs
 2023-11-05 16:19:25 [INFO] (warp::server): listening on http://[::1]:3000
 ```
 
-- The generated website will be located under `docs/book`;
-- The live server can be accessed by opening [http://localhost:3000](http://localhost:3000) in a Web browser.
+- The generated website is at `docs/book`;
+- Open [http://localhost:3000](http://localhost:3000) in a Web browser to view the live server.
 
 ## Reference
 - [SparkleMuffin Documentation Structure](../reference/documentation-structure.md)

@@ -8,7 +8,7 @@
 - [SQLFluff](https://docs.sqlfluff.com/en/stable/index.html)
 
 ## Install development utilities
-Install Go linters, vulnerability detection and license check tools:
+Install the Go linter, the vulnerability scanner, and the license checker:
 
 ```shell
 $ make dev-install-tools
@@ -21,8 +21,8 @@ $ make dev-install-sqlfluff
 ```
 
 This uses `uv` to create a virtual environment under
-`internal/repository/.venv/`, pinned by
-`internal/repository/pyproject.toml` and `internal/repository/uv.lock`.
+`internal/repository/.venv/`. The files `internal/repository/pyproject.toml`
+and `internal/repository/uv.lock` set the exact package versions.
 
 ## Run linters
 ### Go
@@ -58,8 +58,8 @@ Format SQL files with SQLFluff:
 $ make format-sql
 ```
 
-Applied migrations must keep their statements unchanged, even when a
-newer SQLFluff release adds a rule they no longer pass. Add a
-`-- noqa: <RULE>` comment on the failing line to silence that rule,
-and leave the statement itself as is. New migrations must stay clean
-against the current rule set.
+Applied migrations must keep their statements unchanged. A newer
+SQLFluff release can add a rule that an applied migration no longer
+passes. In this case, add a `-- noqa: <RULE>` comment on the failing
+line. Do not change the statement. New migrations must pass the
+current rule set.

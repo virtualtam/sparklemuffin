@@ -1,10 +1,10 @@
 # Upgrading the major version of the local PostgreSQL server
-When running the PostgreSQL database server as a Docker container, the most straightforward approach
-to upgrade the major version of PostgreSQL is to:
+This guide shows the simplest way to upgrade the major version of a
+PostgreSQL server that runs as a Docker container. Follow these steps:
 
 1. Start the server
 2. Dump the database to a local file using `pg_dump`
-3. Stop the server and destroy the Docker volume containing the PostgreSQL server data
+3. Stop the server. Delete the Docker volume that holds its data
 4. Bump the PostgreSQL version
 5. Start the server
 6. Restore the database from the local dump file using `pg_restore`
@@ -12,7 +12,7 @@ to upgrade the major version of PostgreSQL is to:
 
 ## Start the PostgreSQL database server
 ```shell
-$ docker compose up -d postgresql
+$ docker compose up -d postgres
 
 [+] Running 3/3
  ✔ Network sparklemuffin_default         Created
@@ -25,7 +25,7 @@ $ docker compose up -d postgresql
 $ make pgdump
 
 # mkdir -p dump
-# docker compose exec postgres pg_dump -U sparklemuffin sparklemuffin --format custom --compress zst > dump/sparklemuffin.sql.zst
+# docker compose exec postgres pg_dump -U sparklemuffin sparklemuffin --format custom --compress zstd > dump/sparklemuffin.sql.zst
 ```
 
 ## Stop the PostgreSQL server and delete its Docker volume
@@ -39,7 +39,7 @@ $ docker compose down -v
 ```
 
 ## Update the PostgreSQL server version
-Edit `docker-compose.yml` and `docker-compose.dev.yml` to set the desired version of the PostgreSQL server:
+Edit `docker-compose.yml` and `docker-compose.dev.yml`. Set the new PostgreSQL version:
 
 ```yaml
 services:
@@ -50,7 +50,7 @@ services:
 
 ## Start the PostgreSQL database server
 ```shell
-$ docker compose up -d postgresql
+$ docker compose up -d postgres
 
 [+] Running 3/3
  ✔ Network sparklemuffin_default         Created

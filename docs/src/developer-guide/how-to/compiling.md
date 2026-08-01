@@ -6,7 +6,7 @@ Build the application with:
 $ make build
 ```
 
-The resulting binary will be located under `build/sparklemuffin`:
+The binary is at `build/sparklemuffin`:
 
 ```shell
 $ ls -lah build/

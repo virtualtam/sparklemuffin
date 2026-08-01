@@ -23,6 +23,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
   - Update configuration, remove deprecated and commented options
   - Switch to `lychee` to check documentation links
 
+#### Documentation
+- Document the Copywrite and Vulnerabilities GitHub Actions workflows
+- Update the CI Workflow description, link how-to guides from each workflow section
+
 ## [v0.7.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.0) - 2026-07-26
 ### Security
 - Update Chi HTTP middleware to read the remote client IP address from a header set by a reverse proxy

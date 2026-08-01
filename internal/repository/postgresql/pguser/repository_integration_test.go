@@ -93,7 +93,7 @@ func TestUserService(t *testing.T) {
 			Email:       updatedPerson.Contact().Email,
 			NickName:    gotUser.NickName,
 			DisplayName: updatedPerson.Name(),
-			Password:    fake.Internet().Password(),
+			Password:    user.FakePassword(t, &fake),
 		}
 
 		if err := s.Update(ctx, updatedUser); err != nil {
@@ -202,7 +202,7 @@ func TestUserService(t *testing.T) {
 			t.Fatalf("failed to retrieve user: %q", err)
 		}
 
-		newPassword := fake.Internet().Password()
+		newPassword := user.FakePassword(t, &fake)
 
 		passwordUpdate := user.PasswordUpdate{
 			UserUUID:                gotUser.UUID,

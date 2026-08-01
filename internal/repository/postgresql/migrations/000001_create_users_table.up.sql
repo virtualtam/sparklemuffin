@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users(
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    uuid          UUID        NOT NULL PRIMARY KEY,
+    uuid          UUID        NOT NULL PRIMARY KEY, -- noqa: RF04
     email         TEXT        UNIQUE   NOT NULL,
     nick_name     TEXT        UNIQUE   NOT NULL,
     display_name  TEXT        NOT NULL,

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## UNRELEASED
+### Changed
+#### Packaging and automation
+- Bump golangci-lint
+- Rework SQLFluff setup:
+  - Pin with `pyproject.toml`
+  - Install with `uv`, run with `uvx` and Python 3.14
+  - Bump to v4.2.2
+  - Silence new rule warnings for existing migrations with `noqa` comments
+
 ## [v0.7.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.0) - 2026-07-26
 ### Security
 - Update Chi HTTP middleware to read the remote client IP address from a header set by a reverse proxy

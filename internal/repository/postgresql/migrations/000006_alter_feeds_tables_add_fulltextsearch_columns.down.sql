@@ -7,7 +7,7 @@ DROP COLUMN description,
 DROP COLUMN fulltextsearch_tsv;
 
 -- Feed Entries
-DROP INDEX IF EXISTS idx_feed_entries_fulltextsearch_tsv;
+DROP INDEX IF EXISTS idx_feed_entries_fulltextsearch_tsv; -- noqa: PG01
 
 ALTER TABLE feed_entries
 DROP COLUMN summary,

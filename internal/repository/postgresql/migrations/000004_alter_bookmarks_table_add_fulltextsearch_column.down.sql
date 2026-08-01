@@ -1,7 +1,7 @@
 -- Copyright VirtualTam 2022, 2026
 -- SPDX-License-Identifier: MIT
 
-DROP INDEX IF EXISTS idx_bookmarks_fulltextsearch_tsv;
+DROP INDEX IF EXISTS idx_bookmarks_fulltextsearch_tsv; -- noqa: PG01
 
 ALTER TABLE bookmarks
 DROP COLUMN fulltextsearch_tsv;

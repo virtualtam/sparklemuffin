@@ -4,7 +4,7 @@
 ALTER TABLE bookmarks
 ADD COLUMN fulltextsearch_tsv TSVECTOR;
 
-CREATE INDEX idx_bookmarks_fulltextsearch_tsv
+CREATE INDEX idx_bookmarks_fulltextsearch_tsv -- noqa: PG01
 ON bookmarks
 USING gin(fulltextsearch_tsv);
 

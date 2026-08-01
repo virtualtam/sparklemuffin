@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS feed_feeds(
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     fetched_at    TIMESTAMPTZ,
 
-    uuid          UUID        UNIQUE   NOT NULL PRIMARY KEY,
+    uuid          UUID        UNIQUE   NOT NULL PRIMARY KEY, -- noqa: RF04
     feed_url      TEXT        UNIQUE   NOT NULL,
     title         TEXT        NOT NULL,
     slug          TEXT        NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS feed_entries(
     published_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    uid          TEXT        UNIQUE   NOT NULL PRIMARY KEY,
+    uid          TEXT        UNIQUE   NOT NULL PRIMARY KEY, -- noqa: RF04
     feed_uuid    UUID        NOT NULL,
     url          TEXT        NOT NULL,
     title        TEXT        NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS feed_entries_metadata(
     user_uuid UUID    NOT NULL,
     entry_uid TEXT    NOT NULL,
 
-    read      BOOLEAN NOT NULL DEFAULT FALSE,
+    read      BOOLEAN NOT NULL DEFAULT FALSE, -- noqa: RF04
 
     CONSTRAINT fk_user FOREIGN KEY(user_uuid) REFERENCES users(uuid) ON DELETE CASCADE,
     CONSTRAINT fk_entry FOREIGN KEY(entry_uid) REFERENCES feed_entries(uid) ON DELETE CASCADE,
@@ -43,9 +43,9 @@ CREATE TABLE IF NOT EXISTS feed_categories(
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    uuid       UUID        UNIQUE   NOT NULL PRIMARY KEY,
+    uuid       UUID        UNIQUE   NOT NULL PRIMARY KEY, -- noqa: RF04
     user_uuid  UUID        NOT NULL,
-    name       TEXT        NOT NULL,
+    name       TEXT        NOT NULL, -- noqa: RF04
     slug       TEXT        NOT NULL,
 
     CONSTRAINT fk_user FOREIGN KEY(user_uuid) REFERENCES users(uuid) ON DELETE CASCADE
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS feed_subscriptions(
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    uuid          UUID        UNIQUE   NOT NULL PRIMARY KEY,
+    uuid          UUID        UNIQUE   NOT NULL PRIMARY KEY, -- noqa: RF04
     category_uuid UUID        NOT NULL,
     feed_uuid     UUID        NOT NULL,
     user_uuid     UUID        NOT NULL,

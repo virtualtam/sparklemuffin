@@ -34,11 +34,11 @@ test:
 .PHONY: test
 
 format-sql:
-	sqlfluff format $(POSTGRESQL_FILES)
+	uv run --project internal/repository sqlfluff format $(POSTGRESQL_FILES)
 .PHONY: format-sql
 
 lint-sql:
-	sqlfluff lint --disable-progress-bar $(POSTGRESQL_FILES)
+	uv run --project internal/repository sqlfluff lint --disable-progress-bar $(POSTGRESQL_FILES)
 .PHONY: lint-sql
 
 # Install development tools
@@ -50,7 +50,7 @@ dev-install-tools:
 .PHONY: dev-install-tools
 
 dev-install-sqlfluff:
-	pip install 'sqlfluff==3.4.0'
+	uv sync --project internal/repository
 .PHONY: dev-install-sqlfluff
 
 # Licence headers

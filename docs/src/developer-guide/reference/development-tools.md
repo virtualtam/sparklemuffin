@@ -81,6 +81,30 @@ A recent version of Docker is required to build Docker images locally, as we lev
   integration for [BuildKit](https://docs.docker.com/build/buildkit/)
 
 
+## Python and uv
+SparkleMuffin uses [SQLFluff](https://sqlfluff.com/) to lint and format SQL
+migration files. SQLFluff is a Python tool, managed with
+[uv](https://docs.astral.sh/uv/).
+
+See [`internal/repository/pyproject.toml`](https://github.com/virtualtam/sparklemuffin/blob/main/internal/repository/pyproject.toml)
+for the pinned SQLFluff version.
+
+### Linux and macOS
+The recommended way of installing uv is via the
+[standalone installer](https://docs.astral.sh/uv/getting-started/installation/):
+
+```shell
+$ curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### Windows
+The recommended way of installing uv is via [winget](https://github.com/microsoft/winget-cli):
+
+```shell
+$ winget install --id=astral-sh.uv
+```
+
+
 ## GNU Make
 A [Makefile](https://www.gnu.org/software/make/) is provided for convenience to help
 running tests, linters, generate documentation and spin local development environments.

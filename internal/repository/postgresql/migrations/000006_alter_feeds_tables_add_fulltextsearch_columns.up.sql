@@ -6,7 +6,7 @@ ALTER TABLE feed_feeds
 ADD COLUMN description        TEXT NOT NULL DEFAULT '',
 ADD COLUMN fulltextsearch_tsv TSVECTOR;
 
-CREATE INDEX idx_feed_feeds_fulltextsearch_tsv
+CREATE INDEX idx_feed_feeds_fulltextsearch_tsv -- noqa: PG01
 ON feed_feeds
 USING gin(fulltextsearch_tsv);
 
@@ -19,7 +19,7 @@ ADD COLUMN summary            TEXT NOT NULL DEFAULT '',
 ADD COLUMN textrank_terms     TEXT[],
 ADD COLUMN fulltextsearch_tsv TSVECTOR;
 
-CREATE INDEX idx_feed_entries_fulltextsearch_tsv
+CREATE INDEX idx_feed_entries_fulltextsearch_tsv -- noqa: PG01
 ON feed_entries
 USING gin(fulltextsearch_tsv);
 

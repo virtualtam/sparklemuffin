@@ -26,7 +26,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Documentation
 - Document the Copywrite and Vulnerabilities GitHub Actions workflows
 - Update the CI Workflow description, link how-to guides from each workflow section
-- Update and reword how-to guides and reference pages to match current tooling configuration
+- Update and reword conceptual, how-to and reference guides to match current tooling configuration
 
 ## [v0.7.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.0) - 2026-07-26
 ### Security

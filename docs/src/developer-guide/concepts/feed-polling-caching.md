@@ -1,40 +1,40 @@
 # Feed polling and caching
 
-As SparkleMuffin periodically makes HTTP requests to update Atom and RSS feeds, we need to ensure:
+SparkleMuffin periodically makes HTTP requests to update Atom and RSS feeds.
+This creates two requirements:
 
-- we do not put unnecessary load on the remote servers;
-- we do not perform unnecessary database updates if the remote content has not changed.
+- do not put unnecessary load on the remote servers;
+- do not perform unnecessary database updates when the remote content has not changed.
 
-To this effect, we leverage features from the HTTP specification to benefit from remote server caching,
-and perform additional checks on the feed content.
+SparkleMuffin uses HTTP caching features from the HTTP specification. It also
+performs extra checks on the feed content.
 
 ## HTTP Conditional Requests
 
 When responding to an HTTP request, a remote server may set the following headers:
 
 - `ETag`: the current entity tag for the selected representation (usually a hash of the feed data);
-- `Last-Modified`: a timestamp indicating the date and time at which the origin server believes
-  the selected representation was last modified.
+- `Last-Modified`: the date and time the origin server last modified the selected representation.
 
-When present, we store these values in the database, and use them to set the following headers in subsequent
-requests:
+When present, SparkleMuffin stores these values in the database. It uses them
+to set the following headers in later requests:
 
 - `If-None-Match`: the value of the `ETag` header from the previous response;
 - `If-Modified-Since`: the value of the `Last-Modified` header from the previous response.
 
-Depending on whether the feed has changed since the last request, the remote server will then respond with:
+The remote server responds in one of two ways:
 
-
-- `200 OK`: the content has changed, we update the feed and its entries;
-- `304 Not Modified`: there are no changes, we only update the feed's `ETag` and `Last-Modified` headers.
+- `200 OK`: the content changed. SparkleMuffin updates the feed and its entries;
+- `304 Not Modified`: nothing changed. SparkleMuffin only updates the feed's `ETag` and `Last-Modified` headers.
 
 ## Feed content hash
-As a remote server may send a different `ETag` or `Last-Modified` value without the feed content being modified,
-or not send any of these headers at all, we:
+A remote server can send a different `ETag` or `Last-Modified` value even
+when the feed content has not changed. It can also send neither header. To
+handle this, SparkleMuffin:
 
-- compute and store a hash of the feed data using the [xxHash](https://xxhash.com/) non-cryptographic hash function;
-- compare the hash of the feed data with what we already have in the database;
-- return early if the hashes match, to avoid unnecessary database updates.
+- computes and stores a hash of the feed data, using the [xxHash](https://xxhash.com/) non-cryptographic hash function;
+- compares the hash of the feed data with the value stored in the database;
+- returns early if the hashes match, to avoid unnecessary database updates.
 
 
 ## Reference

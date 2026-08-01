@@ -1,11 +1,11 @@
 # Content Security Policy
 
 [Content Security Policy (CSP)](https://en.wikipedia.org/wiki/Content_Security_Policy) is a security
-mechanism that helps prevent cross-site scripting (XSS), clickjacking, and other code injection attacks
-by controlling which resources can be loaded and executed on a Web page.
+mechanism. It helps prevent cross-site scripting (XSS), clickjacking, and other code-injection attacks.
+CSP controls which resources a Web page can load and run.
 
-SparkleMuffin uses CSP headers to restrict inline scripts, styles, and external resources to trusted sources,
-improving the security posture of the application.
+SparkleMuffin uses CSP headers to restrict inline scripts, styles, and external resources to trusted
+sources. This makes the application more secure.
 
 ## Specifications and Resources
 

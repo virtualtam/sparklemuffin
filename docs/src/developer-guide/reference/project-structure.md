@@ -27,7 +27,7 @@ internal
 ├── rand            # Cryptographically secure pseudo-random helpers
 ├── repository
 │   └── postgresql  # PostgreSQL database persistence layer (repository)
-├── test            # Helpers for unitary and integration tests
+├── test            # Helpers for unit and integration tests
 ├── textkit         # Text processing utilities
 └── version         # Version detection utilities
 ```

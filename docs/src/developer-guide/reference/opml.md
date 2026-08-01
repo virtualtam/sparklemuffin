@@ -42,8 +42,9 @@ It has a permissive specification, and each feed aggregator or reader may:
 SparkleMuffin uses [virtualtam/opml-go](https://github.com/virtualtam/opml-go/)
 to parse (unmarshal) and export (marshal) feed subscriptions using the OPML file format.
 
-This allows users to import or synchronize their existing subscriptions to SparkleMuffin,
-and to export them for usage with another feed aggregator or feed reader.
+Users can import or sync their existing subscriptions into SparkleMuffin.
+They can also export subscriptions for use with another feed aggregator or
+feed reader.
 
 [virtualtam/opml-go](https://github.com/virtualtam/opml-go/)
-is provided as a standalone library in the hope other users may find it useful.
+is also available as a standalone library for other projects to use.

@@ -1,62 +1,63 @@
 # Contributing to SparkleMuffin
-SparkleMuffin is still in an early stage of development, and as such, you may find some
-rough edges and missing features.
+SparkleMuffin is in an early stage of development. You may find missing
+features and incomplete parts.
 
-The goal of the project is to experiment with writing a Web-based tool that can be
-used to save, tag and retrieve bookmarks for the Websites you visit, while keeping
-its interface simple to use, clutter-free and responsive for mobile devices.
+The project experiments with a Web-based tool for Web bookmarks. The tool
+saves, tags, and retrieves bookmarks. Its interface stays simple, free of
+clutter, and responsive on mobile devices.
 
-If this sounds interesting to you, please keep on reading!
+Read on if this project interests you.
 
 ## Providing feedback
 ### Issues and improvements
-The best way to provide feedback about the project and its documentation is
-via the [GitHub issue tracker](https://github.com/virtualtam/sparklemuffin/issues).
+Use the [GitHub issue tracker](https://github.com/virtualtam/sparklemuffin/issues)
+to give feedback about the project and its documentation.
 
 Here are some good ways to start contributing:
 
-- reporting bugs in the application;
-- reporting missing or outdated documentation;
-- providing suggestions to improve accessibility;
-- providing sugegstions to improve User Interface (UI) and User Experience (UX).
+- report bugs in the application;
+- report missing or outdated documentation;
+- suggest improvements to accessibility;
+- suggest improvements to the User Interface (UI) and User Experience (UX).
 
 <div class="warning">
-Before submitting a new issue, please check the existing issues (open and closed)
-for similar reports, known issues and planned work.
+Check the existing issues (open and closed) for similar reports, known issues,
+and planned work before you submit a new issue.
 </div>
 
-Feel free to attach any relevant information that may be helpful in fixing the issue, such as:
+Attach information that helps fix the issue, for example:
 
 - application logs;
-- application configuration (please redact any secret or sensitive information first!);
+- application configuration (redact secrets and other sensitive information first);
 - screenshots;
-- links to relevant documentation, articles or previous issues.
+- links to relevant documentation, articles, or previous issues.
 
 ### Feature requests
-Feel free to open a new issue on the [GitHub issue tracker](https://github.com/virtualtam/sparklemuffin/issues)
-to discuss improvements to existing features, or request new features.
+Open a new issue on the [GitHub issue tracker](https://github.com/virtualtam/sparklemuffin/issues)
+to discuss improvements to existing features, or to request new features.
 
 ### Security issues
 - TODO: email address for security reports
 
 ## Submitting patches
 ### Documentation
-To contribute to the documentation, you need to set up a local development environment:
+To contribute to the documentation, set up a local development environment:
 
 - [Getting the source code](../how-to/getting-the-source-code.md)
 - [Generating the documentation](../how-to/generating-documentation.md)
 
-This will allow you to build the documentation locally and test your changes before
-submitting a Pull Request.
+You can then build the documentation locally, and test your changes before
+you submit a Pull Request.
 
 ### Bug Fixes
 - TODO: contribution workflow
 
 ### Improvements and new features
-Improvements to existing features, and requests for new features, must be discussed
-first by opening a new issue on the [GitHub issue tracker](https://github.com/virtualtam/sparklemuffin/issues).
+Open a new issue on the [GitHub issue tracker](https://github.com/virtualtam/sparklemuffin/issues)
+to discuss improvements to existing features, or requests for new features,
+before you submit a patch.
 
-This will ensure:
+This confirms that:
 
-- the improvement or feature is aligned with the project's goals;
-- the contribution's quality is on-par with the SparkleMuffin codebase.
+- the improvement or feature fits the project's goals;
+- the contribution matches the quality of the existing codebase.

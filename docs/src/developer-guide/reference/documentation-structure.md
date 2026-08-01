@@ -1,11 +1,11 @@
 # Documentation Structure
 ## Markdown sources
-The documentation is a static Website generated from
-[Markdown](https://rust-lang.github.io/mdBook/format/markdown.html) files
-using [mdBook](https://rust-lang.github.io/mdBook/).
+[mdBook](https://rust-lang.github.io/mdBook/) generates the documentation as
+a static Website from
+[Markdown](https://rust-lang.github.io/mdBook/format/markdown.html) files.
 
-The documentation resources are part of the SparkleMuffin repository, and located
-under the `docs/` directory:
+The SparkleMuffin repository stores the documentation resources under the
+`docs/` directory:
 
 ```shell
 docs/
@@ -16,18 +16,18 @@ docs/
 
 ## Sections and page categories
 
-There are two main sections:
+The documentation has two main sections:
 
-- a [User Guide](../../user-guide/index.md) that showcases SparkleMuffin's features and how to use them;
-- a [Developer Guide](../../developer-guide/index.md) that provides information on how SparkleMuffin works,
+- a [User Guide](../../user-guide/index.md) that shows SparkleMuffin's features and how to use them;
+- a [Developer Guide](../../developer-guide/index.md) that explains how SparkleMuffin works,
   and how to contribute to the project.
 
-Pages are organized into four categories, according to the [Diátaxis](https://diataxis.fr/) approach:
+The [Diátaxis](https://diataxis.fr/) approach organizes pages into four categories:
 
 - **Tutorials**: learning-oriented lessons that take you through a series of steps to use a feature;
 - **How-to Guides**: practical step-by-step guides to help you achieve a specific goal;
 - **Reference Guides**: details about how SparkleMuffin works;
-- **Concept Guides**: thoughts and reflections about how why things work the way they do.
+- **Concept Guides**: thoughts and reflections about why things work the way they do.
 
 ## Reference
 - [mdbook build](https://rust-lang.github.io/mdBook/cli/build.html) command

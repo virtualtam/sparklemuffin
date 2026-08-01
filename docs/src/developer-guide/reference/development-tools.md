@@ -1,35 +1,34 @@
 # Development Tools
 
 ## Git
-The source code is tracked using the [Git](https://git-scm.com/) Source Code Management
-tool, and available on GitHub at
+SparkleMuffin uses [Git](https://git-scm.com/) to track source code changes.
+The code is available on GitHub at
 [github.com/virtualtam/sparklemuffin](https://github.com/virtualtam/sparklemuffin).
 
-To get started with using Git and GitHub:
+To start using Git and GitHub:
 
 - [Get started with GitHub](https://docs.github.com/en/get-started)
 - [First-Time Git Setup](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup)
 
 
 ## Go
-SparkleMuffin is mainly written with the [Go programming language](https://go.dev/).
+SparkleMuffin is written mainly in the [Go programming language](https://go.dev/).
 
 See [`go.mod`](https://github.com/virtualtam/sparklemuffin/blob/main/go.mod) for the
-minimum version of Go required by SparkleMuffin.
+minimum Go version that SparkleMuffin needs.
 
 ### Linux
-The recommended way of installing Go is via your Linux distribution's package manager.
+Install Go with your Linux distribution's package manager.
 
 ### macOS
-The recommended way of installing Go is via the [Homebrew](https://brew.sh/)
-community packages:
+Install Go with the [Homebrew](https://brew.sh/) community packages:
 
 ```shell
 $ brew install go
 ```
 
 ### Windows
-The recommended way of installing Go is via [winget](https://github.com/microsoft/winget-cli):
+Install Go with [winget](https://github.com/microsoft/winget-cli):
 
 ```shell
 $ winget install --id=GoLang.Go
@@ -45,35 +44,34 @@ To install a specific version of Go, see:
 ## Node.js
 SparkleMuffin uses the [Node.js runtime](https://nodejs.org/) to build its frontend assets.
 
-We recommend installing the current Long-Term Support (LTS) version of Node.js.
+Install the current Long-Term Support (LTS) version of Node.js.
 
 ### Linux
-The recommended way of installing Node.js is via your Linux distribution's package manager.
+Install Node.js with your Linux distribution's package manager.
 
 ### macOS
-The recommended way of installing Node.js is via the [Homebrew](https://brew.sh/)
-community packages:
+Install Node.js with the [Homebrew](https://brew.sh/) community packages:
 
 ```shell
 $ brew install node
 ```
 
 ### Windows
-The recommended way of installing Node.js is via [winget](https://github.com/microsoft/winget-cli):
+Install Node.js with [winget](https://github.com/microsoft/winget-cli):
 
 ```shell
 $ winget install --id=OpenJS.NodeJS
 ```
 
 ## Docker
-[Docker](https://docs.docker.com/) is used to:
+SparkleMuffin uses [Docker](https://docs.docker.com/) to:
 
 - Package the application as easy-to-run Docker images;
 - Run database integration tests with [Testcontainers](https://testcontainers.com/);
 - Spin a local development environment with [Docker Compose](https://docs.docker.com/compose/)
 
 
-A recent version of Docker is required to build Docker images locally, as we leverage:
+Building Docker images locally needs a recent version of Docker. Local builds use:
 
 - [Multi-stage builds](https://docs.docker.com/build/building/multi-stage/)
 - [Local build cache volumes](https://docs.docker.com/build/cache/)
@@ -90,7 +88,7 @@ See [`internal/repository/pyproject.toml`](https://github.com/virtualtam/sparkle
 for the pinned SQLFluff version.
 
 ### Linux and macOS
-The recommended way of installing uv is via the
+Install uv with the
 [standalone installer](https://docs.astral.sh/uv/getting-started/installation/):
 
 ```shell
@@ -98,22 +96,24 @@ $ curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ### Windows
-The recommended way of installing uv is via [winget](https://github.com/microsoft/winget-cli):
+Install uv with [winget](https://github.com/microsoft/winget-cli):
 
 ```shell
 $ winget install --id=astral-sh.uv
 ```
 
 ## GNU Make
-A [Makefile](https://www.gnu.org/software/make/) is provided for convenience to help
-running tests, linters, generate documentation and spin local development environments.
+A [Makefile](https://www.gnu.org/software/make/) provides targets to run tests
+and linters, generate documentation, and start local development environments.
 
 ## lychee
-[lychee](https://lychee.cli.rs/) is used to check the generated HTML documentation for broken links.
+SparkleMuffin uses [lychee](https://lychee.cli.rs/) to check the generated HTML
+documentation for broken links.
 
 ## mdBook
-[mdBook](https://rust-lang.github.io/mdBook/) is used to generate a static HTML documentation from [Markdown](https://rust-lang.github.io/mdBook/format/markdown.html) files.
+SparkleMuffin uses [mdBook](https://rust-lang.github.io/mdBook/) to generate a
+static HTML documentation from [Markdown](https://rust-lang.github.io/mdBook/format/markdown.html) files.
 
 ## Watchexec
-[watchexec](https://github.com/watchexec/watchexec) is used to live-reload the development server when source files
-have been changed on the disk.
+SparkleMuffin uses [watchexec](https://github.com/watchexec/watchexec) to
+live-reload the development server when source files change on disk.

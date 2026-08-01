@@ -3,10 +3,10 @@ The [Netscape Bookmark File Format](https://learn.microsoft.com/en-us/previous-v
 is a format commonly used by Web browsers and Web bookmarking applications to export
 and import bookmarks.
 
-It has a very loose specification (i.e. no
+It has a loose specification. It has no
 [DTD](https://en.wikipedia.org/wiki/Document_type_definition)
-nor [XSL Stylesheet](https://en.wikipedia.org/wiki/XSL)),
-and may be assimilated to XML "with some quirks":
+and no [XSL Stylesheet](https://en.wikipedia.org/wiki/XSL). You can treat it
+as XML with some quirks:
 
 - some elements have an opening tag, but no closing tag:
     - `<DT>` items;
@@ -15,7 +15,7 @@ and may be assimilated to XML "with some quirks":
     - `<A>...</A>` bookmarks;
     - `<H1>...</H1>` export title;
     - `<H3>...</H3>` folder name;
-- some elements have *surprising* opening and closing tags:
+- some elements have unusual opening and closing tags:
     - `<DL><p>...</DL><p>` item lists;
 - depending on the implementation:
     - elements may (or may not) be capitalized;
@@ -47,16 +47,15 @@ and may be assimilated to XML "with some quirks":
 SparkleMuffin uses [virtualtam/netscape-go](https://github.com/virtualtam/netscape-go)
 to parse (unmarshal) and export (marshal) bookmarks using the Netscape Bookmark File Format.
 
-This allows users to import or synchronize their existing bookmarks to SparkleMuffin,
-and to export them for usage with another bookmarking service.
+Users can import or sync their existing bookmarks into SparkleMuffin. They
+can also export bookmarks for use with another bookmarking service.
 
 [virtualtam/netscape-go](https://github.com/virtualtam/netscape-go)
-is provided as a standalone library in the hope other users may find it useful.
+is also available as a standalone library for other projects to use.
 
+It uses:
 
-It leverages:
-
-- the streaming parser abilities of Go's [encoding/xml](https://pkg.go.dev/encoding/xml) package for most of the heavy lifing;
+- Go's [encoding/xml](https://pkg.go.dev/encoding/xml) package to parse most of the file;
 - the HTML character escaping and unescaping of Go's [html](https://pkg.go.dev/html) package;
 - previous work on [Shaarli](https://github.com/shaarli/Shaarli)'s
   [netscape-bookmark-parser](https://github.com/shaarli/netscape-bookmark-parser),

@@ -27,6 +27,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Document the Copywrite and Vulnerabilities GitHub Actions workflows
 - Update the CI Workflow description, link how-to guides from each workflow section
 - Update and reword conceptual, how-to and reference guides to match current tooling configuration
+- Fix broken documentation links and reword the README
+- Link the CI badge to its workflow run, add a badge for the GHCR Docker image
 
 ## [v0.7.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.0) - 2026-07-26
 ### Security

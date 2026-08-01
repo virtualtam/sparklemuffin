@@ -1,0 +1,26 @@
+---
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "npm"
+    directory: "/internal/http/www/assets"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "uv"
+    directory: "/internal/repository"
+    schedule:
+      interval: "monthly"

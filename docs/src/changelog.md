@@ -8,6 +8,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ## UNRELEASED
 ### Security
 - Bump GitHub Actions to their latest release, and pin them by SHA + version comment
+- Enable Dependabot for GitHub Actions, Go modules, Node.js packages and the SQLFluff `uv` project
 
 ### Changed
 #### Packaging and automation

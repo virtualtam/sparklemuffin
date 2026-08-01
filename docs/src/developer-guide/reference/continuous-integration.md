@@ -5,6 +5,15 @@ trailing comment (e.g. `actions/checkout@<sha> # v7.0.1`). A tag can be
 moved to point at different code; a commit SHA cannot. This protects
 workflows against a compromised or mistakenly re-tagged Action release.
 
+## Dependabot
+Dependabot opens a Pull Request once a month to update:
+
+- GitHub Actions, grouped into a single Pull Request;
+- Go modules;
+- Node.js packages, for the frontend asset pipeline;
+- SQLFluff, pinned as a `uv` dependency in
+  [`internal/repository/pyproject.toml`](https://github.com/virtualtam/sparklemuffin/blob/main/internal/repository/pyproject.toml).
+
 ### CI Workflow
 This workflow runs when:
 

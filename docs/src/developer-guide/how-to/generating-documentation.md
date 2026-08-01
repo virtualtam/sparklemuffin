@@ -1,7 +1,7 @@
 # Generating the HTML documentation
 ## Prerequisites
 - Install [mdBook](https://rust-lang.github.io/mdBook/);
-- Install [mdbook-linkcheck](https://github.com/Michael-F-Bryan/mdbook-linkcheck).
+- Install [lychee](https://lychee.cli.rs/) to check documentation links.
 
 ## HTML Documentation
 Build the HTML documentation with:
@@ -14,7 +14,19 @@ mdbook build docs
 2023-11-05 16:19:04 [INFO] (mdbook::book): Running the html backend
 ```
 
-The generated website will be located under `docs/book/html`.
+The generated website will be located under `docs/book`.
+
+## Checking links
+Check the generated website for broken links with:
+
+```shell
+$ make lint-docs
+
+lychee --offline --no-progress --root-dir docs/book docs/book
+```
+
+This only checks links between local pages. It skips links to external
+websites.
 
 
 ## Live-reload server
@@ -32,7 +44,7 @@ mdbook serve docs
 2023-11-05 16:19:25 [INFO] (warp::server): listening on http://[::1]:3000
 ```
 
-- The generated website will be located under `docs/book/html`;
+- The generated website will be located under `docs/book`;
 - The live server can be accessed by opening [http://localhost:3000](http://localhost:3000) in a Web browser.
 
 ## Reference

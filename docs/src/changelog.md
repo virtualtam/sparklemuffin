@@ -18,6 +18,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
   - Install with `uv`, run with `uvx` and Python 3.14
   - Bump to v4.2.2
   - Silence new rule warnings for existing migrations with `noqa` comments
+- Rework mdBook setup:
+  - Bump to v0.5.4
+  - Update configuration, remove deprecated and commented options
+  - Switch to `lychee` to check documentation links
 
 ## [v0.7.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.0) - 2026-07-26
 ### Security

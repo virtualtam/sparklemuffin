@@ -46,7 +46,8 @@ This workflow runs when:
 - new Git tags are pushed;
 - Pull Requests are created or updated.
 
-It generates the HTML documentation with `mdBook`.
+It generates the HTML documentation with `mdBook`, then checks it for
+broken links with [lychee](https://lychee.cli.rs/).
 
 When new commits are pushed to the `main` Git branch and the `CI` workflow is successful,
 the documentation is uploaded to GitHub Pages and can be accessed here: [SparkleMuffin Documentation](https://virtualtam.github.io/sparklemuffin/).

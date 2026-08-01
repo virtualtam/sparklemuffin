@@ -104,17 +104,16 @@ The recommended way of installing uv is via [winget](https://github.com/microsof
 $ winget install --id=astral-sh.uv
 ```
 
-
 ## GNU Make
 A [Makefile](https://www.gnu.org/software/make/) is provided for convenience to help
 running tests, linters, generate documentation and spin local development environments.
 
+## lychee
+[lychee](https://lychee.cli.rs/) is used to check the generated HTML documentation for broken links.
 
 ## mdBook
-[mdBook](https://rust-lang.github.io/mdBook/) is used to generate a static HTML documentation
-from [Markdown](https://rust-lang.github.io/mdBook/format/markdown.html) files.
-
+[mdBook](https://rust-lang.github.io/mdBook/) is used to generate a static HTML documentation from [Markdown](https://rust-lang.github.io/mdBook/format/markdown.html) files.
 
 ## Watchexec
-[watchexec](https://github.com/watchexec/watchexec) is used to live-reload the development
-server when source files have been changed on the disk.
+[watchexec](https://github.com/watchexec/watchexec) is used to live-reload the development server when source files
+have been changed on the disk.

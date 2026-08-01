@@ -177,12 +177,16 @@ dev-admin:
 DOCS_DIR := docs
 DOCS_FILES := $(shell find docs -name "*.md" -or -name "*.toml")
 
-docs: docs/book/html
+docs: docs/book
 .PHONY: docs
 
-docs/book/html: $(DOCS_FILES)
+docs/book: $(DOCS_FILES)
 	mdbook build $(DOCS_DIR)
 
 live-docs:
 	mdbook serve $(DOCS_DIR)
 .PHONY: live-docs
+
+lint-docs: docs
+	lychee --offline --no-progress --root-dir docs/book docs/book
+.PHONY: lint-docs

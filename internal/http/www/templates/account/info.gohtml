@@ -1,63 +1,40 @@
 {{define "content"}}
-<section class="section pt-3">
-  <nav class="breadcrumb" aria-label="breadcrumbs">
-    <ul>
-      <li><a href="/account">Account</a></li>
-      <li class="is-active"><a href="#" aria-current="page">Update Information</a></li>
-    </ul>
+<section class="pt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/account">Account</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Update Information</li>
+    </ol>
   </nav>
 
   <form action="/account/info" method="POST">
-    <div class="field is-horizontal">
-      <div class="field-label is-normal">
-        <label for="email" class="label">Email address</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <input class="input" type="email" id="email" name="email" placeholder="Email" value="{{.Email}}"
-              required="">
-          </div>
-        </div>
+    <div class="row mb-3">
+      <label for="email" class="col-sm-2 col-form-label">Email address</label>
+      <div class="col-sm-10">
+        <input class="form-control" type="email" id="email" name="email" placeholder="Email" value="{{.Email}}"
+          required="">
       </div>
     </div>
 
-    <div class="field is-horizontal">
-      <div class="field-label is-normal">
-        <label for="nick_name" class="label">Nickname</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <input class="input" type="text" id="nick_name" name="nick_name" placeholder="Nickname"
-              value="{{.NickName}}" required="">
-          </div>
-        </div>
+    <div class="row mb-3">
+      <label for="nick_name" class="col-sm-2 col-form-label">Nickname</label>
+      <div class="col-sm-10">
+        <input class="form-control" type="text" id="nick_name" name="nick_name" placeholder="Nickname"
+          value="{{.NickName}}" required="">
       </div>
     </div>
 
-    <div class="field is-horizontal">
-      <div class="field-label is-normal">
-        <label for="display_name" class="label">Display Name</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <input class="input" type="text" id="display_name" name="display_name" placeholder="Display Name"
-              value="{{.DisplayName}}" required="">
-          </div>
-        </div>
+    <div class="row mb-3">
+      <label for="display_name" class="col-sm-2 col-form-label">Display Name</label>
+      <div class="col-sm-10">
+        <input class="form-control" type="text" id="display_name" name="display_name" placeholder="Display Name"
+          value="{{.DisplayName}}" required="">
       </div>
     </div>
 
-    <div class="field is-horizontal">
-      <div class="field-label"></div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <button type="submit" class="button is-primary">Update information</button>
-          </div>
-        </div>
+    <div class="row mb-3">
+      <div class="col-sm-10 offset-sm-2">
+        <button type="submit" class="btn btn-primary">Update information</button>
       </div>
     </div>
   </form>

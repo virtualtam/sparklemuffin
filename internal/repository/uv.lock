@@ -202,7 +202,7 @@ wheels = [
 ]
 
 [[package]]
-name = "sparklemuffin-repository-tooling"
+name = "sparklemuffin-dev"
 version = "0.1.0"
 source = { virtual = "." }
 

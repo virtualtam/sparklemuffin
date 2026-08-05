@@ -11,14 +11,17 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 
 	"github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/alecthomas/chroma/v2/styles"
+	"github.com/bep/godartsass/v2"
 	"github.com/evanw/esbuild/pkg/api"
 )
 
@@ -28,6 +31,7 @@ func main() {
 
 	copyStaticAssets()
 	generateChromaCss()
+	compileSass()
 
 	if *watchMode {
 		watchAssets()
@@ -77,6 +81,101 @@ func generateChromaCss() {
 	if err := writeFile(&buf, "css/chroma.css"); err != nil {
 		log.Fatalf("esbuild: failed to write chroma CSS: %s\n", err)
 	}
+}
+
+// sassEntryPoints lists the custom Sass entry points compiled ahead of the
+// esbuild CSS bundling pass. See scss/bootstrap.scss.
+var sassEntryPoints = map[string]string{
+	"scss/bootstrap.scss": "css/bootstrap.css",
+}
+
+// compileSass compiles the custom Sass entry points to plain CSS using Dart
+// Sass, ahead of the esbuild CSS bundling pass.
+func compileSass() {
+	transpiler, err := godartsass.Start(godartsass.Options{
+		DartSassEmbeddedFilename: sassEmbeddedBinaryPath(),
+	})
+	if err != nil {
+		log.Fatalf("sass: failed to start the Dart Sass compiler: %s\n", err)
+	}
+
+	for src, dst := range sassEntryPoints {
+		if err := compileSassFile(transpiler, src, dst); err != nil {
+			_ = transpiler.Close()
+			log.Fatalf("sass: %s\n", err)
+		}
+	}
+
+	if err := transpiler.Close(); err != nil {
+		log.Fatalf("sass: failed to close the Dart Sass compiler: %s\n", err)
+	}
+}
+
+// compileSassFile compiles one Sass entry point to plain CSS.
+func compileSassFile(transpiler *godartsass.Transpiler, src, dst string) error {
+	absSrc, err := filepath.Abs(src)
+	if err != nil {
+		return fmt.Errorf("failed to resolve %s: %w", src, err)
+	}
+
+	result, err := transpiler.Execute(godartsass.Args{
+		Source: mustReadFile(src),
+		URL:    fileURL(absSrc),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to compile %s: %w", src, err)
+	}
+
+	if err := writeFile(strings.NewReader(result.CSS), dst); err != nil {
+		return fmt.Errorf("failed to write %s: %w", dst, err)
+	}
+
+	return nil
+}
+
+// sassEmbeddedBinaryPath returns the path to the platform-specific Dart Sass
+// embedded compiler binary installed as an npm optional dependency of
+// "sass-embedded".
+func sassEmbeddedBinaryPath() string {
+	npmArch := runtime.GOARCH
+	if npmArch == "amd64" {
+		npmArch = "x64"
+	}
+
+	npmPlatform := runtime.GOOS
+	binName := "sass"
+	if npmPlatform == "windows" {
+		npmPlatform = "win32"
+		binName = "sass.bat"
+	}
+
+	return filepath.Join(
+		"node_modules",
+		fmt.Sprintf("sass-embedded-%s-%s", npmPlatform, npmArch),
+		"dart-sass",
+		binName,
+	)
+}
+
+// fileURL converts an absolute filesystem path to a "file://" URL, as
+// expected by godartsass to resolve relative Sass imports.
+func fileURL(absPath string) string {
+	path := filepath.ToSlash(absPath)
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	u := url.URL{Scheme: "file", Path: path}
+	return u.String()
+}
+
+// mustReadFile reads the contents of path, or exits the program on error.
+func mustReadFile(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatalf("sass: failed to read %s: %s\n", path, err)
+	}
+	return string(data)
 }
 
 var (

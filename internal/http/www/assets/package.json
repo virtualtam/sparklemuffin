@@ -14,6 +14,7 @@
         "bootstrap": "^5.3.8",
         "easymde": "^2.21.0",
         "firacode": "^6.2.0",
-        "htmx.org": "^2.0.10"
+        "htmx.org": "^2.0.10",
+        "sass-embedded": "^1.100.0"
     }
 }

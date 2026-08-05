@@ -1,14 +1,14 @@
 {{define "content"}}
-<section class="section pt-3">
-  <nav class="breadcrumb" aria-label="breadcrumbs">
-    <ul>
-      <li class="is-active"><a href="#" aria-current="page">Administration</a></li>
-      <li><a href="/admin/users" aria-current="page">Users</a></li>
-      <li class="is-active"><a href="#" aria-current="page">Delete user</a></li>
-    </ul>
+<section class="pt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item active" aria-current="page">Administration</li>
+      <li class="breadcrumb-item"><a href="/admin/users">Users</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Delete user</li>
+    </ol>
   </nav>
 
-  <h2 class="title">Delete user - {{.Email}}</h2>
+  <h2 class="h3">Delete user - {{.Email}}</h2>
 
   {{template "userDeleteForm" (dict "User" . "InModal" false)}}
 </section>
@@ -22,8 +22,6 @@
 
 <form action="/admin/users/{{.User.UUID}}/delete" method="POST"
   {{if .InModal}}hx-post="/admin/users/{{.User.UUID}}/delete" hx-target="this" hx-swap="outerHTML"{{end}}>
-  <div class="field">
-    <button type="submit" class="button is-danger">Delete</button>
-  </div>
+  <button type="submit" class="btn btn-danger">Delete</button>
 </form>
 {{end}}

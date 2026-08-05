@@ -1,30 +1,30 @@
 {{define "content"}}
-<section class="section pt-3" x-data="{ userDeleteModalOpen: false }"
-  @modal:close.window="userDeleteModalOpen = false">
-  <nav class="breadcrumb" aria-label="breadcrumbs">
-    <ul>
-      <li class="is-active"><a href="#" aria-current="page">Administration</a></li>
-      <li class="is-active"><a href="#" aria-current="page">Users</a></li>
-    </ul>
+<section class="pt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item active" aria-current="page">Administration</li>
+      <li class="breadcrumb-item active" aria-current="page">Users</li>
+    </ol>
   </nav>
 
   {{template "userTable" .}}
 
-  <div class="modal" :class="{ 'is-active': userDeleteModalOpen }">
-    <div class="modal-background" @click="userDeleteModalOpen = false"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p class="modal-card-title">Delete user</p>
-        <button class="delete" aria-label="close" @click="userDeleteModalOpen = false"></button>
-      </header>
-      <section class="modal-card-body" id="user-delete-modal-body"></section>
+  <div class="modal fade" id="userDeleteModal" tabindex="-1" aria-labelledby="userDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="userDeleteModalLabel">Delete user</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="user-delete-modal-body"></div>
+      </div>
     </div>
   </div>
 </section>
 {{end}}
 
 {{define "userTable"}}
-<table class="table is-striped is-hoverable">
+<table class="table table-striped table-hover">
   <thead>
     <tr>
       <th>Email</th>
@@ -50,12 +50,12 @@
   <td>{{if .IsAdmin}}yes{{else}}no{{end}}</td>
   <td>
     <a href="/admin/users/{{.UUID}}" title="Edit user">
-      <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
+      <i class="fa-solid fa-pen-to-square"></i>
     </a>
-    <a class="has-text-danger" href="/admin/users/{{.UUID}}/delete" title="Delete user"
+    <a class="text-danger" href="/admin/users/{{.UUID}}/delete" title="Delete user"
       hx-get="/admin/users/{{.UUID}}/delete" hx-target="#user-delete-modal-body" hx-swap="innerHTML"
-      @click="userDeleteModalOpen = true">
-      <span class="icon"><i class="fa-solid fa-trash"></i></span>
+      data-bs-toggle="modal" data-bs-target="#userDeleteModal">
+      <i class="fa-solid fa-trash"></i>
     </a>
   </td>
 </tr>

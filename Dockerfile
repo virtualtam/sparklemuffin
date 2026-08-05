@@ -41,7 +41,11 @@ RUN --mount=type=cache,target=/var/lib/apt/lists \
 # - https://letsencrypt.org/docs/certificate-compatibility/
 # - https://community.letsencrypt.org/t/chain-validation-issues-with-ye-yr-under-linux-distributions/247836
 ADD https://letsencrypt.org/certs/gen-y/root-ye.pem /usr/local/share/ca-certificates/le-ye.crt
+ADD https://letsencrypt.org/certs/gen-y/int-ye1.pem /usr/local/share/ca-certificates/le-ye1.crt
+ADD https://letsencrypt.org/certs/gen-y/int-ye2.pem /usr/local/share/ca-certificates/le-ye2.crt
 ADD https://letsencrypt.org/certs/gen-y/root-yr.pem /usr/local/share/ca-certificates/le-yr.crt
+ADD https://letsencrypt.org/certs/gen-y/int-yr1.pem /usr/local/share/ca-certificates/le-yr1.crt
+ADD https://letsencrypt.org/certs/gen-y/int-yr2.pem /usr/local/share/ca-certificates/le-yr2.crt
 RUN update-ca-certificates
 
 RUN groupadd \

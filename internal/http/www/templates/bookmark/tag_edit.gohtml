@@ -1,11 +1,11 @@
 {{define "content"}}
-<section class="section pt-3">
-  <nav class="breadcrumb" aria-label="breadcrumbs">
-    <ul>
-      <li><a href="/bookmarks">Bookmarks</a></li>
-      <li><a href="/bookmarks/tags">Tags</a></li>
-      <li class="is-active"><a href="#" aria-current="page">Edit</a></li>
-    </ul>
+<section class="pt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/bookmarks">Bookmarks</a></li>
+      <li class="breadcrumb-item"><a href="/bookmarks/tags">Tags</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Edit</li>
+    </ol>
   </nav>
 
   {{template "tagEditForm" (dict "Tag" . "InModal" false)}}
@@ -16,27 +16,16 @@
 {{define "tagEditForm"}}
 <form action="/bookmarks/tags/{{.Tag.EncodedName}}/edit" method="POST"
   {{if .InModal}}hx-post="/bookmarks/tags/{{.Tag.EncodedName}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>
-  <div class="field is-horizontal">
-    <div class="field-label is-normal">
-      <label class="label" for="name">Name</label>
-    </div>
-    <div class="field-body">
-      <div class="field">
-        <div class="control">
-          <input class="input" type="text" id="name" name="name" placeholder="Name" value="{{.Tag.Name}}" required="">
-        </div>
-      </div>
+  <div class="row mb-3">
+    <label class="col-sm-2 col-form-label" for="name">Name</label>
+    <div class="col-sm-10">
+      <input class="form-control" type="text" id="name" name="name" placeholder="Name" value="{{.Tag.Name}}" required="">
     </div>
   </div>
 
-  <div class="field is-horizontal">
-    <div class="field-label"></div>
-    <div class="field-body">
-      <div class="field">
-        <div class="control">
-          <button type="submit" class="button is-primary">Rename</button>
-        </div>
-      </div>
+  <div class="row mb-3">
+    <div class="col-sm-10 offset-sm-2">
+      <button type="submit" class="btn btn-primary">Rename</button>
     </div>
   </div>
 </form>

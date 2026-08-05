@@ -44,6 +44,9 @@ func copyStaticAssets() {
 	if err := copyFile("node_modules/htmx.org/dist/htmx.min.js", "../static/htmx.min.js"); err != nil {
 		log.Fatal(err)
 	}
+	if err := copyFile("node_modules/bootstrap/dist/js/bootstrap.bundle.min.js", "../static/bootstrap.bundle.min.js"); err != nil {
+		log.Fatal(err)
+	}
 	if err := copyFiles("favicons", "../static"); err != nil {
 		log.Fatal(err)
 	}
@@ -99,6 +102,7 @@ var (
 	// jsBuildOptions configure how JavaScript files are processed by esbuild.
 	jsBuildOptions = api.BuildOptions{
 		EntryPoints: []string{
+			"js/bootstrap-modal-bridge.js",
 			"js/complete-tags.js",
 			"js/easymde-init.js",
 		},

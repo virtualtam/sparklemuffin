@@ -1,59 +1,42 @@
 {{define "content"}}
-{{/*
-  Unlike the tag/category/subscription edit modals, this one is opened after
-  the edit form has swapped in (htmx:after-swap) rather than on click: opening
-  an empty modal and growing it once the (much taller, EasyMDE-bearing) form
-  arrives caused a visible resize jump.
-*/}}
-<section class="section pt-3" id="bookmark-list-content"
-  x-data="{ bookmarkEditModalOpen: false, bookmarkDeleteModalOpen: false }"
-  @modal:close.window="bookmarkEditModalOpen = false; bookmarkDeleteModalOpen = false"
-  @htmx:after-swap.window="if ($event.detail.target.id === 'bookmark-edit-modal-body') bookmarkEditModalOpen = true">
+<section class="pt-3" id="bookmark-list-content">
   {{template "bookmarkSearchForm" .}}
   <ol start="{{.Page.ItemOffset}}">
     {{range .Bookmarks}}
     {{template "bookmarkRow" (dict "Bookmark" . "Owner" $.Owner)}}
     {{end}}
   </ol>
-  <nav class="level">
-    <div class="level-left">
-      <div class="level-item">
-        <a href="#" class="button is-small">
-          <span class="icon-text">
-            <span class="icon">
-              <i class="fa-solid fa-chevron-up"></i>
-            </span>
-            <span>Back to top</span>
-          </span>
-        </a>
-      </div>
-    </div>
-    <div class="level-right">
-      <div class="level-item">
-        {{template "pagination" (dict "Page" .Page "HxTarget" "#bookmark-list-content")}}
-      </div>
-    </div>
+  <nav class="d-flex justify-content-between align-items-center">
+    <a href="#" class="btn btn-outline-secondary btn-sm">
+      <i class="fa-solid fa-chevron-up me-1"></i>
+      Back to top
+    </a>
+    {{template "pagination" (dict "Page" .Page "HxTarget" "#bookmark-list-content")}}
   </nav>
 
-  <div class="modal is-wide" :class="{ 'is-active': bookmarkEditModalOpen }">
-    <div class="modal-background" @click="bookmarkEditModalOpen = false"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p class="modal-card-title">Edit bookmark</p>
-        <button class="delete" aria-label="close" @click="bookmarkEditModalOpen = false"></button>
-      </header>
-      <section class="modal-card-body" id="bookmark-edit-modal-body"></section>
+  <div class="modal modal-wide fade" id="bookmarkEditModal" tabindex="-1" aria-labelledby="bookmarkEditModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="bookmarkEditModalLabel">Edit bookmark</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="bookmark-edit-modal-body"></div>
+      </div>
     </div>
   </div>
 
-  <div class="modal" :class="{ 'is-active': bookmarkDeleteModalOpen }">
-    <div class="modal-background" @click="bookmarkDeleteModalOpen = false"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p class="modal-card-title">Delete bookmark</p>
-        <button class="delete" aria-label="close" @click="bookmarkDeleteModalOpen = false"></button>
-      </header>
-      <section class="modal-card-body" id="bookmark-delete-modal-body"></section>
+  <div class="modal fade" id="bookmarkDeleteModal" tabindex="-1" aria-labelledby="bookmarkDeleteModalLabel"
+       aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="bookmarkDeleteModalLabel">Delete bookmark</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="bookmark-delete-modal-body"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -61,87 +44,59 @@
 
 {{define "bookmarkRow"}}
 <li class="bookmark mb-5" id="bookmark-row-{{.Bookmark.UID}}">
-  <div class="level mb-1">
-    <div class="level-left">
-      <div class="level-item">
-        <strong>
-          {{- if .Bookmark.Private}}
-          <span class="has-text-danger-30">[Private]</span>
-          {{- end}}
-          <a class="bookmark-title" href="{{.Bookmark.URL}}">{{.Bookmark.Title}}</a>
-        </strong>
-      </div>
-    </div>
-    <div class="level-right">
-      <div class="level-item">
-        <strong>
-          <time>{{.Bookmark.CreatedAt.Format "2006-01-02"}}</time>
-        </strong>
-      </div>
-    </div>
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <strong>
+      {{- if .Bookmark.Private}}
+      <span class="text-danger">[Private]</span>
+      {{- end}}
+      <a class="bookmark-title" href="{{.Bookmark.URL}}">{{.Bookmark.Title}}</a>
+    </strong>
+    <strong>
+      <time>{{.Bookmark.CreatedAt.Format "2006-01-02"}}</time>
+    </strong>
   </div>
-  <div class="level mb-1">
-    <div class="level-left">
-      <div class="level-item">
-        <span class="icon">
-          <i class="fa-solid fa-tags"></i>
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <div class="d-flex align-items-center gap-1">
+      <i class="fa-solid fa-tags"></i>
+      <div class="d-flex flex-wrap gap-1">
+        {{- range .Bookmark.Tags}}
+        <span class="badge text-bg-secondary">
+          <a href="/bookmarks?search={{.}}">{{.}}</a>
         </span>
-        <div class="tags">
-          {{- range .Bookmark.Tags}}
-          <span class="tag">
-            <a href="/bookmarks?search={{.}}">{{.}}</a>
-          </span>
-          {{- end}}
-        </div>
+        {{- end}}
       </div>
     </div>
-    <div class="level-right">
-      <div class="level-item">
-        <div class="dropdown is-hoverable is-right">
-          <div class="dropdown-trigger">
-            <button class="button is-small" aria-haspopup="true" aria-controls="dropdown-menu-{{.Bookmark.UID}}">
-              <span>Actions</span>
-              <span class="icon is-small">
-                <i class="fa-solid fa-chevron-down"></i>
-              </span>
-            </button>
-          </div>
-          <div class="dropdown-menu" id="dropdown-menu-{{.Bookmark.UID}}" role="menu">
-            <div class="dropdown-content">
-              <a href="/bookmarks/{{.Bookmark.UID}}/edit" class="dropdown-item px-4"
-                hx-get="/bookmarks/{{.Bookmark.UID}}/edit" hx-target="#bookmark-edit-modal-body" hx-swap="innerHTML">
-                <span class="icon-text">
-                  <span class="icon">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                  </span>
-                  <span>Edit</span>
-                </span>
-              </a>
-              <a href="/bookmarks/{{.Bookmark.UID}}/delete" class="dropdown-item px-4"
-                hx-get="/bookmarks/{{.Bookmark.UID}}/delete" hx-target="#bookmark-delete-modal-body" hx-swap="innerHTML"
-                @click="bookmarkDeleteModalOpen = true">
-                <span class="icon-text">
-                  <span class="icon">
-                    <i class="fa-solid fa-trash"></i>
-                  </span>
-                  <span>Delete</span>
-                </span>
-              </a>
-              {{- if not .Bookmark.Private}}
-              <hr class="dropdown-divider">
-              <a href="/u/{{.Owner.NickName}}/bookmarks/{{.Bookmark.UID}}" class="dropdown-item px-4">
-                <span class="icon-text">
-                  <span class="icon">
-                    <i class="fa-solid fa-link"></i>
-                  </span>
-                  <span>Permalink</span>
-                </span>
-              </a>
-              {{- end}}
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="dropdown">
+      <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+        aria-expanded="false" aria-controls="dropdown-menu-{{.Bookmark.UID}}">
+        Actions
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end" id="dropdown-menu-{{.Bookmark.UID}}" role="menu">
+        <li>
+          <a href="/bookmarks/{{.Bookmark.UID}}/edit" class="dropdown-item"
+            hx-get="/bookmarks/{{.Bookmark.UID}}/edit" hx-target="#bookmark-edit-modal-body" hx-swap="innerHTML">
+            <i class="fa-solid fa-pen-to-square me-1"></i>
+            Edit
+          </a>
+        </li>
+        <li>
+          <a href="/bookmarks/{{.Bookmark.UID}}/delete" class="dropdown-item"
+            hx-get="/bookmarks/{{.Bookmark.UID}}/delete" hx-target="#bookmark-delete-modal-body" hx-swap="innerHTML"
+            data-bs-toggle="modal" data-bs-target="#bookmarkDeleteModal">
+            <i class="fa-solid fa-trash me-1"></i>
+            Delete
+          </a>
+        </li>
+        {{- if not .Bookmark.Private}}
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <a href="/u/{{.Owner.NickName}}/bookmarks/{{.Bookmark.UID}}" class="dropdown-item">
+            <i class="fa-solid fa-link me-1"></i>
+            Permalink
+          </a>
+        </li>
+        {{- end}}
+      </ul>
     </div>
   </div>
   {{- with .Bookmark.Description}}
@@ -153,37 +108,25 @@
 {{end}}
 
 {{define "bookmarkSearchForm"}}
-<nav class="level">
-  <div class="level-left">
-    <div class="level-item">
-      <form action="/bookmarks" method="GET"
-        hx-get="/bookmarks" hx-target="#bookmark-list-content" hx-swap="outerHTML" hx-push-url="true">
-        <div class="field has-addons">
-          <div class="control">
-            <input class="input" type="text" id="searchTerms" name="search" placeholder="Search terms"
-                   value="{{.Page.SearchTerms}}">
-          </div>
-          <div class="control">
-            <button type="submit" class="button">Search</button>
-          </div>
-        </div>
-      </form>
-    </div>
-    <div class="level-item">
-      <p class="subtitle is-5">
-        {{if ne .Page.SearchTerms "" }}
-        <strong>{{.Page.ItemCount}}</strong> bookmark{{if gt .Page.ItemCount 1}}s{{end}} found
-        {{else}}
-        <strong>{{.Page.ItemCount}}</strong> bookmark{{if gt .Page.ItemCount 1}}s{{end}}
-        {{end}}
-      </p>
-    </div>
+<nav class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex align-items-center gap-3">
+    <form action="/bookmarks" method="GET"
+      hx-get="/bookmarks" hx-target="#bookmark-list-content" hx-swap="outerHTML" hx-push-url="true">
+      <div class="input-group">
+        <input class="form-control" type="text" id="searchTerms" name="search" placeholder="Search terms"
+               value="{{.Page.SearchTerms}}">
+        <button type="submit" class="btn btn-outline-secondary">Search</button>
+      </div>
+    </form>
+    <p class="fs-5 mb-0">
+      {{if ne .Page.SearchTerms "" }}
+      <strong>{{.Page.ItemCount}}</strong> bookmark{{if gt .Page.ItemCount 1}}s{{end}} found
+      {{else}}
+      <strong>{{.Page.ItemCount}}</strong> bookmark{{if gt .Page.ItemCount 1}}s{{end}}
+      {{end}}
+    </p>
   </div>
-  <div class="level-right">
-    <div class="level-item">
-      {{template "pagination" (dict "Page" .Page "HxTarget" "#bookmark-list-content")}}
-    </div>
-  </div>
+  {{template "pagination" (dict "Page" .Page "HxTarget" "#bookmark-list-content")}}
 </nav>
 {{end}}
 

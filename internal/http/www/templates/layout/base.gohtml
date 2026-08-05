@@ -1,6 +1,6 @@
 {{define "base"}}
 <!DOCTYPE html>
-<html lang="en" class="has-navbar-fixed-top" data-theme="light">
+<html lang="en" data-theme="light">
 
   <head>
     <meta charset="utf-8">
@@ -31,6 +31,8 @@
     {{template "footer"}}
     <script nonce="{{.CSP.Nonce}}" src="/static/alpinejs.min.js" defer></script>
     <script nonce="{{.CSP.Nonce}}" src="/static/htmx.min.js"></script>
+    <script nonce="{{.CSP.Nonce}}" src="/static/bootstrap.bundle.min.js"></script>
+    <script nonce="{{.CSP.Nonce}}" src="/static/bootstrap-modal-bridge.min.js"></script>
     {{template "scripts" .CSP}}
   </body>
 </html>

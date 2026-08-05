@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-@import "../node_modules/bulma/css/bulma.css";
+@import "../node_modules/bootstrap/dist/css/bootstrap.css";
 @import "../node_modules/@fortawesome/fontawesome-free/css/all.min.css";
 @import "alpinejs.css";
 @import "awesomplete.css";
@@ -46,24 +46,18 @@ input {
   font-family: exo2, sans, sans-serif;
 }
 
+/* Offsets page content below the fixed-top navbar. */
+body {
+  padding-top: 3.5rem;
+}
+
 a:hover {
   text-decoration: underline;
 }
 
-/*
- * Bulma rounds the top corners of .modal-card-head and the bottom corners of
- * .modal-card-foot, but a modal-card with no foot (actions living in the
- * body instead, e.g. a form's own submit button) is left with square bottom
- * corners on .modal-card-body. Round them to match when it's the last child.
- */
-.modal-card-body:last-child {
-  border-end-start-radius: var(--bulma-modal-card-foot-radius);
-  border-end-end-radius: var(--bulma-modal-card-foot-radius);
-}
-
-/* Wider modal-card, for content that needs more room (e.g. long URLs, a Markdown editor). */
-.modal.is-wide {
-  --bulma-modal-content-width: 60rem;
+/* Wider modal, for content that needs more room (e.g. long URLs, a Markdown editor). */
+.modal-wide .modal-dialog {
+  max-width: 60rem;
 }
 
 code {
@@ -85,7 +79,7 @@ code {
 }
 
 .footer .logo {
-  color: var(--bulma-success-30);
+  color: var(--bs-success);
 }
 
 .icon-text {
@@ -134,9 +128,13 @@ code {
   color: var(--bulma-text);
 }
 
+.badge a {
+  color: inherit;
+}
+
 /* Bookmarks */
 .bookmark-title {
-  color: var(--bulma-text);
+  color: var(--bs-body-color);
 }
 
 .tag-count {

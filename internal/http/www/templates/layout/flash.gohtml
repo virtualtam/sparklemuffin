@@ -1,9 +1,7 @@
 {{define "flash"}}
-<section class="section py-3">
-  <article class="message is-{{.Level}}">
-    <div class="message-body">
-      {{.Message}}
-    </div>
-  </article>
+<section class="py-3">
+  <div class="alert alert-{{.Level}} mb-0" role="alert">
+    {{.Message}}
+  </div>
 </section>
 {{end}}

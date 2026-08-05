@@ -30,6 +30,20 @@ RUN --mount=type=cache,target=/var/lib/apt/lists \
     && apt update \
     && apt install -y ca-certificates curl
 
+# Add certificates for Let's Encrypt Generation Y CAs (YE and YR).
+#
+# As of 2026-08-05:
+#
+# > These roots are not yet included in Root Program Trust Stores, but will be submitted for inclusion soon.
+#
+# See:
+# - https://letsencrypt.org/certificates/
+# - https://letsencrypt.org/docs/certificate-compatibility/
+# - https://community.letsencrypt.org/t/chain-validation-issues-with-ye-yr-under-linux-distributions/247836
+ADD https://letsencrypt.org/certs/gen-y/root-ye.pem /usr/local/share/ca-certificates/le-ye.crt
+ADD https://letsencrypt.org/certs/gen-y/root-yr.pem /usr/local/share/ca-certificates/le-yr.crt
+RUN update-ca-certificates
+
 RUN groupadd \
         --gid 1000 \
         sparklemuffin \

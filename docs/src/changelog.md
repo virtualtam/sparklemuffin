@@ -10,6 +10,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Bump GitHub Actions to their latest release, and pin them by SHA + version comment
 - Enable Dependabot for GitHub Actions, Go modules, Node.js packages and the SQLFluff `uv` project
 
+### Added
+#### Packaging and automation
+- Add root certificates for Let's Encrypt Generation Y certificate authorities YE and YR
+
 ### Changed
 #### Packaging and automation
 - Bump golangci-lint

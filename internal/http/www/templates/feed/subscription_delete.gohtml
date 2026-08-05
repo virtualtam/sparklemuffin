@@ -1,11 +1,11 @@
 {{define "content"}}
-<section class="section pt-3">
-  <nav class="breadcrumb" aria-label="breadcrumbs">
-    <ul>
-      <li><a href="/feeds">Feeds</a></li>
-      <li><a href="/feeds/subscriptions">Subscriptions</a></li>
-      <li class="is-active"><a href="#">Delete</a></li>
-    </ul>
+<section class="pt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/feeds">Feeds</a></li>
+      <li class="breadcrumb-item"><a href="/feeds/subscriptions">Subscriptions</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Delete</li>
+    </ol>
   </nav>
 
   {{template "subscriptionDeleteForm" (dict "Subscription" . "InModal" false)}}
@@ -18,8 +18,6 @@
 
 <form action="/feeds/subscriptions/{{.Subscription.UUID}}/delete" method="POST"
   {{if .InModal}}hx-post="/feeds/subscriptions/{{.Subscription.UUID}}/delete" hx-target="this" hx-swap="outerHTML"{{end}}>
-  <p>
-    <button type="submit" class="button is-danger">Delete</button>
-  </p>
+  <button type="submit" class="btn btn-danger">Delete</button>
 </form>
 {{end}}

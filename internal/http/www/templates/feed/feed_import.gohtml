@@ -1,45 +1,24 @@
 {{define "content"}}
-<section class="section pt-3">
-  <nav class="breadcrumb" aria-label="breadcrumbs">
-    <ul>
-      <li><a href="/feeds">Feeds</a></li>
-      <li><a href="/feeds/subscriptions">Subscriptions</a></li>
-      <li class="is-active"><a href="#" aria-current="page">Import</a></li>
-    </ul>
+<section class="pt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/feeds">Feeds</a></li>
+      <li class="breadcrumb-item"><a href="/feeds/subscriptions">Subscriptions</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Import</li>
+    </ol>
   </nav>
 
   <form action="/feeds/import" enctype="multipart/form-data" method="POST">
-    <div class="field is-horizontal">
-      <div class="field-label is-normal">
-        <label class="label" for="importfile">Import from</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <div class="file">
-              <label class="file-label">
-                <input class="file-input" type="file" id="importfile" name="importfile" />
-                <span class="file-cta">
-                  <span class="file-icon">
-                    <i class="fas fa-upload"></i>
-                  </span>
-                  <span class="file-label"> Choose a file… </span>
-                </span>
-              </label>
-            </div>
-          </div>
-        </div>
+    <div class="row mb-3">
+      <label class="col-sm-2 col-form-label" for="importfile">Import from</label>
+      <div class="col-sm-10">
+        <input class="form-control" type="file" id="importfile" name="importfile">
       </div>
     </div>
 
-    <div class="field is-horizontal">
-      <div class="field-label"></div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <button type="submit" class="button is-primary">Import</button>
-          </div>
-        </div>
+    <div class="row mb-3">
+      <div class="col-sm-10 offset-sm-2">
+        <button type="submit" class="btn btn-primary">Import</button>
       </div>
     </div>
   </form>

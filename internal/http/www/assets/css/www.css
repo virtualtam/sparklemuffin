@@ -101,16 +101,6 @@ a.badge:hover {
 }
 
 /* Feeds */
-.menu-label {
-  font-size: 1em;
-  letter-spacing: initial;
-  text-transform: initial;
-}
-
-.menu-label a {
-  color: var(--bulma-text);
-}
-
 .feed-category-toggle {
   cursor: pointer;
 }
@@ -120,10 +110,10 @@ a.badge:hover {
 }
 
 .feed-title a {
-  color: var(--bulma-text);
+  color: var(--bs-body-color);
   font-style: italic;
 }
 
 .feed-entry-title {
-  color: var(--bulma-text);
+  color: var(--bs-body-color);
 }

@@ -1,124 +1,116 @@
 {{define "content"}}
-<section class="section pt-3"
-  x-data="{
-    categoryEditModalOpen: false, subscriptionEditModalOpen: false,
-    categoryDeleteModalOpen: false, subscriptionDeleteModalOpen: false
-  }"
-  @modal:close.window="categoryEditModalOpen = false; subscriptionEditModalOpen = false;
-    categoryDeleteModalOpen = false; subscriptionDeleteModalOpen = false">
-  <nav class="breadcrumb" aria-label="breadcrumbs">
-    <ul>
-      <li><a href="/feeds">Feeds</a></li>
-      <li class="is-active"><a href="#">Subscriptions</a></li>
-    </ul>
+<section class="pt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/feeds">Feeds</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Subscriptions</li>
+    </ol>
   </nav>
 
-  <div class="columns is-multiline">
+  <div class="row">
     {{- range .}}
-    <div class="column is-full-mobile is-half-tablet is-one-third-desktop" id="category-column-{{.UUID}}">
-      <nav class="panel is-light">
+    <div class="col-12 col-md-6 col-lg-4 mb-3" id="category-column-{{.UUID}}">
+      <div class="card">
         {{template "categoryHeading" .}}
-        {{- range .Subscriptions}}
-        {{template "subscriptionRow" .}}
-        {{- end}}
-      </nav>
+        <ul class="list-group list-group-flush">
+          {{- range .Subscriptions}}
+          {{template "subscriptionRow" .}}
+          {{- end}}
+        </ul>
+      </div>
     </div>
     {{- end}}
   </div>
 
-  <div class="modal" :class="{ 'is-active': categoryEditModalOpen }">
-    <div class="modal-background" @click="categoryEditModalOpen = false"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p class="modal-card-title">Edit category</p>
-        <button class="delete" aria-label="close" @click="categoryEditModalOpen = false"></button>
-      </header>
-      <section class="modal-card-body" id="category-edit-modal-body"></section>
+  <div class="modal fade" id="categoryEditModal" tabindex="-1" aria-labelledby="categoryEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="categoryEditModalLabel">Edit category</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="category-edit-modal-body"></div>
+      </div>
     </div>
   </div>
 
-  <div class="modal" :class="{ 'is-active': subscriptionEditModalOpen }">
-    <div class="modal-background" @click="subscriptionEditModalOpen = false"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p class="modal-card-title">Edit subscription</p>
-        <button class="delete" aria-label="close" @click="subscriptionEditModalOpen = false"></button>
-      </header>
-      <section class="modal-card-body" id="subscription-edit-modal-body"></section>
+  <div class="modal fade" id="subscriptionEditModal" tabindex="-1" aria-labelledby="subscriptionEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="subscriptionEditModalLabel">Edit subscription</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="subscription-edit-modal-body"></div>
+      </div>
     </div>
   </div>
 
-  <div class="modal" :class="{ 'is-active': categoryDeleteModalOpen }">
-    <div class="modal-background" @click="categoryDeleteModalOpen = false"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p class="modal-card-title">Delete category</p>
-        <button class="delete" aria-label="close" @click="categoryDeleteModalOpen = false"></button>
-      </header>
-      <section class="modal-card-body" id="category-delete-modal-body"></section>
+  <div class="modal fade" id="categoryDeleteModal" tabindex="-1" aria-labelledby="categoryDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="categoryDeleteModalLabel">Delete category</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="category-delete-modal-body"></div>
+      </div>
     </div>
   </div>
 
-  <div class="modal" :class="{ 'is-active': subscriptionDeleteModalOpen }">
-    <div class="modal-background" @click="subscriptionDeleteModalOpen = false"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p class="modal-card-title">Delete subscription</p>
-        <button class="delete" aria-label="close" @click="subscriptionDeleteModalOpen = false"></button>
-      </header>
-      <section class="modal-card-body" id="subscription-delete-modal-body"></section>
+  <div class="modal fade" id="subscriptionDeleteModal" tabindex="-1" aria-labelledby="subscriptionDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="subscriptionDeleteModalLabel">Delete subscription</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="subscription-delete-modal-body"></div>
+      </div>
     </div>
   </div>
 </section>
 {{end}}
 
 {{define "categoryHeading"}}
-<div class="panel-heading level is-mobile" id="category-{{.UUID}}">
-  <div class="level-left">
-    <span class="level-item">{{.Name}} ({{len .Subscriptions}})</span>
-  </div>
-  <div class="level-right">
-    <div class="level-item buttons has-addons">
-      <a class="button is-small is-info is-light" href="/feeds/categories/{{.UUID}}/edit"
-        title="Edit category: {{.Name}}"
-        hx-get="/feeds/categories/{{.UUID}}/edit" hx-target="#category-edit-modal-body" hx-swap="innerHTML"
-        @click="categoryEditModalOpen = true">
-        <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
-      </a>
-      <a class="button is-small is-danger is-light" href="/feeds/categories/{{.UUID}}/delete"
-        title="Delete category: {{.Name}}"
-        hx-get="/feeds/categories/{{.UUID}}/delete" hx-target="#category-delete-modal-body" hx-swap="innerHTML"
-        @click="categoryDeleteModalOpen = true">
-        <span class="icon"><i class="fa-solid fa-trash"></i></span>
-      </a>
-    </div>
+<div class="card-header d-flex justify-content-between align-items-center" id="category-{{.UUID}}">
+  <span>{{.Name}} ({{len .Subscriptions}})</span>
+  <div class="btn-group">
+    <a class="btn btn-sm bg-info-subtle text-info-emphasis border-0" href="/feeds/categories/{{.UUID}}/edit"
+      title="Edit category: {{.Name}}"
+      hx-get="/feeds/categories/{{.UUID}}/edit" hx-target="#category-edit-modal-body" hx-swap="innerHTML"
+      data-bs-toggle="modal" data-bs-target="#categoryEditModal">
+      <i class="fa-solid fa-pen-to-square"></i>
+    </a>
+    <a class="btn btn-sm bg-danger-subtle text-danger-emphasis border-0" href="/feeds/categories/{{.UUID}}/delete"
+      title="Delete category: {{.Name}}"
+      hx-get="/feeds/categories/{{.UUID}}/delete" hx-target="#category-delete-modal-body" hx-swap="innerHTML"
+      data-bs-toggle="modal" data-bs-target="#categoryDeleteModal">
+      <i class="fa-solid fa-trash"></i>
+    </a>
   </div>
 </div>
 {{end}}
 
 {{define "subscriptionRow"}}
-<div class="panel-block level is-mobile" id="subscription-{{.UUID}}">
-  <div class="level-left">
-    <span class="level-item">
-      <span class="panel-icon"><i class="fa-solid fa-rss"></i></span>
-      {{or .Alias .FeedTitle}}
-    </span>
+<li class="list-group-item d-flex justify-content-between align-items-center" id="subscription-{{.UUID}}">
+  <span>
+    <i class="fa-solid fa-rss me-1"></i>
+    {{or .Alias .FeedTitle}}
+  </span>
+  <div class="btn-group">
+    <a class="btn btn-sm bg-info-subtle text-info-emphasis border-0" href="/feeds/subscriptions/{{.UUID}}/edit"
+      title="Edit subscription: {{.FeedTitle}}"
+      hx-get="/feeds/subscriptions/{{.UUID}}/edit" hx-target="#subscription-edit-modal-body" hx-swap="innerHTML"
+      data-bs-toggle="modal" data-bs-target="#subscriptionEditModal">
+      <i class="fa-solid fa-pen-to-square"></i>
+    </a>
+    <a class="btn btn-sm bg-danger-subtle text-danger-emphasis border-0" href="/feeds/subscriptions/{{.UUID}}/delete"
+      title="Delete subscription: {{.FeedTitle}}"
+      hx-get="/feeds/subscriptions/{{.UUID}}/delete" hx-target="#subscription-delete-modal-body" hx-swap="innerHTML"
+      data-bs-toggle="modal" data-bs-target="#subscriptionDeleteModal">
+      <i class="fa-solid fa-trash"></i>
+    </a>
   </div>
-  <div class="level-right">
-    <div class="level-item buttons has-addons">
-      <a class="button is-small is-info is-light" href="/feeds/subscriptions/{{.UUID}}/edit"
-        title="Edit subscription: {{.FeedTitle}}"
-        hx-get="/feeds/subscriptions/{{.UUID}}/edit" hx-target="#subscription-edit-modal-body" hx-swap="innerHTML"
-        @click="subscriptionEditModalOpen = true">
-        <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span>
-      </a>
-      <a class="button is-small is-danger is-light" href="/feeds/subscriptions/{{.UUID}}/delete"
-        title="Delete subscription: {{.FeedTitle}}"
-        hx-get="/feeds/subscriptions/{{.UUID}}/delete" hx-target="#subscription-delete-modal-body" hx-swap="innerHTML"
-        @click="subscriptionDeleteModalOpen = true">
-        <span class="icon"><i class="fa-solid fa-trash"></i></span>
-      </a>
-    </div>
-  </div>
-</div>
+</li>
 {{end}}

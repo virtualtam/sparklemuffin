@@ -320,7 +320,7 @@ func TestHandleHxFeedEntryToggleRead(t *testing.T) {
 		body := w.Body.String()
 		wantContains := []string{
 			`id="feed-entry-entry-1"`,
-			"has-text-grey-light", // now marked as read
+			"text-muted", // now marked as read
 			"Mark as unread",
 			`id="unread-count-all"`,
 			`id="unread-count-category-tech"`,
@@ -484,7 +484,8 @@ func TestHandleHxPreferencesFeedShowEntriesUpdate(t *testing.T) {
 		// 2: the Unread filter button, plus the Compact button (also always
 		// re-rendered by the shared helper, active by default since
 		// ShowEntrySummaries is zero-valued/false in this fixture)
-		if got := strings.Count(body, "is-active"); got != 2 {
+		// the button's own class combo, not bare "active": pagination's current-page item is also "active"
+		if got := strings.Count(body, "btn-outline-secondary active"); got != 2 {
 			t.Errorf("want exactly 2 active buttons (Unread + Compact), got %d, body:\n%s", got, body)
 		}
 	})
@@ -558,7 +559,8 @@ func TestHandleHxPreferencesToggleShowEntrySummaries(t *testing.T) {
 		// ShowEntrySummaries flips from true to false, so the Compact button
 		// (now hiding summaries) becomes active; the "All" filter button is
 		// also active since ShowEntries stays ALL. 2 total.
-		if got := strings.Count(body, "is-active"); got != 2 {
+		// the button's own class combo, not bare "active": pagination's current-page item is also "active"
+		if got := strings.Count(body, "btn-outline-secondary active"); got != 2 {
 			t.Errorf("want exactly 2 active buttons (All + Compact), got %d, body:\n%s", got, body)
 		}
 	})

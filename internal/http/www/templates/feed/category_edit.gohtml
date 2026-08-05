@@ -1,10 +1,10 @@
 {{define "content"}}
-<section class="section pt-3">
-  <nav class="breadcrumb">
-    <ul>
-      <li><a href="/feeds">Feeds</a></li>
-      <li class="is-active"><a href="#">Edit category</a></li>
-    </ul>
+<section class="pt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/feeds">Feeds</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Edit category</li>
+    </ol>
   </nav>
 
   {{template "categoryEditForm" (dict "Category" . "InModal" false)}}
@@ -15,28 +15,17 @@
 {{define "categoryEditForm"}}
 <form action="/feeds/categories/{{.Category.UUID}}/edit" method="POST"
   {{if .InModal}}hx-post="/feeds/categories/{{.Category.UUID}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>
-  <div class="field is-horizontal">
-    <div class="field-label is-normal">
-      <label class="label" for="name">Name</label>
-    </div>
-    <div class="field-body">
-      <div class="field">
-        <div class="control">
-          <input class="input" type="text" id="name" name="name" placeholder="Name" value="{{.Category.Name}}"
-            required="">
-        </div>
-      </div>
+  <div class="row mb-3">
+    <label class="col-sm-2 col-form-label" for="name">Name</label>
+    <div class="col-sm-10">
+      <input class="form-control" type="text" id="name" name="name" placeholder="Name" value="{{.Category.Name}}"
+        required="">
     </div>
   </div>
 
-  <div class="field is-horizontal">
-    <div class="field-label"></div>
-    <div class="field-body">
-      <div class="field">
-        <div class="control">
-          <button type="submit" class="button is-primary">Save</button>
-        </div>
-      </div>
+  <div class="row mb-3">
+    <div class="col-sm-10 offset-sm-2">
+      <button type="submit" class="btn btn-primary">Save</button>
     </div>
   </div>
 </form>

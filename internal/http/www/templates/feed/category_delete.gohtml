@@ -1,10 +1,10 @@
 {{define "content"}}
-<section class="section pt-3">
-  <nav class="breadcrumb">
-    <ul>
-      <li><a href="/feeds">Feeds</a></li>
-      <li class="is-active"><a href="#">Delete category</a></li>
-    </ul>
+<section class="pt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/feeds">Feeds</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Delete category</li>
+    </ol>
   </nav>
 
   {{template "categoryDeleteForm" (dict "Category" . "InModal" false)}}
@@ -17,8 +17,6 @@
 
 <form action="/feeds/categories/{{.Category.UUID}}/delete" method="POST"
   {{if .InModal}}hx-post="/feeds/categories/{{.Category.UUID}}/delete" hx-target="this" hx-swap="outerHTML"{{end}}>
-  <p>
-    <button type="submit" class="button is-danger">Delete</button>
-  </p>
+  <button type="submit" class="btn btn-danger">Delete</button>
 </form>
 {{end}}

@@ -1,42 +1,34 @@
 {{define "content"}}
-<section class="section pt-3">
-  <div class="columns is-3-desktop is-5">
-    <div class="column is-one-quarter pl-0">
-      <aside class="menu" x-data="feedMenu()" x-init="loadState()">
-        <p class="menu-label mb-0">
-          <a class="pl-0" href="/feeds"
+<section class="pt-3">
+  <div class="row g-5 g-lg-3">
+    <div class="col-12 col-lg-3">
+      <aside x-data="feedMenu()" x-init="loadState()">
+        <p class="d-flex justify-content-between align-items-center mb-1">
+          <a href="/feeds"
             hx-get="/feeds" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">
-            <strong>
-              All
-              {{template "unreadCountAll" .Unread}}
-            </strong>
+            <strong>All</strong>
           </a>
-          <hr class="my-1">
+          {{template "unreadCountAll" .Unread}}
         </p>
+        <hr class="my-1">
 
         {{- range .Categories}}
-          <p class="menu-label mb-0">
-            <strong>
-              <span class="icon-text">
-                <span
-                  class="icon feed-category-toggle"
-                  @click.stop="toggleCategory('{{.Slug}}')"
-                >
-                  <i class="fa-regular" :class="open['{{.Slug}}'] ? 'fa-square-minus' : 'fa-square-plus'"></i>
-                </span>
-                <span><a class="pl-0" href="/feeds/categories/{{.Slug}}"
-                  hx-get="/feeds/categories/{{.Slug}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">{{.Name}}</a></span>
+          <p class="d-flex justify-content-between align-items-center mb-1">
+            <strong class="d-flex align-items-center gap-1">
+              <span class="feed-category-toggle" @click.stop="toggleCategory('{{.Slug}}')">
+                <i class="fa-regular" :class="open['{{.Slug}}'] ? 'fa-square-minus' : 'fa-square-plus'"></i>
               </span>
-              {{template "unreadCountCategory" .}}
+              <a href="/feeds/categories/{{.Slug}}"
+                hx-get="/feeds/categories/{{.Slug}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">{{.Name}}</a>
             </strong>
+            {{template "unreadCountCategory" .}}
           </p>
-          <ul class="menu-list" x-cloak x-show="open['{{.Slug}}']">
+          <ul class="list-unstyled ps-3" x-cloak x-show="open['{{.Slug}}']">
             {{- range .SubscribedFeeds}}
-              <li>
-                <a class="pr-0" href="/feeds/subscriptions/{{.Slug}}"
-                  hx-get="/feeds/subscriptions/{{.Slug}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">{{or .Alias .Title}}
-                  {{template "unreadCountFeed" .}}
-                </a>
+              <li class="d-flex justify-content-between align-items-center">
+                <a href="/feeds/subscriptions/{{.Slug}}"
+                  hx-get="/feeds/subscriptions/{{.Slug}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">{{or .Alias .Title}}</a>
+                {{template "unreadCountFeed" .}}
               </li>
             {{- end}}
           </ul>
@@ -46,74 +38,50 @@
 
     {{template "feedListContent" .}}
   </div>
-  <nav class="level">
-    <div class="level-left">
-      <div class="level-item">
-        <a href="#" class="button is-small">
-          <span class="icon-text">
-            <span class="icon">
-              <i class="fa-solid fa-chevron-up"></i>
-            </span>
-            <span>Back to top</span>
-          </span>
-        </a>
-      </div>
-    </div>
-    <div class="level-right">
-      <div class="level-item">
-        {{template "paginationBottom" .Page}}
-      </div>
-    </div>
+  <nav class="d-flex justify-content-between align-items-center">
+    <a href="#" class="btn btn-outline-secondary btn-sm">
+      <i class="fa-solid fa-chevron-up me-1"></i>
+      Back to top
+    </a>
+    {{template "paginationBottom" .Page}}
   </nav>
 </section>
 {{end}}
 
 {{define "feedListContent"}}
-<div class="column" id="feed-list-content">
-  <div class="level mb-3">
-    <div class="level-left">
-      <div class="level-item">
-        <h2 class="title is-4">{{.PageTitle}}</h2>
-      </div>
-    </div>
-    <div class="level-right">
-      <div class="level-item">
-        {{template "showEntriesButtons" (dict
-          "ShowEntries" .Preferences.ShowEntries
-          "URLPath" .URLPath
-          "SearchTerms" .Page.SearchTerms
-        )}}
-      </div>
-      <div class="level-item">
-        {{template "compactButton" (dict
-          "ShowEntrySummaries" .Preferences.ShowEntrySummaries
-          "URLPath" .URLPath
-          "SearchTerms" .Page.SearchTerms
-          "PageNumber" .Page.PageNumber
-        )}}
-      </div>
-      <div class="level-item">
-        <div class="buttons has-addons">
-          <button
-            title="Mark all entries as read"
-            class="button is-small"
-            hx-post="{{.URLPath}}/entries/mark-all-read"
-            hx-target="#entry-list"
-            hx-swap="outerHTML"
-            hx-vals='{{toJSON "urlPath" .URLPath "search" .Page.SearchTerms}}'
-          >
-            <span class="icon">
-              <i class="fa-solid fa-eye-slash"></i>
-            </span>
-            <span>Mark all as read</span>
-          </button>
-        </div>
+<div class="col-12 col-lg-9" id="feed-list-content">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h4 mb-0">{{.PageTitle}}</h2>
+    <div class="d-flex align-items-center gap-2">
+      {{template "showEntriesButtons" (dict
+        "ShowEntries" .Preferences.ShowEntries
+        "URLPath" .URLPath
+        "SearchTerms" .Page.SearchTerms
+      )}}
+      {{template "compactButton" (dict
+        "ShowEntrySummaries" .Preferences.ShowEntrySummaries
+        "URLPath" .URLPath
+        "SearchTerms" .Page.SearchTerms
+        "PageNumber" .Page.PageNumber
+      )}}
+      <div class="btn-group">
+        <button
+          title="Mark all entries as read"
+          class="btn btn-sm btn-outline-secondary"
+          hx-post="{{.URLPath}}/entries/mark-all-read"
+          hx-target="#entry-list"
+          hx-swap="outerHTML"
+          hx-vals='{{toJSON "urlPath" .URLPath "search" .Page.SearchTerms}}'
+        >
+          <i class="fa-solid fa-eye-slash me-1"></i>
+          Mark all as read
+        </button>
       </div>
     </div>
   </div>
 
   {{with .Description}}
-  <h3 class="subtitle is-6">{{.}}</h3>
+  <h3 class="h6 text-muted">{{.}}</h3>
   {{end}}
 
   {{template "feedSearchForm" .}}
@@ -154,31 +122,19 @@
 {{end}}
 
 {{define "feedSearchForm"}}
-<nav class="level">
-  <div class="level-left">
-    <div class="level-item">
-      <form action="{{.URLPath}}" method="GET"
-        hx-get="{{.URLPath}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">
-        <div class="field has-addons">
-          <div class="control">
-            <input class="input" type="text" id="searchTerms" name="search" placeholder="Search terms"
-              value="{{.SearchTerms}}">
-          </div>
-          <div class="control">
-            <button class="button" type="submit">Search</button>
-          </div>
-        </div>
-      </form>
-    </div>
-    <div class="level-item">
-      {{template "entryCount" .Page}}
-    </div>
+<nav class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex align-items-center gap-3">
+    <form action="{{.URLPath}}" method="GET"
+      hx-get="{{.URLPath}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">
+      <div class="input-group">
+        <input class="form-control" type="text" id="searchTerms" name="search" placeholder="Search terms"
+          value="{{.SearchTerms}}">
+        <button class="btn btn-outline-secondary" type="submit">Search</button>
+      </div>
+    </form>
+    {{template "entryCount" .Page}}
   </div>
-  <div class="level-right">
-    <div class="level-item">
-      {{template "paginationTop" .Page}}
-    </div>
-  </div>
+  {{template "paginationTop" .Page}}
 </nav>
 {{end}}
 
@@ -198,61 +154,39 @@
 
 {{define "feedEntry"}}
 <li class="mb-5" id="feed-entry-{{.Entry.UID}}">
-  <div class="level mb-1">
-    <div class="level-left">
-      <div class="level-item">
-        <strong><a class="feed-entry-title{{if .Entry.Read}} has-text-grey-light{{end}}"
-            href="{{.Entry.URL}}">{{.Entry.Title}}</a></strong>
-      </div>
-    </div>
-    <div class="level-right">
-      <div class="level-item">
-        <strong>
-          <time class="{{if .Entry.Read}} has-text-grey-light{{end}}">{{.Entry.PublishedAt.Format "2006-01-02"}}</time>
-        </strong>
-      </div>
-    </div>
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <strong><a class="feed-entry-title{{if .Entry.Read}} text-muted{{end}}"
+        href="{{.Entry.URL}}">{{.Entry.Title}}</a></strong>
+    <strong>
+      <time class="{{if .Entry.Read}}text-muted{{end}}">{{.Entry.PublishedAt.Format "2006-01-02"}}</time>
+    </strong>
   </div>
-  <div class="level mb-1">
-    <div class="level-left">
-      <div class="level-item{{if .Entry.Read}} has-text-grey-light{{end}}">
-        <span class="icon-text">
-          <span class="icon">
-            <i class="fa-regular fa-newspaper"></i>
-          </span>
-          <span class="feed-title" >
-            <a class="{{if .Entry.Read}} has-text-grey-light{{end}}" href="/feeds/subscriptions/{{.Entry.FeedSlug}}">{{ or .Entry.SubscriptionAlias .Entry.FeedTitle }}</a>
-          </span>
-        </span>
-      </div>
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <div class="{{if .Entry.Read}}text-muted{{end}}">
+      <i class="fa-regular fa-newspaper me-1"></i>
+      <span class="feed-title">
+        <a class="{{if .Entry.Read}}text-muted{{end}}" href="/feeds/subscriptions/{{.Entry.FeedSlug}}">{{ or .Entry.SubscriptionAlias .Entry.FeedTitle }}</a>
+      </span>
     </div>
-    <div class="level-right">
-      <div class="level-item">
-        <button
-          type="button"
-          class="button is-small"
-          hx-post="/feeds/entries/{{.Entry.UID}}/toggle-read"
-          hx-target="#feed-entry-{{.Entry.UID}}"
-          hx-swap="outerHTML"
-          hx-vals='{{toJSON "urlPath" .URLPath "search" .SearchTerms "page" .PageNumber}}'
-        >
-          {{if .Entry.Read}}
-          <span class="icon has-text-grey-light">
-            <i class="fa-solid fa-eye-slash"></i>
-          </span>
-          <span class="has-text-grey-light">Mark as unread</span>
-          {{else}}
-          <span class="icon">
-            <i class="fa-solid fa-eye"></i>
-          </span>
-          <span>Mark as read</span>
-          {{end}}
-        </button>
-      </div>
-    </div>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      hx-post="/feeds/entries/{{.Entry.UID}}/toggle-read"
+      hx-target="#feed-entry-{{.Entry.UID}}"
+      hx-swap="outerHTML"
+      hx-vals='{{toJSON "urlPath" .URLPath "search" .SearchTerms "page" .PageNumber}}'
+    >
+      {{if .Entry.Read}}
+      <i class="fa-solid fa-eye-slash me-1"></i>
+      Mark as unread
+      {{else}}
+      <i class="fa-solid fa-eye me-1"></i>
+      Mark as read
+      {{end}}
+    </button>
   </div>
 
-  <div class="{{if .Entry.Read}}has-text-grey-light{{end}}">
+  <div class="{{if .Entry.Read}}text-muted{{end}}">
     {{- if .ShowEntrySummaries}}
       {{- with .Entry.Summary }}
       <div class="content">{{.}}</div>
@@ -262,14 +196,14 @@
 </li>
 {{end}}
 
-{{define "unreadCountAll"}}<span id="unread-count-all" class="tag is-light is-pulled-right" hx-swap-oob="true">{{.}}</span>{{end}}
+{{define "unreadCountAll"}}<span id="unread-count-all" class="badge text-bg-secondary" hx-swap-oob="true">{{.}}</span>{{end}}
 
-{{define "unreadCountCategory"}}<span id="unread-count-category-{{.Slug}}" class="tag is-light is-pulled-right" hx-swap-oob="true">{{.Unread}}</span>{{end}}
+{{define "unreadCountCategory"}}<span id="unread-count-category-{{.Slug}}" class="badge text-bg-secondary" hx-swap-oob="true">{{.Unread}}</span>{{end}}
 
-{{define "unreadCountFeed"}}<span id="unread-count-feed-{{.Slug}}" class="tag is-light is-pulled-right" hx-swap-oob="true">{{.Unread}}</span>{{end}}
+{{define "unreadCountFeed"}}<span id="unread-count-feed-{{.Slug}}" class="badge text-bg-secondary" hx-swap-oob="true">{{.Unread}}</span>{{end}}
 
 {{define "entryCount"}}
-<p id="entry-count" class="subtitle is-5" hx-swap-oob="true">
+<p id="entry-count" class="fs-5 mb-0" hx-swap-oob="true">
   {{if ne .SearchTerms "" }}
   <strong>{{.ItemCount}}</strong> entr{{if gt .ItemCount 1}}ies{{else}}y{{end}} found
   {{else}}
@@ -279,57 +213,57 @@
 {{end}}
 
 {{define "showEntriesButtons"}}
-<div class="buttons has-addons" id="show-entries-buttons" hx-swap-oob="true">
+<div class="btn-group" id="show-entries-buttons" hx-swap-oob="true">
   <button
     title="Show all entries"
-    class="button is-small{{if eq .ShowEntries "ALL"}} is-active{{end}}"
+    class="btn btn-sm btn-outline-secondary{{if eq .ShowEntries "ALL"}} active{{end}}"
     hx-post="/feeds/preferences/show-entries"
     hx-target="#entry-list"
     hx-swap="outerHTML"
     hx-vals='{{toJSON "show" "ALL" "urlPath" .URLPath "search" .SearchTerms}}'
   >
-    <span class="icon"><i class="fas fa-globe"></i></span>
-    <span>All</span>
+    <i class="fa-solid fa-globe me-1"></i>
+    All
   </button>
 
   <button
     title="Show only read entries"
-    class="button is-small{{if eq .ShowEntries "READ"}} is-active{{end}}"
+    class="btn btn-sm btn-outline-secondary{{if eq .ShowEntries "READ"}} active{{end}}"
     hx-post="/feeds/preferences/show-entries"
     hx-target="#entry-list"
     hx-swap="outerHTML"
     hx-vals='{{toJSON "show" "READ" "urlPath" .URLPath "search" .SearchTerms}}'
   >
-    <span class="icon"><i class="fas fa-check-circle"></i></span>
-    <span>Read</span>
+    <i class="fa-solid fa-check-circle me-1"></i>
+    Read
   </button>
 
   <button
     title="Show only unread entries"
-    class="button is-small{{if eq .ShowEntries "UNREAD"}} is-active{{end}}"
+    class="btn btn-sm btn-outline-secondary{{if eq .ShowEntries "UNREAD"}} active{{end}}"
     hx-post="/feeds/preferences/show-entries"
     hx-target="#entry-list"
     hx-swap="outerHTML"
     hx-vals='{{toJSON "show" "UNREAD" "urlPath" .URLPath "search" .SearchTerms}}'
   >
-    <span class="icon"><i class="fas fa-envelope"></i></span>
-    <span>Unread</span>
+    <i class="fa-solid fa-envelope me-1"></i>
+    Unread
   </button>
 </div>
 {{end}}
 
 {{define "compactButton"}}
-<div class="buttons has-addons" id="compact-button" hx-swap-oob="true">
+<div class="btn-group" id="compact-button" hx-swap-oob="true">
   <button
     title="Show or hide entry summaries"
-    class="button is-small{{if eq .ShowEntrySummaries false}} is-active{{end}}"
+    class="btn btn-sm btn-outline-secondary{{if eq .ShowEntrySummaries false}} active{{end}}"
     hx-post="/feeds/preferences/toggle-show-entry-summaries"
     hx-target="#entry-list"
     hx-swap="outerHTML"
     hx-vals='{{toJSON "urlPath" .URLPath "search" .SearchTerms "page" .PageNumber}}'
   >
-    <span class="icon"><i class="fa-regular fa-rectangle-list"></i></span>
-    <span>Compact</span>
+    <i class="fa-regular fa-rectangle-list me-1"></i>
+    Compact
   </button>
 </div>
 {{end}}

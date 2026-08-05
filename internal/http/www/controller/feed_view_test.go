@@ -58,7 +58,7 @@ func TestFeedEntryTemplate(t *testing.T) {
 				`page&#34;:2`,
 			},
 			wantNotContains: []string{
-				"has-text-grey-light",
+				"text-muted",
 				"<form",
 			},
 		},
@@ -68,7 +68,7 @@ func TestFeedEntryTemplate(t *testing.T) {
 			showEntrySummaries: false,
 			wantContains: []string{
 				`id="feed-entry-entry-uid-1"`,
-				"has-text-grey-light",
+				"text-muted",
 				"Mark as unread",
 				`hx-post="/feeds/entries/entry-uid-1/toggle-read"`,
 			},

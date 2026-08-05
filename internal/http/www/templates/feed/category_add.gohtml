@@ -1,34 +1,23 @@
 {{define "content"}}
-<section class="section pt-3">
-  <nav class="breadcrumb">
-    <ul>
-      <li><a href="/feeds">Feeds</a></li>
-      <li class="is-active"><a href="#">Add category</a></li>
-    </ul>
+<section class="pt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/feeds">Feeds</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Add category</li>
+    </ol>
   </nav>
 
   <form action="/feeds/categories/add" method="POST">
-    <div class="field is-horizontal">
-      <div class="field-label is-normal">
-        <label class="label" for="name">Category name</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <input class="input" type="text" id="name" name="name" placeholder="Name" required="">
-          </div>
-        </div>
+    <div class="row mb-3">
+      <label class="col-sm-2 col-form-label" for="name">Category name</label>
+      <div class="col-sm-10">
+        <input class="form-control" type="text" id="name" name="name" placeholder="Name" required="">
       </div>
     </div>
 
-    <div class="field is-horizontal">
-      <div class="field-label"></div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <button type="submit" class="button is-primary">Save</button>
-          </div>
-        </div>
+    <div class="row mb-3">
+      <div class="col-sm-10 offset-sm-2">
+        <button type="submit" class="btn btn-primary">Save</button>
       </div>
     </div>
   </form>

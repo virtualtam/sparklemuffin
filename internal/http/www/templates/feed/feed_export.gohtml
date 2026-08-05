@@ -1,19 +1,17 @@
 {{define "content"}}
-<section class="section pt-3">
-  <nav class="breadcrumb" aria-label="breadcrumbs">
-    <ul>
-      <li><a href="/feeds">Feeds</a></li>
-      <li><a href="/feeds/subscriptions">Subscriptions</a></li>
-      <li class="is-active"><a href="#" aria-current="page">Export</a></li>
-    </ul>
+<section class="pt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/feeds">Feeds</a></li>
+      <li class="breadcrumb-item"><a href="/feeds/subscriptions">Subscriptions</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Export</li>
+    </ol>
   </nav>
 
   <p class="mb-4">Export your subscriptions to OPML.</p>
 
   <form action="/feeds/export" method="POST">
-    <div class="field">
-      <button type="submit" class="button is-primary">Export</button>
-    </div>
+    <button type="submit" class="btn btn-primary">Export</button>
   </form>
 </section>
 {{end}}

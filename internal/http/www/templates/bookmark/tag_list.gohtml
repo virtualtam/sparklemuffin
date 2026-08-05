@@ -54,22 +54,23 @@
 {{end}}
 
 {{define "tagRow"}}
-<div class="d-flex justify-content-between align-items-center" id="tag-row-{{.EncodedName}}">
+<div class="d-flex justify-content-between align-items-center mb-2" id="tag-row-{{.EncodedName}}">
   <div class="d-flex align-items-center gap-2">
-    <span class="badge text-bg-light tag-count">{{.Count}}</span>
-    <a href="/bookmarks?search={{.Name}}" title="Bookmarks tagged {{.Name}}">
+    <span class="badge text-bg-secondary tag-count">{{.Count}}</span>
+    <a class="link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover"
+       href="/bookmarks?search={{.Name}}" title="Bookmarks tagged {{.Name}}">
       <i class="fa-solid fa-tag me-1"></i>
       {{.Name}}
     </a>
   </div>
   <div class="btn-group">
-    <a class="btn btn-sm btn-outline-info" href="/bookmarks/tags/{{.EncodedName}}/edit"
+    <a class="btn btn-sm bg-info-subtle text-info-emphasis border-0" href="/bookmarks/tags/{{.EncodedName}}/edit"
       title="Edit tag: {{.Name}}"
       hx-get="/bookmarks/tags/{{.EncodedName}}/edit" hx-target="#tag-edit-modal-body" hx-swap="innerHTML"
       data-bs-toggle="modal" data-bs-target="#tagEditModal">
       <i class="fa-solid fa-pen-to-square"></i>
     </a>
-    <a class="btn btn-sm btn-outline-danger" href="/bookmarks/tags/{{.EncodedName}}/delete"
+    <a class="btn btn-sm bg-danger-subtle text-danger-emphasis border-0" href="/bookmarks/tags/{{.EncodedName}}/delete"
       title="Delete tag: {{.Name}}"
       hx-get="/bookmarks/tags/{{.EncodedName}}/delete" hx-target="#tag-delete-modal-body" hx-swap="innerHTML"
       data-bs-toggle="modal" data-bs-target="#tagDeleteModal">

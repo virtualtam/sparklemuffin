@@ -60,9 +60,7 @@
       <i class="fa-solid fa-tags"></i>
       <div class="d-flex flex-wrap gap-1">
         {{- range .Bookmark.Tags}}
-        <span class="badge text-bg-secondary">
-          <a href="/bookmarks?search={{.}}">{{.}}</a>
-        </span>
+        <a class="badge text-bg-light" href="/bookmarks?search={{.}}">{{.}}</a>
         {{- end}}
       </div>
     </div>

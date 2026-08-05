@@ -1,56 +1,31 @@
 {{define "content"}}
-<section class="section pt-3">
-  <h2 class="title">{{.Owner.DisplayName}}'s bookmarks</h2>
+<section class="pt-3">
+  <h2 class="h3">{{.Owner.DisplayName}}'s bookmarks</h2>
   {{template "bookmarkSearchForm" .}}
   <ol start="{{.Page.ItemOffset}}">
     {{range .Bookmarks}}
     <li class="bookmark mb-5">
-      <div class="level mb-1">
-        <div class="level-left">
-          <div class="level-item">
-            <strong>
-              <a class="bookmark-title" href="{{.URL}}">{{.Title}}</a>
-            </strong>
-          </div>
-        </div>
-        <div class="level-right">
-          <div class="level-item">
-            <div class="dots"></div>
-          </div>
-          <div class="level-item">
-            <strong>
-              <time>{{.CreatedAt.Format "2006-01-02"}}</time>
-            </strong>
-          </div>
-        </div>
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <strong>
+          <a class="bookmark-title" href="{{.URL}}">{{.Title}}</a>
+        </strong>
+        <strong>
+          <time>{{.CreatedAt.Format "2006-01-02"}}</time>
+        </strong>
       </div>
-      <div class="level mb-1">
-        <div class="level-left">
-          <div class="level-item">
-            <span class="icon">
-              <i class="fa-solid fa-tags"></i>
-            </span>
-            <div class="tags">
-              {{- range .Tags}}
-              <span class="tag">
-                <a href="/u/{{$.Owner.NickName}}/bookmarks?search={{.}}">{{.}}</a>
-              </span>
-              {{- end}}
-            </div>
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <div class="d-flex align-items-center gap-1">
+          <i class="fa-solid fa-tags"></i>
+          <div class="d-flex flex-wrap gap-1">
+            {{- range .Tags}}
+            <a class="badge text-bg-light" href="/u/{{$.Owner.NickName}}/bookmarks?search={{.}}">{{.}}</a>
+            {{- end}}
           </div>
         </div>
-        <div class="level-right">
-          <div class="level-item">
-            <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">
-              <span class="icon-text">
-                <span class="icon">
-                  <i class="fa-solid fa-link"></i>
-                </span>
-                <span>Permalink</span>
-              </span>
-            </a>
-          </div>
-        </div>
+        <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">
+          <i class="fa-solid fa-link me-1"></i>
+          Permalink
+        </a>
       </div>
       {{- with .Description}}
       <div class="content">
@@ -60,58 +35,34 @@
     </li>
     {{end}}
   </ol>
-  <nav class="level">
-    <div class="level-left">
-      <div class="level-item">
-        <a href="#" class="button is-small">
-          <span class="icon-text">
-            <span class="icon">
-              <i class="fa-solid fa-chevron-up"></i>
-            </span>
-            <span>Back to top</span>
-          </span>
-        </a>
-      </div>
-    </div>
-    <div class="level-right">
-      <div class="level-item">
-        {{template "pagination" (dict "Page" .Page)}}
-      </div>
-    </div>
+  <nav class="d-flex justify-content-between align-items-center">
+    <a href="#" class="btn btn-outline-secondary btn-sm">
+      <i class="fa-solid fa-chevron-up me-1"></i>
+      Back to top
+    </a>
+    {{template "pagination" (dict "Page" .Page)}}
   </nav>
 </section>
 {{end}}
 
 {{define "bookmarkSearchForm"}}
-<nav class="level">
-  <div class="level-left">
-    <div class="level-item">
-      <form action="/u/{{.Owner.NickName}}/bookmarks" method="GET">
-        <div class="field has-addons">
-          <div class="control">
-            <input class="input" type="text" id="searchTerms" name="search" placeholder="Search terms"
-                   value="{{.Page.SearchTerms}}">
-          </div>
-          <div class="control">
-            <button type="submit" class="button">Search</button>
-          </div>
-        </div>
-      </form>
-    </div>
-    <div class="level-item">
-      <p class="subtitle is-5">
-        {{if ne .Page.SearchTerms "" }}
-        <strong>{{.Page.ItemCount}}</strong> bookmark{{if gt .Page.ItemCount 1}}s{{end}} found
-        {{else}}
-        <strong>{{.Page.ItemCount}}</strong> bookmark{{if gt .Page.ItemCount 1}}s{{end}}
-        {{end}}
-      </p>
-    </div>
+<nav class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex align-items-center gap-3">
+    <form action="/u/{{.Owner.NickName}}/bookmarks" method="GET">
+      <div class="input-group">
+        <input class="form-control" type="text" id="searchTerms" name="search" placeholder="Search terms"
+               value="{{.Page.SearchTerms}}">
+        <button type="submit" class="btn btn-outline-secondary">Search</button>
+      </div>
+    </form>
+    <p class="fs-5 mb-0">
+      {{if ne .Page.SearchTerms "" }}
+      <strong>{{.Page.ItemCount}}</strong> bookmark{{if gt .Page.ItemCount 1}}s{{end}} found
+      {{else}}
+      <strong>{{.Page.ItemCount}}</strong> bookmark{{if gt .Page.ItemCount 1}}s{{end}}
+      {{end}}
+    </p>
   </div>
-  <div class="level-right">
-    <div class="level-item">
-      {{template "pagination" (dict "Page" .Page)}}
-    </div>
-  </div>
+  {{template "pagination" (dict "Page" .Page)}}
 </nav>
 {{end}}

@@ -1,58 +1,48 @@
 {{define "content"}}
-<section class="section pt-3">
-  <nav class="breadcrumb" aria-label="breadcrumbs">
-    <ul>
-      <li><a href="/bookmarks">Bookmarks</a></li>
-      <li class="is-active"><a href="#" aria-current="page">Export</a></li>
-    </ul>
+<section class="pt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/bookmarks">Bookmarks</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Export</li>
+    </ol>
   </nav>
 
   <form action="/bookmarks/export" method="POST">
-    <div class="field is-horizontal">
-      <div class="field-label">
-        <label class="label">Visibility</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <input type="radio" name="visibility" id="all" value="all" checked>
-            <label for="all">All</label>
-            <br>
-            <input type="radio" name="visibility" id="private" value="private">
-            <label for="private">Private</label>
-            <br>
-            <input type="radio" name="visibility" id="public" value="public">
-            <label for="public">Public</label>
-          </div>
+    <div class="row mb-3">
+      <label class="col-sm-2 col-form-label">Visibility</label>
+      <div class="col-sm-10">
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="visibility" id="all" value="all" checked>
+          <label class="form-check-label" for="all">All</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="visibility" id="private" value="private">
+          <label class="form-check-label" for="private">Private</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="visibility" id="public" value="public">
+          <label class="form-check-label" for="public">Public</label>
         </div>
       </div>
     </div>
 
-    <div class="field is-horizontal">
-      <div class="field-label">
-        <label class="label">Format</label>
-      </div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <input type="radio" name="format" id="json" value="json" checked>
-            <label for="json">JSON</label>
-            <br>
-            <input type="radio" name="format" id="netscape" value="netscape">
-            <label for="netscape">Netscape Bookmark File</label>
-          </div>
+    <div class="row mb-3">
+      <label class="col-sm-2 col-form-label">Format</label>
+      <div class="col-sm-10">
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="format" id="json" value="json" checked>
+          <label class="form-check-label" for="json">JSON</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="format" id="netscape" value="netscape">
+          <label class="form-check-label" for="netscape">Netscape Bookmark File</label>
         </div>
       </div>
     </div>
 
-    <div class="field is-horizontal">
-      <div class="field-label"></div>
-      <div class="field-body">
-        <div class="field">
-          <div class="control">
-            <button type="submit" class="button is-primary">Export</button>
-          </div>
-        </div>
+    <div class="row mb-3">
+      <div class="col-sm-10 offset-sm-2">
+        <button type="submit" class="btn btn-primary">Export</button>
       </div>
     </div>
   </form>

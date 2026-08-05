@@ -82,54 +82,12 @@ code {
   color: var(--bs-success);
 }
 
-.icon-text {
-  flex-wrap: nowrap;
+a.badge {
+  text-decoration: none;
 }
 
-.level-left,
-.level-right {
-  flex-direction: row;
-}
-
-.level-left,
-.level-item {
-  flex-shrink: unset;
-}
-
-.menu-list li ul {
-  border-inline-start: 0;
-  margin-top: 0;
-  margin-bottom: 0;
-  margin-left: 0;
-  padding-inline-start: 0;
-}
-
-.column>.level {
-  margin-bottom: 0.2em;
-}
-
-.column>.level:hover {
-  background-color: var(--bulma-scheme-main-bis);
-}
-
-.panel-heading {
-  padding: 0.75em 0.75em;
-}
-
-.panel .level {
-  margin-bottom: 0;
-}
-
-.panel-block:hover {
-  background-color: var(--bulma-scheme-main-bis);
-}
-
-.tag a {
-  color: var(--bulma-text);
-}
-
-.badge a {
-  color: inherit;
+a.badge:hover {
+  filter: brightness(0.95);
 }
 
 /* Bookmarks */

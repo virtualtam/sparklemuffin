@@ -95,10 +95,6 @@ a.badge:hover {
 }
 
 /* Bookmarks */
-.bookmark-title {
-  color: var(--bs-body-color);
-}
-
 .tag-count {
   display: inline-block;
   width: 2.5em;
@@ -107,17 +103,4 @@ a.badge:hover {
 /* Feeds */
 .feed-category-toggle {
   cursor: pointer;
-}
-
-.feed-title {
-  font-weight: 300;
-}
-
-.feed-title a {
-  color: var(--bs-body-color);
-  font-style: italic;
-}
-
-.feed-entry-title {
-  color: var(--bs-body-color);
 }

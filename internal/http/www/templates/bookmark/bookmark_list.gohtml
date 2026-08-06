@@ -49,7 +49,7 @@
       {{- if .Bookmark.Private}}
       <span class="text-danger">[Private]</span>
       {{- end}}
-      <a class="bookmark-title" href="{{.Bookmark.URL}}">{{.Bookmark.Title}}</a>
+      <a class="link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover" href="{{.Bookmark.URL}}">{{.Bookmark.Title}}</a>
     </strong>
     <strong>
       <time>{{.Bookmark.CreatedAt.Format "2006-01-02"}}</time>

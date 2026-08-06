@@ -4,9 +4,9 @@
     <div class="col-12 col-lg-3">
       <aside x-data="feedMenu()" x-init="loadState()">
         <p class="d-flex justify-content-between align-items-center mb-1">
-          <a href="/feeds"
+          <a class="link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover" href="/feeds"
             hx-get="/feeds" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">
-            <strong>All</strong>
+            <span class="fw-semibold">All</span>
           </a>
           {{template "unreadCountAll" .Unread}}
         </p>
@@ -14,19 +14,19 @@
 
         {{- range .Categories}}
           <p class="d-flex justify-content-between align-items-center mb-1">
-            <strong class="d-flex align-items-center gap-1">
+            <span class="d-flex align-items-center gap-1 fw-semibold">
               <span class="feed-category-toggle" @click.stop="toggleCategory('{{.Slug}}')">
                 <i class="fa-regular" :class="open['{{.Slug}}'] ? 'fa-square-minus' : 'fa-square-plus'"></i>
               </span>
-              <a href="/feeds/categories/{{.Slug}}"
+              <a class="link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover" href="/feeds/categories/{{.Slug}}"
                 hx-get="/feeds/categories/{{.Slug}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">{{.Name}}</a>
-            </strong>
+            </span>
             {{template "unreadCountCategory" .}}
           </p>
           <ul class="list-unstyled ps-3" x-cloak x-show="open['{{.Slug}}']">
             {{- range .SubscribedFeeds}}
               <li class="d-flex justify-content-between align-items-center">
-                <a href="/feeds/subscriptions/{{.Slug}}"
+                <a class="link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover" href="/feeds/subscriptions/{{.Slug}}"
                   hx-get="/feeds/subscriptions/{{.Slug}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">{{or .Alias .Title}}</a>
                 {{template "unreadCountFeed" .}}
               </li>
@@ -155,7 +155,7 @@
 {{define "feedEntry"}}
 <li class="mb-4" id="feed-entry-{{.Entry.UID}}">
   <div class="d-flex justify-content-between align-items-center mb-1">
-    <strong><a class="feed-entry-title{{if .Entry.Read}} text-muted{{end}}"
+    <strong><a class="link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover{{if .Entry.Read}} text-muted{{end}}"
         href="{{.Entry.URL}}">{{.Entry.Title}}</a></strong>
     <strong>
       <time class="{{if .Entry.Read}}text-muted{{end}}">{{.Entry.PublishedAt.Format "2006-01-02"}}</time>
@@ -164,8 +164,8 @@
   <div class="d-flex justify-content-between align-items-center mb-1">
     <div class="{{if .Entry.Read}}text-muted{{end}}">
       <i class="fa-regular fa-newspaper me-1"></i>
-      <span class="feed-title">
-        <a class="{{if .Entry.Read}}text-muted{{end}}" href="/feeds/subscriptions/{{.Entry.FeedSlug}}">{{ or .Entry.SubscriptionAlias .Entry.FeedTitle }}</a>
+      <span class="fw-light">
+        <a class="fst-italic link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover{{if .Entry.Read}} text-muted{{end}}" href="/feeds/subscriptions/{{.Entry.FeedSlug}}">{{ or .Entry.SubscriptionAlias .Entry.FeedTitle }}</a>
       </span>
     </div>
     <button

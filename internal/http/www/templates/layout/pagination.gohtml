@@ -26,7 +26,7 @@
     </li>
     {{end}}
     <li class="page-item active">
-      <a class="page-link" aria-label="Page {{.Page.PageNumber}}" aria-current="page">{{.Page.PageNumber}}</a>
+      <span class="page-link" aria-label="Page {{.Page.PageNumber}}" aria-current="page">{{.Page.PageNumber}}</span>
     </li>
     {{if lt .Page.NextPageNumber .Page.TotalPages}}
     <li class="page-item">

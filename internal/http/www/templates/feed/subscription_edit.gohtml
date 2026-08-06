@@ -8,7 +8,9 @@
     </ol>
   </nav>
 
-  {{template "subscriptionEditForm" (dict "Subscription" .Subscription "Categories" .Categories "InModal" false)}}
+  <div class="col-lg-8">
+    {{template "subscriptionEditForm" (dict "Subscription" .Subscription "Categories" .Categories "InModal" false)}}
+  </div>
 </section>
 {{end}}
 
@@ -16,12 +18,14 @@
 <form action="/feeds/subscriptions/{{.Subscription.UUID}}/edit" method="POST"
   {{if .InModal}}hx-post="/feeds/subscriptions/{{.Subscription.UUID}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>
   <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="title">Title</label>
-    <div class="col-sm-10 pt-2">{{.Subscription.FeedTitle}}</div>
+    <label class="col-sm-2 col-form-label text-sm-end" for="title">Title</label>
+    <div class="col-sm-10">
+      <input class="form-control-plaintext" type="text" id="title" readonly value="{{.Subscription.FeedTitle}}">
+    </div>
   </div>
 
   <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="alias">Alias</label>
+    <label class="col-sm-2 col-form-label text-sm-end" for="alias">Alias</label>
     <div class="col-sm-10">
       <input class="form-control" type="text" id="alias" name="alias"
         placeholder="An optional alias to be displayed instead of the feed title" value="{{.Subscription.Alias}}">
@@ -29,14 +33,14 @@
   </div>
 
   <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="description">Description</label>
-    <div class="col-sm-10 pt-2">
-      <span id="description">{{.Subscription.FeedDescription}}</span>
+    <label class="col-sm-2 col-form-label text-sm-end" for="description">Description</label>
+    <div class="col-sm-10">
+      <textarea class="form-control-plaintext" id="description" readonly rows="2">{{.Subscription.FeedDescription}}</textarea>
     </div>
   </div>
 
   <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="category">Category</label>
+    <label class="col-sm-2 col-form-label text-sm-end" for="category">Category</label>
     <div class="col-sm-10">
       <select class="form-select" name="category" id="category">
         {{- range .Categories}}

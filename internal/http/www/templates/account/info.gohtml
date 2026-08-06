@@ -7,36 +7,38 @@
     </ol>
   </nav>
 
-  <form action="/account/info" method="POST">
-    <div class="row mb-3">
-      <label for="email" class="col-sm-2 col-form-label">Email address</label>
-      <div class="col-sm-10">
-        <input class="form-control" type="email" id="email" name="email" placeholder="Email" value="{{.Email}}"
-          required="">
+  <div class="col-lg-8">
+    <form action="/account/info" method="POST">
+      <div class="row mb-3">
+        <label for="email" class="col-sm-2 col-form-label text-sm-end">Email address</label>
+        <div class="col-sm-10">
+          <input class="form-control" type="email" id="email" name="email" placeholder="Email" value="{{.Email}}"
+            required="">
+        </div>
       </div>
-    </div>
 
-    <div class="row mb-3">
-      <label for="nick_name" class="col-sm-2 col-form-label">Nickname</label>
-      <div class="col-sm-10">
-        <input class="form-control" type="text" id="nick_name" name="nick_name" placeholder="Nickname"
-          value="{{.NickName}}" required="">
+      <div class="row mb-3">
+        <label for="nick_name" class="col-sm-2 col-form-label text-sm-end">Nickname</label>
+        <div class="col-sm-10">
+          <input class="form-control" type="text" id="nick_name" name="nick_name" placeholder="Nickname"
+            value="{{.NickName}}" required="">
+        </div>
       </div>
-    </div>
 
-    <div class="row mb-3">
-      <label for="display_name" class="col-sm-2 col-form-label">Display Name</label>
-      <div class="col-sm-10">
-        <input class="form-control" type="text" id="display_name" name="display_name" placeholder="Display Name"
-          value="{{.DisplayName}}" required="">
+      <div class="row mb-3">
+        <label for="display_name" class="col-sm-2 col-form-label text-sm-end">Display Name</label>
+        <div class="col-sm-10">
+          <input class="form-control" type="text" id="display_name" name="display_name" placeholder="Display Name"
+            value="{{.DisplayName}}" required="">
+        </div>
       </div>
-    </div>
 
-    <div class="row mb-3">
-      <div class="col-sm-10 offset-sm-2">
-        <button type="submit" class="btn btn-primary">Update information</button>
+      <div class="row mb-3">
+        <div class="col-sm-10 offset-sm-2">
+          <button type="submit" class="btn btn-primary">Update information</button>
+        </div>
       </div>
-    </div>
-  </form>
+    </form>
+  </div>
 </section>
 {{- end}}

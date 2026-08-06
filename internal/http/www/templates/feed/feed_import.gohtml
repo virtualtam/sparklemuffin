@@ -8,19 +8,21 @@
     </ol>
   </nav>
 
-  <form action="/feeds/import" enctype="multipart/form-data" method="POST">
-    <div class="row mb-3">
-      <label class="col-sm-2 col-form-label" for="importfile">Import from</label>
-      <div class="col-sm-10">
-        <input class="form-control" type="file" id="importfile" name="importfile">
+  <div class="col-lg-8">
+    <form action="/feeds/import" enctype="multipart/form-data" method="POST">
+      <div class="row mb-3">
+        <label class="col-sm-2 col-form-label text-sm-end" for="importfile">Import from</label>
+        <div class="col-sm-10">
+          <input class="form-control" type="file" id="importfile" name="importfile">
+        </div>
       </div>
-    </div>
 
-    <div class="row mb-3">
-      <div class="col-sm-10 offset-sm-2">
-        <button type="submit" class="btn btn-primary">Import</button>
+      <div class="row mb-3">
+        <div class="col-sm-10 offset-sm-2">
+          <button type="submit" class="btn btn-primary">Import</button>
+        </div>
       </div>
-    </div>
-  </form>
+    </form>
+  </div>
 </section>
 {{end}}

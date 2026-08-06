@@ -17,6 +17,13 @@
 
 <form action="/feeds/subscriptions/{{.Subscription.UUID}}/delete" method="POST"
   {{if .InModal}}hx-post="/feeds/subscriptions/{{.Subscription.UUID}}/delete" hx-target="this" hx-swap="outerHTML"{{end}}>
-  <button type="submit" class="btn btn-danger">Delete</button>
+  <div class="d-flex gap-2">
+    {{if .InModal}}
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    {{else}}
+    <a href="/feeds/subscriptions" class="btn btn-secondary">Cancel</a>
+    {{end}}
+    <button type="submit" class="btn btn-danger">Delete</button>
+  </div>
 </form>
 {{end}}

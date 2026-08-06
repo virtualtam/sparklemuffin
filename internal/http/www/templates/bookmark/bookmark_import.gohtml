@@ -7,51 +7,53 @@
     </ol>
   </nav>
 
-  <form action="/bookmarks/import" enctype="multipart/form-data" method="POST">
-    <div class="row mb-3">
-      <label class="col-sm-2 col-form-label" for="importfile">Import from</label>
-      <div class="col-sm-10">
-        <input class="form-control" type="file" id="importfile" name="importfile">
+  <div class="col-lg-8">
+    <form action="/bookmarks/import" enctype="multipart/form-data" method="POST">
+      <div class="row mb-3">
+        <label class="col-sm-2 col-form-label text-sm-end" for="importfile">Import from</label>
+        <div class="col-sm-10">
+          <input class="form-control" type="file" id="importfile" name="importfile">
+        </div>
       </div>
-    </div>
 
-    <div class="row mb-3">
-      <label class="col-sm-2 col-form-label">Visibility</label>
-      <div class="col-sm-10">
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="visibility" id="default" value="default" checked>
-          <label class="form-check-label" for="default">Use values from the imported file, default to public</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="visibility" id="private" value="private">
-          <label class="form-check-label" for="private">Import all bookmarks as private</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="visibility" id="public" value="public">
-          <label class="form-check-label" for="public">Import all bookmarks as public</label>
+      <div class="row mb-3">
+        <label class="col-sm-2 col-form-label text-sm-end">Visibility</label>
+        <div class="col-sm-10">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="visibility" id="default" value="default" checked>
+            <label class="form-check-label" for="default">Use values from the imported file, default to public</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="visibility" id="private" value="private">
+            <label class="form-check-label" for="private">Import all bookmarks as private</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="visibility" id="public" value="public">
+            <label class="form-check-label" for="public">Import all bookmarks as public</label>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="row mb-3">
-      <label class="col-sm-2 col-form-label">On conflict (same URL)</label>
-      <div class="col-sm-10">
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="on-conflict" id="on-conflict-keep" value="keep" checked>
-          <label class="form-check-label" for="on-conflict-keep">Keep existing bookmarks</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="on-conflict" id="on-conflict-overwrite" value="overwrite">
-          <label class="form-check-label" for="on-conflict-overwrite">Overwrite existing bookmarks with imported data</label>
+      <div class="row mb-3">
+        <label class="col-sm-2 col-form-label text-sm-end">On conflict (same URL)</label>
+        <div class="col-sm-10">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="on-conflict" id="on-conflict-keep" value="keep" checked>
+            <label class="form-check-label" for="on-conflict-keep">Keep existing bookmarks</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="on-conflict" id="on-conflict-overwrite" value="overwrite">
+            <label class="form-check-label" for="on-conflict-overwrite">Overwrite existing bookmarks with imported data</label>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="row mb-3">
-      <div class="col-sm-10 offset-sm-2">
-        <button type="submit" class="btn btn-primary">Import</button>
+      <div class="row mb-3">
+        <div class="col-sm-10 offset-sm-2">
+          <button type="submit" class="btn btn-primary">Import</button>
+        </div>
       </div>
-    </div>
-  </form>
+    </form>
+  </div>
 </section>
 {{end}}

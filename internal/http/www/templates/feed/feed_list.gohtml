@@ -15,7 +15,12 @@
         {{- range .Categories}}
           <p class="d-flex justify-content-between align-items-center mb-1">
             <span class="d-flex align-items-center gap-1 fw-semibold">
-              <span class="feed-category-toggle" @click.stop="toggleCategory('{{.Slug}}')">
+              <span class="feed-category-toggle" tabindex="0" role="button"
+                aria-controls="feed-category-{{.Slug}}" aria-label="Toggle category: {{.Name}}"
+                :aria-expanded="(!!open['{{.Slug}}']).toString()"
+                @click.stop="toggleCategory('{{.Slug}}')"
+                @keydown.enter.stop="toggleCategory('{{.Slug}}')"
+                @keydown.space.stop.prevent="toggleCategory('{{.Slug}}')">
                 <i class="fa-regular" :class="open['{{.Slug}}'] ? 'fa-square-minus' : 'fa-square-plus'"></i>
               </span>
               <a class="link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover" href="/feeds/categories/{{.Slug}}"
@@ -23,7 +28,7 @@
             </span>
             {{template "unreadCountCategory" .}}
           </p>
-          <ul class="list-unstyled ps-3" x-cloak x-show="open['{{.Slug}}']">
+          <ul class="list-unstyled ps-3" id="feed-category-{{.Slug}}" x-cloak x-show="open['{{.Slug}}']">
             {{- range .SubscribedFeeds}}
               <li class="d-flex justify-content-between align-items-center">
                 <a class="link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover" href="/feeds/subscriptions/{{.Slug}}"

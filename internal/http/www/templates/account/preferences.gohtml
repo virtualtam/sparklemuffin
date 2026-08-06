@@ -7,39 +7,41 @@
       </ol>
     </nav>
 
-    <form action="/account/preferences" method="POST">
-      <h3>Feeds</h3>
-      <div class="row mb-3">
-        <label for="feed_show_entries" class="col-sm-2 col-form-label">Show entries</label>
-        <div class="col-sm-10">
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="feed_show_entries" id="all" value="ALL"{{ if eq .ShowEntries "ALL" }} checked{{ end }}>
-            <label class="form-check-label" for="all">All</label>
+    <div class="col-lg-8">
+      <form action="/account/preferences" method="POST">
+        <h3>Feeds</h3>
+        <fieldset class="row mb-3">
+          <legend class="col-form-label text-sm-end col-sm-2 pt-0">Show entries</legend>
+          <div class="col-sm-10">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="feed_show_entries" id="all" value="ALL"{{ if eq .ShowEntries "ALL" }} checked{{ end }}>
+              <label class="form-check-label" for="all">All</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="feed_show_entries" id="read" value="READ"{{ if eq .ShowEntries "READ" }} checked{{ end }}>
+              <label class="form-check-label" for="read">Read</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="feed_show_entries" id="unread" value="UNREAD"{{ if eq .ShowEntries "UNREAD" }} checked{{ end }}>
+              <label class="form-check-label" for="unread">Unread</label>
+            </div>
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="feed_show_entries" id="read" value="READ"{{ if eq .ShowEntries "READ" }} checked{{ end }}>
-            <label class="form-check-label" for="read">Read</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="feed_show_entries" id="unread" value="UNREAD"{{ if eq .ShowEntries "UNREAD" }} checked{{ end }}>
-            <label class="form-check-label" for="unread">Unread</label>
+        </fieldset>
+        <div class="row mb-3">
+          <div class="col-sm-10 offset-sm-2">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="feed_show_entry_summaries" name="feed_show_entry_summaries"{{if .ShowEntrySummaries}} checked{{end}}>
+              <label class="form-check-label" for="feed_show_entry_summaries">Show entry summaries</label>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="row mb-3">
-        <div class="col-sm-10 offset-sm-2">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="feed_show_entry_summaries" name="feed_show_entry_summaries"{{if .ShowEntrySummaries}} checked{{end}}>
-            <label class="form-check-label" for="feed_show_entry_summaries">Show entry summaries</label>
-          </div>
-        </div>
-      </div>
 
-      <div class="row mb-3">
-        <div class="col-sm-10 offset-sm-2">
-          <button type="submit" class="btn btn-primary">Save</button>
+        <div class="row mb-3">
+          <div class="col-sm-10 offset-sm-2">
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   </section>
 {{- end}}

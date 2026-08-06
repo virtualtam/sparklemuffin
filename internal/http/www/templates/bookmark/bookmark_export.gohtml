@@ -7,44 +7,46 @@
     </ol>
   </nav>
 
-  <form action="/bookmarks/export" method="POST">
-    <div class="row mb-3">
-      <label class="col-sm-2 col-form-label">Visibility</label>
-      <div class="col-sm-10">
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="visibility" id="all" value="all" checked>
-          <label class="form-check-label" for="all">All</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="visibility" id="private" value="private">
-          <label class="form-check-label" for="private">Private</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="visibility" id="public" value="public">
-          <label class="form-check-label" for="public">Public</label>
+  <div class="col-lg-8">
+    <form action="/bookmarks/export" method="POST">
+      <div class="row mb-3">
+        <label class="col-sm-2 col-form-label text-sm-end">Visibility</label>
+        <div class="col-sm-10">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="visibility" id="all" value="all" checked>
+            <label class="form-check-label" for="all">All</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="visibility" id="private" value="private">
+            <label class="form-check-label" for="private">Private</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="visibility" id="public" value="public">
+            <label class="form-check-label" for="public">Public</label>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="row mb-3">
-      <label class="col-sm-2 col-form-label">Format</label>
-      <div class="col-sm-10">
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="format" id="json" value="json" checked>
-          <label class="form-check-label" for="json">JSON</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="format" id="netscape" value="netscape">
-          <label class="form-check-label" for="netscape">Netscape Bookmark File</label>
+      <div class="row mb-3">
+        <label class="col-sm-2 col-form-label text-sm-end">Format</label>
+        <div class="col-sm-10">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="format" id="json" value="json" checked>
+            <label class="form-check-label" for="json">JSON</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="format" id="netscape" value="netscape">
+            <label class="form-check-label" for="netscape">Netscape Bookmark File</label>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="row mb-3">
-      <div class="col-sm-10 offset-sm-2">
-        <button type="submit" class="btn btn-primary">Export</button>
+      <div class="row mb-3">
+        <div class="col-sm-10 offset-sm-2">
+          <button type="submit" class="btn btn-primary">Export</button>
+        </div>
       </div>
-    </div>
-  </form>
+    </form>
+  </div>
 </section>
 {{end}}

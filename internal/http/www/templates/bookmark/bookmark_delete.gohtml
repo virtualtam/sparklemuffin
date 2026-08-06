@@ -12,10 +12,17 @@
 {{end}}
 
 {{define "bookmarkDeleteForm"}}
-<p class="mb-4">Delete bookmark: <a href="{{.Bookmark.URL}}">{{.Bookmark.Title}}</a>?</p>
+<p class="mb-4">Delete bookmark: <strong><a href="{{.Bookmark.URL}}">{{.Bookmark.Title}}</a></strong>?</p>
 
 <form action="/bookmarks/{{.Bookmark.UID}}/delete" method="POST"
   {{if .InModal}}hx-post="/bookmarks/{{.Bookmark.UID}}/delete" hx-target="this" hx-swap="outerHTML"{{end}}>
-  <button type="submit" class="btn btn-danger">Delete</button>
+  <div class="d-flex gap-2">
+    {{if .InModal}}
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    {{else}}
+    <a href="/bookmarks" class="btn btn-secondary">Cancel</a>
+    {{end}}
+    <button type="submit" class="btn btn-danger">Delete</button>
+  </div>
 </form>
 {{end}}

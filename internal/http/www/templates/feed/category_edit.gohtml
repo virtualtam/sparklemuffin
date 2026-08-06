@@ -7,7 +7,9 @@
     </ol>
   </nav>
 
-  {{template "categoryEditForm" (dict "Category" . "InModal" false)}}
+  <div class="col-lg-8">
+    {{template "categoryEditForm" (dict "Category" . "InModal" false)}}
+  </div>
 </section>
 {{end}}
 
@@ -15,7 +17,7 @@
 <form action="/feeds/categories/{{.Category.UUID}}/edit" method="POST"
   {{if .InModal}}hx-post="/feeds/categories/{{.Category.UUID}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>
   <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="name">Name</label>
+    <label class="col-sm-2 col-form-label text-sm-end" for="name">Name</label>
     <div class="col-sm-10">
       <input class="form-control" type="text" id="name" name="name" placeholder="Name" value="{{.Category.Name}}"
         required="">

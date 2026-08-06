@@ -8,7 +8,9 @@
     </ol>
   </nav>
 
-  {{template "tagEditForm" (dict "Tag" . "InModal" false)}}
+  <div class="col-lg-8">
+    {{template "tagEditForm" (dict "Tag" . "InModal" false)}}
+  </div>
 </section>
 {{end}}
 
@@ -16,7 +18,7 @@
 <form action="/bookmarks/tags/{{.Tag.EncodedName}}/edit" method="POST"
   {{if .InModal}}hx-post="/bookmarks/tags/{{.Tag.EncodedName}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>
   <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="name">Name</label>
+    <label class="col-sm-2 col-form-label text-sm-end" for="name">Name</label>
     <div class="col-sm-10">
       <input class="form-control" type="text" id="name" name="name" placeholder="Name" value="{{.Tag.Name}}" required="">
     </div>

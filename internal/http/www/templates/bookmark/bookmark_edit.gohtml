@@ -7,7 +7,9 @@
     </ol>
   </nav>
 
-  {{template "bookmarkEditForm" (dict "Bookmark" .Bookmark "Tags" .Tags "InModal" false "Conflict" .Conflict)}}
+  <div class="col-lg-8">
+    {{template "bookmarkEditForm" (dict "Bookmark" .Bookmark "Tags" .Tags "InModal" false "Conflict" .Conflict)}}
+  </div>
 </section>
 {{end}}
 
@@ -21,14 +23,14 @@
   {{end}}
 
   <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="url">URL</label>
+    <label class="col-sm-2 col-form-label text-sm-end" for="url">URL</label>
     <div class="col-sm-10">
       <input class="form-control" type="url" id="url" name="url" placeholder="URL" value="{{.Bookmark.URL}}" required="">
     </div>
   </div>
 
   <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="title">Title</label>
+    <label class="col-sm-2 col-form-label text-sm-end" for="title">Title</label>
     <div class="col-sm-10">
       <input class="form-control" type="text" id="title" name="title" placeholder="Title" value="{{.Bookmark.Title}}"
         required="">
@@ -37,16 +39,16 @@
 
   {{if .Conflict}}
   <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="new-description">Description (New)</label>
+    <label class="col-sm-2 col-form-label text-sm-end" for="new-description">Description (New)</label>
     <div class="col-sm-10">
-      <textarea class="form-control text-muted" id="new-description" rows="{{.Conflict.NewDescriptionRows}}"
+      <textarea class="form-control-plaintext" id="new-description" rows="{{.Conflict.NewDescriptionRows}}"
         readonly placeholder="No description">{{.Conflict.NewDescription}}</textarea>
     </div>
   </div>
   {{end}}
 
   <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="description">Description</label>
+    <label class="col-sm-2 col-form-label text-sm-end" for="description">Description</label>
     <div class="col-sm-10">
       <textarea class="form-control" id="description" name="description" placeholder="Description" rows="10"
         data-easymde>{{.Bookmark.Description}}</textarea>
@@ -54,7 +56,7 @@
   </div>
 
   <div class="row mb-3">
-    <label class="col-sm-2 col-form-label" for="tags">Tags</label>
+    <label class="col-sm-2 col-form-label text-sm-end" for="tags">Tags</label>
     <div class="col-sm-10">
       <input class="form-control" type="text" id="tags" name="tags" placeholder="Tags, separated by spaces"
         value="{{Join .Bookmark.Tags " "}}" data-list="{{Join .Tags ","}}">

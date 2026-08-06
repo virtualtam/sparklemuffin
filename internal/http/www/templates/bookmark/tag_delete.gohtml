@@ -13,10 +13,17 @@
 {{end}}
 
 {{define "tagDeleteForm"}}
-<p class="mb-4">Delete tag: <span class="badge bg-secondary-subtle text-secondary-emphasis">{{.Tag.Name}}</span>?</p>
+<p class="mb-4">Delete tag: <strong>{{.Tag.Name}}</strong>?</p>
 
 <form action="/bookmarks/tags/{{.Tag.EncodedName}}/delete" method="POST"
   {{if .InModal}}hx-post="/bookmarks/tags/{{.Tag.EncodedName}}/delete" hx-target="this" hx-swap="outerHTML"{{end}}>
-  <button type="submit" class="btn btn-danger">Delete</button>
+  <div class="d-flex gap-2">
+    {{if .InModal}}
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    {{else}}
+    <a href="/bookmarks/tags" class="btn btn-secondary">Cancel</a>
+    {{end}}
+    <button type="submit" class="btn btn-danger">Delete</button>
+  </div>
 </form>
 {{end}}

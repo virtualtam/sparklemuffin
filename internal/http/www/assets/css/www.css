@@ -94,6 +94,17 @@ a.badge:hover {
   filter: brightness(0.85);
 }
 
+/* Lighter hover/active fill than Bootstrap's default solid gray, and normal body text color instead of gray. */
+.btn-outline-secondary {
+  --bs-btn-color: var(--bs-body-color);
+  --bs-btn-hover-bg: var(--bs-secondary-bg-subtle);
+  --bs-btn-hover-border-color: var(--bs-secondary);
+  --bs-btn-hover-color: var(--bs-body-color);
+  --bs-btn-active-bg: var(--bs-secondary-bg-subtle);
+  --bs-btn-active-border-color: var(--bs-secondary);
+  --bs-btn-active-color: var(--bs-body-color);
+}
+
 /* Bookmarks */
 .tag-count {
   display: inline-block;

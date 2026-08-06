@@ -82,7 +82,7 @@
 <nav class="d-flex justify-content-between align-items-center mb-3">
   <form action="/bookmarks/tags" method="GET"
     hx-get="/bookmarks/tags" hx-target="#tag-list-content" hx-swap="outerHTML" hx-push-url="true">
-    <div class="input-group">
+    <div class="input-group input-group-sm">
       <input class="form-control" type="text" id="filterTerm" name="search" placeholder="Filter by name"
         value="{{.Page.SearchTerms}}">
       <button type="submit" class="btn btn-outline-secondary">

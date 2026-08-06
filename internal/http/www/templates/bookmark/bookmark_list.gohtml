@@ -1,5 +1,5 @@
 {{define "content"}}
-<section class="pt-2" id="bookmark-list-content">
+<section class="pt-2 container-fluid" id="bookmark-list-content">
   {{template "bookmarkSearchForm" .}}
   <ol start="{{.Page.ItemOffset}}">
     {{range .Bookmarks}}

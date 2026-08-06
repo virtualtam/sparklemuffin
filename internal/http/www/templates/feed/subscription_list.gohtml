@@ -80,11 +80,13 @@
       title="Edit category: {{.Name}}"
       hx-get="/feeds/categories/{{.UUID}}/edit" hx-target="#category-edit-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-pen-to-square"></i>
+      <span class="visually-hidden">Edit category: {{.Name}}</span>
     </a>
     <a class="btn btn-sm bg-danger-subtle text-danger-emphasis border-0" href="/feeds/categories/{{.UUID}}/delete"
       title="Delete category: {{.Name}}"
       hx-get="/feeds/categories/{{.UUID}}/delete" hx-target="#category-delete-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-trash"></i>
+      <span class="visually-hidden">Delete category: {{.Name}}</span>
     </a>
   </div>
 </div>
@@ -101,11 +103,13 @@
       title="Edit subscription: {{.FeedTitle}}"
       hx-get="/feeds/subscriptions/{{.UUID}}/edit" hx-target="#subscription-edit-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-pen-to-square"></i>
+      <span class="visually-hidden">Edit subscription: {{.FeedTitle}}</span>
     </a>
     <a class="btn btn-sm bg-danger-subtle text-danger-emphasis border-0" href="/feeds/subscriptions/{{.UUID}}/delete"
       title="Delete subscription: {{.FeedTitle}}"
       hx-get="/feeds/subscriptions/{{.UUID}}/delete" hx-target="#subscription-delete-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-trash"></i>
+      <span class="visually-hidden">Delete subscription: {{.FeedTitle}}</span>
     </a>
   </div>
 </li>

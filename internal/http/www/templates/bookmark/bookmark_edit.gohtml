@@ -11,7 +11,6 @@
 </section>
 {{end}}
 
-{{/* InModal enables htmx attributes; only true when loaded into the bookmark list page's edit modal. */}}
 {{define "bookmarkEditForm"}}
 <form action="/bookmarks/{{.Bookmark.UID}}/edit" autocomplete="off" method="POST"
   {{if .InModal}}hx-post="/bookmarks/{{.Bookmark.UID}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>

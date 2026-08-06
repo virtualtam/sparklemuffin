@@ -11,7 +11,6 @@
 </section>
 {{end}}
 
-{{/* InModal enables htmx attributes; only true when loaded into the subscriptions page's edit modal. */}}
 {{define "categoryEditForm"}}
 <form action="/feeds/categories/{{.Category.UUID}}/edit" method="POST"
   {{if .InModal}}hx-post="/feeds/categories/{{.Category.UUID}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>

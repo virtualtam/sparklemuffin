@@ -74,10 +74,6 @@ code {
   font-style: italic;
 }
 
-.dropdown-menu {
-  min-width: 4ch;
-}
-
 .footer {
   background-color: var(--bs-tertiary-bg);
 }

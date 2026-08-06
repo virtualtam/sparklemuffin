@@ -24,22 +24,24 @@
 {{end}}
 
 {{define "userTable"}}
-<table class="table table-striped table-hover">
-  <thead>
-    <tr>
-      <th>Email</th>
-      <th>Nickname</th>
-      <th>Display Name</th>
-      <th>Is Admin?</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {{range .}}
-    {{template "userRow" .}}
-    {{end}}
-  </tbody>
-</table>
+<div class="table-responsive">
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Nickname</th>
+        <th>Display Name</th>
+        <th>Is Admin?</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .}}
+      {{template "userRow" .}}
+      {{end}}
+    </tbody>
+  </table>
+</div>
 {{end}}
 
 {{define "userRow"}}
@@ -51,10 +53,12 @@
   <td>
     <a href="/admin/users/{{.UUID}}" title="Edit user">
       <i class="fa-solid fa-pen-to-square"></i>
+      <span class="visually-hidden">Edit user</span>
     </a>
     <a class="text-danger" href="/admin/users/{{.UUID}}/delete" title="Delete user"
       hx-get="/admin/users/{{.UUID}}/delete" hx-target="#user-delete-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-trash"></i>
+      <span class="visually-hidden">Delete user</span>
     </a>
   </td>
 </tr>

@@ -15,12 +15,12 @@
               <i class="fa-regular fa-bookmark me-1"></i>
               Bookmarks
             </a>
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-               aria-expanded="false">
+            <a class="nav-link dropdown-toggle px-3" href="#" role="button" data-bs-toggle="dropdown"
+               aria-expanded="false" aria-controls="navbar-dropdown-bookmarks">
               <span class="visually-hidden">Toggle Bookmarks menu</span>
             </a>
 
-            <ul class="dropdown-menu">
+            <ul class="dropdown-menu" id="navbar-dropdown-bookmarks" role="menu">
               <li>
                 <a class="dropdown-item" href="/bookmarks/add">
                   <i class="fa-solid fa-plus me-1"></i>
@@ -67,12 +67,12 @@
               <i class="fa-regular fa-newspaper me-1"></i>
               Feeds
             </a>
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-               aria-expanded="false">
+            <a class="nav-link dropdown-toggle px-3" href="#" role="button" data-bs-toggle="dropdown"
+               aria-expanded="false" aria-controls="navbar-dropdown-feeds">
               <span class="visually-hidden">Toggle Feeds menu</span>
             </a>
 
-            <ul class="dropdown-menu">
+            <ul class="dropdown-menu" id="navbar-dropdown-feeds" role="menu">
               <li>
                 <a class="dropdown-item" href="/feeds/subscriptions/add">
                   <i class="fa-solid fa-plus me-1"></i>
@@ -114,12 +114,12 @@
           {{- if .User.IsAdmin}}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-               aria-expanded="false">
+               aria-expanded="false" aria-controls="navbar-dropdown-administration">
               <i class="fa-solid fa-lock me-1"></i>
               Administration
             </a>
 
-            <ul class="dropdown-menu dropdown-menu-end">
+            <ul class="dropdown-menu dropdown-menu-end" id="navbar-dropdown-administration" role="menu">
               <li>
                 <a class="dropdown-item" href="/admin/users/add">
                   <i class="fa-solid fa-user-plus me-1"></i>
@@ -137,12 +137,12 @@
           {{- end}}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-               aria-expanded="false">
+               aria-expanded="false" aria-controls="navbar-dropdown-account">
               <i class="fa-solid fa-user me-1"></i>
               Account
             </a>
 
-            <ul class="dropdown-menu dropdown-menu-end">
+            <ul class="dropdown-menu dropdown-menu-end" id="navbar-dropdown-account" role="menu">
               <li><h6 class="dropdown-header">{{.User.Email}}</h6></li>
               <li><hr class="dropdown-divider"></li>
               <li>

@@ -12,7 +12,6 @@
 </section>
 {{end}}
 
-{{/* InModal enables htmx attributes; only true when loaded into the subscriptions page's delete modal. */}}
 {{define "subscriptionDeleteForm"}}
 <p class="mb-4">Delete feed subscription: <strong>{{or .Subscription.Alias .Subscription.FeedTitle}}</strong>?</p>
 

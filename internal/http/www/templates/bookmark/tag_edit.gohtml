@@ -12,7 +12,6 @@
 </section>
 {{end}}
 
-{{/* InModal enables htmx attributes; only true when loaded into the tag list page's edit modal. */}}
 {{define "tagEditForm"}}
 <form action="/bookmarks/tags/{{.Tag.EncodedName}}/edit" method="POST"
   {{if .InModal}}hx-post="/bookmarks/tags/{{.Tag.EncodedName}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>

@@ -51,13 +51,55 @@ body {
   padding-top: 3.5rem;
 }
 
+/* Reboot gives ol/ul a 2rem left padding for the marker, so a numbered
+   list's own item text sits 2rem right of the list's own left edge. Align
+   headers/search-forms above such a list with that same text, not the
+   list's outer edge (which visually lines up with the item numbers instead). */
+.list-header-offset {
+  padding-left: 2rem;
+}
+
+/* Bootstrap's own ::after triangle is too subtle on a toggle whose only other
+   content is visually-hidden text; swap it for a visible chevron icon. */
+.navbar-dropdown-caret::after {
+  display: none;
+}
+
+.navbar-dropdown-caret:hover,
+.navbar-dropdown-caret:focus {
+  background-color: var(--bs-tertiary-bg);
+  border-radius: var(--bs-border-radius);
+}
+
+/* Bootstrap fades link-body-emphasis to 75% opacity on hover by default,
+   which makes it look washed out rather than emphasized. Keep it solid at
+   both rest and hover; only the underline (already handled by the
+   link-underline-opacity-* utilities) should change. */
+.link-body-emphasis {
+  --bs-link-opacity: 1;
+}
+
+/* Bootstrap fades .list-group-item-action's default (non-hover) text to
+   --bs-secondary-color (75% opacity), only reaching full body-color on
+   hover -- appropriate for a disabled/muted row, but not for the
+   subscription row, whose primary content (a feed title) should read
+   clearly at rest. Scoped to .subscription-row rather than overriding
+   .list-group-item-action globally, so any future list-group-item-action
+   elsewhere keeps Bootstrap's default muted-until-hover affordance. */
+.subscription-row.list-group-item-action {
+  color: var(--bs-body-color);
+}
+
 a:hover {
   text-decoration: underline;
 }
 
-/* Wider modal, for content that needs more room (e.g. long URLs, a Markdown editor). */
+/* Wider modal, for content that needs more room (e.g. long URLs, a Markdown
+   editor). Sets Bootstrap's own --bs-modal-width variable (the mechanism
+   .modal-lg/.modal-xl use) instead of a raw max-width, so it only applies
+   at the same >=576px breakpoint Bootstrap's own size variants do. */
 .modal-wide .modal-dialog {
-  max-width: 60rem;
+  --bs-modal-width: 60rem;
 }
 
 code {
@@ -74,6 +116,20 @@ code {
   font-style: italic;
 }
 
+/* Keep Bootstrap's default link color for markdown-rendered content
+   (bookmark descriptions), unlike link-body-emphasis elsewhere in the app,
+   but only show the underline on hover. The explicit :hover rule is needed
+   because the general a:hover rule above has equal specificity to .content a
+   and would otherwise lose to it (both match while hovering; source order
+   would decide, not the intent). */
+.content a {
+  text-decoration: none;
+}
+
+.content a:hover {
+  text-decoration: underline;
+}
+
 .footer {
   background-color: var(--bs-tertiary-bg);
 }
@@ -87,12 +143,16 @@ a.badge {
 }
 
 a.badge:hover {
-  filter: brightness(0.85);
+  text-decoration: underline;
 }
 
-/* Lighter hover/active fill than Bootstrap's default solid gray, and normal body text color instead of gray. */
+/* Lighter hover/active fill than Bootstrap's default solid gray, normal body
+   text color instead of gray, and a pale border matching form-control's own
+   --bs-border-color instead of Bootstrap's default $secondary (a much more
+   saturated mid-gray that reads as heavy/brutalist next to plain inputs). */
 .btn-outline-secondary {
   --bs-btn-color: var(--bs-body-color);
+  --bs-btn-border-color: var(--bs-border-color);
   --bs-btn-hover-bg: var(--bs-secondary-bg-subtle);
   --bs-btn-hover-border-color: var(--bs-secondary);
   --bs-btn-hover-color: var(--bs-body-color);
@@ -101,10 +161,46 @@ a.badge:hover {
   --bs-btn-active-color: var(--bs-body-color);
 }
 
+/* Tinted icon buttons (edit/delete action pairs). Same --bs-btn-* mechanism
+   as .btn-outline-secondary above -- not Bootstrap's button-variant() mixin
+   directly, since its color-contrast()/shade-color() calls need real Sass
+   colors and these subtle tokens are CSS custom properties (theme-aware).
+   Using dedicated classes instead of the bg-*-subtle/text-*-emphasis utility
+   combo avoids fighting their !important background-color/color (utilities
+   compile with !important; .btn:hover's own background-color/color don't,
+   so a plain --bs-btn-hover-bg override could never win against them). */
+.btn-subtle-info {
+  --bs-btn-color: var(--bs-info-text-emphasis);
+  --bs-btn-bg: var(--bs-info-bg-subtle);
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-color: var(--bs-info-text-emphasis);
+  --bs-btn-hover-bg: var(--bs-info-border-subtle);
+  --bs-btn-hover-border-color: transparent;
+  --bs-btn-active-color: var(--bs-info-text-emphasis);
+  --bs-btn-active-bg: var(--bs-info-border-subtle);
+  --bs-btn-active-border-color: transparent;
+}
+
+.btn-subtle-danger {
+  --bs-btn-color: var(--bs-danger-text-emphasis);
+  --bs-btn-bg: var(--bs-danger-bg-subtle);
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-color: var(--bs-danger-text-emphasis);
+  --bs-btn-hover-bg: var(--bs-danger-border-subtle);
+  --bs-btn-hover-border-color: transparent;
+  --bs-btn-active-color: var(--bs-danger-text-emphasis);
+  --bs-btn-active-bg: var(--bs-danger-border-subtle);
+  --bs-btn-active-border-color: transparent;
+}
+
 /* Bookmarks */
 .tag-count {
   display: inline-block;
   min-width: 2.5em;
+}
+
+.tag-row:hover {
+  background-color: var(--bs-tertiary-bg);
 }
 
 /* Feeds */

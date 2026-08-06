@@ -76,13 +76,13 @@
 <div class="card-header d-flex justify-content-between align-items-center" id="category-{{.UUID}}">
   <span>{{.Name}} ({{len .Subscriptions}})</span>
   <div class="btn-group">
-    <a class="btn btn-sm bg-info-subtle text-info-emphasis border-0" href="/feeds/categories/{{.UUID}}/edit"
+    <a class="btn btn-sm btn-subtle-info" href="/feeds/categories/{{.UUID}}/edit"
       title="Edit category: {{.Name}}"
       hx-get="/feeds/categories/{{.UUID}}/edit" hx-target="#category-edit-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-pen-to-square"></i>
       <span class="visually-hidden">Edit category: {{.Name}}</span>
     </a>
-    <a class="btn btn-sm bg-danger-subtle text-danger-emphasis border-0" href="/feeds/categories/{{.UUID}}/delete"
+    <a class="btn btn-sm btn-subtle-danger" href="/feeds/categories/{{.UUID}}/delete"
       title="Delete category: {{.Name}}"
       hx-get="/feeds/categories/{{.UUID}}/delete" hx-target="#category-delete-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-trash"></i>
@@ -93,19 +93,19 @@
 {{end}}
 
 {{define "subscriptionRow"}}
-<li class="list-group-item d-flex justify-content-between align-items-center" id="subscription-{{.UUID}}">
+<li class="subscription-row list-group-item list-group-item-action d-flex justify-content-between align-items-center" id="subscription-{{.UUID}}">
   <span>
     <i class="fa-solid fa-rss me-1"></i>
     {{or .Alias .FeedTitle}}
   </span>
   <div class="btn-group">
-    <a class="btn btn-sm bg-info-subtle text-info-emphasis border-0" href="/feeds/subscriptions/{{.UUID}}/edit"
+    <a class="btn btn-sm btn-subtle-info" href="/feeds/subscriptions/{{.UUID}}/edit"
       title="Edit subscription: {{.FeedTitle}}"
       hx-get="/feeds/subscriptions/{{.UUID}}/edit" hx-target="#subscription-edit-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-pen-to-square"></i>
       <span class="visually-hidden">Edit subscription: {{.FeedTitle}}</span>
     </a>
-    <a class="btn btn-sm bg-danger-subtle text-danger-emphasis border-0" href="/feeds/subscriptions/{{.UUID}}/delete"
+    <a class="btn btn-sm btn-subtle-danger" href="/feeds/subscriptions/{{.UUID}}/delete"
       title="Delete subscription: {{.FeedTitle}}"
       hx-get="/feeds/subscriptions/{{.UUID}}/delete" hx-target="#subscription-delete-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-trash"></i>

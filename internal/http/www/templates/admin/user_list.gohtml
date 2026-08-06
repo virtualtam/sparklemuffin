@@ -37,7 +37,7 @@
 
 {{define "userTable"}}
 <div class="table-responsive">
-  <table class="table table-striped table-hover">
+  <table class="table table-striped table-hover table-sm">
     <thead>
       <tr>
         <th>Email</th>
@@ -64,13 +64,13 @@
   <td>{{if .IsAdmin}}yes{{else}}no{{end}}</td>
   <td>
     <div class="btn-group">
-      <a class="btn btn-sm bg-info-subtle text-info-emphasis border-0" href="/admin/users/{{.UUID}}"
+      <a class="btn btn-sm btn-subtle-info" href="/admin/users/{{.UUID}}"
         title="Edit user: {{.Email}}"
         hx-get="/admin/users/{{.UUID}}" hx-target="#user-edit-modal-body" hx-swap="innerHTML">
         <i class="fa-solid fa-pen-to-square"></i>
         <span class="visually-hidden">Edit user: {{.Email}}</span>
       </a>
-      <a class="btn btn-sm bg-danger-subtle text-danger-emphasis border-0" href="/admin/users/{{.UUID}}/delete"
+      <a class="btn btn-sm btn-subtle-danger" href="/admin/users/{{.UUID}}/delete"
         title="Delete user: {{.Email}}"
         hx-get="/admin/users/{{.UUID}}/delete" hx-target="#user-delete-modal-body" hx-swap="innerHTML">
         <i class="fa-solid fa-trash"></i>

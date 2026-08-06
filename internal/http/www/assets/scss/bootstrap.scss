@@ -10,5 +10,12 @@ $modal-inner-padding: 1.5rem;
 $badge-font-weight: 400;
 $headings-font-weight: 600;
 $form-label-font-weight: 700;
+$body-color: #404654;
+$body-emphasis-color: $body-color;
+$secondary-bg-subtle: #f3f4f6;
+$navbar-light-emphasis: rgba(var(--bs-emphasis-color-rgb), 1);
+$navbar-light-color: $navbar-light-emphasis;
+$navbar-light-hover-color: $navbar-light-emphasis;
+$navbar-light-active-color: $navbar-light-emphasis;
 
 @import "../node_modules/bootstrap/scss/bootstrap";

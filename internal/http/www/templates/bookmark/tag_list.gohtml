@@ -54,23 +54,23 @@
 {{end}}
 
 {{define "tagRow"}}
-<div class="d-flex justify-content-between align-items-center mb-2" id="tag-row-{{.EncodedName}}">
+<div class="tag-row d-flex justify-content-between align-items-center mb-2" id="tag-row-{{.EncodedName}}">
   <div class="d-flex align-items-center gap-2">
     <span class="badge bg-secondary-subtle text-secondary-emphasis tag-count">{{.Count}}</span>
-    <a class="link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover"
+    <a class="badge bg-secondary-subtle text-secondary-emphasis"
        href="/bookmarks?search={{.Name}}" title="Bookmarks tagged {{.Name}}">
       <i class="fa-solid fa-tag me-1"></i>
       {{.Name}}
     </a>
   </div>
   <div class="btn-group">
-    <a class="btn btn-sm bg-info-subtle text-info-emphasis border-0" href="/bookmarks/tags/{{.EncodedName}}/edit"
+    <a class="btn btn-sm btn-subtle-info" href="/bookmarks/tags/{{.EncodedName}}/edit"
       title="Edit tag: {{.Name}}"
       hx-get="/bookmarks/tags/{{.EncodedName}}/edit" hx-target="#tag-edit-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-pen-to-square"></i>
       <span class="visually-hidden">Edit tag: {{.Name}}</span>
     </a>
-    <a class="btn btn-sm bg-danger-subtle text-danger-emphasis border-0" href="/bookmarks/tags/{{.EncodedName}}/delete"
+    <a class="btn btn-sm btn-subtle-danger" href="/bookmarks/tags/{{.EncodedName}}/delete"
       title="Delete tag: {{.Name}}"
       hx-get="/bookmarks/tags/{{.EncodedName}}/delete" hx-target="#tag-delete-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-trash"></i>
@@ -82,16 +82,26 @@
 
 {{define "tagFilterForm"}}
 <nav class="d-flex justify-content-between align-items-center mb-3">
-  <form action="/bookmarks/tags" method="GET"
-    hx-get="/bookmarks/tags" hx-target="#tag-list-content" hx-swap="outerHTML" hx-push-url="true">
-    <div class="input-group input-group-sm">
-      <input class="form-control" type="text" id="filterTerm" name="search" placeholder="Filter by name"
-        value="{{.Page.SearchTerms}}">
-      <button type="submit" class="btn btn-outline-secondary">
-        <i class="fa-solid fa-filter me-1"></i>
-        Filter
-      </button>
-    </div>
-  </form>
+  <div class="d-flex align-items-center gap-3">
+    <form action="/bookmarks/tags" method="GET"
+      hx-get="/bookmarks/tags" hx-target="#tag-list-content" hx-swap="outerHTML" hx-push-url="true">
+      <div class="input-group input-group-sm">
+        <input class="form-control" type="text" id="filterTerm" name="search" placeholder="Filter by name"
+          value="{{.Page.SearchTerms}}">
+        <button type="submit" class="btn btn-outline-secondary">
+          <i class="fa-solid fa-filter me-1"></i>
+          Filter
+        </button>
+      </div>
+    </form>
+    <p class="fs-5 mb-0">
+      {{if ne .Page.SearchTerms "" }}
+      <strong>{{.Page.ItemCount}}</strong> tag{{if gt .Page.ItemCount 1}}s{{end}} found
+      {{else}}
+      <strong>{{.Page.ItemCount}}</strong> tag{{if gt .Page.ItemCount 1}}s{{end}}
+      {{end}}
+    </p>
+  </div>
+  {{template "pagination" (dict "Page" .Page "HxTarget" "#tag-list-content")}}
 </nav>
 {{end}}

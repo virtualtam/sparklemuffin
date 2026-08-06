@@ -9,6 +9,18 @@
 
   {{template "userTable" .}}
 
+  <div class="modal fade" id="userEditModal" tabindex="-1" aria-labelledby="userEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="userEditModalLabel">Edit user</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="user-edit-modal-body"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="modal fade" id="userDeleteModal" tabindex="-1" aria-labelledby="userDeleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -51,15 +63,20 @@
   <td>{{.DisplayName}}</td>
   <td>{{if .IsAdmin}}yes{{else}}no{{end}}</td>
   <td>
-    <a href="/admin/users/{{.UUID}}" title="Edit user">
-      <i class="fa-solid fa-pen-to-square"></i>
-      <span class="visually-hidden">Edit user</span>
-    </a>
-    <a class="text-danger" href="/admin/users/{{.UUID}}/delete" title="Delete user"
-      hx-get="/admin/users/{{.UUID}}/delete" hx-target="#user-delete-modal-body" hx-swap="innerHTML">
-      <i class="fa-solid fa-trash"></i>
-      <span class="visually-hidden">Delete user</span>
-    </a>
+    <div class="btn-group">
+      <a class="btn btn-sm bg-info-subtle text-info-emphasis border-0" href="/admin/users/{{.UUID}}"
+        title="Edit user: {{.Email}}"
+        hx-get="/admin/users/{{.UUID}}" hx-target="#user-edit-modal-body" hx-swap="innerHTML">
+        <i class="fa-solid fa-pen-to-square"></i>
+        <span class="visually-hidden">Edit user: {{.Email}}</span>
+      </a>
+      <a class="btn btn-sm bg-danger-subtle text-danger-emphasis border-0" href="/admin/users/{{.UUID}}/delete"
+        title="Delete user: {{.Email}}"
+        hx-get="/admin/users/{{.UUID}}/delete" hx-target="#user-delete-modal-body" hx-swap="innerHTML">
+        <i class="fa-solid fa-trash"></i>
+        <span class="visually-hidden">Delete user: {{.Email}}</span>
+      </a>
+    </div>
   </td>
 </tr>
 {{end}}

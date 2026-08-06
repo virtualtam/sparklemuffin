@@ -129,3 +129,25 @@ func RedirectOnError(w http.ResponseWriter, r *http.Request, redirectURL string,
 	PutFlashError(w, message)
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
+
+// RedirectWithFlashWarning sets a flash warning message and forces a full
+// client-side navigation to redirectURL via HX-Redirect (see
+// RedirectWithFlashError for why a plain http.Redirect can't be used here).
+func RedirectWithFlashWarning(w http.ResponseWriter, redirectURL string, message string) {
+	PutFlashWarning(w, message)
+	w.Header().Set(htmx.HeaderRedirect, redirectURL)
+	w.WriteHeader(http.StatusOK)
+}
+
+// RedirectOnWarning reports a warning to the user and redirects them to
+// redirectURL, using HX-Redirect for htmx requests (see
+// RedirectWithFlashWarning) and a plain http.Redirect otherwise.
+func RedirectOnWarning(w http.ResponseWriter, r *http.Request, redirectURL string, message string) {
+	if r.Header.Get(htmx.HeaderRequest) == "true" {
+		RedirectWithFlashWarning(w, redirectURL, message)
+		return
+	}
+
+	PutFlashWarning(w, message)
+	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+}

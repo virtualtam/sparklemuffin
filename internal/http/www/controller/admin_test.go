@@ -71,6 +71,24 @@ func newUserDeletePostRequest(t *testing.T, ctxUser user.User, userUUID string, 
 	return r.WithContext(ctx)
 }
 
+// newUserEditViewRequest builds a GET request against /admin/users/{uuid}.
+func newUserEditViewRequest(t *testing.T, ctxUser user.User, userUUID string, hxRequest bool) *http.Request {
+	t.Helper()
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/admin/users/"+userUUID, nil)
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("uuid", userUUID)
+
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	return r.WithContext(ctx)
+}
+
 func TestHandleUserAddView(t *testing.T) {
 	ac := adminController{
 		adminUserAddView: view.New("admin/user_add.gohtml"),
@@ -96,34 +114,87 @@ func TestHandleUserAddView(t *testing.T) {
 
 func TestHandleUserEditView(t *testing.T) {
 	fake := faker.New()
-	targetUser := user.User{
-		UUID:  fake.UUID().V4(),
-		Email: fake.Internet().Email(),
-	}
-	ac := adminController{
-		userService:       user.NewService(&user.FakeRepository{Users: []user.User{targetUser}}),
-		adminUserEditView: view.New("admin/user_edit.gohtml"),
+	ctxUser := user.User{UUID: fake.UUID().V4(), IsAdmin: true}
+
+	newFixture := func() user.User {
+		return user.User{
+			UUID:  fake.UUID().V4(),
+			Email: fake.Internet().Email(),
+		}
 	}
 
-	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/admin/users/"+targetUser.UUID, nil)
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("uuid", targetUser.UUID)
-	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
-	w := httptest.NewRecorder()
-
-	ac.handleUserEditView()(w, r)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+	newTestController := func(u user.User) adminController {
+		return adminController{
+			userService:       user.NewService(&user.FakeRepository{Users: []user.User{u}}),
+			adminUserEditView: view.New("admin/user_edit.gohtml"),
+		}
 	}
 
-	body := w.Body.String()
-	if !strings.Contains(body, `id="password" name="password" minlength="8"`) {
-		t.Errorf("want the password field to enforce the minimum password length, got:\n%s", body)
-	}
-	if !strings.Contains(body, "Must be at least 8 characters long.") {
-		t.Errorf("want a hint about the minimum password length, got:\n%s", body)
-	}
+	t.Run("plain browser request renders the full page", func(t *testing.T) {
+		u := newFixture()
+		ac := newTestController(u)
+		r := newUserEditViewRequest(t, ctxUser, u.UUID, false)
+		w := httptest.NewRecorder()
+
+		ac.handleUserEditView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a full page (with layout), got:\n%s", body)
+		}
+		if !strings.Contains(body, u.Email) {
+			t.Errorf("want the user's email rendered, got:\n%s", body)
+		}
+		if strings.Contains(body, "hx-post") {
+			t.Errorf("want a plain form with no htmx attributes on the full page, got:\n%s", body)
+		}
+		if !strings.Contains(body, `id="password" name="password" minlength="8"`) {
+			t.Errorf("want the password field to enforce the minimum password length, got:\n%s", body)
+		}
+		if !strings.Contains(body, "Must be at least 8 characters long.") {
+			t.Errorf("want a hint about the minimum password length, got:\n%s", body)
+		}
+	})
+
+	t.Run("htmx request renders only the form fragment", func(t *testing.T) {
+		u := newFixture()
+		ac := newTestController(u)
+		r := newUserEditViewRequest(t, ctxUser, u.UUID, true)
+		w := httptest.NewRecorder()
+
+		ac.handleUserEditView()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if strings.Contains(body, "<!DOCTYPE html>") {
+			t.Errorf("want a fragment with no layout, got:\n%s", body)
+		}
+		if !strings.Contains(body, u.Email) {
+			t.Errorf("want the user's email rendered, got:\n%s", body)
+		}
+		if !strings.Contains(body, `hx-post="/admin/users/`) {
+			t.Errorf("want the modal fragment's form to be htmx-enhanced, got:\n%s", body)
+		}
+	})
+
+	t.Run("unknown user, htmx request uses HX-Redirect", func(t *testing.T) {
+		u := newFixture()
+		ac := newTestController(u)
+		unknownUUID := fake.UUID().V4()
+		r := newUserEditViewRequest(t, ctxUser, unknownUUID, true)
+		w := httptest.NewRecorder()
+
+		ac.handleUserEditView()(w, r)
+
+		assertHXRedirectOnError(t, w, "/admin/users/"+unknownUUID)
+	})
 }
 
 func TestHandleUserAdd(t *testing.T) {
@@ -333,6 +404,161 @@ func TestHandleUserEdit(t *testing.T) {
 		if got := decodedFlashMessage(t, w); !strings.Contains(got, "This email address is already registered.") {
 			t.Errorf("want a user-friendly duplicate-email message, got %q", got)
 		}
+	})
+
+	t.Run("duplicate email, htmx request uses HX-Redirect", func(t *testing.T) {
+		targetUser := user.User{UUID: fake.UUID().V4(), Email: "target4@example.com"}
+		userRepo := &user.FakeRepository{
+			Users: []user.User{
+				targetUser,
+				{UUID: fake.UUID().V4(), Email: "other4@example.com"},
+			},
+		}
+		ac := adminController{
+			userService: user.NewService(userRepo),
+		}
+
+		form := url.Values{}
+		form.Set("email", "other4@example.com")
+		form.Set("nick_name", "target4")
+		form.Set("display_name", "Target Four")
+		form.Set("password", "admin-reset-password1234")
+
+		r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/admin/users/"+targetUser.UUID, strings.NewReader(form.Encode()))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		r.Header.Set("HX-Request", "true")
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("uuid", targetUser.UUID)
+		ctx := context.WithValue(r.Context(), chi.RouteCtxKey, rctx)
+		ctx = httpcontext.WithUser(ctx, ctxUser)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+
+		ac.handleUserEdit()(w, r)
+
+		assertHXRedirectOnError(t, w, "/admin/users/"+targetUser.UUID)
+	})
+
+	t.Run("htmx request re-renders the user's row and closes the modal", func(t *testing.T) {
+		userRepo := &user.FakeRepository{}
+		userService := user.NewService(userRepo)
+
+		targetUser := user.User{
+			UUID:        fake.UUID().V4(),
+			Email:       "target5@example.com",
+			NickName:    "target5",
+			DisplayName: "Target Five",
+			Password:    "original-password1234",
+		}
+		if err := userService.Add(t.Context(), targetUser); err != nil {
+			t.Fatalf("failed to seed user: %q", err)
+		}
+		seededUser, err := userService.ByNickName(t.Context(), targetUser.NickName)
+		if err != nil {
+			t.Fatalf("failed to retrieve seeded user: %q", err)
+		}
+
+		sessionRepo := &session.FakeRepository{}
+		sessionService, err := session.NewService(sessionRepo, "hmac-key")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		ac := adminController{
+			userService:       userService,
+			sessionService:    sessionService,
+			adminUserListView: view.New("admin/user_list.gohtml"),
+		}
+
+		form := url.Values{}
+		form.Set("email", seededUser.Email)
+		form.Set("nick_name", seededUser.NickName)
+		form.Set("display_name", "Target Five Renamed")
+		form.Set("password", "admin-reset-password1234")
+
+		r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/admin/users/"+seededUser.UUID, strings.NewReader(form.Encode()))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		r.Header.Set("HX-Request", "true")
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("uuid", seededUser.UUID)
+		ctx := context.WithValue(r.Context(), chi.RouteCtxKey, rctx)
+		ctx = httpcontext.WithUser(ctx, ctxUser)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+
+		ac.handleUserEdit()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("HX-Retarget"); got != "#user-row-"+seededUser.UUID {
+			t.Errorf("want HX-Retarget to the user's row, got %q", got)
+		}
+		if got := w.Header().Get("HX-Reswap"); got != "outerHTML" {
+			t.Errorf("want HX-Reswap outerHTML, got %q", got)
+		}
+		if got := w.Header().Get("HX-Trigger"); got != "modal:close" {
+			t.Errorf("want HX-Trigger modal:close, got %q", got)
+		}
+		if body := w.Body.String(); !strings.Contains(body, "Target Five Renamed") {
+			t.Errorf("want the re-rendered row to reflect the update, got:\n%s", body)
+		}
+	})
+
+	t.Run("session revocation failure, htmx request uses HX-Redirect", func(t *testing.T) {
+		userRepo := &user.FakeRepository{}
+		userService := user.NewService(userRepo)
+
+		targetUser := user.User{
+			UUID:        fake.UUID().V4(),
+			Email:       "target6@example.com",
+			NickName:    "target6",
+			DisplayName: "Target Six",
+			Password:    "original-password1234",
+		}
+		if err := userService.Add(t.Context(), targetUser); err != nil {
+			t.Fatalf("failed to seed user: %q", err)
+		}
+		seededUser, err := userService.ByNickName(t.Context(), targetUser.NickName)
+		if err != nil {
+			t.Fatalf("failed to retrieve seeded user: %q", err)
+		}
+
+		sessionRepo := &session.FakeRepository{
+			SessionDeleteByUserUUIDErr: errors.New("connection reset"),
+		}
+		sessionService, err := session.NewService(sessionRepo, "hmac-key")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		ac := adminController{
+			userService:    userService,
+			sessionService: sessionService,
+		}
+
+		form := url.Values{}
+		form.Set("email", seededUser.Email)
+		form.Set("nick_name", seededUser.NickName)
+		form.Set("display_name", seededUser.DisplayName)
+		form.Set("password", "admin-reset-password1234")
+
+		r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/admin/users/"+seededUser.UUID, strings.NewReader(form.Encode()))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		r.Header.Set("HX-Request", "true")
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("uuid", seededUser.UUID)
+		ctx := context.WithValue(r.Context(), chi.RouteCtxKey, rctx)
+		ctx = httpcontext.WithUser(ctx, ctxUser)
+		r = r.WithContext(ctx)
+		w := httptest.NewRecorder()
+
+		ac.handleUserEdit()(w, r)
+
+		assertHXRedirectOnError(t, w, "/admin/users/"+seededUser.UUID)
 	})
 }
 

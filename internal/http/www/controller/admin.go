@@ -204,6 +204,10 @@ func (ac *adminController) handleUserDelete() func(w http.ResponseWriter, r *htt
 }
 
 // handleUserEditView renders the user edition form.
+//
+// On an htmx request, it responds with only the form fragment, meant to be
+// loaded into the user list page's edit modal. On a plain request, it
+// renders the full page as usual, so the URL stays independently navigable.
 func (ac *adminController) handleUserEditView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -212,8 +216,16 @@ func (ac *adminController) handleUserEditView() func(w http.ResponseWriter, r *h
 		userToEdit, err := ac.userService.ByUUID(ctx, userUUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve user")
-			view.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, err.Error())
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			formData := map[string]any{"User": userToEdit, "InModal": true}
+			if err := ac.adminUserEditView.RenderTemplate(w, "userEditForm", formData); err != nil {
+				log.Error().Err(err).Msg("failed to render user edit form fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -226,6 +238,15 @@ func (ac *adminController) handleUserEditView() func(w http.ResponseWriter, r *h
 }
 
 // handleUserEdit processes the user edition form.
+//
+// On success:
+//   - htmx request: re-renders the user's row and retargets/reswaps the
+//     response into it (outerHTML), and fires a "modal:close" client-side
+//     event so the user list page's edit modal closes.
+//   - plain request: flash + redirect to the referring page, as before.
+//
+// On error, it falls back to the same flash+redirect (or HX-Redirect, for
+// htmx requests) behavior used throughout this file.
 func (ac *adminController) handleUserEdit() func(w http.ResponseWriter, r *http.Request) {
 	type userEditForm struct {
 		Email       string `schema:"email"`
@@ -242,8 +263,7 @@ func (ac *adminController) handleUserEdit() func(w http.ResponseWriter, r *http.
 		var form userEditForm
 		if err := decodeForm(r, &form); err != nil {
 			log.Error().Err(err).Msg("failed to parse user edition form")
-			view.PutFlashError(w, err.Error())
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, err.Error())
 			return
 		}
 
@@ -258,16 +278,26 @@ func (ac *adminController) handleUserEdit() func(w http.ResponseWriter, r *http.
 
 		if err := ac.userService.Update(ctx, editedUser); err != nil {
 			log.Error().Err(err).Msg("failed to update user")
-			view.PutFlashError(w, userFacingError(err))
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			view.RedirectOnError(w, r, r.URL.Path, userFacingError(err))
 			return
 		}
 
 		// an admin-initiated edit always rewrites the password hash, so revoke the edited user's sessions too
 		if err := ac.sessionService.DeleteByUserUUID(ctx, editedUser.UUID); err != nil {
 			log.Error().Err(err).Msg("failed to revoke user sessions")
-			view.PutFlashWarning(w, fmt.Sprintf("user %q was updated, but their other active sessions could not be revoked", editedUser.Email))
-			http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+			view.RedirectOnWarning(w, r, r.URL.Path, fmt.Sprintf("user %q was updated, but their other active sessions could not be revoked", editedUser.Email))
+			return
+		}
+
+		if r.Header.Get(htmx.HeaderRequest) == "true" {
+			w.Header().Set(htmx.HeaderRetarget, "#user-row-"+userUUID)
+			w.Header().Set(htmx.HeaderReswap, "outerHTML")
+			w.Header().Set(htmx.HeaderTrigger, "modal:close")
+
+			if err := ac.adminUserListView.RenderTemplate(w, "userRow", editedUser); err != nil {
+				log.Error().Err(err).Msg("failed to render user row fragment")
+				http.Error(w, "Something went wrong", http.StatusInternalServerError)
+			}
 			return
 		}
 

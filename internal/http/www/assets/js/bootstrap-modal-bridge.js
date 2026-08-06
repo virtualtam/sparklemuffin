@@ -9,12 +9,14 @@
  * HX-Trigger: modal:close header (set by the server after a successful edit
  * or delete). Any currently-open Bootstrap modal is hidden in response.
  *
- * Opens the bookmark edit modal only once its form has loaded: unlike the
- * other modals on this page (opened immediately via data-bs-toggle, then
- * filled in by htmx), the bookmark edit modal is opened after its form has
- * swapped in, so it never shows empty and then grows once EasyMDE's editor
- * arrives. Waits for htmx:afterSettle, not htmx:afterSwap, for the same
+ * Opens modals only once their content has loaded: trigger elements carry
+ * hx-get/hx-target but no data-bs-toggle, so a modal never becomes visible
+ * with the previous row's content (or nothing at all, on the first open)
+ * still in it. Waits for htmx:afterSettle, not htmx:afterSwap, for the same
  * reconciliation reasons as easymde-init.js and complete-tags.js.
+ *
+ * The modal id is derived from its body's id by convention:
+ * "foo-bar-modal-body" -> "fooBarModal".
  *
  * Copyright VirtualTam 2022, 2026
  * SPDX-License-Identifier: MIT
@@ -26,10 +28,17 @@ document.addEventListener("modal:close", () => {
 });
 
 document.addEventListener("htmx:afterSettle", (event) => {
-    if (event.detail.target.id !== "bookmark-edit-modal-body") {
+    const bodyId = event.detail.target.id;
+    if (!bodyId.endsWith("-modal-body")) {
         return;
     }
 
-    const modalEl = document.getElementById("bookmarkEditModal");
+    const modalId = bodyId
+        .slice(0, -"-modal-body".length)
+        .split("-")
+        .map((word, i) => (i === 0 ? word : word[0].toUpperCase() + word.slice(1)))
+        .join("") + "Modal";
+
+    const modalEl = document.getElementById(modalId);
     window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
 });

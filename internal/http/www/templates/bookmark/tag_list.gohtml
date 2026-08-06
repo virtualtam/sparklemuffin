@@ -28,7 +28,7 @@
   </nav>
 
   <div class="modal fade" id="tagEditModal" tabindex="-1" aria-labelledby="tagEditModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="tagEditModalLabel">Edit tag</h5>
@@ -40,7 +40,7 @@
   </div>
 
   <div class="modal fade" id="tagDeleteModal" tabindex="-1" aria-labelledby="tagDeleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="tagDeleteModalLabel">Delete tag</h5>
@@ -66,14 +66,12 @@
   <div class="btn-group">
     <a class="btn btn-sm bg-info-subtle text-info-emphasis border-0" href="/bookmarks/tags/{{.EncodedName}}/edit"
       title="Edit tag: {{.Name}}"
-      hx-get="/bookmarks/tags/{{.EncodedName}}/edit" hx-target="#tag-edit-modal-body" hx-swap="innerHTML"
-      data-bs-toggle="modal" data-bs-target="#tagEditModal">
+      hx-get="/bookmarks/tags/{{.EncodedName}}/edit" hx-target="#tag-edit-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-pen-to-square"></i>
     </a>
     <a class="btn btn-sm bg-danger-subtle text-danger-emphasis border-0" href="/bookmarks/tags/{{.EncodedName}}/delete"
       title="Delete tag: {{.Name}}"
-      hx-get="/bookmarks/tags/{{.EncodedName}}/delete" hx-target="#tag-delete-modal-body" hx-swap="innerHTML"
-      data-bs-toggle="modal" data-bs-target="#tagDeleteModal">
+      hx-get="/bookmarks/tags/{{.EncodedName}}/delete" hx-target="#tag-delete-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-trash"></i>
     </a>
   </div>

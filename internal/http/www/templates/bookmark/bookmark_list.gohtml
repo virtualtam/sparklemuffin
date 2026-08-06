@@ -29,7 +29,7 @@
 
   <div class="modal fade" id="bookmarkDeleteModal" tabindex="-1" aria-labelledby="bookmarkDeleteModalLabel"
        aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="bookmarkDeleteModalLabel">Delete bookmark</h5>
@@ -79,8 +79,7 @@
         </li>
         <li>
           <a href="/bookmarks/{{.Bookmark.UID}}/delete" class="dropdown-item"
-            hx-get="/bookmarks/{{.Bookmark.UID}}/delete" hx-target="#bookmark-delete-modal-body" hx-swap="innerHTML"
-            data-bs-toggle="modal" data-bs-target="#bookmarkDeleteModal">
+            hx-get="/bookmarks/{{.Bookmark.UID}}/delete" hx-target="#bookmark-delete-modal-body" hx-swap="innerHTML">
             <i class="fa-solid fa-trash me-1"></i>
             Delete
           </a>

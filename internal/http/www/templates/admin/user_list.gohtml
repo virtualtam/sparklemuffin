@@ -10,7 +10,7 @@
   {{template "userTable" .}}
 
   <div class="modal fade" id="userDeleteModal" tabindex="-1" aria-labelledby="userDeleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="userDeleteModalLabel">Delete user</h5>
@@ -53,8 +53,7 @@
       <i class="fa-solid fa-pen-to-square"></i>
     </a>
     <a class="text-danger" href="/admin/users/{{.UUID}}/delete" title="Delete user"
-      hx-get="/admin/users/{{.UUID}}/delete" hx-target="#user-delete-modal-body" hx-swap="innerHTML"
-      data-bs-toggle="modal" data-bs-target="#userDeleteModal">
+      hx-get="/admin/users/{{.UUID}}/delete" hx-target="#user-delete-modal-body" hx-swap="innerHTML">
       <i class="fa-solid fa-trash"></i>
     </a>
   </td>

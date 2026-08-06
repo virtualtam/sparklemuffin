@@ -8,8 +8,6 @@
     </ol>
   </nav>
 
-  <h2 class="h3">Delete user - {{.Email}}</h2>
-
   {{template "userDeleteForm" (dict "User" . "InModal" false)}}
 </section>
 {{end}}

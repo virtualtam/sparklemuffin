@@ -1,0 +1,69 @@
+{{define "bookmarkRow"}}
+<li class="bookmark mb-4" id="bookmark-row-{{.Bookmark.UID}}">
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <strong>
+      {{- if .Bookmark.Private}}
+      <span class="text-danger">[Private]</span>
+      {{- end}}
+      <a class="link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover" href="{{.Bookmark.URL}}">{{.Bookmark.Title}}</a>
+    </strong>
+    <strong>
+      <time>{{.Bookmark.CreatedAt.Format "2006-01-02"}}</time>
+    </strong>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <div class="d-flex align-items-center gap-1">
+      <i class="fa-solid fa-tags"></i>
+      <div class="d-flex flex-wrap gap-1">
+        {{- range .Bookmark.Tags}}
+        <a class="badge bg-secondary-subtle text-secondary-emphasis"
+          href="{{if $.Public}}/u/{{$.Owner.NickName}}/bookmarks{{else}}/bookmarks{{end}}?search={{.}}">{{.}}</a>
+        {{- end}}
+      </div>
+    </div>
+    {{if .Public}}
+    <a href="/u/{{.Owner.NickName}}/bookmarks/{{.Bookmark.UID}}">
+      <i class="fa-solid fa-link me-1"></i>
+      Permalink
+    </a>
+    {{else}}
+    <div class="dropdown">
+      <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+        aria-expanded="false" aria-controls="dropdown-menu-{{.Bookmark.UID}}">
+        Actions
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end" id="dropdown-menu-{{.Bookmark.UID}}" role="menu">
+        <li>
+          <a href="/bookmarks/{{.Bookmark.UID}}/edit" class="dropdown-item"
+            hx-get="/bookmarks/{{.Bookmark.UID}}/edit" hx-target="#bookmark-edit-modal-body" hx-swap="innerHTML">
+            <i class="fa-solid fa-pen-to-square me-1"></i>
+            Edit
+          </a>
+        </li>
+        <li>
+          <a href="/bookmarks/{{.Bookmark.UID}}/delete" class="dropdown-item"
+            hx-get="/bookmarks/{{.Bookmark.UID}}/delete" hx-target="#bookmark-delete-modal-body" hx-swap="innerHTML">
+            <i class="fa-solid fa-trash me-1"></i>
+            Delete
+          </a>
+        </li>
+        {{- if not .Bookmark.Private}}
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <a href="/u/{{.Owner.NickName}}/bookmarks/{{.Bookmark.UID}}" class="dropdown-item">
+            <i class="fa-solid fa-link me-1"></i>
+            Permalink
+          </a>
+        </li>
+        {{- end}}
+      </ul>
+    </div>
+    {{end}}
+  </div>
+  {{- with .Bookmark.Description}}
+  <div class="content">
+    {{. | MarkdownToHTML}}
+  </div>
+  {{- end}}
+</li>
+{{end}}

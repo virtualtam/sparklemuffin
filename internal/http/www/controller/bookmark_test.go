@@ -48,7 +48,7 @@ func newTestBookmarkController(bookmarks []bookmark.Bookmark) bookmarkController
 
 	return bookmarkController{
 		queryingService:  bookmarkquerying.NewService(queryingRepo),
-		bookmarkListView: view.New("bookmark/bookmark_list.gohtml"),
+		bookmarkListView: view.New("bookmark/bookmark_list.gohtml", "bookmark/bookmark_row.gohtml"),
 	}
 }
 
@@ -188,7 +188,7 @@ func TestHandleBookmarkListView(t *testing.T) {
 		queryingRepo := &bookmarkquerying.FakeRepository{}
 		bc := bookmarkController{
 			queryingService:  bookmarkquerying.NewService(queryingRepo),
-			bookmarkListView: view.New("bookmark/bookmark_list.gohtml"),
+			bookmarkListView: view.New("bookmark/bookmark_list.gohtml", "bookmark/bookmark_row.gohtml"),
 		}
 		r := newBookmarkListRequest(t, ctxUser, "", true)
 		w := httptest.NewRecorder()
@@ -985,7 +985,7 @@ func newTestBookmarkControllerForBookmarkEdit(ctxUser user.User, b bookmark.Book
 	return bookmarkController{
 		bookmarkService:  bookmark.NewService(repo),
 		queryingService:  bookmarkquerying.NewService(queryingRepo),
-		bookmarkListView: view.New("bookmark/bookmark_list.gohtml"),
+		bookmarkListView: view.New("bookmark/bookmark_list.gohtml", "bookmark/bookmark_row.gohtml"),
 		bookmarkEditView: view.New("bookmark/bookmark_edit.gohtml"),
 	}
 }

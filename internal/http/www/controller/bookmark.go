@@ -53,12 +53,12 @@ func RegisterBookmarkHandlers(
 		bookmarkAddView:    view.New("bookmark/bookmark_add.gohtml"),
 		bookmarkDeleteView: view.New("bookmark/bookmark_delete.gohtml"),
 		bookmarkEditView:   view.New("bookmark/bookmark_edit.gohtml"),
-		bookmarkListView:   view.New("bookmark/bookmark_list.gohtml"),
+		bookmarkListView:   view.New("bookmark/bookmark_list.gohtml", "bookmark/bookmark_row.gohtml"),
 
 		bookmarkExportView: view.New("bookmark/bookmark_export.gohtml"),
 		bookmarkImportView: view.New("bookmark/bookmark_import.gohtml"),
 
-		publicBookmarkListView: view.New("public/bookmark_list.gohtml"),
+		publicBookmarkListView: view.New("public/bookmark_list.gohtml", "bookmark/bookmark_row.gohtml"),
 
 		tagDeleteView: view.New("bookmark/tag_delete.gohtml"),
 		tagEditView:   view.New("bookmark/tag_edit.gohtml"),

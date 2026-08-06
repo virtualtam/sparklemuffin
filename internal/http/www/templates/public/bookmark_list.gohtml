@@ -4,35 +4,7 @@
   {{template "bookmarkSearchForm" .}}
   <ol start="{{.Page.ItemOffset}}">
     {{range .Bookmarks}}
-    <li class="bookmark mb-4">
-      <div class="d-flex justify-content-between align-items-center mb-1">
-        <strong>
-          <a class="link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover" href="{{.URL}}">{{.Title}}</a>
-        </strong>
-        <strong>
-          <time>{{.CreatedAt.Format "2006-01-02"}}</time>
-        </strong>
-      </div>
-      <div class="d-flex justify-content-between align-items-center mb-1">
-        <div class="d-flex align-items-center gap-1">
-          <i class="fa-solid fa-tags"></i>
-          <div class="d-flex flex-wrap gap-1">
-            {{- range .Tags}}
-            <a class="badge bg-secondary-subtle text-secondary-emphasis" href="/u/{{$.Owner.NickName}}/bookmarks?search={{.}}">{{.}}</a>
-            {{- end}}
-          </div>
-        </div>
-        <a href="/u/{{$.Owner.NickName}}/bookmarks/{{.UID}}">
-          <i class="fa-solid fa-link me-1"></i>
-          Permalink
-        </a>
-      </div>
-      {{- with .Description}}
-      <div class="content">
-        {{. | MarkdownToHTML}}
-      </div>
-      {{- end}}
-    </li>
+    {{template "bookmarkRow" (dict "Bookmark" . "Owner" $.Owner "Public" true)}}
     {{end}}
   </ol>
   <nav class="d-flex justify-content-between align-items-center">

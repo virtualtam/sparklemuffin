@@ -91,13 +91,13 @@ a.badge {
 }
 
 a.badge:hover {
-  filter: brightness(0.95);
+  filter: brightness(0.85);
 }
 
 /* Bookmarks */
 .tag-count {
   display: inline-block;
-  width: 2.5em;
+  min-width: 2.5em;
 }
 
 /* Feeds */

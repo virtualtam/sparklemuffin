@@ -56,7 +56,7 @@
 {{define "tagRow"}}
 <div class="d-flex justify-content-between align-items-center mb-2" id="tag-row-{{.EncodedName}}">
   <div class="d-flex align-items-center gap-2">
-    <span class="badge text-bg-secondary tag-count">{{.Count}}</span>
+    <span class="badge bg-secondary-subtle text-secondary-emphasis tag-count">{{.Count}}</span>
     <a class="link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover"
        href="/bookmarks?search={{.Name}}" title="Bookmarks tagged {{.Name}}">
       <i class="fa-solid fa-tag me-1"></i>

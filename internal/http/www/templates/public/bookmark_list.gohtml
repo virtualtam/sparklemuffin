@@ -18,7 +18,7 @@
           <i class="fa-solid fa-tags"></i>
           <div class="d-flex flex-wrap gap-1">
             {{- range .Tags}}
-            <a class="badge text-bg-light" href="/u/{{$.Owner.NickName}}/bookmarks?search={{.}}">{{.}}</a>
+            <a class="badge bg-secondary-subtle text-secondary-emphasis" href="/u/{{$.Owner.NickName}}/bookmarks?search={{.}}">{{.}}</a>
             {{- end}}
           </div>
         </div>

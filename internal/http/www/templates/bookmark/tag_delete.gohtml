@@ -14,7 +14,7 @@
 
 {{/* InModal enables htmx attributes; only true when loaded into the tag list page's delete modal. */}}
 {{define "tagDeleteForm"}}
-<p class="mb-4">Delete tag: <span class="badge text-bg-secondary">{{.Tag.Name}}</span>?</p>
+<p class="mb-4">Delete tag: <span class="badge bg-secondary-subtle text-secondary-emphasis">{{.Tag.Name}}</span>?</p>
 
 <form action="/bookmarks/tags/{{.Tag.EncodedName}}/delete" method="POST"
   {{if .InModal}}hx-post="/bookmarks/tags/{{.Tag.EncodedName}}/delete" hx-target="this" hx-swap="outerHTML"{{end}}>

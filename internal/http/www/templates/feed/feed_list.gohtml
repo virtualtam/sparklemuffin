@@ -196,11 +196,11 @@
 </li>
 {{end}}
 
-{{define "unreadCountAll"}}<span id="unread-count-all" class="badge text-bg-secondary" hx-swap-oob="true">{{.}}</span>{{end}}
+{{define "unreadCountAll"}}<span id="unread-count-all" class="badge bg-secondary-subtle text-secondary-emphasis" hx-swap-oob="true">{{.}}</span>{{end}}
 
-{{define "unreadCountCategory"}}<span id="unread-count-category-{{.Slug}}" class="badge text-bg-secondary" hx-swap-oob="true">{{.Unread}}</span>{{end}}
+{{define "unreadCountCategory"}}<span id="unread-count-category-{{.Slug}}" class="badge bg-secondary-subtle text-secondary-emphasis" hx-swap-oob="true">{{.Unread}}</span>{{end}}
 
-{{define "unreadCountFeed"}}<span id="unread-count-feed-{{.Slug}}" class="badge text-bg-secondary" hx-swap-oob="true">{{.Unread}}</span>{{end}}
+{{define "unreadCountFeed"}}<span id="unread-count-feed-{{.Slug}}" class="badge bg-secondary-subtle text-secondary-emphasis" hx-swap-oob="true">{{.Unread}}</span>{{end}}
 
 {{define "entryCount"}}
 <p id="entry-count" class="fs-5 mb-0" hx-swap-oob="true">

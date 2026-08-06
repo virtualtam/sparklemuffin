@@ -13,12 +13,6 @@
   min-width: 30ch;
 }
 
-.awesomplete>ul,
-.awesomplete>ul:before {
-  background: var(--bulma-primary-100);
-  color: var(--bulma-text);
-}
-
 .awesomplete input[type=text] {
   box-sizing: border-box;
   width: 100%;

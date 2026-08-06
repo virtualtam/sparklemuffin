@@ -43,11 +43,11 @@
 }
 
 .EasyMDEContainer .CodeMirror {
-  border-color: hsl(var(--bulma-input-h), var(--bulma-input-s), calc(var(--bulma-input-border-l) + var(--bulma-input-border-l-delta)));
-  border-bottom-left-radius: var(--bulma-radius);
-  border-bottom-right-radius: var(--bulma-radius);
-  box-shadow: inset 0 .0625em .125em hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), var(--bulma-scheme-invert-l), .05);
-  color: var(--bulma-text);
+  border-color: var(--bs-border-color);
+  border-bottom-left-radius: var(--bs-border-radius);
+  border-bottom-right-radius: var(--bs-border-radius);
+  box-shadow: var(--bs-box-shadow-inset);
+  color: var(--bs-body-color);
   flex: 1 1 auto;
   font-family: firacode, monospace;
   font-size: 14px;
@@ -62,7 +62,7 @@
 }
 
 .cm-s-easymde .cm-link {
-  color: var(--bulma-text);
+  color: var(--bs-body-color);
 }
 
 .cm-s-easymde .cm-url {
@@ -70,7 +70,7 @@
 }
 
 .editor-statusbar {
-  color: var(--bulma-text);
+  color: var(--bs-body-color);
   font-size: .8rem;
   text-align: left;
 }
@@ -81,20 +81,20 @@
 }
 
 .editor-toolbar {
-  border-color: hsl(var(--bulma-input-h), var(--bulma-input-s), calc(var(--bulma-input-border-l) + var(--bulma-input-border-l-delta)));
-  border-top-left-radius: var(--bulma-radius);
-  border-top-right-radius: var(--bulma-radius);
+  border-color: var(--bs-border-color);
+  border-top-left-radius: var(--bs-border-radius);
+  border-top-right-radius: var(--bs-border-radius);
 }
 
 .editor-toolbar button {
-  color: var(--bulma-text);
+  color: var(--bs-body-color);
 }
 
 .editor-toolbar button.active,
 .editor-toolbar button:hover {
-  background: var(--bulma-primary-90);
-  border-color: hsl(var(--bulma-input-h), var(--bulma-input-s), calc(var(--bulma-input-border-l) + var(--bulma-input-border-l-delta)));
-  color: var(--bulma-text);
+  background: var(--bs-tertiary-bg);
+  border-color: var(--bs-border-color);
+  color: var(--bs-body-color);
 }
 
 .editor-toolbar i.separator {

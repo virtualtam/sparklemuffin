@@ -131,7 +131,7 @@
   <div class="d-flex align-items-center gap-3 list-header-offset">
     <form action="{{.URLPath}}" method="GET"
       hx-get="{{.URLPath}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true">
-      <div class="input-group input-group-sm">
+      <div class="input-group input-group-sm search-form">
         <input class="form-control" type="text" id="searchTerms" name="search" placeholder="Search terms"
           value="{{.SearchTerms}}">
         <button class="btn btn-outline-secondary" type="submit">

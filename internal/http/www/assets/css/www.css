@@ -193,6 +193,11 @@ a.badge:hover {
   --bs-btn-active-border-color: transparent;
 }
 
+.search-form {
+  width: 40ch;
+  max-width: 100%;
+}
+
 /* Bookmarks */
 .tag-count {
   display: inline-block;

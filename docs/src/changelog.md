@@ -36,6 +36,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Fix broken documentation links and reword the README
 - Link the CI badge to its workflow run, add a badge for the GHCR Docker image
 
+#### WWW
+- Migrate the application from Bulma to Bootstrap 5
+
 ## [v0.7.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.0) - 2026-07-26
 ### Security
 - Update Chi HTTP middleware to read the remote client IP address from a header set by a reverse proxy

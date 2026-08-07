@@ -7,9 +7,9 @@
   <img src="https://img.shields.io/badge/ghcr.io-sparklemuffin-blue?logo=docker" alt="Docker image on the GitHub Container Registry">
 </a>
 
-**SparkleMuffin** is a self-hosted bookmark manager and feed aggregator.
+**SparkleMuffin** is a self-hosted Web bookmark manager and feed aggregator.
 
-It has a minimalist interface. The interface is simple to use, free of clutter,
+It offers a minimalist interface and aims at being simple to use, clutter-free
 and accessible.
 
 SparkleMuffin allows you to:
@@ -20,11 +20,9 @@ SparkleMuffin allows you to:
 - follow Atom and RSS feeds;
 - import your existing feed subscriptions using the [OPML File Format](./docs/src/developer-guide/reference/opml.md).
 
-
 ## Project status
 
-SparkleMuffin is alpha software. Do not use it in production.
-
+SparkleMuffin is under active development and should be considered beta software.
 
 ## Change Log
 
@@ -34,7 +32,7 @@ See [CHANGELOG](./docs/src/changelog.md) and [ROADMAP](./docs/src/roadmap.md).
 ## License
 
 - **sparklemuffin** is licensed under the MIT license.
-- **favicons**: generated from the Fira Code font, licensed under the SIL Open Font License, Version 1.1.
+- **favicons** are generated using the Fira Code font, licensed under the SIL Open Font License, Version 1.1.
 - **Exo2** is licensed under the SIL Open Font License, Version 1.1.
 - **Fira Code** is licensed under the SIL Open Font License, Version 1.1.
 - **Wikipedia article extracts** used in unit tests are licensed under the Creative Commons Attribution-Share-Alike License 4.0.

@@ -13,6 +13,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 #### Packaging and automation
 - Add root certificates for Let's Encrypt Generation Y certificate authorities YE and YR
+- Setup GitHub Actions to store and reuse Docker cache mounts (NPM, Go)
+- Setup GitHub Actions to build multi-platform Docker images (amd64, arm64)
 
 ### Changed
 #### Packaging and automation

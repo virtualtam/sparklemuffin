@@ -25,6 +25,7 @@ services:
 
   sparklemuffin:
     image: ghcr.io/virtualtam/sparklemuffin:latest
+    build: .
     depends_on:
       postgres:
         condition: service_healthy

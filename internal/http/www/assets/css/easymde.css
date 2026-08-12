@@ -43,6 +43,7 @@
 }
 
 .EasyMDEContainer .CodeMirror {
+  background-color: var(--bs-body-bg);
   border-color: var(--bs-border-color);
   border-bottom-left-radius: var(--bs-border-radius);
   border-bottom-right-radius: var(--bs-border-radius);
@@ -66,7 +67,15 @@
 }
 
 .cm-s-easymde .cm-url {
-  color: #183691;
+  color: var(--bs-link-color);
+}
+
+.cm-s-easymde .cm-quote {
+  color: var(--bs-secondary-color);
+}
+
+.cm-header {
+  color: var(--bs-primary);
 }
 
 .editor-statusbar {
@@ -98,5 +107,5 @@
 }
 
 .editor-toolbar i.separator {
-  border: 1px dashed gray;
+  border: 1px dashed var(--bs-secondary-color);
 }

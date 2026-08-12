@@ -1,6 +1,6 @@
 {{define "navbar"}}
 <header>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm fixed-top" aria-label="main navigation">
+  <nav class="navbar navbar-expand-lg navbar-light bg-body-tertiary border-bottom fixed-top" aria-label="main navigation">
     <div class="container-fluid">
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
         aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -13,7 +13,7 @@
           <li class="nav-item dropdown d-flex align-items-center">
             <a class="nav-link" href="/bookmarks">
               <i class="fa-regular fa-bookmark me-1"></i>
-              Bookmarks
+              <span class="nav-link-label">Bookmarks</span>
             </a>
             <a class="nav-link dropdown-toggle navbar-dropdown-caret px-3" href="#" role="button" data-bs-toggle="dropdown"
                aria-expanded="false" aria-controls="navbar-dropdown-bookmarks">
@@ -25,39 +25,39 @@
               <li>
                 <a class="dropdown-item" href="/bookmarks/add">
                   <i class="fa-solid fa-plus me-1"></i>
-                  Add bookmark
+                  <span class="nav-link-label">Add bookmark</span>
                 </a>
               </li>
               <li>
                 <a class="dropdown-item" href="/bookmarks/tags">
                   <i class="fa-solid fa-tags me-1"></i>
-                  Tags
+                  <span class="nav-link-label">Tags</span>
                 </a>
               </li>
               <li><hr class="dropdown-divider"></li>
               <li>
                 <a class="dropdown-item" href="/bookmarks/export">
                   <i class="fa-solid fa-download me-1"></i>
-                  Export bookmarks
+                  <span class="nav-link-label">Export bookmarks</span>
                 </a>
               </li>
               <li>
                 <a class="dropdown-item" href="/bookmarks/import">
                   <i class="fa-solid fa-upload me-1"></i>
-                  Import bookmarks
+                  <span class="nav-link-label">Import bookmarks</span>
                 </a>
               </li>
               <li><hr class="dropdown-divider"></li>
               <li>
                 <a class="dropdown-item" href="/u/{{.User.NickName}}/bookmarks">
                   <i class="fa-solid fa-share-nodes me-1"></i>
-                  Public bookmark URL
+                  <span class="nav-link-label">Public bookmark URL</span>
                 </a>
               </li>
               <li>
                 <a class="dropdown-item" href="/u/{{.User.NickName}}/feed/atom">
                   <i class="fa-solid fa-rss me-1"></i>
-                  Public Atom feed
+                  <span class="nav-link-label">Public Atom feed</span>
                 </a>
               </li>
             </ul>
@@ -66,7 +66,7 @@
           <li class="nav-item dropdown d-flex align-items-center">
             <a class="nav-link" href="/feeds">
               <i class="fa-regular fa-newspaper me-1"></i>
-              Feeds
+              <span class="nav-link-label">Feeds</span>
             </a>
             <a class="nav-link dropdown-toggle navbar-dropdown-caret px-3" href="#" role="button" data-bs-toggle="dropdown"
                aria-expanded="false" aria-controls="navbar-dropdown-feeds">
@@ -78,32 +78,32 @@
               <li>
                 <a class="dropdown-item" href="/feeds/subscriptions/add">
                   <i class="fa-solid fa-plus me-1"></i>
-                  Add subscription
+                  <span class="nav-link-label">Add subscription</span>
                 </a>
               </li>
               <li>
                 <a class="dropdown-item" href="/feeds/categories/add">
                   <i class="fa-solid fa-plus me-1"></i>
-                  Add category
+                  <span class="nav-link-label">Add category</span>
                 </a>
               </li>
               <li>
                 <a class="dropdown-item" href="/feeds/subscriptions">
                   <i class="fa-regular fa-newspaper me-1"></i>
-                  Manage subscriptions
+                  <span class="nav-link-label">Manage subscriptions</span>
                 </a>
               </li>
               <li><hr class="dropdown-divider"></li>
               <li>
                 <a class="dropdown-item" href="/feeds/export">
                   <i class="fa-solid fa-download me-1"></i>
-                  Export subscriptions
+                  <span class="nav-link-label">Export subscriptions</span>
                 </a>
               </li>
               <li>
                 <a class="dropdown-item" href="/feeds/import">
                   <i class="fa-solid fa-upload me-1"></i>
-                  Import subscriptions
+                  <span class="nav-link-label">Import subscriptions</span>
                 </a>
               </li>
             </ul>
@@ -112,26 +112,32 @@
         </ul>
 
         <ul class="navbar-nav">
+          <li class="nav-item d-flex align-items-center">
+            <button type="button" id="theme-toggle" class="btn btn-link nav-link" aria-label="Toggle color theme">
+              <i class="fa-solid fa-circle-half-stroke"></i>
+              <span class="visually-hidden">Toggle color theme</span>
+            </button>
+          </li>
           {{- if .User}}
           {{- if .User.IsAdmin}}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                aria-expanded="false" aria-controls="navbar-dropdown-administration">
               <i class="fa-solid fa-lock me-1"></i>
-              Administration
+              <span class="nav-link-label">Administration</span>
             </a>
 
             <ul class="dropdown-menu dropdown-menu-end" id="navbar-dropdown-administration" role="menu">
               <li>
                 <a class="dropdown-item" href="/admin/users/add">
                   <i class="fa-solid fa-user-plus me-1"></i>
-                  Add user
+                  <span class="nav-link-label">Add user</span>
                 </a>
               </li>
               <li>
                 <a class="dropdown-item" href="/admin/users">
                   <i class="fa-solid fa-users me-1"></i>
-                  Users
+                  <span class="nav-link-label">Users</span>
                 </a>
               </li>
             </ul>
@@ -141,7 +147,7 @@
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                aria-expanded="false" aria-controls="navbar-dropdown-account">
               <i class="fa-solid fa-user me-1"></i>
-              Account
+              <span class="nav-link-label">Account</span>
             </a>
 
             <ul class="dropdown-menu dropdown-menu-end" id="navbar-dropdown-account" role="menu">
@@ -150,19 +156,19 @@
               <li>
                 <a class="dropdown-item" href="/account/info">
                   <i class="fa-solid fa-user me-1"></i>
-                  Information
+                  <span class="nav-link-label">Information</span>
                 </a>
               </li>
               <li>
                 <a class="dropdown-item" href="/account/password">
                   <i class="fa-solid fa-lock me-1"></i>
-                  Password
+                  <span class="nav-link-label">Password</span>
                 </a>
               </li>
               <li>
                 <a class="dropdown-item" href="/account/preferences">
                   <i class="fa-solid fa-gear me-1"></i>
-                  Preferences
+                  <span class="nav-link-label">Preferences</span>
                 </a>
               </li>
               <li><hr class="dropdown-divider"></li>
@@ -178,7 +184,7 @@
           </li>
           {{- else}}
           <li class="nav-item">
-            <a class="nav-link" href="/login">Login</a>
+            <a class="nav-link" href="/login"><span class="nav-link-label">Login</span></a>
           </li>
           {{- end}}
         </ul>

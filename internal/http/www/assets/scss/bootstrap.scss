@@ -10,9 +10,58 @@ $modal-inner-padding: 1.5rem;
 $badge-font-weight: 400;
 $headings-font-weight: 600;
 $form-label-font-weight: 700;
-$body-color: #404654;
+
+// Nord palette: Polar Night, Snow Storm, Frost, Aurora.
+// https://www.nordtheme.com/docs/colors-and-palettes
+$primary: #5e81ac; // nord10, frost
+$secondary: #4c566a; // nord3, polar night
+$success: #a3be8c; // nord14, aurora
+$info: #8fbcbb; // nord7, frost
+$warning: #ebcb8b; // nord13, aurora
+$danger: #bf616a; // nord11, aurora
+
+// nord9 shaded 40%: the literal swatch falls short of 4.5:1 on the light body-bg.
+$link-color: #4d6174;
+
+$body-bg: #eceff4; // nord6, snow storm
+$body-color: #000;
 $body-emphasis-color: $body-color;
-$secondary-bg-subtle: #f3f4f6;
+$body-secondary-color: rgba($body-color, .5);
+
+// One step up from body-bg, for chrome elements (navbar, footer) that sit
+// above the page rather than being part of its content.
+$body-tertiary-bg: #e5e9f0; // nord5, snow storm
+$body-tertiary-bg-dark: #3b4252; // nord1, polar night
+
+$border-width: 1px;
+$border-color: #000;
+
+// Root cause of the translucent dropdown/card/modal borders seen last round.
+$border-color-translucent: $border-color;
+
+// var(...) rather than the light-only $border-color Sass value, so these
+// stay correct once dark mode redefines --bs-border-color.
+$navbar-light-toggler-border-color: var(--bs-border-color);
+
+// Active page keeps the same blue as the rest of pagination, not $primary.
+$pagination-active-bg: $link-color;
+$pagination-active-border-color: var(--bs-border-color);
+
+// [data-bs-theme="dark"] overrides -- Bootstrap's own dark color-mode
+// mechanism. Semantic colors (primary/secondary/success/info/warning/danger)
+// and their auto-derived text-emphasis/bg-subtle/border-subtle variants stay
+// the same in both modes; only surfaces, ink and links invert.
+$body-bg-dark: #2e3440; // nord0, polar night
+$body-color-dark: #b8bdc6; // nord4, shaded 15%
+$border-color-dark: #4c566a; // nord3, polar night
+$border-color-translucent-dark: $border-color-dark; // same root-cause fix, dark mode
+$link-color-dark: #81a1c1; // nord9, unshaded -- already clears 4.5:1 here
+$body-emphasis-color-dark: #eceff4; // nord6, titles -- default #fff isn't a Nord swatch
+
+$enable-shadows: false;
+
+$dropdown-link-hover-bg: var(--bs-primary-bg-subtle);
+
 $navbar-light-emphasis: rgba(var(--bs-emphasis-color-rgb), 1);
 $navbar-light-color: $navbar-light-emphasis;
 $navbar-light-hover-color: $navbar-light-emphasis;

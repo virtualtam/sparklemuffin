@@ -17,3 +17,38 @@
   box-sizing: border-box;
   width: 100%;
 }
+
+.awesomplete>ul {
+  background: var(--bs-body-bg);
+  border: var(--bs-border-width) solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  box-shadow: none;
+  color: var(--bs-body-color);
+}
+
+.awesomplete>ul:before {
+  background: var(--bs-body-bg);
+}
+
+.awesomplete>ul>li:hover {
+  background: var(--bs-primary-bg-subtle);
+  color: var(--bs-body-color);
+}
+
+/* --bs-primary-bg-subtle is near-black in dark mode; a dedicated lighter fill instead. */
+[data-bs-theme="dark"] .awesomplete>ul>li:hover {
+  background: #434c5e; /* nord2 */
+}
+
+.awesomplete>ul>li[aria-selected="true"] {
+  background: var(--bs-primary);
+  color: #fff;
+}
+
+/* Matches the vendor's hover/selected mark selectors' own specificity, not just their source order. */
+.awesomplete mark,
+.awesomplete li:hover mark,
+.awesomplete li[aria-selected="true"] mark {
+  background: var(--bs-warning);
+  color: #000;
+}

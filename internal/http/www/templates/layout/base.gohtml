@@ -1,13 +1,22 @@
 {{define "base"}}
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en"{{with .Theme}} data-bs-theme="{{.}}"{{end}}>
 
   <head>
     <meta charset="utf-8">
-    <meta name="color-scheme" content="only light" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="viewport" content="width=device-width">
     <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowNestedOobSwaps": false}'>
     <title>{{.Title}}</title>
+    {{if not .Theme}}
+    <script nonce="{{.CSP.Nonce}}">
+      (function () {
+        var theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.setAttribute("data-bs-theme", theme);
+        document.cookie = "theme=" + theme + ";path=/;max-age=31536000;samesite=lax";
+      })();
+    </script>
+    {{end}}
     <link rel="stylesheet" type="text/css" href="/static/www.min.css">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
@@ -33,6 +42,7 @@
     <script nonce="{{.CSP.Nonce}}" src="/static/htmx.min.js"></script>
     <script nonce="{{.CSP.Nonce}}" src="/static/bootstrap.bundle.min.js"></script>
     <script nonce="{{.CSP.Nonce}}" src="/static/bootstrap-modal-bridge.min.js"></script>
+    <script nonce="{{.CSP.Nonce}}" src="/static/theme-toggle.min.js"></script>
     {{template "scripts" .CSP}}
   </body>
 </html>

@@ -32,6 +32,7 @@ type Data struct {
 	Content     any
 	CSP         ContentSecurityPolicy
 	Flash       *flash
+	Theme       string
 	Title       string
 	User        *user.User
 }
@@ -100,6 +101,7 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request, data any) {
 	viewData.popFlash(w, r)
 	viewData.User = httpcontext.UserValue(r.Context())
 	viewData.CSP.Nonce = httpcontext.CSPNonceValue(r.Context())
+	viewData.Theme = themeFromCookie(r)
 
 	var buf bytes.Buffer
 

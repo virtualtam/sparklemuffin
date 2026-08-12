@@ -92,6 +92,20 @@ body {
 
 a:hover {
   text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+/* Underlining the icon+text <a> itself always risked drawing under the icon too (browser-dependent); the nav-link-label span is the only element that ever gets the underline, so the icon can't. */
+.nav-link:hover,
+.dropdown-item:hover {
+  text-decoration: none;
+}
+
+.nav-link:hover .nav-link-label,
+.dropdown-item:hover .nav-link-label {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
 }
 
 /* Wider modal, for content that needs more room (e.g. long URLs, a Markdown
@@ -128,6 +142,7 @@ code {
 
 .content a:hover {
   text-decoration: underline;
+  text-decoration-thickness: 1.3pt;
 }
 
 .footer {
@@ -144,6 +159,21 @@ a.badge {
 
 a.badge:hover {
   text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+/* Stopgap: lighter light-mode-only submit-button fill, without touching $primary itself; revisit once button colors are decoupled from it. */
+html:not([data-bs-theme="dark"]) .btn-primary {
+  --bs-btn-color: #000;
+  --bs-btn-bg: #81a1c1; /* nord9 */
+  --bs-btn-border-color: #81a1c1;
+  --bs-btn-hover-color: #000;
+  --bs-btn-hover-bg: #6e89a4; /* nord9, shaded 15% */
+  --bs-btn-hover-border-color: #6e89a4;
+  --bs-btn-active-color: #000;
+  --bs-btn-active-bg: #617991; /* nord9, shaded 25% */
+  --bs-btn-active-border-color: #617991;
 }
 
 /* Lighter hover/active fill than Bootstrap's default solid gray, normal body
@@ -161,41 +191,66 @@ a.badge:hover {
   --bs-btn-active-color: var(--bs-body-color);
 }
 
-/* Tinted icon buttons (edit/delete action pairs). Same --bs-btn-* mechanism
-   as .btn-outline-secondary above -- not Bootstrap's button-variant() mixin
-   directly, since its color-contrast()/shade-color() calls need real Sass
-   colors and these subtle tokens are CSS custom properties (theme-aware).
-   Using dedicated classes instead of the bg-*-subtle/text-*-emphasis utility
-   combo avoids fighting their !important background-color/color (utilities
-   compile with !important; .btn:hover's own background-color/color don't,
-   so a plain --bs-btn-hover-bg override could never win against them). */
+/* Pinned to fixed Nord swatches, not the info/danger tokens, so edit/delete stay blue/red regardless of semantic-role reassignment. */
 .btn-subtle-info {
-  --bs-btn-color: var(--bs-info-text-emphasis);
-  --bs-btn-bg: var(--bs-info-bg-subtle);
-  --bs-btn-border-color: transparent;
-  --bs-btn-hover-color: var(--bs-info-text-emphasis);
-  --bs-btn-hover-bg: var(--bs-info-border-subtle);
-  --bs-btn-hover-border-color: transparent;
-  --bs-btn-active-color: var(--bs-info-text-emphasis);
-  --bs-btn-active-bg: var(--bs-info-border-subtle);
-  --bs-btn-active-border-color: transparent;
+  --bs-btn-color: #000;
+  --bs-btn-bg: #88c0d0; /* nord8 */
+  --bs-btn-border-color: var(--bs-border-color);
+  --bs-btn-hover-color: #000;
+  --bs-btn-hover-bg: #9ac9d7; /* nord8, tinted 15% */
+  --bs-btn-hover-border-color: var(--bs-border-color);
+  --bs-btn-active-color: #000;
+  --bs-btn-active-bg: #a6d0dc; /* nord8, tinted 25% */
+  --bs-btn-active-border-color: var(--bs-border-color);
 }
 
 .btn-subtle-danger {
-  --bs-btn-color: var(--bs-danger-text-emphasis);
-  --bs-btn-bg: var(--bs-danger-bg-subtle);
-  --bs-btn-border-color: transparent;
-  --bs-btn-hover-color: var(--bs-danger-text-emphasis);
-  --bs-btn-hover-bg: var(--bs-danger-border-subtle);
-  --bs-btn-hover-border-color: transparent;
-  --bs-btn-active-color: var(--bs-danger-text-emphasis);
-  --bs-btn-active-bg: var(--bs-danger-border-subtle);
-  --bs-btn-active-border-color: transparent;
+  --bs-btn-color: #000;
+  --bs-btn-bg: #bf616a; /* nord11 */
+  --bs-btn-border-color: var(--bs-border-color);
+  --bs-btn-hover-color: #000;
+  --bs-btn-hover-bg: #c97980; /* nord11, tinted 15% */
+  --bs-btn-hover-border-color: var(--bs-border-color);
+  --bs-btn-active-color: #000;
+  --bs-btn-active-bg: #cf898f; /* nord11, tinted 25% */
+  --bs-btn-active-border-color: var(--bs-border-color);
+}
+
+/* Dark mode: dropdown text brighter than body copy (nord4, pre-shading), hover fill one Polar Night step up from body-bg. */
+[data-bs-theme="dark"] .dropdown-menu {
+  --bs-dropdown-color: #d8dee9;
+  --bs-dropdown-link-color: #d8dee9;
+  --bs-dropdown-link-hover-color: #d8dee9;
+  --bs-dropdown-link-hover-bg: #434c5e; /* nord2 */
+}
+
+/* Dark mode: .btn-secondary's white text makes Bootstrap shade (darken) its hover by default; flip to a lighter tint instead. */
+[data-bs-theme="dark"] .btn-secondary {
+  --bs-btn-hover-bg: #676f80; /* nord3, tinted 15% */
+  --bs-btn-hover-border-color: #676f80;
+  --bs-btn-active-bg: #707888; /* nord3, tinted 20% */
+  --bs-btn-active-border-color: #707888;
+}
+
+.card-header {
+  --bs-card-cap-bg: var(--bs-secondary);
+  --bs-card-cap-color: #fff;
+}
+
+.table thead {
+  background-color: var(--bs-secondary);
+  color: #fff;
 }
 
 .search-form {
   width: 40ch;
   max-width: 100%;
+}
+
+/* Dark mode: the auto-derived subtle-secondary background is nearly black; lighten it, and the paired text to match. */
+[data-bs-theme="dark"] .badge.bg-secondary-subtle {
+  background-color: #434c5e !important; /* nord2 */
+  color: #eceff4 !important; /* nord6 */
 }
 
 /* Bookmarks */

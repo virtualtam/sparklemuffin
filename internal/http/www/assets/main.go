@@ -204,6 +204,7 @@ var (
 			"js/bootstrap-modal-bridge.js",
 			"js/complete-tags.js",
 			"js/easymde-init.js",
+			"js/theme-toggle.js",
 		},
 		Outdir:            "../static",
 		Bundle:            true,

@@ -12,6 +12,12 @@
         - [Configuration](./user-guide/reference/configuration.md)
         - [Command-line flags](./user-guide/reference/cli.md)
         - [Observability](./user-guide/reference/observability.md)
+        - [Related Software](./user-guide/reference/related-software/index.md)
+            - [Social Bookmarking](./user-guide/reference/related-software/social-bookmarking.md)
+            - [Feed Aggregators](./user-guide/reference/related-software/feed-aggregators.md)
+    - [Concepts](./user-guide/concepts/index.md)
+        - [Social Bookmarking](./user-guide/concepts/social-bookmarking.md)
+        - [Feed Syndication](./user-guide/concepts/feed-syndication.md)
 
 - [Developer Guide](./developer-guide/index.md)
     - [How-to Guides](./developer-guide/how-to/index.md)

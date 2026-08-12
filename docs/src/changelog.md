@@ -16,6 +16,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Setup GitHub Actions to store and reuse Docker cache mounts (NPM, Go)
 - Setup GitHub Actions to build multi-platform Docker images (amd64, arm64)
 
+#### Documentation
+- Document related software: social bookmarking, feed aggregators
+
 ### Changed
 #### Packaging and automation
 - Bump golangci-lint

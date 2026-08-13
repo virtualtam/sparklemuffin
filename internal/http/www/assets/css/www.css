@@ -51,6 +51,11 @@ body {
   padding-top: 3.5rem;
 }
 
+[data-bs-theme="dark"] .chroma,
+[data-bs-theme="dark"] .bg {
+  background-color: #3b4252; /* nord1 */
+}
+
 /* Reboot gives ol/ul a 2rem left padding for the marker, so a numbered
    list's own item text sits 2rem right of the list's own left edge. Align
    headers/search-forms above such a list with that same text, not the

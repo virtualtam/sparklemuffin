@@ -19,6 +19,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/bep/godartsass/v2"
@@ -56,7 +57,11 @@ func copyStaticAssets() {
 	}
 }
 
-// generateChromaCss generates a CSS file corresponding to the selected Chroma syntax highlighting style.
+// generateChromaCss generates the CSS for Markdown code block syntax
+// highlighting: "nord-light" unscoped (the default), "nord" nested under
+// [data-bs-theme="dark"] so it follows the runtime theme toggle. Goldmark
+// itself (internal/http/www/view/markdown.go) only emits token classes, not
+// colours, so this is the sole place the actual palette is defined.
 //
 // The generated CSS is imported in the main CSS file (www.css) and processed as part of the assets pipeline.
 //
@@ -64,23 +69,87 @@ func copyStaticAssets() {
 // - configuring Chroma to output CSS classes instead of inline style;
 // - enforcing a strict Content Security Policy by not having to allow 'unsafe-inline' styles.
 func generateChromaCss() {
-	const (
-		// chromaStyle is the name of the syntax highlighting style used by Chroma when rendering Markdown code blocks.
-		//
-		// This value MUST match the one configured in internal/http/www/view/markdown.go for the Markdown renderer.
-		chromaStyle = "catppuccin-latte"
-	)
+	registerNordLightStyle()
 
 	formatter := html.New(html.WithClasses(true))
 
 	var buf bytes.Buffer
-	if err := formatter.WriteCSS(&buf, styles.Get(chromaStyle)); err != nil {
-		log.Fatalf("esbuild: failed to generate chroma CSS: %s\n", err)
+	if err := formatter.WriteCSS(&buf, styles.Get("nord-light")); err != nil {
+		log.Fatalf("esbuild: failed to generate light chroma CSS: %s\n", err)
 	}
+
+	var darkBuf bytes.Buffer
+	if err := formatter.WriteCSS(&darkBuf, styles.Get("nord")); err != nil {
+		log.Fatalf("esbuild: failed to generate dark chroma CSS: %s\n", err)
+	}
+	buf.WriteString("[data-bs-theme=\"dark\"] {\n")
+	buf.Write(darkBuf.Bytes())
+	buf.WriteString("}\n")
 
 	if err := writeFile(&buf, "css/chroma.css"); err != nil {
 		log.Fatalf("esbuild: failed to write chroma CSS: %s\n", err)
 	}
+}
+
+// nordLightEntries mirrors chroma's own bundled "nord" style
+// (github.com/alecthomas/chroma/v2/styles/nord.xml), with the background and
+// base text swapped for light-mode contrast and every accent colour shaded
+// to clear a 4.5:1 contrast ratio against the light body background.
+var nordLightEntries = chroma.StyleEntries{
+	chroma.Background:            "#2e3440 bg:#e5e9f0",
+	chroma.Error:                 "#994e55",
+	chroma.Keyword:               "bold #4d6174",
+	chroma.KeywordPseudo:         "nobold #4d6174",
+	chroma.KeywordType:           "nobold #4d6174",
+	chroma.Name:                  "#2e3440",
+	chroma.NameAttribute:         "#4f6767",
+	chroma.NameBuiltin:           "#4d6174",
+	chroma.NameClass:             "#4f6767",
+	chroma.NameConstant:          "#4f6767",
+	chroma.NameDecorator:         "#875849",
+	chroma.NameEntity:            "#875849",
+	chroma.NameException:         "#994e55",
+	chroma.NameFunction:          "#446068",
+	chroma.NameLabel:             "#4f6767",
+	chroma.NameNamespace:         "#4f6767",
+	chroma.NameOther:             "#2e3440",
+	chroma.NameTag:               "#4d6174",
+	chroma.NameVariable:          "#2e3440",
+	chroma.NameProperty:          "#4f6767",
+	chroma.LiteralString:         "#5a694d",
+	chroma.LiteralStringDoc:      "#525e73",
+	chroma.LiteralStringEscape:   "#5e5138",
+	chroma.LiteralStringInterpol: "#5a694d",
+	chroma.LiteralStringOther:    "#5a694d",
+	chroma.LiteralStringRegex:    "#5e5138",
+	chroma.LiteralStringSymbol:   "#5a694d",
+	chroma.LiteralNumber:         "#755c70",
+	chroma.Operator:              "#4d6174",
+	chroma.OperatorWord:          "bold #4d6174",
+	chroma.Punctuation:           "#2e3440",
+	chroma.Comment:               "italic #525e73",
+	chroma.CommentPreproc:        "#4b678a",
+	chroma.GenericDeleted:        "#994e55",
+	chroma.GenericEmph:           "italic",
+	chroma.GenericError:          "#994e55",
+	chroma.GenericHeading:        "bold #446068",
+	chroma.GenericInserted:       "#5a694d",
+	chroma.GenericOutput:         "#2e3440",
+	chroma.GenericPrompt:         "bold #4c566a",
+	chroma.GenericStrong:         "bold",
+	chroma.GenericSubheading:     "bold #446068",
+	chroma.GenericTraceback:      "#994e55",
+	chroma.TextWhitespace:        "#2e3440",
+}
+
+// registerNordLightStyle builds "nord-light" and pairs it with chroma's bundled "nord" as its dark counterpart.
+func registerNordLightStyle() {
+	nordLight, err := chroma.NewStyleBuilder("nord-light").AddAll(nordLightEntries).Build()
+	if err != nil {
+		log.Fatalf("chroma: failed to build the nord-light style: %s\n", err)
+	}
+
+	styles.RegisterPair(nordLight, styles.Get("nord"))
 }
 
 // sassEntryPoints lists the custom Sass entry points compiled ahead of the

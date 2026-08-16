@@ -6,9 +6,11 @@ The roadmap is based on the Now / Next / Later format to communicate current foc
 
 ## Now
 - www: Review OWASP Top 10 checklist
+- www: Responsive design
+- www: Dark mode / theme switching
 
 ## Next
-- Feed: Add entry tags, with auto-tagging rules
+- Feed: Improve duplicate entry detection
 - Feed: Bookmark entry
 - Internal: Rework error flow (logging, metadata)
     - www: Improve error messages
@@ -20,7 +22,7 @@ The roadmap is based on the Now / Next / Later format to communicate current foc
 - Bookmark, Feed: Store site favicon
 - Bookmark, Feed: Store site domain
 - Feed: Adapt fetch frequency to entry publication frequency
-- Feed: Improve duplicate entry detection
+- Feed: Add entry tags, with auto-tagging rules
 - Search: Query language
 - Taxonomy: Tag hierarchy
 
@@ -33,9 +35,7 @@ The roadmap is based on the Now / Next / Later format to communicate current foc
 
 ### www
 - www: Display curated content on the home page
-- www: Responsive design
 - www: Internationalization (i18n)
-- www: Dark mode / theme switching
 
 ### Command-line
 - Database: Review connection pool transaction and timeout usage
@@ -49,4 +49,4 @@ The roadmap is based on the Now / Next / Later format to communicate current foc
 - Integration: Archive.org
 - Integration: Self-hosted archive
 - Integration: News (HN, Lobste.rs)
-- Integration: Forges (Github, Gitlab, Gitea/Forgejo)
+- Integration: Forges (Github, Gitlab, Codeberg, Gitea/Forgejo)

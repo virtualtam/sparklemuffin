@@ -6,8 +6,6 @@ The roadmap is based on the Now / Next / Later format to communicate current foc
 
 ## Now
 - www: Review OWASP Top 10 checklist
-- www: Responsive design
-- www: Dark mode / theme switching
 
 ## Next
 - Feed: Improve duplicate entry detection

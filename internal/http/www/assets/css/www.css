@@ -51,6 +51,10 @@ body {
   padding-top: 3.5rem;
 }
 
+::selection {
+  background-color: rgba(94, 129, 172, 0.35); /* nord10 */
+}
+
 [data-bs-theme="dark"] .chroma,
 [data-bs-theme="dark"] .bg {
   background-color: #3b4252; /* nord1 */

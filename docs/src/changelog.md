@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## UNRELEASED
+## [v0.7.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.1) - 2026-08-16
 ### Security
 - Bump GitHub Actions to their latest release, and pin them by SHA + version comment
 - Enable Dependabot for GitHub Actions, Go modules, Node.js packages and the SQLFluff `uv` project
@@ -41,6 +41,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 #### WWW
 - Migrate the application from Bulma to Bootstrap 5
+- Use the Nord color palettes
+- Switch between light and dark themes
 
 ## [v0.7.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.0) - 2026-07-26
 ### Security

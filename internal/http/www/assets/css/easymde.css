@@ -117,3 +117,18 @@
 .editor-toolbar i.separator {
   border: 1px dashed var(--bs-secondary-color);
 }
+
+.CodeMirror-selected,
+.CodeMirror-focused .CodeMirror-selected,
+.EasyMDEContainer .CodeMirror-focused .CodeMirror-selected {
+  background: rgba(94, 129, 172, 0.35); /* nord10 */
+}
+
+.CodeMirror-line::selection,
+.CodeMirror-line > span::selection,
+.CodeMirror-line > span > span::selection,
+.CodeMirror-line::-moz-selection,
+.CodeMirror-line > span::-moz-selection,
+.CodeMirror-line > span > span::-moz-selection {
+  background: rgba(94, 129, 172, 0.35); /* nord10 */
+}

@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-// Initializes EasyMDE on textareas marked with data-easymde.
+// Initializes EasyMDE on textareas marked with `data-easymde`.
+//
 // Usage: <textarea data-easymde></textarea>
 import EasyMDE from "easymde";
 
@@ -43,10 +44,13 @@ function initEasyMDE(root) {
             "link",
             "image",
             "|",
-            "preview",
-            "|",
             "guide",
         ],
+        // Disabled: would require maintaining two syntax highlighting implementations (Chroma).
+        shortcuts: {
+            togglePreview: null,
+            toggleSideBySide: null,
+        },
         indentWithTabs: false,
         tabSize: 4,
     });
@@ -59,7 +63,7 @@ function initEasyMDE(root) {
 }
 
 // A modal starts hidden, so CodeMirror first lays out against a zero-width element.
-// Poll with setTimeout, since requestAnimationFrame stalls on a backgrounded tab.
+// Poll with setTimeout, since requestAnimationFrame stalls on a background tab.
 function refreshOnceVisible(editor, modalEl, attemptsLeft = 30) {
     if (getComputedStyle(modalEl).display === "none") {
         if (attemptsLeft > 0) {

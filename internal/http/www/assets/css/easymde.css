@@ -62,16 +62,24 @@
   }
 }
 
+.CodeMirror-cursor {
+  border-left-color: var(--bs-body-color);
+}
+
+.cm-s-easymde .cm-comment {
+  background: transparent;
+}
+
 .cm-s-easymde .cm-link {
   color: var(--bs-body-color);
 }
 
-.cm-s-easymde .cm-url {
-  color: var(--bs-link-color);
-}
-
 .cm-s-easymde .cm-quote {
   color: var(--bs-secondary-color);
+}
+
+.cm-s-easymde .cm-url {
+  color: var(--bs-link-color);
 }
 
 .cm-header {

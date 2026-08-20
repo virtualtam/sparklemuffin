@@ -21,7 +21,7 @@
         <label class="col-sm-2 col-form-label text-sm-end" for="category">Category</label>
         <div class="col-sm-10">
           <select class="form-select" name="category" id="category">
-            {{- range .}}
+            {{- range .Categories}}
             <option value="{{.UUID}}">{{.Name}}</option>
             {{- end}}
           </select>
@@ -31,7 +31,8 @@
       <div class="row mb-3">
         <label class="col-sm-2 col-form-label text-sm-end" for="tags">Tags</label>
         <div class="col-sm-10">
-          <input class="form-control" type="text" id="tags" name="tags" placeholder="Tags, separated by spaces">
+          <input class="form-control" type="text" id="tags" name="tags" placeholder="Tags, separated by spaces"
+            data-list="{{Join .Tags ","}}">
         </div>
       </div>
 
@@ -43,4 +44,8 @@
     </form>
   </div>
 </section>
+{{end}}
+
+{{define "scripts"}}
+  <script nonce="{{.Nonce}}" src="/static/complete-tags.min.js"></script>
 {{end}}

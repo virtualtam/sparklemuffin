@@ -229,6 +229,23 @@ func (s *Service) SubscriptionsByCategory(ctx context.Context, userUUID string) 
 	return s.r.FeedQueryingSubscriptionsByCategory(ctx, userUUID)
 }
 
+// TagNamesByCount returns all Feed subscription tag names for a given user,
+// sorted by count in descending order.
+func (s *Service) TagNamesByCount(ctx context.Context, userUUID string) ([]string, error) {
+	tags, err := s.r.FeedSubscriptionTagGetAll(ctx, userUUID)
+	if err != nil {
+		return []string{}, err
+	}
+
+	tagNames := make([]string, len(tags))
+
+	for i, tag := range tags {
+		tagNames[i] = tag.Name
+	}
+
+	return tagNames, nil
+}
+
 // TagsByPage returns a TagPage containing a limited and offset number of Feed subscription tags.
 func (s *Service) TagsByPage(ctx context.Context, userUUID string, number uint) (TagPage, error) {
 	if number < 1 {

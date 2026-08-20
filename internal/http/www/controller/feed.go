@@ -787,6 +787,11 @@ func (fc *feedController) handleFeedSubscriptionListView() func(w http.ResponseW
 
 // handleFeedSubscriptionAddView renders the feed subscription addition form.
 func (fc *feedController) handleFeedSubscriptionAddView() func(w http.ResponseWriter, r *http.Request) {
+	type feedSubscriptionAddFormContent struct {
+		Categories []feed.Category
+		Tags       []string
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
@@ -799,9 +804,20 @@ func (fc *feedController) handleFeedSubscriptionAddView() func(w http.ResponseWr
 			return
 		}
 
+		tags, err := fc.queryingService.TagNamesByCount(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
+			view.PutFlashError(w, "failed to retrieve existing tags")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
 		viewData := view.Data{
-			Content: categories,
-			Title:   "Add feed",
+			Content: feedSubscriptionAddFormContent{
+				Categories: categories,
+				Tags:       tags,
+			},
+			Title: "Add feed",
 		}
 
 		fc.feedSubscriptionAddView.Render(w, r, viewData)
@@ -919,6 +935,7 @@ func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseW
 	type feedSubscriptionEditFormContent struct {
 		Subscription feedquerying.Subscription
 		Categories   []feed.Category
+		Tags         []string
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -940,8 +957,15 @@ func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseW
 			return
 		}
 
+		tags, err := fc.queryingService.TagNamesByCount(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve tags")
+			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve existing tags")
+			return
+		}
+
 		if r.Header.Get(htmx.HeaderRequest) == "true" {
-			formData := map[string]any{"Subscription": subscription, "Categories": categories, "InModal": true}
+			formData := map[string]any{"Subscription": subscription, "Categories": categories, "Tags": tags, "InModal": true}
 			if err := fc.feedSubscriptionEditView.RenderTemplate(w, "subscriptionEditForm", formData); err != nil {
 				log.Error().Err(err).Msg("failed to render subscription edit form fragment")
 				http.Error(w, "Something went wrong", http.StatusInternalServerError)
@@ -953,6 +977,7 @@ func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseW
 			Content: feedSubscriptionEditFormContent{
 				Subscription: subscription,
 				Categories:   categories,
+				Tags:         tags,
 			},
 			Title: "Edit feed subscription",
 		}

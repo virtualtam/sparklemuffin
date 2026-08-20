@@ -9,9 +9,13 @@
   </nav>
 
   <div class="col-lg-8">
-    {{template "subscriptionEditForm" (dict "Subscription" .Subscription "Categories" .Categories "InModal" false)}}
+    {{template "subscriptionEditForm" (dict "Subscription" .Subscription "Categories" .Categories "Tags" .Tags "InModal" false)}}
   </div>
 </section>
+{{end}}
+
+{{define "scripts"}}
+  <script nonce="{{.Nonce}}" src="/static/complete-tags.min.js"></script>
 {{end}}
 
 {{define "subscriptionEditForm"}}
@@ -54,7 +58,7 @@
     <label class="col-sm-2 col-form-label text-sm-end" for="tags">Tags</label>
     <div class="col-sm-10">
       <input class="form-control" type="text" id="tags" name="tags" placeholder="Tags, separated by spaces"
-        value="{{Join .Subscription.Tags " "}}">
+        value="{{Join .Subscription.Tags " "}}" data-list="{{Join .Tags ","}}">
     </div>
   </div>
 

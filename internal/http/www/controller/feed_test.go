@@ -303,6 +303,57 @@ func TestHandleFeedListView(t *testing.T) {
 	})
 }
 
+func TestHandleFeedListView_EntryTagChipsLinkToSearch(t *testing.T) {
+	ctxUser := testCtxUser
+	category := feed.Category{UUID: "category-2", UserUUID: ctxUser.UUID, Name: "Tech", Slug: "tech-2"}
+	subscribedFeed := feed.Feed{UUID: "feed-2", Title: "Blog", Slug: "blog-2"}
+	taggedSubscription := feed.Subscription{
+		UUID:         "sub-2",
+		UserUUID:     ctxUser.UUID,
+		CategoryUUID: category.UUID,
+		FeedUUID:     subscribedFeed.UUID,
+		Tags:         []string{"golang"},
+	}
+	entry := feed.Entry{UID: "entry-2", FeedUUID: subscribedFeed.UUID, URL: "https://example.com/2", Title: "Post 2"}
+
+	feedRepo := &feed.FakeRepository{
+		Categories:    []feed.Category{category},
+		Entries:       []feed.Entry{entry},
+		Feeds:         []feed.Feed{subscribedFeed},
+		Preferences:   map[string]feed.Preferences{ctxUser.UUID: {UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityAll}},
+		Subscriptions: []feed.Subscription{taggedSubscription},
+	}
+	queryingRepo := &feedquerying.FakeRepository{
+		Categories:    []feed.Category{category},
+		Entries:       []feed.Entry{entry},
+		Feeds:         []feed.Feed{subscribedFeed},
+		Subscriptions: []feed.Subscription{taggedSubscription},
+	}
+
+	fc := feedController{
+		feedService:     feed.NewService(feedRepo, nil, nil),
+		queryingService: feedquerying.NewService(queryingRepo),
+		feedListView:    view.New("feed/feed_list.gohtml"),
+	}
+
+	r := newFeedListRequest(t, ctxUser, "/feeds", "", "", false)
+	w := httptest.NewRecorder()
+
+	fc.handleFeedListAllView()(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+	}
+
+	body := w.Body.String()
+	if !strings.Contains(body, `href="/feeds?search=golang"`) {
+		t.Errorf("want the tag chip to link to a search for its own name, got:\n%s", body)
+	}
+	if !strings.Contains(body, `hx-get="/feeds?search=golang"`) {
+		t.Errorf("want the tag chip to be htmx-enhanced, got:\n%s", body)
+	}
+}
+
 func TestHandleHxFeedEntryToggleRead(t *testing.T) {
 	ctxUser := testCtxUser
 	entry := testEntry
@@ -1018,6 +1069,41 @@ func TestHandleFeedCategoryEdit(t *testing.T) {
 	})
 }
 
+func TestHandleFeedSubscriptionAddView(t *testing.T) {
+	fake := faker.New()
+	ctxUser := testCtxUser
+	category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
+	taggedSubscription := feed.Subscription{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Tags: []string{"golang", "rss"}}
+
+	feedRepo := &feed.FakeRepository{Categories: []feed.Category{category}}
+	queryingRepo := &feedquerying.FakeRepository{Subscriptions: []feed.Subscription{taggedSubscription}}
+
+	fc := feedController{
+		feedService:             feed.NewService(feedRepo, nil, nil),
+		queryingService:         feedquerying.NewService(queryingRepo),
+		feedSubscriptionAddView: view.New("feed/subscription_add.gohtml"),
+	}
+
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/feeds/subscriptions/add", nil)
+	ctx := httpcontext.WithUser(r.Context(), ctxUser)
+	r = r.WithContext(ctx)
+	w := httptest.NewRecorder()
+
+	fc.handleFeedSubscriptionAddView()(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+	}
+
+	body := w.Body.String()
+	if !strings.Contains(body, `<option value="`+category.UUID+`">`) {
+		t.Errorf("want the category rendered as an option, got:\n%s", body)
+	}
+	if !strings.Contains(body, `data-list="golang,rss"`) {
+		t.Errorf("want existing tag names available for autocomplete, got:\n%s", body)
+	}
+}
+
 // newTestFeedControllerForSubscriptionEdit wires a feedController against
 // the given subscription/feed/categories, for exercising the subscription
 // edit handlers.
@@ -1127,6 +1213,9 @@ func TestHandleFeedSubscriptionEditView(t *testing.T) {
 		}
 		if !strings.Contains(body, `value="golang rss"`) {
 			t.Errorf("want the subscription tags pre-filled, got:\n%s", body)
+		}
+		if !strings.Contains(body, `data-list="golang,rss"`) {
+			t.Errorf("want existing tag names available for autocomplete, got:\n%s", body)
 		}
 		if strings.Contains(body, "hx-post") {
 			t.Errorf("want a plain form with no htmx attributes on the full page, got:\n%s", body)

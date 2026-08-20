@@ -174,7 +174,9 @@
     <i class="fa-solid fa-tags"></i>
     <div class="d-flex flex-wrap gap-1">
       {{- range .Entry.SubscriptionTags}}
-      <span class="badge bg-secondary-subtle text-secondary-emphasis">{{.}}</span>
+      <a class="badge bg-secondary-subtle text-secondary-emphasis" href="{{$.URLPath}}?search={{.}}"
+        hx-get="{{$.URLPath}}?search={{.}}" hx-target="#feed-list-content" hx-swap="outerHTML" hx-push-url="true"
+        title="Search entries for &quot;{{.}}&quot;">{{.}}</a>
       {{- end}}
     </div>
   </div>

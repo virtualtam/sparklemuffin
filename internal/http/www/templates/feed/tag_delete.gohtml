@@ -1,0 +1,29 @@
+{{define "content"}}
+<section class="pt-2 container-fluid">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/feeds">Feeds</a></li>
+      <li class="breadcrumb-item"><a href="/feeds/subscriptions/tags">Tags</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Delete</li>
+    </ol>
+  </nav>
+
+  {{template "tagDeleteForm" (dict "Tag" . "InModal" false)}}
+</section>
+{{end}}
+
+{{define "tagDeleteForm"}}
+<p class="mb-4">Delete tag: <strong>{{.Tag.Name}}</strong>?</p>
+
+<form action="/feeds/subscriptions/tags/{{.Tag.EncodedName}}/delete" method="POST"
+  {{if .InModal}}hx-post="/feeds/subscriptions/tags/{{.Tag.EncodedName}}/delete" hx-target="this" hx-swap="outerHTML"{{end}}>
+  <div class="d-flex gap-2">
+    {{if .InModal}}
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    {{else}}
+    <a href="/feeds/subscriptions/tags" class="btn btn-secondary">Cancel</a>
+    {{end}}
+    <button type="submit" class="btn btn-danger">Delete</button>
+  </div>
+</form>
+{{end}}

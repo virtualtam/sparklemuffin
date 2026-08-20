@@ -18,6 +18,11 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Feed
 - Tag feed subscriptions
 
+#### WWW
+- Feed: tag subscriptions
+- Feed: Show subscription tags for each subscription entry
+- Feed: edit, list, search and delete subscription tags
+
 ### Changed
 #### Documentation
 - Automatically expand and collapse the changelog page's headings in the sidebar when scrolling through the page

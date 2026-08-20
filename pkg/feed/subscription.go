@@ -5,6 +5,8 @@ package feed
 
 import (
 	"context"
+	"slices"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -23,6 +25,7 @@ type Subscription struct {
 	UserUUID     string
 
 	Alias string
+	Tags  []string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -51,6 +54,9 @@ func NewSubscription(categoryUUID string, feedUUID string, userUUID string) (Sub
 
 func (s *Subscription) Normalize() {
 	s.normalizeAlias()
+	s.normalizeTags()
+	s.deduplicateTags()
+	s.sortTags()
 }
 
 func (s *Subscription) ValidateForCreation(ctx context.Context, v ValidationRepository) error {
@@ -88,6 +94,40 @@ func (s *Subscription) ensureSubscriptionIsNotRegistered(ctx context.Context, v 
 
 func (s *Subscription) normalizeAlias() {
 	s.Alias = strings.TrimSpace(s.Alias)
+}
+
+func (s *Subscription) normalizeTags() {
+	var tags []string
+
+	for _, tag := range s.Tags {
+		tag := strings.TrimSpace(tag)
+		if tag == "" {
+			continue
+		}
+		tags = append(tags, tag)
+	}
+
+	s.Tags = tags
+}
+
+func (s *Subscription) deduplicateTags() {
+	tagNames := map[string]bool{}
+	var tags []string
+
+	for _, tag := range s.Tags {
+		if tagNames[tag] {
+			continue
+		}
+
+		tagNames[tag] = true
+		tags = append(tags, tag)
+	}
+
+	s.Tags = tags
+}
+
+func (s *Subscription) sortTags() {
+	sort.Strings(s.Tags)
 }
 
 func (s *Subscription) requireCategoryUUID() error {
@@ -144,6 +184,9 @@ func AssertSubscriptionEquals(t *testing.T, want Subscription, got Subscription)
 	}
 	if want.UserUUID != got.UserUUID {
 		t.Errorf("want UserUUID %q, got %q", want.UserUUID, got.UserUUID)
+	}
+	if !slices.Equal(want.Tags, got.Tags) {
+		t.Errorf("want Tags %v, got %v", want.Tags, got.Tags)
 	}
 
 	assert.TimeAlmostEquals(t, "CreatedAt", got.CreatedAt, want.CreatedAt, assert.TimeComparisonDelta)

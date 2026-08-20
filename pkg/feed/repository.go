@@ -92,8 +92,14 @@ type Repository interface {
 	// FeedSubscriptionGetByFeed returns the Subscription for a given user and feed.
 	FeedSubscriptionGetByFeed(ctx context.Context, userUUID string, feedUUID string) (Subscription, error)
 
+	// FeedSubscriptionGetByTag returns all Subscriptions for a given user UUID and tag.
+	FeedSubscriptionGetByTag(ctx context.Context, userUUID string, tag string) ([]Subscription, error)
+
 	// FeedSubscriptionGetByUUID returns the Subscription for a given user and UUID.
 	FeedSubscriptionGetByUUID(ctx context.Context, userUUID string, subscriptionUUID string) (Subscription, error)
+
+	// FeedSubscriptionTagUpdateMany updates a tag for a collection of existing Subscriptions.
+	FeedSubscriptionTagUpdateMany(ctx context.Context, subscriptions []Subscription) (int64, error)
 
 	// FeedSubscriptionUpdate updates an existing Subscription.
 	FeedSubscriptionUpdate(ctx context.Context, subscription Subscription) error

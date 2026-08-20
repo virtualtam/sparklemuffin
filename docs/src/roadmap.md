@@ -5,11 +5,12 @@ All high-level goals and planned work for this project will be documented in thi
 The roadmap is based on the Now / Next / Later format to communicate current focus, upcoming work and longer-term ideas.
 
 ## Now
-- www: Review OWASP Top 10 checklist
+- Feed: Tag subscriptions
+- Feed: Bookmark entry
 
 ## Next
 - Feed: Improve duplicate entry detection
-- Feed: Bookmark entry
+- Taxonomy: Tag hierarchy
 - Internal: Rework error flow (logging, metadata)
     - www: Improve error messages
 
@@ -20,16 +21,18 @@ The roadmap is based on the Now / Next / Later format to communicate current foc
 - Bookmark, Feed: Store site favicon
 - Bookmark, Feed: Store site domain
 - Feed: Adapt fetch frequency to entry publication frequency
-- Feed: Add entry tags, with auto-tagging rules
 - Search: Query language
-- Taxonomy: Tag hierarchy
 
 ### Users
-- Authentication: Password reset
-- Authentication: OAuth2/OpenID
-- Authentication: Two-factor authentication
+- www: Review OWASP Top 10 checklist
+  - Users: Audit log
+  - Users: Identify session by user-agent
+  - Users: Show active sessions
+  - Users: Revoke all sessions
+  - Authentication: Password reset
+  - Authentication: OAuth2/OpenID
+  - Authentication: Two-factor authentication
 - Documentation: Add a user guide with screenshots
-- Users: Audit log
 
 ### www
 - www: Display curated content on the home page

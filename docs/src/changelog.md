@@ -14,6 +14,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### WWW
 - Feed: re-render the list of entries when toggling an entry's read/unread status
 
+### Added
+#### Feed
+- Tag feed subscriptions
+
 ### Changed
 #### Documentation
 - Automatically expand and collapse the changelog page's headings in the sidebar when scrolling through the page

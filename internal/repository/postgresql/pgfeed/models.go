@@ -199,7 +199,8 @@ type DBSubscription struct {
 	FeedUUID     string `db:"feed_uuid"`
 	UserUUID     string `db:"user_uuid"`
 
-	Alias string `db:"alias"`
+	Alias string   `db:"alias"`
+	Tags  []string `db:"tags"`
 
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
@@ -212,6 +213,7 @@ func (s *DBSubscription) asSubscription() feed.Subscription {
 		FeedUUID:     s.FeedUUID,
 		UserUUID:     s.UserUUID,
 		Alias:        s.Alias,
+		Tags:         s.Tags,
 		CreatedAt:    s.CreatedAt,
 		UpdatedAt:    s.UpdatedAt,
 	}

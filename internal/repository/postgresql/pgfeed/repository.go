@@ -928,7 +928,7 @@ func (r *Repository) FeedSubscriptionDelete(ctx context.Context, userUUID string
 
 func (r *Repository) FeedSubscriptionGetByFeed(ctx context.Context, userUUID string, feedUUID string) (feed.Subscription, error) {
 	query := `
-	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, created_at, updated_at
+	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, tags, created_at, updated_at
 	  FROM feed_subscriptions
 	 WHERE user_uuid=$1
 	   AND feed_uuid=$2`
@@ -936,14 +936,65 @@ func (r *Repository) FeedSubscriptionGetByFeed(ctx context.Context, userUUID str
 	return r.feedSubscriptionGetQuery(ctx, query, userUUID, feedUUID)
 }
 
+func (r *Repository) FeedSubscriptionGetByTag(ctx context.Context, userUUID string, tag string) ([]feed.Subscription, error) {
+	query := `
+	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, tags, created_at, updated_at
+	  FROM feed_subscriptions
+	 WHERE user_uuid=$1
+	   AND $2=ANY(tags)`
+
+	return r.feedSubscriptionGetManyQuery(ctx, query, userUUID, tag)
+}
+
 func (r *Repository) FeedSubscriptionGetByUUID(ctx context.Context, userUUID string, subscriptionUUID string) (feed.Subscription, error) {
 	query := `
-	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, created_at, updated_at
+	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, tags, created_at, updated_at
 	  FROM feed_subscriptions
 	 WHERE user_uuid=$1
 	   AND uuid=$2`
 
 	return r.feedSubscriptionGetQuery(ctx, query, userUUID, subscriptionUUID)
+}
+
+func (r *Repository) FeedSubscriptionTagUpdateMany(ctx context.Context, subscriptions []feed.Subscription) (int64, error) {
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	defer r.Rollback(ctx, tx, domain, "FeedSubscriptionTagUpdateMany")
+
+	query := `
+	UPDATE feed_subscriptions
+	SET
+		tags=@tags,
+		updated_at=@updated_at
+	WHERE user_uuid=@user_uuid
+	AND uuid=@uuid`
+
+	var updated int64
+
+	for _, s := range subscriptions {
+		args := pgx.NamedArgs{
+			"user_uuid":  s.UserUUID,
+			"uuid":       s.UUID,
+			"tags":       s.Tags,
+			"updated_at": s.UpdatedAt,
+		}
+
+		commandTag, err := tx.Exec(ctx, query, args)
+		if err != nil {
+			return 0, err
+		}
+
+		updated += commandTag.RowsAffected()
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, err
+	}
+
+	return updated, nil
 }
 
 func (r *Repository) FeedSubscriptionUpdate(ctx context.Context, s feed.Subscription) error {
@@ -952,7 +1003,8 @@ func (r *Repository) FeedSubscriptionUpdate(ctx context.Context, s feed.Subscrip
 	SET
 		category_uuid=@category_uuid,
 		updated_at=@updated_at,
-		alias=@alias
+		alias=@alias,
+		tags=@tags
 	WHERE user_uuid=@user_uuid
 	AND uuid=@uuid`
 
@@ -961,6 +1013,7 @@ func (r *Repository) FeedSubscriptionUpdate(ctx context.Context, s feed.Subscrip
 		"uuid":          s.UUID,
 		"category_uuid": s.CategoryUUID,
 		"alias":         s.Alias,
+		"tags":          s.Tags,
 		"updated_at":    s.UpdatedAt,
 	}
 

@@ -328,6 +328,28 @@ func (r *Repository) feedSubscriptionGetQuery(ctx context.Context, query string,
 	return dbSubscription.asSubscription(), nil
 }
 
+func (r *Repository) feedSubscriptionGetManyQuery(ctx context.Context, query string, queryParams ...any) ([]feed.Subscription, error) {
+	rows, err := r.Pool.Query(ctx, query, queryParams...)
+	if err != nil {
+		return []feed.Subscription{}, err
+	}
+	defer rows.Close()
+
+	var dbSubscriptions []DBSubscription
+
+	if err := pgxscan.ScanAll(&dbSubscriptions, rows); err != nil {
+		return []feed.Subscription{}, err
+	}
+
+	subscriptions := make([]feed.Subscription, len(dbSubscriptions))
+
+	for i, dbSubscription := range dbSubscriptions {
+		subscriptions[i] = dbSubscription.asSubscription()
+	}
+
+	return subscriptions, nil
+}
+
 func (r *Repository) feedSubscriptionTitleGetQuery(ctx context.Context, query string, queryParams ...any) (feedquerying.Subscription, error) {
 	rows, err := r.Pool.Query(ctx, query, queryParams...)
 	if err != nil {

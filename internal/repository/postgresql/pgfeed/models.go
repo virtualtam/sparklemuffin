@@ -241,3 +241,8 @@ func (s *DBQueryingSubscription) asQueryingSubscription() feedquerying.Subscript
 		FeedDescription: s.FeedDescription,
 	}
 }
+
+type DBTag struct {
+	Name  string `db:"name"`
+	Count uint   `db:"count"`
+}

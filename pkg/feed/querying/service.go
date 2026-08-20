@@ -12,6 +12,7 @@ import (
 
 const (
 	entriesPerPage uint   = 20
+	tagsPerPage    uint   = 90
 	PageHeaderAll  string = "All"
 )
 
@@ -226,4 +227,69 @@ func (s *Service) SubscriptionByUUID(ctx context.Context, userUUID string, subsc
 
 func (s *Service) SubscriptionsByCategory(ctx context.Context, userUUID string) ([]SubscriptionsByCategory, error) {
 	return s.r.FeedQueryingSubscriptionsByCategory(ctx, userUUID)
+}
+
+// TagsByPage returns a TagPage containing a limited and offset number of Feed subscription tags.
+func (s *Service) TagsByPage(ctx context.Context, userUUID string, number uint) (TagPage, error) {
+	if number < 1 {
+		return TagPage{}, paginate.ErrPageNumberOutOfBounds
+	}
+
+	tagCount, err := s.r.FeedSubscriptionTagGetCount(ctx, userUUID)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	totalPages := paginate.PageCount(tagCount, tagsPerPage)
+
+	if number > totalPages {
+		return TagPage{}, paginate.ErrPageNumberOutOfBounds
+	}
+
+	if tagCount == 0 {
+		// early return: nothing to display
+		return NewTagPage(1, 1, 0, []Tag{}), nil
+	}
+
+	offset := (number - 1) * tagsPerPage
+
+	tags, err := s.r.FeedSubscriptionTagGetN(ctx, userUUID, tagsPerPage, offset)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	return NewTagPage(number, totalPages, tagCount, tags), nil
+}
+
+// TagsBySearchQueryAndPage returns a TagPage containing a limited and offset
+// number of Feed subscription tags matching a given set of search terms.
+func (s *Service) TagsBySearchQueryAndPage(ctx context.Context, userUUID string, searchTerms string, number uint) (TagPage, error) {
+	if number < 1 {
+		return TagPage{}, paginate.ErrPageNumberOutOfBounds
+	}
+
+	tagCount, err := s.r.FeedSubscriptionTagSearchCount(ctx, userUUID, searchTerms)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	totalPages := paginate.PageCount(tagCount, tagsPerPage)
+
+	if number > totalPages {
+		return TagPage{}, paginate.ErrPageNumberOutOfBounds
+	}
+
+	if tagCount == 0 {
+		// early return: nothing to display
+		return NewTagSearchResultPage(searchTerms, 0, 1, 1, []Tag{}), nil
+	}
+
+	offset := (number - 1) * tagsPerPage
+
+	tags, err := s.r.FeedSubscriptionTagSearchN(ctx, userUUID, searchTerms, tagsPerPage, offset)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	return NewTagSearchResultPage(searchTerms, tagCount, number, totalPages, tags), nil
 }

@@ -1062,3 +1062,87 @@ func (r *Repository) FeedQueryingSubscriptionsByCategory(ctx context.Context, us
 
 	return categories, nil
 }
+
+func (r *Repository) FeedSubscriptionTagGetCount(ctx context.Context, userUUID string) (uint, error) {
+	query := `
+	SELECT COUNT(DISTINCT name)
+	FROM (
+		SELECT UNNEST(tags) AS name
+		FROM feed_subscriptions
+		WHERE user_uuid=$1
+	) s`
+
+	var count uint
+
+	err := r.Pool.QueryRow(ctx, query, userUUID).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *Repository) FeedSubscriptionTagGetAll(ctx context.Context, userUUID string) ([]feedquerying.Tag, error) {
+	query := `
+	SELECT name, COUNT(name) AS count
+	FROM (
+		SELECT UNNEST(tags) AS name
+		FROM  feed_subscriptions
+		WHERE user_uuid=$1
+	) s
+	GROUP BY name
+	ORDER BY count DESC, name`
+
+	return r.feedSubscriptionTagGetQuery(ctx, query, userUUID)
+}
+
+func (r *Repository) FeedSubscriptionTagGetN(ctx context.Context, userUUID string, n uint, offset uint) ([]feedquerying.Tag, error) {
+	query := `
+	SELECT name, COUNT(name) AS count
+	FROM (
+		SELECT UNNEST(tags) AS name
+		FROM  feed_subscriptions
+		WHERE user_uuid=$1
+	) s
+	GROUP BY name
+	ORDER BY count DESC, name
+	LIMIT $2 OFFSET $3`
+
+	return r.feedSubscriptionTagGetQuery(ctx, query, userUUID, n, offset)
+}
+
+func (r *Repository) FeedSubscriptionTagSearchCount(ctx context.Context, userUUID string, searchTerms string) (uint, error) {
+	query := `
+	SELECT COUNT(DISTINCT name)
+	FROM (
+		SELECT UNNEST(tags) AS name
+		FROM feed_subscriptions
+		WHERE user_uuid=$1
+	) s
+	WHERE name ILIKE $2`
+
+	var count uint
+
+	err := r.Pool.QueryRow(ctx, query, userUUID, "%"+searchTerms+"%").Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *Repository) FeedSubscriptionTagSearchN(ctx context.Context, userUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.Tag, error) {
+	query := `
+	SELECT name, COUNT(name) AS count
+	FROM (
+		SELECT UNNEST(tags) AS name
+		FROM  feed_subscriptions
+		WHERE user_uuid=$1
+	) s
+	WHERE name ILIKE $2
+	GROUP BY name
+	ORDER BY count DESC, name
+	LIMIT $3 OFFSET $4`
+
+	return r.feedSubscriptionTagGetQuery(ctx, query, userUUID, "%"+searchTerms+"%", n, offset)
+}

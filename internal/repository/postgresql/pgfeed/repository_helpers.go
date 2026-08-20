@@ -403,3 +403,25 @@ ORDER BY
 
 	return dbSubscriptionTitles, nil
 }
+
+func (r *Repository) feedSubscriptionTagGetQuery(ctx context.Context, query string, queryParams ...any) ([]feedquerying.Tag, error) {
+	rows, err := r.Pool.Query(ctx, query, queryParams...)
+	if err != nil {
+		return []feedquerying.Tag{}, err
+	}
+	defer rows.Close()
+
+	var dbTags []DBTag
+
+	if err := pgxscan.ScanAll(&dbTags, rows); err != nil {
+		return []feedquerying.Tag{}, err
+	}
+
+	var tags []feedquerying.Tag
+
+	for _, dbTag := range dbTags {
+		tags = append(tags, feedquerying.NewTag(dbTag.Name, dbTag.Count))
+	}
+
+	return tags, nil
+}

@@ -581,6 +581,218 @@ func TestServiceEntriesCarrySubscriptionTags(t *testing.T) {
 	AssertSubscriptionEntriesEqual(t, got.Entries, want)
 }
 
+func newTestRepositorySubscriptionsWithTags(userUUID string) []feed.Subscription {
+	return []feed.Subscription{
+		{UUID: "sub-1", UserUUID: userUUID, Tags: []string{"go", "programming", "testing"}},
+		{UUID: "sub-2", UserUUID: userUUID, Tags: []string{"go", "programming"}},
+		{UUID: "sub-3", UserUUID: userUUID, Tags: []string{"go"}},
+	}
+}
+
+func TestServiceTagsByPage(t *testing.T) {
+	fake := faker.New()
+	userUUID := fake.UUID().V4()
+
+	cases := []struct {
+		tname                   string
+		repositorySubscriptions []feed.Subscription
+		pageNumber              uint
+		want                    TagPage
+		wantErr                 error
+	}{
+		// nominal cases
+		{
+			tname:      "0 tags",
+			pageNumber: 1,
+			want: TagPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+				},
+			},
+		},
+		{
+			tname:                   "page 1",
+			repositorySubscriptions: newTestRepositorySubscriptionsWithTags(userUUID),
+			pageNumber:              1,
+			want: TagPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          3,
+				},
+				Tags: []Tag{
+					{Name: "go", Count: 3},
+					{Name: "programming", Count: 2},
+					{Name: "testing", Count: 1},
+				},
+			},
+		},
+
+		// error cases
+		{
+			tname:      "zeroth page",
+			pageNumber: 0,
+			wantErr:    paginate.ErrPageNumberOutOfBounds,
+		},
+		{
+			tname:                   "page number out of bounds",
+			repositorySubscriptions: newTestRepositorySubscriptionsWithTags(userUUID),
+			pageNumber:              18,
+			wantErr:                 paginate.ErrPageNumberOutOfBounds,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Subscriptions: tc.repositorySubscriptions,
+			}
+
+			s := NewService(r)
+
+			got, err := s.TagsByPage(t.Context(), userUUID, tc.pageNumber)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertTagPageEquals(t, got, tc.want)
+		})
+	}
+}
+
+func TestServiceTagsBySearchQueryAndPage(t *testing.T) {
+	fake := faker.New()
+	userUUID := fake.UUID().V4()
+
+	cases := []struct {
+		tname                   string
+		repositorySubscriptions []feed.Subscription
+		searchTerms             string
+		pageNumber              uint
+		want                    TagPage
+		wantErr                 error
+	}{
+		// nominal cases
+		{
+			tname:       "0 matches",
+			searchTerms: "notfound",
+			pageNumber:  1,
+			want: TagPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					SearchTerms:        "notfound",
+				},
+			},
+		},
+		{
+			tname:                   "1 match",
+			repositorySubscriptions: newTestRepositorySubscriptionsWithTags(userUUID),
+			searchTerms:             "test",
+			pageNumber:              1,
+			want: TagPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          1,
+					SearchTerms:        "test",
+				},
+				Tags: []Tag{
+					{Name: "testing", Count: 1},
+				},
+			},
+		},
+		{
+			tname:                   "multiple matches",
+			repositorySubscriptions: newTestRepositorySubscriptionsWithTags(userUUID),
+			searchTerms:             "o",
+			pageNumber:              1,
+			want: TagPage{
+				Page: paginate.Page{
+					PageNumber:         1,
+					PreviousPageNumber: 1,
+					NextPageNumber:     1,
+					TotalPages:         1,
+					ItemOffset:         1,
+					ItemCount:          2,
+					SearchTerms:        "o",
+				},
+				Tags: []Tag{
+					{Name: "go", Count: 3},
+					{Name: "programming", Count: 2},
+				},
+			},
+		},
+
+		// error cases
+		{
+			tname:       "zeroth page",
+			searchTerms: "go",
+			pageNumber:  0,
+			wantErr:     paginate.ErrPageNumberOutOfBounds,
+		},
+		{
+			tname:                   "page number out of bounds",
+			repositorySubscriptions: newTestRepositorySubscriptionsWithTags(userUUID),
+			searchTerms:             "go",
+			pageNumber:              18,
+			wantErr:                 paginate.ErrPageNumberOutOfBounds,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Subscriptions: tc.repositorySubscriptions,
+			}
+
+			s := NewService(r)
+
+			got, err := s.TagsBySearchQueryAndPage(t.Context(), userUUID, tc.searchTerms, tc.pageNumber)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			assertTagPageEquals(t, got, tc.want)
+		})
+	}
+}
+
 func TestServiceFeedsByPageFiltersByShowEntries(t *testing.T) {
 	fake := faker.New()
 

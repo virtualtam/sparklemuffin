@@ -796,6 +796,7 @@ func (fc *feedController) handleFeedSubscriptionAdd() func(w http.ResponseWriter
 	type feedAddForm struct {
 		URL          string `schema:"url"`
 		CategoryUUID string `schema:"category"`
+		Tags         string `schema:"tags"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -810,7 +811,7 @@ func (fc *feedController) handleFeedSubscriptionAdd() func(w http.ResponseWriter
 			return
 		}
 
-		if err := fc.feedService.Subscribe(ctx, ctxUser.UUID, form.CategoryUUID, form.URL); err != nil {
+		if err := fc.feedService.Subscribe(ctx, ctxUser.UUID, form.CategoryUUID, form.URL, strings.Split(form.Tags, " ")); err != nil {
 			log.Error().Err(err).Msg("failed to subscribe to feed")
 			view.PutFlashError(w, "failed to subscribe to feed")
 			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -961,6 +962,7 @@ func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWrite
 	type feedSubscriptionEditForm struct {
 		Alias        string `schema:"alias"`
 		CategoryUUID string `schema:"category"`
+		Tags         string `schema:"tags"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -987,6 +989,7 @@ func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWrite
 			UUID:         subscriptionUUID,
 			Alias:        form.Alias,
 			CategoryUUID: form.CategoryUUID,
+			Tags:         strings.Split(form.Tags, " "),
 		}
 
 		if err := fc.feedService.UpdateSubscription(ctx, updatedSubscription); err != nil {

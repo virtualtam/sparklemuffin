@@ -5,6 +5,7 @@ package querying
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/virtualtam/sparklemuffin/internal/paginate"
@@ -97,6 +98,9 @@ func AssertSubscriptionEntriesEqual(t *testing.T, got []SubscribedFeedEntry, wan
 		}
 		if gotEntry.SubscriptionAlias != wantEntry.SubscriptionAlias {
 			t.Errorf("want Entry %d SubscriptionAlias %q, got %q", i, wantEntry.SubscriptionAlias, gotEntry.SubscriptionAlias)
+		}
+		if !slices.Equal(gotEntry.SubscriptionTags, wantEntry.SubscriptionTags) {
+			t.Errorf("want Entry %d SubscriptionTags %v, got %v", i, wantEntry.SubscriptionTags, gotEntry.SubscriptionTags)
 		}
 		if gotEntry.Read != wantEntry.Read {
 			t.Errorf("want Entry %d Read %t, got %t", i, wantEntry.Read, gotEntry.Read)

@@ -155,7 +155,7 @@ func (s *Service) FeedBySlug(ctx context.Context, slug string) (Feed, error) {
 
 // Subscribe creates a new Feed if needed, and creates the corresponding Subscription
 // for a given user.
-func (s *Service) Subscribe(ctx context.Context, userUUID string, categoryUUID string, feedURL string) error {
+func (s *Service) Subscribe(ctx context.Context, userUUID string, categoryUUID string, feedURL string, tags []string) error {
 	feed, _, err := s.GetOrCreateFeedAndEntries(ctx, feedURL)
 	if err != nil {
 		return fmt.Errorf("failed to create or retrieve feed: %w", err)
@@ -165,6 +165,7 @@ func (s *Service) Subscribe(ctx context.Context, userUUID string, categoryUUID s
 		CategoryUUID: categoryUUID,
 		FeedUUID:     feed.UUID,
 		UserUUID:     userUUID,
+		Tags:         tags,
 	}
 
 	if _, err := s.createSubscription(ctx, subscription); err != nil {
@@ -477,6 +478,9 @@ func (s *Service) createSubscription(ctx context.Context, newSubscription Subscr
 	if err != nil {
 		return Subscription{}, fmt.Errorf("failed to create subscription: %w", err)
 	}
+
+	subscription.Tags = newSubscription.Tags
+	subscription.Normalize()
 
 	if err := subscription.ValidateForCreation(ctx, s.r); err != nil {
 		return Subscription{}, err

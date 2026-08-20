@@ -28,6 +28,7 @@ type SubscribedFeedEntry struct {
 	FeedSlug          string
 	FeedTitle         string
 	SubscriptionAlias string
+	SubscriptionTags  []string
 
 	Read bool
 }
@@ -36,6 +37,7 @@ type Subscription struct {
 	UUID         string
 	CategoryUUID string
 	Alias        string
+	Tags         []string
 
 	FeedTitle       string
 	FeedDescription string

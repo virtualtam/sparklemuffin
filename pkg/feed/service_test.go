@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -970,6 +971,32 @@ func TestServiceGetOrCreateFeedAndEntries_BlockedDestination(t *testing.T) {
 
 	if !errors.Is(err, ErrFeedURLBlocked) {
 		t.Fatalf("want error %q, got %q", ErrFeedURLBlocked, err)
+	}
+}
+
+func TestServiceSubscribe(t *testing.T) {
+	fake := faker.New()
+	userUUID := fake.UUID().V4()
+	categoryUUID := fake.UUID().V4()
+
+	transport := feedtest.NewRoundTripperFromFeed(t, feedtest.GenerateDummyFeed(t, time.Now().UTC()))
+	feedClient := fetching.NewClient(&http.Client{Transport: transport}, "sparklemuffin/test")
+
+	r := &FakeRepository{}
+	s := NewService(r, feedClient, noopURLValidator)
+
+	if err := s.Subscribe(t.Context(), userUUID, categoryUUID, "http://test.local", []string{"golang", " rss ", "golang"}); err != nil {
+		t.Fatalf("want no error, got %q", err)
+	}
+
+	if len(r.Subscriptions) != 1 {
+		t.Fatalf("want 1 subscription, got %d", len(r.Subscriptions))
+	}
+
+	want := []string{"golang", "rss"}
+	got := r.Subscriptions[0].Tags
+	if !slices.Equal(got, want) {
+		t.Errorf("want Tags %v, got %v", want, got)
 	}
 }
 

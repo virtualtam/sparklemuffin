@@ -160,7 +160,7 @@ func TestFeedService(t *testing.T) {
 		}
 
 		// 2. Create feed, entries and subscription
-		if err := fs.Subscribe(ctx, testUser.UUID, category.UUID, "http://test.local"); err != nil {
+		if err := fs.Subscribe(ctx, testUser.UUID, category.UUID, "http://test.local", nil); err != nil {
 			t.Fatalf("failed to subscribe to feed: %q", err)
 		}
 
@@ -282,10 +282,10 @@ func TestFeedService(t *testing.T) {
 		}
 
 		// 1. Subscribe to two feeds with the same title.
-		if err := fs.Subscribe(ctx, testUser.UUID, category.UUID, "http://feed1.test.local"); err != nil {
+		if err := fs.Subscribe(ctx, testUser.UUID, category.UUID, "http://feed1.test.local", nil); err != nil {
 			t.Fatalf("failed to subscribe to feed1: %q", err)
 		}
-		if err := fs.Subscribe(ctx, testUser.UUID, category.UUID, "http://feed2.test.local"); err != nil {
+		if err := fs.Subscribe(ctx, testUser.UUID, category.UUID, "http://feed2.test.local", nil); err != nil {
 			t.Fatalf("failed to subscribe to feed2: %q", err)
 		}
 

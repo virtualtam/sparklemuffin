@@ -707,6 +707,7 @@ func (r *Repository) FeedSubscriptionEntryGetByUID(ctx context.Context, userUUID
 		fe.published_at,
 		fe.updated_at,
 		fs.alias AS subscription_alias,
+		fs.tags AS subscription_tags,
 		f.uuid AS feed_uuid,
 		f.title AS feed_title,
 		f.slug AS feed_slug,
@@ -1022,7 +1023,7 @@ func (r *Repository) FeedSubscriptionUpdate(ctx context.Context, s feed.Subscrip
 
 func (r *Repository) FeedQueryingSubscriptionByUUID(ctx context.Context, userUUID string, subscriptionUUID string) (feedquerying.Subscription, error) {
 	query := `
-	SELECT fs.uuid, fs.alias, fs.category_uuid, f.title, f.description
+	SELECT fs.uuid, fs.alias, fs.tags, fs.category_uuid, f.title, f.description
 	FROM   feed_subscriptions fs
 	JOIN   feed_feeds f ON f.uuid = fs.feed_uuid
 	WHERE  fs.user_uuid=$1

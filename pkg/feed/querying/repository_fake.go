@@ -261,6 +261,7 @@ func (r *FakeRepository) subscribedFeedEntryGetByFeed(ctx context.Context, userU
 			FeedSlug:          f.Slug,
 			FeedTitle:         f.Title,
 			SubscriptionAlias: subscription.Alias,
+			SubscriptionTags:  subscription.Tags,
 			Read:              read,
 		}
 
@@ -299,6 +300,7 @@ func (r *FakeRepository) FeedSubscriptionEntryGetByUID(ctx context.Context, user
 			FeedSlug:          f.Slug,
 			FeedTitle:         f.Title,
 			SubscriptionAlias: subscription.Alias,
+			SubscriptionTags:  subscription.Tags,
 			Read:              read,
 		}, nil
 	}
@@ -416,6 +418,7 @@ func (r *FakeRepository) FeedQueryingSubscriptionByUUID(_ context.Context, userU
 					UUID:            s.UUID,
 					CategoryUUID:    s.CategoryUUID,
 					Alias:           s.Alias,
+					Tags:            s.Tags,
 					FeedTitle:       f.Title,
 					FeedDescription: f.Description,
 				}, nil

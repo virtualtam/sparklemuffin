@@ -520,6 +520,67 @@ func TestService(t *testing.T) {
 	})
 }
 
+func TestServiceEntriesCarrySubscriptionTags(t *testing.T) {
+	fake := faker.New()
+
+	userUUID := fake.UUID().V4()
+
+	category := feed.Category{
+		UUID:     fake.UUID().V4(),
+		UserUUID: userUUID,
+		Name:     "Test Category",
+		Slug:     "test-category",
+	}
+
+	f := feed.Feed{
+		UUID:    fake.UUID().V4(),
+		FeedURL: "http://test.local/feed.atom",
+		Title:   "Local Test",
+		Slug:    "local-test",
+	}
+
+	entry := feed.Entry{
+		UID:      "1",
+		FeedUUID: f.UUID,
+		URL:      "http://test.local/posts/1",
+		Title:    "First Post",
+	}
+
+	subscription := feed.Subscription{
+		UUID:         fake.UUID().V4(),
+		CategoryUUID: category.UUID,
+		FeedUUID:     f.UUID,
+		UserUUID:     userUUID,
+		Tags:         []string{"golang", "rss"},
+	}
+
+	testRepository := FakeRepository{
+		Categories:    []feed.Category{category},
+		Entries:       []feed.Entry{entry},
+		Feeds:         []feed.Feed{f},
+		Subscriptions: []feed.Subscription{subscription},
+	}
+
+	testService := NewService(&testRepository)
+	preferences := feed.Preferences{ShowEntries: feed.EntryVisibilityAll}
+
+	got, err := testService.FeedsByPage(t.Context(), userUUID, preferences, 1)
+	if err != nil {
+		t.Fatalf("want no error, got %q", err)
+	}
+
+	want := []SubscribedFeedEntry{
+		{
+			Entry:            entry,
+			FeedSlug:         f.Slug,
+			FeedTitle:        f.Title,
+			SubscriptionTags: subscription.Tags,
+		},
+	}
+
+	AssertSubscriptionEntriesEqual(t, got.Entries, want)
+}
+
 func TestServiceFeedsByPageFiltersByShowEntries(t *testing.T) {
 	fake := faker.New()
 

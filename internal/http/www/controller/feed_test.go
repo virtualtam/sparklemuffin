@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 
@@ -1018,17 +1019,24 @@ func TestHandleFeedCategoryEdit(t *testing.T) {
 // newTestFeedControllerForSubscriptionEdit wires a feedController against
 // the given subscription/feed/categories, for exercising the subscription
 // edit handlers.
+//
+// feedRepo and queryingRepo share the same backing Subscriptions slice, so a
+// write through feedService (e.g. UpdateSubscription) is visible to reads
+// through queryingService, the way a single Postgres database is in
+// production.
 func newTestFeedControllerForSubscriptionEdit(subscription feed.Subscription, subscribedFeed feed.Feed, categories []feed.Category) feedController {
+	subscriptions := []feed.Subscription{subscription}
+
 	feedRepo := &feed.FakeRepository{
 		Categories:    categories,
 		Feeds:         []feed.Feed{subscribedFeed},
-		Subscriptions: []feed.Subscription{subscription},
+		Subscriptions: subscriptions,
 	}
 
 	queryingRepo := &feedquerying.FakeRepository{
 		Categories:    categories,
 		Feeds:         []feed.Feed{subscribedFeed},
-		Subscriptions: []feed.Subscription{subscription},
+		Subscriptions: subscriptions,
 	}
 
 	return feedController{
@@ -1091,6 +1099,7 @@ func TestHandleFeedSubscriptionEditView(t *testing.T) {
 			FeedUUID:     subscribedFeed.UUID,
 			CategoryUUID: category.UUID,
 			Alias:        fake.Lorem().Text(10),
+			Tags:         []string{"golang", "rss"},
 		}
 		return subscription, subscribedFeed, []feed.Category{category}
 	}
@@ -1113,6 +1122,9 @@ func TestHandleFeedSubscriptionEditView(t *testing.T) {
 		}
 		if !strings.Contains(body, `value="`+subscription.Alias+`"`) {
 			t.Errorf("want the subscription alias pre-filled, got:\n%s", body)
+		}
+		if !strings.Contains(body, `value="golang rss"`) {
+			t.Errorf("want the subscription tags pre-filled, got:\n%s", body)
 		}
 		if strings.Contains(body, "hx-post") {
 			t.Errorf("want a plain form with no htmx attributes on the full page, got:\n%s", body)
@@ -1187,6 +1199,28 @@ func TestHandleFeedSubscriptionEdit(t *testing.T) {
 		}
 		if got := w.Header().Get("Location"); got != "/feeds/subscriptions" {
 			t.Errorf("want redirect to /feeds/subscriptions, got %q", got)
+		}
+	})
+
+	t.Run("htmx request, tags change updates the subscription's tags", func(t *testing.T) {
+		subscription, subscribedFeed, categories := newFixture()
+		fc := newTestFeedControllerForSubscriptionEdit(subscription, subscribedFeed, categories)
+		form := url.Values{"alias": {subscription.Alias}, "category": {subscription.CategoryUUID}, "tags": {"golang atom golang"}}
+		r := newSubscriptionEditPostRequest(t, ctxUser, subscription.UUID, form, false)
+		w := httptest.NewRecorder()
+
+		fc.handleFeedSubscriptionEdit()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		updated, err := fc.queryingService.SubscriptionByUUID(r.Context(), ctxUser.UUID, subscription.UUID)
+		if err != nil {
+			t.Fatalf("failed to retrieve updated subscription: %q", err)
+		}
+		if want := []string{"atom", "golang"}; !slices.Equal(updated.Tags, want) {
+			t.Errorf("want Tags %v, got %v", want, updated.Tags)
 		}
 	})
 

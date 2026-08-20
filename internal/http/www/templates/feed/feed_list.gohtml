@@ -169,8 +169,18 @@
       <time class="{{if .Entry.Read}}text-muted{{end}}">{{.Entry.PublishedAt.Format "2006-01-02"}}</time>
     </strong>
   </div>
+  {{- if .Entry.SubscriptionTags}}
+  <div class="d-flex align-items-center gap-1 mb-1">
+    <i class="fa-solid fa-tags"></i>
+    <div class="d-flex flex-wrap gap-1">
+      {{- range .Entry.SubscriptionTags}}
+      <span class="badge bg-secondary-subtle text-secondary-emphasis">{{.}}</span>
+      {{- end}}
+    </div>
+  </div>
+  {{- end}}
   <div class="d-flex justify-content-between align-items-center mb-1">
-    <div class="{{if .Entry.Read}}text-muted{{end}}">
+    <div class="d-flex align-items-center gap-1 {{if .Entry.Read}}text-muted{{end}}">
       <i class="fa-regular fa-newspaper me-1"></i>
       <span class="fw-light">
         <a class="fst-italic link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover{{if .Entry.Read}} text-muted{{end}}" href="/feeds/subscriptions/{{.Entry.FeedSlug}}">{{ or .Entry.SubscriptionAlias .Entry.FeedTitle }}</a>

@@ -139,9 +139,10 @@ func (em *DBEntryMetadata) asEntryMetadata() feed.EntryMetadata {
 type DBQueryingSubscribedFeedEntry struct {
 	DBEntry
 
-	FeedSlug          string `db:"feed_slug"`
-	FeedTitle         string `db:"feed_title"`
-	SubscriptionAlias string `db:"subscription_alias"`
+	FeedSlug          string   `db:"feed_slug"`
+	FeedTitle         string   `db:"feed_title"`
+	SubscriptionAlias string   `db:"subscription_alias"`
+	SubscriptionTags  []string `db:"subscription_tags"`
 
 	Read bool `db:"read"`
 }
@@ -150,6 +151,7 @@ func (qe *DBQueryingSubscribedFeedEntry) asQueryingSubscribedFeedEntry() feedque
 	return feedquerying.SubscribedFeedEntry{
 		Entry:             qe.asEntry(),
 		SubscriptionAlias: qe.SubscriptionAlias,
+		SubscriptionTags:  qe.SubscriptionTags,
 		FeedTitle:         qe.FeedTitle,
 		FeedSlug:          qe.FeedSlug,
 		Read:              qe.Read,
@@ -220,9 +222,10 @@ func (s *DBSubscription) asSubscription() feed.Subscription {
 }
 
 type DBQueryingSubscription struct {
-	SubscriptionUUID  string `db:"uuid"`
-	SubscriptionAlias string `db:"alias"`
-	CategoryUUID      string `db:"category_uuid"`
+	SubscriptionUUID  string   `db:"uuid"`
+	SubscriptionAlias string   `db:"alias"`
+	SubscriptionTags  []string `db:"tags"`
+	CategoryUUID      string   `db:"category_uuid"`
 
 	FeedTitle       string `db:"title"`
 	FeedDescription string `db:"description"`
@@ -232,6 +235,7 @@ func (s *DBQueryingSubscription) asQueryingSubscription() feedquerying.Subscript
 	return feedquerying.Subscription{
 		UUID:            s.SubscriptionUUID,
 		Alias:           s.SubscriptionAlias,
+		Tags:            s.SubscriptionTags,
 		CategoryUUID:    s.CategoryUUID,
 		FeedTitle:       s.FeedTitle,
 		FeedDescription: s.FeedDescription,

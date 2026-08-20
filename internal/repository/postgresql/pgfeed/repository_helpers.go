@@ -225,6 +225,7 @@ func (r *Repository) feedSubscriptionEntryGetN(ctx context.Context, where string
 			fe.published_at,
 			fe.updated_at,
 			fs.alias AS subscription_alias,
+			fs.tags AS subscription_tags,
 			f.uuid AS feed_uuid,
 			f.title AS feed_title,
 			f.slug AS feed_slug,

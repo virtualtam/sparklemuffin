@@ -14,6 +14,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### WWW
 - Feed: re-render the list of entries when toggling an entry's read/unread status
 
+### Changed
+#### Documentation
+- Automatically expand and collapse the changelog page's headings in the sidebar when scrolling through the page
+
 ## v0.7.1 - 2026-08-16
 
 Release: [v0.7.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.1)
@@ -200,7 +204,7 @@ Release: [v0.6.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.
 - Document query and transaction helpers
 - Cleanup SQL queries
 
-### WWW
+#### WWW
 - Indicate browsers that only a light theme is available
 - Homogenize all forms to use horizontal fields
 - Rework the feed subscription management page
@@ -372,11 +376,11 @@ Release: [v0.3.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.
 - Allow users to set an alias title for feed subscriptions
 
 ### Changed
-### CI
+#### CI
 - Lint and format SQL files with SQLFluff
 - Publish HTML documentation to GitHub Pages
 
-### Documentation
+#### Documentation
 - Update documentation structure to follow the Diátaxis approach
 - Disable mdBook file auto-creation
 - Check for broken links with mdbook-linkcheck

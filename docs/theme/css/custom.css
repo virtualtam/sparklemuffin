@@ -1,3 +1,8 @@
+/**
+ * Copyright VirtualTam 2022, 2026
+ * SPDX-License-Identifier: MIT
+ */
+
 @media (min-width: 900px) {
   :root {
     --content-max-width: 700px;

@@ -15,7 +15,8 @@ project {
     "docker-compose*.yml",
 
     # mdBook documentation
-    "docs/**",
+    "docs/book/**",
+    "docs/src/**",
 
     # Fonts
     "**/firacode/**",

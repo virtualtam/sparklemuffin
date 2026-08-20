@@ -9,3 +9,4 @@ create-missing = false
 
 [output.html]
 additional-css = ["theme/css/custom.css"]
+additional-js = ["theme/js/custom.js"]

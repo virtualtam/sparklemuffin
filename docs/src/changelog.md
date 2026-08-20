@@ -7,10 +7,17 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## UNRELEASED
 ### Fixed
+#### Documentation
+- Workaround a mdBook limitation resulting in headings containing links not being shown in the table of contents
+  - See [mdBook issue #3126 - Sidebar header navigation renders empty anchor when heading is a Markdown link](https://github.com/rust-lang/mdBook/issues/3126)
+
 #### WWW
 - Feed: re-render the list of entries when toggling an entry's read/unread status
 
-## [v0.7.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.1) - 2026-08-16
+## v0.7.1 - 2026-08-16
+
+Release: [v0.7.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.1)
+
 ### Security
 - Bump GitHub Actions to their latest release, and pin them by SHA + version comment
 - Enable Dependabot for GitHub Actions, Go modules, Node.js packages and the SQLFluff `uv` project
@@ -49,7 +56,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Use the Nord color palettes
 - Switch between light and dark themes
 
-## [v0.7.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.0) - 2026-07-26
+## v0.7.0 - 2026-07-26
+
+Release: [v0.7.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.0)
+
 ### Security
 - Update Chi HTTP middleware to read the remote client IP address from a header set by a reverse proxy
 - Prevent the HTTP client used to fetch syndication feeds from performing requests to unroutable or blocked IP address ranges.
@@ -114,7 +124,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Rework deletion forms as modals
 - Map domain errors to user-facing error messages
 
-## [v0.6.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.1) - 2026-04-23
+## v0.6.1 - 2026-04-23
+
+Release: [v0.6.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.1)
+
 ### Security
 - Replace custom Cross-Site Request Forgery (CSRF) helpers with Go 1.25's CSRF protection middleware
 - Define a Content Security Policy for Web browsers to enforce
@@ -148,7 +161,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Rework the base template to allow content pages to define an optional `scripts` template
 - Rework Goldmark / Chroma usage to use CSS classes instead of outputting inline style information
 
-## [v0.6.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.0) - 2025-12-04
+## v0.6.0 - 2025-12-04
+
+Release: [v0.6.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.6.0)
+
 ### Added
 #### Feed
 - Add display preferences
@@ -199,7 +215,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Fix `<time>` blocks in bookmark and feed list pages
 - Use the same `plus` sign icon for bookmark and feed navbar menu items
 
-## [v0.5.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.1) - 2025-08-16
+## v0.5.1 - 2025-08-16
+
+Release: [v0.5.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.1)
+
 ### Added
 #### Documentation
 - Add high-level roadmap using the Now / Next / Later format
@@ -231,7 +250,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Fix pagination for the one but last page
 
 
-## [v0.5.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.0) - 2025-06-01
+## v0.5.0 - 2025-06-01
+
+Release: [v0.5.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.5.0)
+
 ### Security
 - Bump `golang.org/x/crypto` to v0.35.0:
     - [Vulnerability Report: GO-2025-3487](https://pkg.go.dev/vuln/GO-2025-3487)
@@ -265,13 +287,19 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Remove unused `importing.Repository` type
 
 
-## [v0.4.3](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.3) - 2025-01-05
+## v0.4.3 - 2025-01-05
+
+Release: [v0.4.3](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.3)
+
 ### Fixed
 #### Feeds
 - Ensure truncating entry descriptions does not result in invalid UTF-8 code points
 
 
-## [v0.4.2](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.2) - 2024-12-21
+## v0.4.2 - 2024-12-21
+
+Release: [v0.4.2](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.2)
+
 ### Changed
 #### Feeds
 - When deleting a category or subscription, propagate the deletion to feeds with no remaining subscriptions
@@ -282,14 +310,20 @@ project adheres to [Semantic Versioning](https://semver.org/).
     - [Vulnerability in golang.org/x/net](https://groups.google.com/g/golang-announce/c/wSCRmFnNmPA/m/Lvcd0mRMAwAJ)
 
 
-## [v0.4.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.1) - 2024-12-14
+## v0.4.1 - 2024-12-14
+
+Release: [v0.4.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.1)
+
 ### Security
 - Bump `golang.org/x/crypto` to v0.31.0:
     - [CVE-2024-45337](https://nvd.nist.gov/vuln/detail/CVE-2024-45337)
     - [Vulnerability in golang.org/x/crypto](https://groups.google.com/g/golang-announce/c/-nPEi39gI4Q)
 
 
-## [v0.4.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.0) - 2024-12-10
+## v0.4.0 - 2024-12-10
+
+Release: [v0.4.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.4.0)
+
 ### Added
 #### Database
 - Add PostgreSQL integration tests for feed operations
@@ -308,13 +342,19 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Relocate version detection helpers to `internal/version`
 
 
-## [v0.3.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.1) - 2024-12-07
+## v0.3.1 - 2024-12-07
+
+Release: [v0.3.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.1)
+
 ### Fixed
 #### Feeds
 - Fix HTML templates after renaming querying models
 
 
-## [v0.3.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.0) - 2024-12-07
+## v0.3.0 - 2024-12-07
+
+Release: [v0.3.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.3.0)
+
 ### Added
 #### Database
 - Add dedicated tests for PostrgeSQL database migrations (up/down)
@@ -355,7 +395,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - In the subscription edit form, ensure the correct category is selected
 
 
-## [v0.2.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.2.0) - 2024-11-14
+## v0.2.0 - 2024-11-14
+
+Release: [v0.2.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.2.0)
+
 ### Added
 #### Feeds
 - Subscribe to Atom and RSS feeds
@@ -377,7 +420,10 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Update direct and transitive dependencies
 
 
-## [v0.1.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.1.1) - 2024-01-26
+## v0.1.1 - 2024-01-26
+
+Release: [v0.1.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.1.1)
+
 _Initial release_
 
 ### Added

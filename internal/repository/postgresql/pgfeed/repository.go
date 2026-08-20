@@ -403,7 +403,7 @@ func (r *Repository) FeedEntryGetCountBySubscription(ctx context.Context, userUU
 }
 
 func (r *Repository) FeedEntryGetCountByQuery(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, searchTerms string) (uint, error) {
-	const and = `AND (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+	const and = `AND (f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
 
 	args := pgx.NamedArgs{
 		"user_uuid":    userUUID,
@@ -416,7 +416,7 @@ func (r *Repository) FeedEntryGetCountByQuery(ctx context.Context, userUUID stri
 func (r *Repository) FeedEntryGetCountByCategoryAndQuery(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, categoryUUID string, searchTerms string) (uint, error) {
 	const and = `
 		AND fs.category_uuid=@category_uuid
-		AND (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+		AND (f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
 
 	args := pgx.NamedArgs{
 		"user_uuid":     userUUID,
@@ -430,7 +430,7 @@ func (r *Repository) FeedEntryGetCountByCategoryAndQuery(ctx context.Context, us
 func (r *Repository) FeedEntryGetCountBySubscriptionAndQuery(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string, searchTerms string) (uint, error) {
 	const and = `
 		AND fs.uuid=@subscription_uuid
-		AND (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+		AND (f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
 
 	args := pgx.NamedArgs{
 		"user_uuid":         userUUID,
@@ -791,7 +791,7 @@ func (r *Repository) FeedSubscriptionEntryGetNByQuery(ctx context.Context, userU
 	const (
 		where = `
 		WHERE fs.user_uuid=@user_uuid
-		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
 	)
 
 	args := pgx.NamedArgs{
@@ -809,7 +809,7 @@ func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(ctx context.Con
 		where = `
 		WHERE fs.user_uuid=@user_uuid
 		AND   fs.category_uuid=@category_uuid
-		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
 	)
 
 	args := pgx.NamedArgs{
@@ -828,7 +828,7 @@ func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(ctx context
 		where = `
 		WHERE fs.user_uuid=@user_uuid
 		AND   fs.uuid=@subscription_uuid
-		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
 	)
 
 	args := pgx.NamedArgs{
@@ -857,6 +857,9 @@ func (r *Repository) FeedSubscriptionCreate(ctx context.Context, s feed.Subscrip
 		feed_uuid,
 		category_uuid,
 		user_uuid,
+		alias,
+		tags,
+		fulltextsearch_tsv,
 		created_at,
 		updated_at
 	)
@@ -865,17 +868,23 @@ func (r *Repository) FeedSubscriptionCreate(ctx context.Context, s feed.Subscrip
 		@feed_uuid,
 		@category_uuid,
 		@user_uuid,
+		@alias,
+		@tags,
+		TO_TSVECTOR(@fulltextsearch_string),
 		@created_at,
 		@updated_at
 	)`
 
 	args := pgx.NamedArgs{
-		"uuid":          s.UUID,
-		"feed_uuid":     s.FeedUUID,
-		"category_uuid": s.CategoryUUID,
-		"user_uuid":     s.UserUUID,
-		"created_at":    s.CreatedAt,
-		"updated_at":    s.UpdatedAt,
+		"uuid":                  s.UUID,
+		"feed_uuid":             s.FeedUUID,
+		"category_uuid":         s.CategoryUUID,
+		"user_uuid":             s.UserUUID,
+		"alias":                 s.Alias,
+		"tags":                  s.Tags,
+		"fulltextsearch_string": feedSubscriptionToFullTextSearchString(s),
+		"created_at":            s.CreatedAt,
+		"updated_at":            s.UpdatedAt,
 	}
 
 	if err := r.QueryTx(ctx, domain, "FeedSubscriptionCreate", query, args); err != nil {
@@ -969,6 +978,7 @@ func (r *Repository) FeedSubscriptionTagUpdateMany(ctx context.Context, subscrip
 	UPDATE feed_subscriptions
 	SET
 		tags=@tags,
+		fulltextsearch_tsv=TO_TSVECTOR(@fulltextsearch_string),
 		updated_at=@updated_at
 	WHERE user_uuid=@user_uuid
 	AND uuid=@uuid`
@@ -977,10 +987,11 @@ func (r *Repository) FeedSubscriptionTagUpdateMany(ctx context.Context, subscrip
 
 	for _, s := range subscriptions {
 		args := pgx.NamedArgs{
-			"user_uuid":  s.UserUUID,
-			"uuid":       s.UUID,
-			"tags":       s.Tags,
-			"updated_at": s.UpdatedAt,
+			"user_uuid":             s.UserUUID,
+			"uuid":                  s.UUID,
+			"tags":                  s.Tags,
+			"fulltextsearch_string": feedSubscriptionToFullTextSearchString(s),
+			"updated_at":            s.UpdatedAt,
 		}
 
 		commandTag, err := tx.Exec(ctx, query, args)
@@ -1005,17 +1016,19 @@ func (r *Repository) FeedSubscriptionUpdate(ctx context.Context, s feed.Subscrip
 		category_uuid=@category_uuid,
 		updated_at=@updated_at,
 		alias=@alias,
-		tags=@tags
+		tags=@tags,
+		fulltextsearch_tsv=TO_TSVECTOR(@fulltextsearch_string)
 	WHERE user_uuid=@user_uuid
 	AND uuid=@uuid`
 
 	args := pgx.NamedArgs{
-		"user_uuid":     s.UserUUID,
-		"uuid":          s.UUID,
-		"category_uuid": s.CategoryUUID,
-		"alias":         s.Alias,
-		"tags":          s.Tags,
-		"updated_at":    s.UpdatedAt,
+		"user_uuid":             s.UserUUID,
+		"uuid":                  s.UUID,
+		"category_uuid":         s.CategoryUUID,
+		"alias":                 s.Alias,
+		"tags":                  s.Tags,
+		"fulltextsearch_string": feedSubscriptionToFullTextSearchString(s),
+		"updated_at":            s.UpdatedAt,
 	}
 
 	return r.QueryTx(ctx, domain, "FeedSubscriptionUpdate", query, args)

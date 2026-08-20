@@ -764,3 +764,101 @@ func TestFeedQueryingService(t *testing.T) {
 		querying.AssertPageEquals(t, gotPage, wantPage)
 	})
 }
+
+// TestFeedQueryingServiceSearchMatchesSubscriptionTag verifies that entry
+// search matches on a subscription's tags, not just on entry/feed text: the
+// search term below ("golang") appears nowhere in the feed's title,
+// description, or entries, only on the tag of the subscription itself.
+func TestFeedQueryingServiceSearchMatchesSubscriptionTag(t *testing.T) {
+	pool := pgbase.CreateAndMigrateTestDatabase(t)
+
+	r := pgfeed.NewRepository(pool)
+	qs := querying.NewService(r)
+
+	ur := pguser.NewRepository(pool)
+	us := user.NewService(ur)
+
+	fake := faker.New()
+
+	u := user.FakeUser(t, &fake)
+	if err := us.Add(t.Context(), u); err != nil {
+		t.Fatalf("failed to create user: %q", err)
+	}
+
+	testUser, err := us.ByNickName(t.Context(), u.NickName)
+	if err != nil {
+		t.Fatalf("failed to retrieve user: %q", err)
+	}
+
+	preferences, err := r.FeedPreferencesGetByUserUUID(t.Context(), testUser.UUID)
+	if err != nil {
+		t.Fatalf("failed to retrieve preferences: %q", err)
+	}
+
+	now := time.Now().UTC()
+
+	taggedFeed := generateFakeFeed(t, &fake, "Local Test", "A fake feed for local testing", now)
+	if err := r.FeedCreate(t.Context(), taggedFeed); err != nil {
+		t.Fatalf("failed to create feed: %q", err)
+	}
+
+	taggedFeedEntries := generateFakeEntries(t, &fake, now, taggedFeed.UUID, 1)
+	if _, err := r.FeedEntryCreateMany(t.Context(), taggedFeedEntries); err != nil {
+		t.Fatalf("failed to create entries: %q", err)
+	}
+
+	category := generateFakeCategory(t, &fake, testUser.UUID, "Run Environments")
+	if err := r.FeedCategoryCreate(t.Context(), category); err != nil {
+		t.Fatalf("failed to create category: %q", err)
+	}
+
+	taggedSubscription := feed.Subscription{
+		UUID:         fake.UUID().V4(),
+		FeedUUID:     taggedFeed.UUID,
+		CategoryUUID: category.UUID,
+		UserUUID:     testUser.UUID,
+		Tags:         []string{"golang"},
+	}
+	if _, err := r.FeedSubscriptionCreate(t.Context(), taggedSubscription); err != nil {
+		t.Fatalf("failed to create subscription: %q", err)
+	}
+
+	wantPage := querying.FeedPage{
+		Page: paginate.Page{
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          1,
+			SearchTerms:        "golang",
+		},
+
+		PageTitle: querying.PageHeaderAll,
+		Unread:    1,
+		Categories: []querying.SubscribedFeedsByCategory{
+			{
+				Category: category,
+				Unread:   1,
+				SubscribedFeeds: []querying.SubscribedFeed{
+					{Feed: taggedFeed, Unread: 1},
+				},
+			},
+		},
+		Entries: []querying.SubscribedFeedEntry{
+			{
+				Entry:            taggedFeedEntries[0],
+				FeedSlug:         taggedFeed.Slug,
+				FeedTitle:        taggedFeed.Title,
+				SubscriptionTags: taggedSubscription.Tags,
+			},
+		},
+	}
+
+	gotPage, err := qs.FeedsByQueryAndPage(t.Context(), testUser.UUID, preferences, "golang", 1)
+	if err != nil {
+		t.Fatalf("failed to retrieve feeds by query and page: %q", err)
+	}
+
+	querying.AssertPageEquals(t, gotPage, wantPage)
+}

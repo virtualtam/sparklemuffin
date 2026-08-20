@@ -195,6 +195,14 @@ type DBPreferences struct {
 	UpdatedAt          time.Time `db:"updated_at"`
 }
 
+func feedSubscriptionToFullTextSearchString(s feed.Subscription) string {
+	return fmt.Sprintf(
+		"%s %s",
+		pgbase.FullTextSearchReplacer.Replace(s.Alias),
+		pgbase.FullTextSearchReplacer.Replace(strings.Join(s.Tags, " ")),
+	)
+}
+
 type DBSubscription struct {
 	UUID         string `db:"uuid"`
 	CategoryUUID string `db:"category_uuid"`

@@ -362,6 +362,63 @@ func TestHandleHxFeedEntryToggleRead(t *testing.T) {
 		}
 	})
 
+	t.Run("success, other still-matching entries stay visible (full list re-rendered, not a single-row swap)", func(t *testing.T) {
+		// Regression test for the "marking one entry read drops the total
+		// entry count by one" bug: the fix re-renders the whole filtered
+		// list, so an unrelated entry that still matches the filter must
+		// still be present in the response -- proving this isn't just the
+		// toggled entry's own row being swapped in isolation.
+		entry2 := feed.Entry{UID: "entry-2", FeedUUID: testFeed.UUID, URL: "https://example.com/2", Title: "Post 2"}
+		entriesMetadata := []feed.EntryMetadata{
+			{UserUUID: ctxUser.UUID, EntryUID: entry.UID, Read: false},
+			{UserUUID: ctxUser.UUID, EntryUID: entry2.UID, Read: false},
+		}
+
+		feedRepo := &feed.FakeRepository{
+			Categories:      []feed.Category{testCategory},
+			Entries:         []feed.Entry{entry, entry2},
+			EntriesMetadata: entriesMetadata,
+			Feeds:           []feed.Feed{testFeed},
+			Preferences:     map[string]feed.Preferences{ctxUser.UUID: {UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityUnread}},
+			Subscriptions:   []feed.Subscription{testSubscription},
+		}
+		queryingRepo := &feedquerying.FakeRepository{
+			Categories:      []feed.Category{testCategory},
+			Entries:         []feed.Entry{entry, entry2},
+			EntriesMetadata: entriesMetadata,
+			Feeds:           []feed.Feed{testFeed},
+			Subscriptions:   []feed.Subscription{testSubscription},
+		}
+		fc := feedController{
+			feedService:              feed.NewService(feedRepo, nil, nil),
+			queryingService:          feedquerying.NewService(queryingRepo),
+			feedListView:             view.New("feed/feed_list.gohtml"),
+			feedSubscriptionListView: view.New("feed/subscription_list.gohtml"),
+			feedCategoryEditView:     view.New("feed/category_edit.gohtml"),
+		}
+
+		form := url.Values{"urlPath": {"/feeds"}, "search": {""}, "page": {"1"}}
+		r := newToggleReadRequest(t, entry.UID, ctxUser, "/feeds", form)
+		w := httptest.NewRecorder()
+
+		fc.handleHxFeedEntryToggleRead()(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("want status 200, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+
+		body := w.Body.String()
+		if strings.Contains(body, `id="feed-entry-`+entry.UID+`"`) {
+			t.Errorf("want the now-read entry dropped from the Unread-only view, got:\n%s", body)
+		}
+		if !strings.Contains(body, `id="feed-entry-`+entry2.UID+`"`) {
+			t.Errorf("want the still-unread entry to remain visible, got:\n%s", body)
+		}
+		if !strings.Contains(body, `<ol id="entry-list"`) {
+			t.Errorf("want the entry list re-rendered, got:\n%s", body)
+		}
+	})
+
 	t.Run("success, category context recomputes the matching entry count", func(t *testing.T) {
 		fc := newTestFeedController(feed.Preferences{UserUUID: ctxUser.UUID, ShowEntries: feed.EntryVisibilityAll}, testUnreadMetadata())
 

@@ -180,7 +180,7 @@
       type="button"
       class="btn btn-sm btn-outline-secondary"
       hx-post="/feeds/entries/{{.Entry.UID}}/toggle-read"
-      hx-target="#feed-entry-{{.Entry.UID}}"
+      hx-target="#entry-list"
       hx-swap="outerHTML"
       hx-vals='{{toJSON "urlPath" .URLPath "search" .SearchTerms "page" .PageNumber}}'
     >

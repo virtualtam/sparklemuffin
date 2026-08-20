@@ -51,7 +51,7 @@ func TestFeedEntryTemplate(t *testing.T) {
 				"A short summary",
 				"Mark as read",
 				`hx-post="/feeds/entries/entry-uid-1/toggle-read"`,
-				`hx-target="#feed-entry-entry-uid-1"`,
+				`hx-target="#entry-list"`,
 				`hx-swap="outerHTML"`,
 				`urlPath&#34;:&#34;/feeds`,
 				`search&#34;:&#34;term`,

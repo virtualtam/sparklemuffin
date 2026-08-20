@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## UNRELEASED
+### Fixed
+#### WWW
+- Feed: re-render the list of entries when toggling an entry's read/unread status
+
 ## [v0.7.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.1) - 2026-08-16
 ### Security
 - Bump GitHub Actions to their latest release, and pin them by SHA + version comment

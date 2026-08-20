@@ -699,11 +699,11 @@ func (fc *feedController) renderFeedListUpdate(
 
 // handleHxFeedEntryToggleRead handles a request to toggle the read status of a feed entry.
 //
-// On success, it responds with an HTML fragment: the re-rendered entry (or nothing,
-// if the entry no longer matches the current read/unread filter, so htmx removes it),
-// plus out-of-band fragments refreshing the unread badges and entry count that the
-// toggle affects. On error, it falls back to the same flash+redirect behavior used
-// throughout this file, which htmx follows as a full page reload.
+// See renderFeedListUpdate for the response behavior: like the other list-mutating
+// endpoints, the whole filtered/paginated entry list is re-rendered rather than just
+// the toggled entry's own row, so an entry no longer matching the current read/unread
+// filter is backfilled from beyond the current page instead of just shrinking the
+// visible count by one.
 func (fc *feedController) handleHxFeedEntryToggleRead() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !fc.requireHxRequest(w, r) {
@@ -727,13 +727,6 @@ func (fc *feedController) handleHxFeedEntryToggleRead() func(w http.ResponseWrit
 			return
 		}
 
-		entry, err := fc.queryingService.SubscribedFeedEntryByUID(ctx, ctxUser.UUID, entryUID)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve feed entry")
-			view.RedirectWithFlashError(w, r.Referer(), "failed to retrieve feed entry")
-			return
-		}
-
 		if err := r.ParseForm(); err != nil {
 			log.Error().Err(err).Msg("failed to parse request form")
 			view.RedirectWithFlashError(w, r.Referer(), "There was an error processing the request")
@@ -748,70 +741,7 @@ func (fc *feedController) handleHxFeedEntryToggleRead() func(w http.ResponseWrit
 			pageNumber = 1
 		}
 
-		ctxPage, err := fc.feedPageForContext(ctx, ctxUser.UUID, preferences, urlPath, searchTerms, pageNumber)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to retrieve feeds")
-			view.RedirectWithFlashError(w, "/feeds", "failed to retrieve feeds")
-			return
-		}
-
-		var buf bytes.Buffer
-
-		renderFragment := func(name string, data any) bool {
-			if err := fc.feedListView.Template.ExecuteTemplate(&buf, name, data); err != nil {
-				log.Error().Err(err).Msg("failed to render feed fragment")
-				view.RedirectWithFlashError(w, r.Referer(), "failed to render feed fragment")
-				return false
-			}
-			return true
-		}
-
-		stillVisible := true
-		switch preferences.ShowEntries {
-		case feed.EntryVisibilityRead:
-			stillVisible = entry.Read
-		case feed.EntryVisibilityUnread:
-			stillVisible = !entry.Read
-		}
-
-		if stillVisible {
-			entryData := map[string]any{
-				"Entry":              entry,
-				"ShowEntrySummaries": preferences.ShowEntrySummaries,
-				"URLPath":            urlPath,
-				"SearchTerms":        searchTerms,
-				"PageNumber":         pageNumber,
-			}
-
-			if !renderFragment("feedEntry", entryData) {
-				return
-			}
-		}
-
-		if !renderFragment("unreadCountAll", ctxPage.Unread) {
-			return
-		}
-
-		for _, category := range ctxPage.Categories {
-			if !renderFragment("unreadCountCategory", category) {
-				return
-			}
-
-			for _, subscribedFeed := range category.SubscribedFeeds {
-				if !renderFragment("unreadCountFeed", subscribedFeed) {
-					return
-				}
-			}
-		}
-
-		if !renderFragment("entryCount", ctxPage.Page) {
-			return
-		}
-
-		w.Header().Set("Content-Type", "text/html")
-		if _, err := buf.WriteTo(w); err != nil {
-			log.Error().Err(err).Msg("failed to write response")
-		}
+		fc.renderFeedListUpdate(w, r, ctxUser.UUID, preferences, urlPath, searchTerms, pageNumber)
 	}
 }
 

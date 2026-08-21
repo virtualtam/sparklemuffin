@@ -50,9 +50,7 @@ func TestFeedEntryTemplate(t *testing.T) {
 				"First Post",
 				"A short summary",
 				"Mark as read",
-				`hx-post="/feeds/entries/entry-uid-1/toggle-read"`,
-				`hx-target="#entry-list"`,
-				`hx-swap="outerHTML"`,
+				`hx-post="/feeds/entries/entry-uid-1/toggle-read" hx-target="#entry-list" hx-swap="outerHTML"`,
 				`urlPath&#34;:&#34;/feeds`,
 				`search&#34;:&#34;term`,
 				`page&#34;:2`,
@@ -63,6 +61,7 @@ func TestFeedEntryTemplate(t *testing.T) {
 			wantNotContains: []string{
 				"text-muted",
 				"<form",
+				"hx-post=\"/feeds/entries/entry-uid-1/toggle-read\"\n        hx-target=\"#entry-list\"",
 			},
 		},
 		{
@@ -73,7 +72,7 @@ func TestFeedEntryTemplate(t *testing.T) {
 				`id="feed-entry-entry-uid-1"`,
 				"text-muted",
 				"Mark as unread",
-				`hx-post="/feeds/entries/entry-uid-1/toggle-read"`,
+				`hx-post="/feeds/entries/entry-uid-1/toggle-read" hx-target="#entry-list" hx-swap="outerHTML"`,
 				"Bookmark",
 				`hx-get="/feeds/entries/entry-uid-1/bookmark"`,
 				`hx-target="#entry-bookmark-modal-body"`,
@@ -81,6 +80,7 @@ func TestFeedEntryTemplate(t *testing.T) {
 			wantNotContains: []string{
 				"A short summary",
 				"<form",
+				"hx-post=\"/feeds/entries/entry-uid-1/toggle-read\"\n        hx-target=\"#entry-list\"",
 			},
 		},
 	}
@@ -112,6 +112,13 @@ func TestFeedEntryTemplate(t *testing.T) {
 				if strings.Contains(body, notWant) {
 					t.Errorf("want body to NOT contain %q, got:\n%s", notWant, body)
 				}
+			}
+
+			if got := strings.Count(body, "<button"); got != 1 {
+				t.Errorf("want a single <button> (the Actions dropdown toggle), got %d, body:\n%s", got, body)
+			}
+			if got := strings.Count(body, "<li>"); got != 2 {
+				t.Errorf("want 2 dropdown items (Bookmark, Mark as read/unread), got %d, body:\n%s", got, body)
 			}
 		})
 	}

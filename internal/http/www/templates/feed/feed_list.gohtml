@@ -203,38 +203,33 @@
         <a class="fst-italic link-body-emphasis link-underline-opacity-0 link-underline-opacity-100-hover{{if .Entry.Read}} text-muted{{end}}" href="/feeds/subscriptions/{{.Entry.FeedSlug}}">{{ or .Entry.SubscriptionAlias .Entry.FeedTitle }}</a>
       </span>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <div class="dropdown">
-        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
-          aria-expanded="false" aria-controls="dropdown-menu-entry-{{.Entry.UID}}">
-          Actions
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end" id="dropdown-menu-entry-{{.Entry.UID}}" role="menu">
-          <li>
-            <a href="/feeds/entries/{{.Entry.UID}}/bookmark" class="dropdown-item"
-              hx-get="/feeds/entries/{{.Entry.UID}}/bookmark" hx-target="#entry-bookmark-modal-body" hx-swap="innerHTML">
-              <i class="fa-regular fa-bookmark me-1"></i>
-              Bookmark
-            </a>
-          </li>
-        </ul>
-      </div>
-      <button
-        type="button"
-        class="btn btn-sm btn-outline-secondary"
-        hx-post="/feeds/entries/{{.Entry.UID}}/toggle-read"
-        hx-target="#entry-list"
-        hx-swap="outerHTML"
-        hx-vals='{{toJSON "urlPath" .URLPath "search" .SearchTerms "page" .PageNumber}}'
-      >
-        {{if .Entry.Read}}
-        <i class="fa-solid fa-eye-slash me-1"></i>
-        Mark as unread
-        {{else}}
-        <i class="fa-solid fa-eye me-1"></i>
-        Mark as read
-        {{end}}
+    <div class="dropdown">
+      <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+        aria-expanded="false" aria-controls="dropdown-menu-entry-{{.Entry.UID}}">
+        Actions
       </button>
+      <ul class="dropdown-menu dropdown-menu-end" id="dropdown-menu-entry-{{.Entry.UID}}" role="menu">
+        <li>
+          <a href="/feeds/entries/{{.Entry.UID}}/bookmark" class="dropdown-item"
+            hx-get="/feeds/entries/{{.Entry.UID}}/bookmark" hx-target="#entry-bookmark-modal-body" hx-swap="innerHTML">
+            <i class="fa-regular fa-bookmark me-1"></i>
+            Bookmark
+          </a>
+        </li>
+        <li>
+          <a href="#" class="dropdown-item"
+            hx-post="/feeds/entries/{{.Entry.UID}}/toggle-read" hx-target="#entry-list" hx-swap="outerHTML"
+            hx-vals='{{toJSON "urlPath" .URLPath "search" .SearchTerms "page" .PageNumber}}'>
+            {{if .Entry.Read}}
+            <i class="fa-solid fa-eye-slash me-1"></i>
+            Mark as unread
+            {{else}}
+            <i class="fa-solid fa-eye me-1"></i>
+            Mark as read
+            {{end}}
+          </a>
+        </li>
+      </ul>
     </div>
   </div>
 

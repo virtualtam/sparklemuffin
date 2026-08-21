@@ -169,6 +169,11 @@ func (fbc *feedBookmarkController) handleFeedEntryBookmark() func(w http.Respons
 			return
 		}
 
+		if r.Header.Get(htmx.HeaderRequest) != "true" {
+			http.Redirect(w, r, "/bookmarks", http.StatusSeeOther)
+			return
+		}
+
 		saved, err := fbc.bookmarkService.ByURL(ctx, ctxUser.UUID, form.URL)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve saved bookmark")

@@ -69,14 +69,16 @@ func newFeedEntryBookmarkViewRequest(t *testing.T, ctxUser user.User, entryUID s
 	return r.WithContext(ctx)
 }
 
-// newFeedEntryBookmarkPostRequest builds an htmx POST request against
+// newFeedEntryBookmarkPostRequest builds a POST request against
 // /feeds/entries/{uid}/bookmark.
-func newFeedEntryBookmarkPostRequest(t *testing.T, ctxUser user.User, entryUID string, form url.Values) *http.Request {
+func newFeedEntryBookmarkPostRequest(t *testing.T, ctxUser user.User, entryUID string, form url.Values, hxRequest bool) *http.Request {
 	t.Helper()
 
 	r := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/feeds/entries/"+entryUID+"/bookmark", strings.NewReader(form.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	r.Header.Set("HX-Request", "true")
+	if hxRequest {
+		r.Header.Set("HX-Request", "true")
+	}
 
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("uid", entryUID)
@@ -244,7 +246,7 @@ func TestHandleFeedEntryBookmark(t *testing.T) {
 			"description": {""},
 			"tags":        {"tech"},
 		}
-		r := newFeedEntryBookmarkPostRequest(t, ctxUser, entry.UID, form)
+		r := newFeedEntryBookmarkPostRequest(t, ctxUser, entry.UID, form, true)
 		w := httptest.NewRecorder()
 
 		fbc.handleFeedEntryBookmark()(w, r)
@@ -288,7 +290,7 @@ func TestHandleFeedEntryBookmark(t *testing.T) {
 			"description": {"New notes"},
 			"tags":        {"new"},
 		}
-		r := newFeedEntryBookmarkPostRequest(t, ctxUser, entry.UID, form)
+		r := newFeedEntryBookmarkPostRequest(t, ctxUser, entry.UID, form, true)
 		w := httptest.NewRecorder()
 
 		fbc.handleFeedEntryBookmark()(w, r)
@@ -325,7 +327,7 @@ func TestHandleFeedEntryBookmark(t *testing.T) {
 		form := url.Values{
 			"url": {entry.URL}, // no title: fails ValidateForAddition
 		}
-		r := newFeedEntryBookmarkPostRequest(t, ctxUser, entry.UID, form)
+		r := newFeedEntryBookmarkPostRequest(t, ctxUser, entry.UID, form, true)
 		w := httptest.NewRecorder()
 
 		fbc.handleFeedEntryBookmark()(w, r)
@@ -346,7 +348,7 @@ func TestHandleFeedEntryBookmark(t *testing.T) {
 		form := url.Values{
 			"title": {entry.Title}, // no url: fails the existing-bookmark check and ValidateForAddition
 		}
-		r := newFeedEntryBookmarkPostRequest(t, ctxUser, entry.UID, form)
+		r := newFeedEntryBookmarkPostRequest(t, ctxUser, entry.UID, form, true)
 		w := httptest.NewRecorder()
 
 		fbc.handleFeedEntryBookmark()(w, r)
@@ -359,6 +361,35 @@ func TestHandleFeedEntryBookmark(t *testing.T) {
 		}
 		if len(all) != 0 {
 			t.Errorf("want no bookmark to have been created, got %d", len(all))
+		}
+	})
+
+	t.Run("plain browser request, no existing bookmark, creates it and redirects to the bookmark list", func(t *testing.T) {
+		fbc := newTestFeedBookmarkController(ctxUser, entry, f, subscription, nil)
+		form := url.Values{
+			"url":         {entry.URL},
+			"title":       {entry.Title},
+			"description": {""},
+			"tags":        {"tech"},
+		}
+		r := newFeedEntryBookmarkPostRequest(t, ctxUser, entry.UID, form, false)
+		w := httptest.NewRecorder()
+
+		fbc.handleFeedEntryBookmark()(w, r)
+
+		if w.Code != http.StatusSeeOther {
+			t.Fatalf("want status 303, got %d, body:\n%s", w.Code, w.Body.String())
+		}
+		if got := w.Header().Get("Location"); got != "/bookmarks" {
+			t.Errorf("want redirect to /bookmarks, got %q", got)
+		}
+
+		saved, err := fbc.bookmarkService.ByURL(t.Context(), ctxUser.UUID, entry.URL)
+		if err != nil {
+			t.Fatalf("want the bookmark to have been created, got error: %s", err)
+		}
+		if saved.Title != entry.Title {
+			t.Errorf("want the created bookmark's title %q, got %q", entry.Title, saved.Title)
 		}
 	})
 }

@@ -6,8 +6,10 @@ package taxonomy
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
+	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -484,6 +486,169 @@ func TestServiceGetOrCreateTags(t *testing.T) {
 
 			if len(r.Tags) != len(tc.repositoryTags)+tc.wantNewTags {
 				t.Errorf("want %d tags in the repository, got %d", len(tc.repositoryTags)+tc.wantNewTags, len(r.Tags))
+			}
+		})
+	}
+}
+
+func TestServiceListTags(t *testing.T) {
+	tags := make([]Tag, 3)
+	for i := range tags {
+		tags[i] = Tag{UUID: fmt.Sprintf("tag-%d-uuid", i), UserUUID: "user-1", Name: fmt.Sprintf("tag-%d", i)}
+	}
+
+	cases := []struct {
+		tname          string
+		repositoryTags []Tag
+		number         uint
+		wantErr        error
+		wantNames      []string
+		wantPageNumber uint
+		wantTotalPages uint
+	}{
+		// nominal cases
+		{
+			tname:          "first (and only) page",
+			repositoryTags: tags,
+			number:         1,
+			wantNames:      []string{"tag-0", "tag-1", "tag-2"},
+			wantPageNumber: 1,
+			wantTotalPages: 1,
+		},
+
+		// edge cases
+		{
+			tname:          "no tags",
+			number:         1,
+			wantNames:      []string{},
+			wantPageNumber: 1,
+			wantTotalPages: 1,
+		},
+
+		// error cases
+		{
+			tname:          "page number is zero",
+			repositoryTags: tags,
+			number:         0,
+			wantErr:        paginate.ErrPageNumberOutOfBounds,
+		},
+		{
+			tname:          "page number is out of bounds",
+			repositoryTags: tags,
+			number:         2,
+			wantErr:        paginate.ErrPageNumberOutOfBounds,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Tags: tc.repositoryTags,
+			}
+			s := NewService(r)
+
+			got, err := s.ListTags(t.Context(), "user-1", tc.number)
+
+			if tc.wantErr != nil {
+				if !errors.Is(err, tc.wantErr) {
+					t.Fatalf("want error %q, got %q", tc.wantErr, err)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			if got.PageNumber != tc.wantPageNumber {
+				t.Errorf("want page number %d, got %d", tc.wantPageNumber, got.PageNumber)
+			}
+			if got.TotalPages != tc.wantTotalPages {
+				t.Errorf("want %d total pages, got %d", tc.wantTotalPages, got.TotalPages)
+			}
+
+			if len(got.Tags) != len(tc.wantNames) {
+				t.Fatalf("want %d tags, got %d", len(tc.wantNames), len(got.Tags))
+			}
+			for index, tag := range got.Tags {
+				if tag.Name != tc.wantNames[index] {
+					t.Errorf("want tag name %q, got %q", tc.wantNames[index], tag.Name)
+				}
+			}
+		})
+	}
+}
+
+func TestServiceSearchTags(t *testing.T) {
+	repositoryTags := []Tag{
+		{UUID: "tag-a-uuid", UserUUID: "user-1", Name: "golang"},
+		{UUID: "tag-b-uuid", UserUUID: "user-1", Name: "gopher"},
+		{UUID: "tag-c-uuid", UserUUID: "user-1", Name: "python"},
+	}
+
+	cases := []struct {
+		tname       string
+		searchTerms string
+		number      uint
+		wantErr     error
+		wantNames   []string
+	}{
+		// nominal cases
+		{
+			tname:       "search matches a subset of tags",
+			searchTerms: "go",
+			number:      1,
+			wantNames:   []string{"golang", "gopher"},
+		},
+
+		// edge cases
+		{
+			tname:       "search matches no tags",
+			searchTerms: "rust",
+			number:      1,
+			wantNames:   []string{},
+		},
+
+		// error cases
+		{
+			tname:       "page number is zero",
+			searchTerms: "go",
+			number:      0,
+			wantErr:     paginate.ErrPageNumberOutOfBounds,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Tags: repositoryTags,
+			}
+			s := NewService(r)
+
+			got, err := s.SearchTags(t.Context(), "user-1", tc.searchTerms, tc.number)
+
+			if tc.wantErr != nil {
+				if !errors.Is(err, tc.wantErr) {
+					t.Fatalf("want error %q, got %q", tc.wantErr, err)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			if got.SearchTerms != tc.searchTerms {
+				t.Errorf("want search terms %q, got %q", tc.searchTerms, got.SearchTerms)
+			}
+
+			if len(got.Tags) != len(tc.wantNames) {
+				t.Fatalf("want %d tags, got %d", len(tc.wantNames), len(got.Tags))
+			}
+			for index, tag := range got.Tags {
+				if tag.Name != tc.wantNames[index] {
+					t.Errorf("want tag name %q, got %q", tc.wantNames[index], tag.Name)
+				}
 			}
 		})
 	}

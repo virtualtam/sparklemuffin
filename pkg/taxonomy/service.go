@@ -8,6 +8,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -83,6 +84,37 @@ func (s *Service) GetOrCreateTags(ctx context.Context, userUUID string, names []
 	return tags, nil
 }
 
+// ListTags returns a Page containing a limited and offset number of tags for a given user.
+func (s *Service) ListTags(ctx context.Context, userUUID string, number uint) (TagPage, error) {
+	if number < 1 {
+		return TagPage{}, paginate.ErrPageNumberOutOfBounds
+	}
+
+	tagCount, err := s.r.TagGetCount(ctx, userUUID)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	totalPages := paginate.PageCount(tagCount, tagsPerPage)
+
+	if number > totalPages {
+		return TagPage{}, paginate.ErrPageNumberOutOfBounds
+	}
+
+	if tagCount == 0 {
+		return NewTagPage(1, 1, 0, []Tag{}), nil
+	}
+
+	offset := (number - 1) * tagsPerPage
+
+	tags, err := s.r.TagGetN(ctx, userUUID, tagsPerPage, offset)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	return NewTagPage(number, totalPages, tagCount, tags), nil
+}
+
 // RenameTag renames a tag for a given user.
 //
 // If a tag with the new name already exists, the two tags are merged: every
@@ -123,4 +155,36 @@ func (s *Service) RenameTag(ctx context.Context, uq TagUpdateQuery) error {
 	}
 
 	return s.r.TagRename(ctx, uq.UserUUID, currentTag.UUID, uq.NewName)
+}
+
+// SearchTags returns a Page containing a limited and offset number of tags
+// for a given user and search terms.
+func (s *Service) SearchTags(ctx context.Context, userUUID, searchTerms string, number uint) (TagPage, error) {
+	if number < 1 {
+		return TagPage{}, paginate.ErrPageNumberOutOfBounds
+	}
+
+	tagCount, err := s.r.TagSearchCount(ctx, userUUID, searchTerms)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	totalPages := paginate.PageCount(tagCount, tagsPerPage)
+
+	if number > totalPages {
+		return TagPage{}, paginate.ErrPageNumberOutOfBounds
+	}
+
+	if tagCount == 0 {
+		return NewTagSearchResultPage(searchTerms, 0, 1, 1, []Tag{}), nil
+	}
+
+	offset := (number - 1) * tagsPerPage
+
+	tags, err := s.r.TagSearchN(ctx, userUUID, searchTerms, tagsPerPage, offset)
+	if err != nil {
+		return TagPage{}, err
+	}
+
+	return NewTagSearchResultPage(searchTerms, tagCount, number, totalPages, tags), nil
 }

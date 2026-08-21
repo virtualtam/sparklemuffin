@@ -1,0 +1,84 @@
+{{define "content"}}
+<section class="pt-2 container-fluid">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/feeds">Feeds</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Bookmark entry</li>
+    </ol>
+  </nav>
+
+  <div class="col-lg-8">
+    {{template "entryBookmarkForm" (dict "EntryUID" .EntryUID "Bookmark" .Bookmark "Tags" .Tags "InModal" false "Existing" .Existing)}}
+  </div>
+</section>
+{{end}}
+
+{{define "entryBookmarkForm"}}
+<form action="/feeds/entries/{{.EntryUID}}/bookmark" autocomplete="off" method="POST"
+  {{if .InModal}}hx-post="/feeds/entries/{{.EntryUID}}/bookmark" hx-target="this" hx-swap="outerHTML"{{end}}>
+  {{if .Existing}}
+  <div class="alert alert-info">
+    You already bookmarked this entry. Editing it now.
+  </div>
+  {{end}}
+
+  <div class="row mb-3">
+    <label class="col-sm-2 col-form-label text-sm-end" for="url">URL</label>
+    <div class="col-sm-10">
+      <input class="form-control" type="url" id="url" name="url" placeholder="URL" value="{{.Bookmark.URL}}" required="">
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <label class="col-sm-2 col-form-label text-sm-end" for="title">Title</label>
+    <div class="col-sm-10">
+      <input class="form-control" type="text" id="title" name="title" placeholder="Title" value="{{.Bookmark.Title}}"
+        required="">
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <label class="col-sm-2 col-form-label text-sm-end" for="description">Description</label>
+    <div class="col-sm-10">
+      <textarea class="form-control" id="description" name="description" placeholder="Description" rows="10"
+        data-easymde>{{.Bookmark.Description}}</textarea>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <label class="col-sm-2 col-form-label text-sm-end" for="tags">Tags</label>
+    <div class="col-sm-10">
+      <input class="form-control" type="text" id="tags" name="tags" placeholder="Tags, separated by spaces"
+        value="{{Join .Bookmark.Tags " "}}" data-list="{{Join .Tags ","}}">
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-sm-10 offset-sm-2">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="private" name="private" {{if .Bookmark.Private}}checked{{end}}>
+        <label class="form-check-label" for="private">Private?</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-sm-10 offset-sm-2">
+      <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</form>
+{{end}}
+
+{{define "entryBookmarkConfirmation"}}
+<div class="alert alert-success mb-0">
+  <i class="fa-solid fa-check me-1"></i>
+  Bookmarked &#34;{{.Bookmark.Title}}&#34;.
+  <a href="/bookmarks/{{.Bookmark.UID}}/edit">Edit it</a>
+</div>
+{{end}}
+
+{{define "scripts"}}
+  <script nonce="{{.Nonce}}" src="/static/complete-tags.min.js"></script>
+  <script nonce="{{.Nonce}}" src="/static/easymde-init.min.js"></script>
+{{end}}

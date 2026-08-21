@@ -5,11 +5,11 @@ All high-level goals and planned work for this project will be documented in thi
 The roadmap is based on the Now / Next / Later format to communicate current focus, upcoming work and longer-term ideas.
 
 ## Now
-- Feed: Bookmark entry
+- Taxonomy: Normalize tags
+- Taxonomy: Tag hierarchy
 
 ## Next
 - Feed: Improve duplicate entry detection
-- Taxonomy: Tag hierarchy
 - Internal: Rework error flow (logging, metadata)
     - www: Improve error messages
 

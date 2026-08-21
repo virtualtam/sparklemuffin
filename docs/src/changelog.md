@@ -19,6 +19,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Tag feed subscriptions
 
 #### WWW
+- Feed: bookmark an entry
 - Feed: tag subscriptions
 - Feed: Show subscription tags for each subscription entry
 - Feed: edit, list, search and delete subscription tags

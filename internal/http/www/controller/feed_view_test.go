@@ -56,6 +56,9 @@ func TestFeedEntryTemplate(t *testing.T) {
 				`urlPath&#34;:&#34;/feeds`,
 				`search&#34;:&#34;term`,
 				`page&#34;:2`,
+				"Bookmark",
+				`hx-get="/feeds/entries/entry-uid-1/bookmark"`,
+				`hx-target="#entry-bookmark-modal-body"`,
 			},
 			wantNotContains: []string{
 				"text-muted",
@@ -71,6 +74,9 @@ func TestFeedEntryTemplate(t *testing.T) {
 				"text-muted",
 				"Mark as unread",
 				`hx-post="/feeds/entries/entry-uid-1/toggle-read"`,
+				"Bookmark",
+				`hx-get="/feeds/entries/entry-uid-1/bookmark"`,
+				`hx-target="#entry-bookmark-modal-body"`,
 			},
 			wantNotContains: []string{
 				"A short summary",

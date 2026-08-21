@@ -213,6 +213,18 @@ func TestHandleFeedListView(t *testing.T) {
 		if !strings.Contains(body, `id="feed-list-content"`) {
 			t.Errorf("want the feed list content, got:\n%s", body)
 		}
+		if !strings.Contains(body, `id="entry-bookmark-modal-body"`) {
+			t.Errorf("want the entry bookmark modal shell, got:\n%s", body)
+		}
+		if !strings.Contains(body, `class="modal modal-wide fade" id="entryBookmarkModal"`) {
+			t.Errorf("want the entry bookmark modal to be the wide size, matching the bookmark edit modal, got:\n%s", body)
+		}
+		if !strings.Contains(body, `src="/static/complete-tags.min.js"`) {
+			t.Errorf("want complete-tags.min.js loaded, so the bookmark modal's tags field autocompletes, got:\n%s", body)
+		}
+		if !strings.Contains(body, `src="/static/easymde-init.min.js"`) {
+			t.Errorf("want easymde-init.min.js loaded, so the bookmark modal's description field gets a markdown editor, got:\n%s", body)
+		}
 	})
 
 	t.Run("htmx request renders only the fragment, plus the pagination-bottom OOB fragment", func(t *testing.T) {
@@ -232,6 +244,9 @@ func TestHandleFeedListView(t *testing.T) {
 		}
 		if !strings.Contains(body, `id="feed-list-content"`) {
 			t.Errorf("want the feed list content, got:\n%s", body)
+		}
+		if !strings.Contains(body, `id="entry-bookmark-modal-body"`) {
+			t.Errorf("want the entry bookmark modal shell, got:\n%s", body)
 		}
 		if !strings.Contains(body, `id="pagination-bottom"`) {
 			t.Errorf("want the pagination-bottom fragment appended, got:\n%s", body)

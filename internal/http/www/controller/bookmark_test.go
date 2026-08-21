@@ -1369,3 +1369,64 @@ func TestHandleBookmarkDelete(t *testing.T) {
 		assertHXRedirectOnError(t, w, "/bookmarks/"+unknownUID+"/delete")
 	})
 }
+
+func TestBookmarkRowTemplate(t *testing.T) {
+	v := view.New("bookmark/bookmark_row.gohtml")
+
+	owner := bookmarkquerying.Owner{UUID: "user-1", NickName: "alice", DisplayName: "Alice"}
+
+	cases := []struct {
+		tname           string
+		bookmark        bookmark.Bookmark
+		wantContains    []string
+		wantNotContains []string
+	}{
+		{
+			tname: "bookmark with tags shows the tags icon",
+			bookmark: bookmark.Bookmark{
+				UID:   "bookmark-1",
+				Title: "Example",
+				URL:   "https://example.com",
+				Tags:  []string{"example"},
+			},
+			wantContains: []string{
+				"fa-tags",
+				"example",
+			},
+		},
+		{
+			tname: "bookmark with no tags hides the tags icon",
+			bookmark: bookmark.Bookmark{
+				UID:   "bookmark-2",
+				Title: "Example",
+				URL:   "https://example.com",
+			},
+			wantNotContains: []string{
+				"fa-tags",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			data := map[string]any{"Bookmark": tc.bookmark, "Owner": owner, "Public": false}
+
+			w := httptest.NewRecorder()
+			if err := v.RenderTemplate(w, "bookmarkRow", data); err != nil {
+				t.Fatalf("failed to render bookmarkRow template: %s", err)
+			}
+
+			body := w.Body.String()
+			for _, want := range tc.wantContains {
+				if !strings.Contains(body, want) {
+					t.Errorf("want body to contain %q, got:\n%s", want, body)
+				}
+			}
+			for _, notWant := range tc.wantNotContains {
+				if strings.Contains(body, notWant) {
+					t.Errorf("want body to NOT contain %q, got:\n%s", notWant, body)
+				}
+			}
+		})
+	}
+}

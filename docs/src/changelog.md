@@ -12,6 +12,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
   - See [mdBook issue #3126 - Sidebar header navigation renders empty anchor when heading is a Markdown link](https://github.com/rust-lang/mdBook/issues/3126)
 
 #### WWW
+- Bookmark: do not display a tag icon if a bookmark has no tags
 - Feed: re-render the list of entries when toggling an entry's read/unread status
 
 ### Added

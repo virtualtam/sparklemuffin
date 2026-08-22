@@ -791,7 +791,15 @@ func (fc *feedController) handleFeedSubscriptionAddView() func(w http.ResponseWr
 			return
 		}
 
-		tags, err := autocompleteTagNames(ctx, fc.taxonomyService, ctxUser.UUID)
+		tagCounts, err := fc.queryingService.SubscriptionCountsByTag(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tag counts")
+			view.PutFlashError(w, "failed to retrieve existing tags")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		tags, err := autocompleteTagNames(ctx, fc.taxonomyService, ctxUser.UUID, tagCounts)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
 			view.PutFlashError(w, "failed to retrieve existing tags")
@@ -944,7 +952,14 @@ func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseW
 			return
 		}
 
-		tags, err := autocompleteTagNames(ctx, fc.taxonomyService, ctxUser.UUID)
+		tagCounts, err := fc.queryingService.SubscriptionCountsByTag(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to retrieve tag counts")
+			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve existing tags")
+			return
+		}
+
+		tags, err := autocompleteTagNames(ctx, fc.taxonomyService, ctxUser.UUID, tagCounts)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve tags")
 			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve existing tags")

@@ -5,6 +5,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -35,6 +36,66 @@ var (
 		CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
 	}
 )
+
+func TestAutocompleteTagNames(t *testing.T) {
+	t.Run("tags are ordered by descending count, ties broken by name", func(t *testing.T) {
+		// Names are deliberately alphabetized opposite to their intended
+		// count order, so a sort that fell back to alphabetical (the bug
+		// being fixed) would fail this assertion instead of coincidentally
+		// passing it.
+		taxonomyRepo := &taxonomy.FakeRepository{
+			Tags: []taxonomy.Tag{
+				{UUID: "tag-a", UserUUID: "user-1", Name: "aaa-rare"},
+				{UUID: "tag-b", UserUUID: "user-1", Name: "zzz-popular"},
+				{UUID: "tag-c", UserUUID: "user-1", Name: "yyy-also-popular"},
+				{UUID: "tag-d", UserUUID: "user-1", Name: "bbb-unused"},
+			},
+		}
+		taxonomyService := taxonomy.NewService(taxonomyRepo)
+		counts := map[string]uint{
+			"aaa-rare":         1,
+			"zzz-popular":      5,
+			"yyy-also-popular": 5,
+		}
+
+		got, err := autocompleteTagNames(t.Context(), taxonomyService, "user-1", counts)
+		if err != nil {
+			t.Fatalf("failed to autocomplete tag names: %q", err)
+		}
+
+		want := []string{"yyy-also-popular", "zzz-popular", "aaa-rare", "bbb-unused"}
+		if len(got) != len(want) {
+			t.Fatalf("want %d tag names, got %d: %v", len(want), len(got), got)
+		}
+		for i, name := range got {
+			if name != want[i] {
+				t.Errorf("want tag name %q at index %d, got %q (full: %v)", want[i], i, name, got)
+			}
+		}
+	})
+
+	t.Run("returns more than one page of tags", func(t *testing.T) {
+		var tags []taxonomy.Tag
+		for i := range 95 {
+			tags = append(tags, taxonomy.Tag{
+				UUID:     fmt.Sprintf("tag-%d", i),
+				UserUUID: "user-1",
+				Name:     fmt.Sprintf("tag-%02d", i),
+			})
+		}
+		taxonomyRepo := &taxonomy.FakeRepository{Tags: tags}
+		taxonomyService := taxonomy.NewService(taxonomyRepo)
+
+		got, err := autocompleteTagNames(t.Context(), taxonomyService, "user-1", nil)
+		if err != nil {
+			t.Fatalf("failed to autocomplete tag names: %q", err)
+		}
+
+		if len(got) != len(tags) {
+			t.Fatalf("want %d tag names, got %d", len(tags), len(got))
+		}
+	})
+}
 
 // newTestBookmarkController wires a bookmarkController against a querying
 // fake repository seeded with the given bookmarks, owned by

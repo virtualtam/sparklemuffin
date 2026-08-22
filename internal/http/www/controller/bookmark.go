@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -131,16 +132,26 @@ type bookmarkFormConflict struct {
 	NewDescriptionRows int
 }
 
-// autocompleteTagNames returns a user's tag names, to populate the tag
-// autocomplete suggestions on bookmark and feed entry bookmark forms.
-func autocompleteTagNames(ctx context.Context, taxonomyService *taxonomy.Service, userUUID string) ([]string, error) {
-	tagPage, err := taxonomyService.ListTags(ctx, userUUID, 1)
+// autocompleteTagNames returns every one of a user's tag names, to populate
+// the tag autocomplete suggestions on bookmark and feed entry bookmark
+// forms, ordered by descending count (looked up by tag name in counts, e.g.
+// bookmark or feed subscription usage), ties broken alphabetically.
+func autocompleteTagNames(ctx context.Context, taxonomyService *taxonomy.Service, userUUID string, counts map[string]uint) ([]string, error) {
+	tags, err := taxonomyService.AllTags(ctx, userUUID)
 	if err != nil {
 		return nil, err
 	}
 
-	names := make([]string, len(tagPage.Tags))
-	for i, tag := range tagPage.Tags {
+	sort.Slice(tags, func(i, j int) bool {
+		ci, cj := counts[tags[i].Name], counts[tags[j].Name]
+		if ci != cj {
+			return ci > cj
+		}
+		return tags[i].Name < tags[j].Name
+	})
+
+	names := make([]string, len(tags))
+	for i, tag := range tags {
 		names[i] = tag.Name
 	}
 
@@ -153,7 +164,15 @@ func (bc *bookmarkController) handleBookmarkAddView() func(w http.ResponseWriter
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 
-		tags, err := autocompleteTagNames(ctx, bc.taxonomyService, ctxUser.UUID)
+		tagCounts, err := bc.queryingService.BookmarkCountsByTag(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tag counts")
+			view.PutFlashError(w, "failed to retrieve existing tags")
+			http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+			return
+		}
+
+		tags, err := autocompleteTagNames(ctx, bc.taxonomyService, ctxUser.UUID, tagCounts)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
 			view.PutFlashError(w, "failed to retrieve existing tags")
@@ -239,7 +258,15 @@ func (bc *bookmarkController) renderBookmarkAddConflict(w http.ResponseWriter, r
 		return
 	}
 
-	tags, err := autocompleteTagNames(ctx, bc.taxonomyService, ctxUser.UUID)
+	tagCounts, err := bc.queryingService.BookmarkCountsByTag(ctx, ctxUser.UUID)
+	if err != nil {
+		log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tag counts")
+		view.PutFlashError(w, "failed to add bookmark")
+		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+		return
+	}
+
+	tags, err := autocompleteTagNames(ctx, bc.taxonomyService, ctxUser.UUID, tagCounts)
 	if err != nil {
 		log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
 		view.PutFlashError(w, "failed to add bookmark")
@@ -353,7 +380,14 @@ func (bc *bookmarkController) handleBookmarkEditView() func(w http.ResponseWrite
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 
-		tags, err := autocompleteTagNames(ctx, bc.taxonomyService, ctxUser.UUID)
+		tagCounts, err := bc.queryingService.BookmarkCountsByTag(ctx, ctxUser.UUID)
+		if err != nil {
+			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tag counts")
+			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve existing tags")
+			return
+		}
+
+		tags, err := autocompleteTagNames(ctx, bc.taxonomyService, ctxUser.UUID, tagCounts)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
 			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve existing tags")

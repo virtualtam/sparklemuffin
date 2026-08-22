@@ -220,8 +220,8 @@ func NewRootCommand() *cobra.Command {
 			feedImportingService = feedimporting.NewService(feedService)
 			feedSynchronizingService = feedsynchronizing.NewService(feedRepository, feedClient, rootCmdName)
 
-			taxonomyRepository := pgtaxonomy.NewRepository(pgxPool)
-			taxonomyService = taxonomy.NewService(taxonomyRepository, bookmarkRepository.OnTagMerge, feedRepository.OnTagMerge)
+			taxonomyRepository := pgtaxonomy.NewRepository(pgxPool, bookmarkRepository.OnTagMerge, feedRepository.OnTagMerge)
+			taxonomyService = taxonomy.NewService(taxonomyRepository)
 
 			sessionRepository := pgsession.NewRepository(ctx, pgxPool, quartz.NewReal())
 			sessionService, err = session.NewService(sessionRepository, hmacKey)

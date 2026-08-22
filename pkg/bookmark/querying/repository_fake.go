@@ -66,6 +66,21 @@ func (r *FakeRepository) BookmarkGetCount(_ context.Context, userUUID string, vi
 	return userBookmarkCount, nil
 }
 
+func (r *FakeRepository) BookmarkGetCountsByTag(_ context.Context, userUUID string) (map[string]uint, error) {
+	counts := map[string]uint{}
+
+	for _, b := range r.Bookmarks {
+		if b.UserUUID != userUUID {
+			continue
+		}
+		for _, tag := range b.Tags {
+			counts[tag]++
+		}
+	}
+
+	return counts, nil
+}
+
 func (r *FakeRepository) BookmarkGetPublicByUID(_ context.Context, userUUID, uid string) (bookmark.Bookmark, error) {
 	for _, b := range r.Bookmarks {
 		if b.UserUUID == userUUID && b.UID == uid && !b.Private {

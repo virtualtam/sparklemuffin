@@ -14,6 +14,10 @@ type Repository interface {
 	// BookmarkGetCount returns the number of bookmarks for a given user.
 	BookmarkGetCount(ctx context.Context, userUUID string, visibility Visibility) (uint, error)
 
+	// BookmarkGetCountsByTag returns the number of bookmarks for a given
+	// user, grouped by tag name.
+	BookmarkGetCountsByTag(ctx context.Context, userUUID string) (map[string]uint, error)
+
 	// BookmarkGetN returns at most n bookmarks for a given user, starting at
 	// a given offset.
 	BookmarkGetN(ctx context.Context, userUUID string, visibility Visibility, n uint, offset uint) ([]bookmark.Bookmark, error)

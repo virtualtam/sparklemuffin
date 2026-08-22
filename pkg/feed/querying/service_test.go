@@ -581,6 +581,61 @@ func TestServiceEntriesCarrySubscriptionTags(t *testing.T) {
 	AssertSubscriptionEntriesEqual(t, got.Entries, want)
 }
 
+func TestServiceSubscriptionCountsByTag(t *testing.T) {
+	fake := faker.New()
+
+	userUUID := fake.UUID().V4()
+	otherUserUUID := fake.UUID().V4()
+
+	testRepository := FakeRepository{
+		Subscriptions: []feed.Subscription{
+			{UUID: fake.UUID().V4(), UserUUID: userUUID, Tags: []string{"golang", "rss"}},
+			{UUID: fake.UUID().V4(), UserUUID: userUUID, Tags: []string{"golang"}},
+			{UUID: fake.UUID().V4(), UserUUID: otherUserUUID, Tags: []string{"golang"}},
+		},
+	}
+
+	testService := NewService(&testRepository)
+
+	cases := []struct {
+		tname      string
+		userUUID   string
+		wantCounts map[string]uint
+	}{
+		// nominal cases
+		{
+			tname:      "user has tagged subscriptions",
+			userUUID:   userUUID,
+			wantCounts: map[string]uint{"golang": 2, "rss": 1},
+		},
+
+		// edge cases
+		{
+			tname:      "user has no tagged subscriptions",
+			userUUID:   fake.UUID().V4(),
+			wantCounts: map[string]uint{},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			got, err := testService.SubscriptionCountsByTag(t.Context(), tc.userUUID)
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			if len(got) != len(tc.wantCounts) {
+				t.Fatalf("want %d tag counts, got %d: %v", len(tc.wantCounts), len(got), got)
+			}
+			for name, wantCount := range tc.wantCounts {
+				if got[name] != wantCount {
+					t.Errorf("want count %d for tag %q, got %d", wantCount, name, got[name])
+				}
+			}
+		})
+	}
+}
+
 func TestServiceFeedsByPageFiltersByShowEntries(t *testing.T) {
 	fake := faker.New()
 

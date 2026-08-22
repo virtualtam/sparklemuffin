@@ -103,6 +103,13 @@ func (t *Tag) ensureNameHasNoWhitespace() error {
 	return nil
 }
 
+func (t *Tag) validateUUID() error {
+	if err := uuid.Validate(t.UUID); err != nil {
+		return ErrTagUUIDInvalid
+	}
+	return nil
+}
+
 func (t *Tag) ensureNameIsNotRegistered(ctx context.Context, v ValidationRepository) func() error {
 	return func() error {
 		registered, err := v.TagNameIsRegistered(ctx, t.UserUUID, t.Name)

@@ -1,0 +1,32 @@
+{{define "content"}}
+<section class="pt-2 container-fluid">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/tags">Tags</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Edit</li>
+    </ol>
+  </nav>
+
+  <div class="col-lg-8">
+    {{template "tagEditForm" (dict "Tag" . "InModal" false)}}
+  </div>
+</section>
+{{end}}
+
+{{define "tagEditForm"}}
+<form action="/tags/{{.Tag.UUID}}/edit" method="POST"
+  {{if .InModal}}hx-post="/tags/{{.Tag.UUID}}/edit" hx-target="this" hx-swap="outerHTML"{{end}}>
+  <div class="row mb-3">
+    <label class="col-sm-2 col-form-label text-sm-end" for="name">Name</label>
+    <div class="col-sm-10">
+      <input class="form-control" type="text" id="name" name="name" placeholder="Name" value="{{.Tag.Name}}" required="">
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-sm-10 offset-sm-2">
+      <button type="submit" class="btn btn-primary">Rename</button>
+    </div>
+  </div>
+</form>
+{{end}}

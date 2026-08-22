@@ -18,6 +18,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/taxonomy"
@@ -36,6 +37,11 @@ func newTestFeedBookmarkController(ctxUser user.User, entry feed.Entry, f feed.F
 
 	bookmarkRepo := &bookmark.FakeRepository{Bookmarks: bookmarks}
 
+	bookmarkQueryingRepo := &bookmarkquerying.FakeRepository{
+		Bookmarks: bookmarks,
+		Users:     []user.User{ctxUser},
+	}
+
 	var tags []taxonomy.Tag
 	for _, b := range bookmarks {
 		for _, name := range b.Tags {
@@ -45,9 +51,10 @@ func newTestFeedBookmarkController(ctxUser user.User, entry feed.Entry, f feed.F
 	taxonomyRepo := &taxonomy.FakeRepository{Tags: tags}
 
 	return feedBookmarkController{
-		feedQueryingService: feedquerying.NewService(feedQueryingRepo),
-		bookmarkService:     bookmark.NewService(bookmarkRepo),
-		taxonomyService:     taxonomy.NewService(taxonomyRepo),
+		feedQueryingService:     feedquerying.NewService(feedQueryingRepo),
+		bookmarkService:         bookmark.NewService(bookmarkRepo),
+		bookmarkQueryingService: bookmarkquerying.NewService(bookmarkQueryingRepo),
+		taxonomyService:         taxonomy.NewService(taxonomyRepo),
 
 		entryBookmarkView: view.New("feed/entry_bookmark.gohtml"),
 	}

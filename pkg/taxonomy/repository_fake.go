@@ -14,6 +14,36 @@ var _ Repository = &FakeRepository{}
 
 type FakeRepository struct {
 	Tags []Tag
+
+	// MergeTagErr, if set, is returned by MergeTag without any effect.
+	MergeTagErr error
+
+	// MergeTagCalls records every call made to MergeTag.
+	MergeTagCalls []MergeTagCall
+}
+
+// MergeTagCall records the arguments passed to a single MergeTag call.
+type MergeTagCall struct {
+	UserUUID   string
+	OldTagUUID string
+	NewTagUUID string
+}
+
+func (r *FakeRepository) MergeTag(_ context.Context, userUUID, oldTagUUID, newTagUUID string) error {
+	r.MergeTagCalls = append(r.MergeTagCalls, MergeTagCall{UserUUID: userUUID, OldTagUUID: oldTagUUID, NewTagUUID: newTagUUID})
+
+	if r.MergeTagErr != nil {
+		return r.MergeTagErr
+	}
+
+	for index, tag := range r.Tags {
+		if tag.UserUUID == userUUID && tag.UUID == oldTagUUID {
+			r.Tags = slices.Delete(r.Tags, index, index+1)
+			break
+		}
+	}
+
+	return nil
 }
 
 func (r *FakeRepository) TagAdd(_ context.Context, tag Tag) error {
@@ -45,6 +75,16 @@ func (r *FakeRepository) TagDelete(_ context.Context, userUUID, name string) err
 func (r *FakeRepository) TagGetByName(_ context.Context, userUUID, name string) (Tag, error) {
 	for _, tag := range r.Tags {
 		if tag.UserUUID == userUUID && tag.Name == name {
+			return tag, nil
+		}
+	}
+
+	return Tag{}, ErrNotFound
+}
+
+func (r *FakeRepository) TagGetByUUID(_ context.Context, userUUID, tagUUID string) (Tag, error) {
+	for _, tag := range r.Tags {
+		if tag.UserUUID == userUUID && tag.UUID == tagUUID {
 			return tag, nil
 		}
 	}

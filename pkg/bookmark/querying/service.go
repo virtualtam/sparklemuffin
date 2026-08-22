@@ -25,6 +25,12 @@ func NewService(r Repository) *Service {
 	}
 }
 
+// BookmarkCountsByTag returns the number of bookmarks for a given user,
+// grouped by tag name.
+func (s *Service) BookmarkCountsByTag(ctx context.Context, userUUID string) (map[string]uint, error) {
+	return s.r.BookmarkGetCountsByTag(ctx, userUUID)
+}
+
 // BookmarksByPage returns a Page containing a limited and offset number of bookmarks.
 func (s *Service) BookmarksByPage(ctx context.Context, ownerUUID string, visibility Visibility, number uint) (BookmarkPage, error) {
 	owner, err := s.r.OwnerGetByUUID(ctx, ownerUUID)

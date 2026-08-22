@@ -41,6 +41,10 @@ type Repository interface {
 	// FeedSubscriptionCategoryGetAll returns SubscribedFeeds, sorted by SubscriptionCategory.
 	FeedSubscriptionCategoryGetAll(ctx context.Context, userUUID string) ([]SubscribedFeedsByCategory, error)
 
+	// FeedSubscriptionGetCountsByTag returns the number of feed
+	// subscriptions for a given user, grouped by tag name.
+	FeedSubscriptionGetCountsByTag(ctx context.Context, userUUID string) (map[string]uint, error)
+
 	// FeedSubscriptionEntryGetByUID returns a single SubscribedFeedEntry for a given user.
 	FeedSubscriptionEntryGetByUID(ctx context.Context, userUUID string, entryUID string) (SubscribedFeedEntry, error)
 

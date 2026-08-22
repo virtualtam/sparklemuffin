@@ -4,7 +4,6 @@
 package taxonomy
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -128,10 +127,11 @@ func TestServiceRenameTag(t *testing.T) {
 		tname             string
 		repositoryTags    []Tag
 		tagUpdateQuery    TagUpdateQuery
-		reassignerErr     error
+		mergeTagErr       error
 		wantErr           error
+		wantTag           Tag
 		wantTags          []Tag
-		wantReassignCalls []reassignCall
+		wantMergeTagCalls []MergeTagCall
 	}{
 		// nominal cases
 		{
@@ -140,6 +140,7 @@ func TestServiceRenameTag(t *testing.T) {
 				{UUID: "tag-a-uuid", UserUUID: "user-1", Name: "foo"},
 			},
 			tagUpdateQuery: TagUpdateQuery{UserUUID: "user-1", CurrentName: "foo", NewName: "bar"},
+			wantTag:        Tag{UUID: "tag-a-uuid", UserUUID: "user-1", Name: "bar"},
 			wantTags: []Tag{
 				{UUID: "tag-a-uuid", UserUUID: "user-1", Name: "bar"},
 			},
@@ -151,11 +152,12 @@ func TestServiceRenameTag(t *testing.T) {
 				{UUID: "tag-b-uuid", UserUUID: "user-1", Name: "bar"},
 			},
 			tagUpdateQuery: TagUpdateQuery{UserUUID: "user-1", CurrentName: "foo", NewName: "bar"},
+			wantTag:        Tag{UUID: "tag-b-uuid", UserUUID: "user-1", Name: "bar"},
 			wantTags: []Tag{
 				{UUID: "tag-b-uuid", UserUUID: "user-1", Name: "bar"},
 			},
-			wantReassignCalls: []reassignCall{
-				{userUUID: "user-1", oldTagUUID: "tag-a-uuid", newTagUUID: "tag-b-uuid"},
+			wantMergeTagCalls: []MergeTagCall{
+				{UserUUID: "user-1", OldTagUUID: "tag-a-uuid", NewTagUUID: "tag-b-uuid"},
 			},
 		},
 
@@ -166,6 +168,7 @@ func TestServiceRenameTag(t *testing.T) {
 				{UUID: "tag-a-uuid", UserUUID: "user-1", Name: "foo"},
 			},
 			tagUpdateQuery: TagUpdateQuery{UserUUID: "user-1", CurrentName: "foo", NewName: "foo"},
+			wantTag:        Tag{UUID: "tag-a-uuid", UserUUID: "user-1", Name: "foo"},
 			wantTags: []Tag{
 				{UUID: "tag-a-uuid", UserUUID: "user-1", Name: "foo"},
 			},
@@ -207,20 +210,20 @@ func TestServiceRenameTag(t *testing.T) {
 			wantErr:        ErrTagNameContainsWhitespace,
 		},
 		{
-			tname: "reassignment fails, the current tag is preserved",
+			tname: "merge fails, both tags are preserved",
 			repositoryTags: []Tag{
 				{UUID: "tag-a-uuid", UserUUID: "user-1", Name: "foo"},
 				{UUID: "tag-b-uuid", UserUUID: "user-1", Name: "bar"},
 			},
 			tagUpdateQuery: TagUpdateQuery{UserUUID: "user-1", CurrentName: "foo", NewName: "bar"},
-			reassignerErr:  errors.New("reassignment failed"),
-			wantErr:        errors.New("reassignment failed"),
+			mergeTagErr:    errors.New("merge failed"),
+			wantErr:        errors.New("merge failed"),
 			wantTags: []Tag{
 				{UUID: "tag-a-uuid", UserUUID: "user-1", Name: "foo"},
 				{UUID: "tag-b-uuid", UserUUID: "user-1", Name: "bar"},
 			},
-			wantReassignCalls: []reassignCall{
-				{userUUID: "user-1", oldTagUUID: "tag-a-uuid", newTagUUID: "tag-b-uuid"},
+			wantMergeTagCalls: []MergeTagCall{
+				{UserUUID: "user-1", OldTagUUID: "tag-a-uuid", NewTagUUID: "tag-b-uuid"},
 			},
 		},
 	}
@@ -228,12 +231,12 @@ func TestServiceRenameTag(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.tname, func(t *testing.T) {
 			r := &FakeRepository{
-				Tags: tc.repositoryTags,
+				Tags:        tc.repositoryTags,
+				MergeTagErr: tc.mergeTagErr,
 			}
-			var calls []reassignCall
-			s := NewService(r, recordingOnTagRenameFn(&calls, tc.reassignerErr))
+			s := NewService(r)
 
-			err := s.RenameTag(t.Context(), tc.tagUpdateQuery)
+			got, err := s.RenameTag(t.Context(), tc.tagUpdateQuery)
 
 			if tc.wantErr != nil {
 				if err == nil {
@@ -244,6 +247,10 @@ func TestServiceRenameTag(t *testing.T) {
 				}
 			} else if err != nil {
 				t.Fatalf("want no error, got %q", err)
+			}
+
+			if got.UUID != tc.wantTag.UUID || got.UserUUID != tc.wantTag.UserUUID || got.Name != tc.wantTag.Name {
+				t.Errorf("want returned tag %+v, got %+v", tc.wantTag, got)
 			}
 
 			if len(r.Tags) != len(tc.wantTags) {
@@ -257,41 +264,17 @@ func TestServiceRenameTag(t *testing.T) {
 				}
 			}
 
-			if len(calls) != len(tc.wantReassignCalls) {
-				t.Fatalf("want %d reassign calls, got %d", len(tc.wantReassignCalls), len(calls))
+			if len(r.MergeTagCalls) != len(tc.wantMergeTagCalls) {
+				t.Fatalf("want %d MergeTag calls, got %d", len(tc.wantMergeTagCalls), len(r.MergeTagCalls))
 			}
 
-			for index, call := range calls {
-				want := tc.wantReassignCalls[index]
+			for index, call := range r.MergeTagCalls {
+				want := tc.wantMergeTagCalls[index]
 				if call != want {
-					t.Errorf("want reassign call %+v, got %+v", want, call)
+					t.Errorf("want MergeTag call %+v, got %+v", want, call)
 				}
 			}
 		})
-	}
-}
-
-func TestServiceRenameTagNotifiesAllReassigners(t *testing.T) {
-	r := &FakeRepository{
-		Tags: []Tag{
-			{UUID: "tag-a-uuid", UserUUID: "user-1", Name: "foo"},
-			{UUID: "tag-b-uuid", UserUUID: "user-1", Name: "bar"},
-		},
-	}
-	var firstCalls, secondCalls []reassignCall
-	s := NewService(r, recordingOnTagRenameFn(&firstCalls, nil), recordingOnTagRenameFn(&secondCalls, nil))
-
-	err := s.RenameTag(t.Context(), TagUpdateQuery{UserUUID: "user-1", CurrentName: "foo", NewName: "bar"})
-	if err != nil {
-		t.Fatalf("want no error, got %q", err)
-	}
-
-	want := reassignCall{userUUID: "user-1", oldTagUUID: "tag-a-uuid", newTagUUID: "tag-b-uuid"}
-
-	for _, calls := range [][]reassignCall{firstCalls, secondCalls} {
-		if len(calls) != 1 || calls[0] != want {
-			t.Errorf("want reassign call %+v, got %+v", want, calls)
-		}
 	}
 }
 
@@ -654,16 +637,131 @@ func TestServiceSearchTags(t *testing.T) {
 	}
 }
 
-type reassignCall struct {
-	userUUID               string
-	oldTagUUID, newTagUUID string
+func TestServiceAllTags(t *testing.T) {
+	cases := []struct {
+		tname          string
+		repositoryTags []Tag
+		wantNames      []string
+	}{
+		// nominal cases
+		{
+			tname: "several tags",
+			repositoryTags: []Tag{
+				{UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096", Name: "golang"},
+				{UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096", Name: "rss"},
+				{UserUUID: "other-user-uuid", Name: "python"},
+			},
+			wantNames: []string{"golang", "rss"},
+		},
+
+		// edge cases
+		{
+			tname:     "no tags",
+			wantNames: []string{},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Tags: tc.repositoryTags,
+			}
+			s := NewService(r)
+
+			got, err := s.AllTags(t.Context(), "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096")
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			if len(got) != len(tc.wantNames) {
+				t.Fatalf("want %d tags, got %d", len(tc.wantNames), len(got))
+			}
+			for index, tag := range got {
+				if tag.Name != tc.wantNames[index] {
+					t.Errorf("want tag name %q, got %q", tc.wantNames[index], tag.Name)
+				}
+			}
+		})
+	}
 }
 
-// recordingOnTagRenameFn returns an OnTagMergeFn that appends each call it
-// receives to calls, and returns err.
-func recordingOnTagRenameFn(calls *[]reassignCall, err error) OnTagMergeFn {
-	return func(_ context.Context, userUUID, oldTagUUID, newTagUUID string) error {
-		*calls = append(*calls, reassignCall{userUUID: userUUID, oldTagUUID: oldTagUUID, newTagUUID: newTagUUID})
-		return err
+func TestServiceTagByUUID(t *testing.T) {
+	cases := []struct {
+		tname          string
+		repositoryTags []Tag
+		userUUID       string
+		tagUUID        string
+		wantErr        error
+		wantName       string
+	}{
+		// nominal cases
+		{
+			tname: "tag exists",
+			repositoryTags: []Tag{
+				{UUID: "d290f1ee-6c54-4b01-90e6-d701748f0851", UserUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096", Name: "existing"},
+			},
+			userUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+			tagUUID:  "d290f1ee-6c54-4b01-90e6-d701748f0851",
+			wantName: "existing",
+		},
+
+		// edge cases
+		{
+			tname:    "no tag with this UUID",
+			userUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+			tagUUID:  "d290f1ee-6c54-4b01-90e6-d701748f0851",
+			wantErr:  ErrNotFound,
+		},
+		{
+			tname: "tag exists for another user",
+			repositoryTags: []Tag{
+				{UUID: "d290f1ee-6c54-4b01-90e6-d701748f0851", UserUUID: "other-user-uuid", Name: "existing"},
+			},
+			userUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+			tagUUID:  "d290f1ee-6c54-4b01-90e6-d701748f0851",
+			wantErr:  ErrNotFound,
+		},
+
+		// error cases
+		{
+			tname:    "UUID is empty",
+			userUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+			wantErr:  ErrTagUUIDInvalid,
+		},
+		{
+			tname:    "UUID is malformed",
+			userUUID: "6fe6a0c6-62da-4d05-b0c5-dc9d6ef58096",
+			tagUUID:  "not-a-uuid",
+			wantErr:  ErrTagUUIDInvalid,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Tags: tc.repositoryTags,
+			}
+			s := NewService(r)
+
+			got, err := s.TagByUUID(t.Context(), tc.userUUID, tc.tagUUID)
+
+			if tc.wantErr != nil {
+				if errors.Is(err, tc.wantErr) {
+					return
+				}
+				if err == nil {
+					t.Fatalf("want error %q, got nil", tc.wantErr)
+				}
+				t.Fatalf("want error %q, got %q", tc.wantErr, err)
+			}
+
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			if got.Name != tc.wantName {
+				t.Errorf("want tag name %q, got %q", tc.wantName, got.Name)
+			}
+		})
 	}
 }

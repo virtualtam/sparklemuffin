@@ -15,13 +15,23 @@ import (
 
 var _ taxonomy.Repository = &Repository{}
 
+const domain = "taxonomy"
+
+// OnTagMergeFn reassigns a domain's tag associations from one tag UUID to
+// another, using q so the reassignment commits or rolls back together with
+// MergeTag's own writes.
+type OnTagMergeFn func(ctx context.Context, q pgbase.Querier, userUUID, oldTagUUID, newTagUUID string) error
+
 type Repository struct {
 	*pgbase.Repository
+
+	onTagMergeFns []OnTagMergeFn
 }
 
-func NewRepository(pool *pgxpool.Pool) *Repository {
+func NewRepository(pool *pgxpool.Pool, onTagMergeFns ...OnTagMergeFn) *Repository {
 	return &Repository{
-		Repository: pgbase.NewRepository(pool),
+		Repository:    pgbase.NewRepository(pool),
+		onTagMergeFns: onTagMergeFns,
 	}
 }
 
@@ -80,6 +90,17 @@ func (r *Repository) TagGetByNameTx(ctx context.Context, q pgbase.Querier, userU
 	return tagGetQuery(ctx, q, query, userUUID, name)
 }
 
+// TagGetByUUID returns the tag with a given UUID for a given user.
+func (r *Repository) TagGetByUUID(ctx context.Context, userUUID, tagUUID string) (taxonomy.Tag, error) {
+	query := `
+	SELECT tag_uuid, user_uuid, tag_name, created_at, updated_at
+	FROM taxonomy_tags
+	WHERE user_uuid=$1
+	AND   tag_uuid=$2`
+
+	return tagGetQuery(ctx, r.Pool, query, userUUID, tagUUID)
+}
+
 // TagGetCount returns the number of tags for a given user.
 func (r *Repository) TagGetCount(ctx context.Context, userUUID string) (uint, error) {
 	var count uint
@@ -94,6 +115,36 @@ func (r *Repository) TagGetCount(ctx context.Context, userUUID string) (uint, er
 	}
 
 	return count, nil
+}
+
+// MergeTag merges the tag with the given old UUID into the tag with the
+// given new UUID for a given user, atomically: every registered
+// OnTagMergeFn reassigns its domain's references to the new tag, then the
+// old tag is deleted.
+func (r *Repository) MergeTag(ctx context.Context, userUUID, oldTagUUID, newTagUUID string) error {
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer r.Rollback(ctx, tx, domain, "MergeTag")
+
+	for _, onTagMergeFn := range r.onTagMergeFns {
+		if err := onTagMergeFn(ctx, tx, userUUID, oldTagUUID, newTagUUID); err != nil {
+			return err
+		}
+	}
+
+	if _, err := tx.Exec(
+		ctx,
+		"DELETE FROM taxonomy_tags WHERE user_uuid=$1 AND tag_uuid=$2",
+		userUUID,
+		oldTagUUID,
+	); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 // TagGetN returns at most n tags for a given user, starting at a given offset.

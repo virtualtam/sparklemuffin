@@ -118,4 +118,49 @@ func TestQueryingService(t *testing.T) {
 			t.Fatalf("failed to delete bookmark: %q", err)
 		}
 	})
+
+	t.Run("count bookmarks by tag", func(t *testing.T) {
+		ctx := t.Context()
+
+		countTag := "zzzcountbytag"
+
+		taggedBookmark1 := generateFakeBookmark(&fake, testUser.UUID, false)
+		taggedBookmark1.Tags = append(taggedBookmark1.Tags, countTag)
+		if err := bs.Add(ctx, taggedBookmark1); err != nil {
+			t.Fatalf("failed to add bookmark: %q", err)
+		}
+
+		taggedBookmark2 := generateFakeBookmark(&fake, testUser.UUID, true)
+		taggedBookmark2.Tags = append(taggedBookmark2.Tags, countTag)
+		if err := bs.Add(ctx, taggedBookmark2); err != nil {
+			t.Fatalf("failed to add bookmark: %q", err)
+		}
+
+		got, err := r.BookmarkGetCountsByTag(ctx, testUser.UUID)
+		if err != nil {
+			t.Fatalf("failed to count bookmarks by tag: %q", err)
+		}
+		if got[countTag] != 2 {
+			t.Errorf("want 2 bookmarks for tag %q, got %d", countTag, got[countTag])
+		}
+		if got["unknown-tag"] != 0 {
+			t.Errorf("want 0 bookmarks for tag %q, got %d", "unknown-tag", got["unknown-tag"])
+		}
+
+		gotBookmark1, err := bs.ByURL(ctx, testUser.UUID, taggedBookmark1.URL)
+		if err != nil {
+			t.Fatalf("failed to retrieve bookmark: %q", err)
+		}
+		gotBookmark2, err := bs.ByURL(ctx, testUser.UUID, taggedBookmark2.URL)
+		if err != nil {
+			t.Fatalf("failed to retrieve bookmark: %q", err)
+		}
+
+		if err := bs.Delete(ctx, testUser.UUID, gotBookmark1.UID); err != nil {
+			t.Fatalf("failed to delete bookmark: %q", err)
+		}
+		if err := bs.Delete(ctx, testUser.UUID, gotBookmark2.UID); err != nil {
+			t.Fatalf("failed to delete bookmark: %q", err)
+		}
+	})
 }

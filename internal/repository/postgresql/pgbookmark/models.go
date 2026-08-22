@@ -28,6 +28,11 @@ type DBBookmark struct {
 	UpdatedAt time.Time `db:"updated_at"`
 }
 
+type DBTagCount struct {
+	Name  string `db:"tag_name"`
+	Count uint   `db:"count"`
+}
+
 func bookmarkToFullTextSearchString(b bookmark.Bookmark) string {
 	return fmt.Sprintf(
 		"%s %s",

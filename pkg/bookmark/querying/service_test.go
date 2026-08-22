@@ -69,6 +69,51 @@ var testRepositoryBookmarks = []bookmark.Bookmark{
 	},
 }
 
+func TestServiceBookmarkCountsByTag(t *testing.T) {
+	cases := []struct {
+		tname      string
+		userUUID   string
+		wantCounts map[string]uint
+	}{
+		// nominal cases
+		{
+			tname:      "user has bookmarks with tags",
+			userUUID:   "5d75c769-059c-4b36-9db6-1c82619e704a",
+			wantCounts: map[string]uint{"example": 1, "test": 1},
+		},
+
+		// edge cases
+		{
+			tname:      "user has no tagged bookmarks",
+			userUUID:   "218d03f8-976c-4387-9d74-95ed656e3921",
+			wantCounts: map[string]uint{},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.tname, func(t *testing.T) {
+			r := &FakeRepository{
+				Bookmarks: testRepositoryBookmarks,
+			}
+			s := NewService(r)
+
+			got, err := s.BookmarkCountsByTag(t.Context(), tc.userUUID)
+			if err != nil {
+				t.Fatalf("want no error, got %q", err)
+			}
+
+			if len(got) != len(tc.wantCounts) {
+				t.Fatalf("want %d tag counts, got %d: %v", len(tc.wantCounts), len(got), got)
+			}
+			for name, wantCount := range tc.wantCounts {
+				if got[name] != wantCount {
+					t.Errorf("want count %d for tag %q, got %d", wantCount, name, got[name])
+				}
+			}
+		})
+	}
+}
+
 func TestServiceByPage(t *testing.T) {
 	cases := []struct {
 		tname               string

@@ -67,6 +67,33 @@ func TestTaxonomyService(t *testing.T) {
 		}
 	})
 
+	t.Run("get a tag by UUID", func(t *testing.T) {
+		ctx := t.Context()
+		name := fake.Lorem().Word()
+
+		tags, err := ts.GetOrCreateTags(ctx, testUser.UUID, []string{name})
+		if err != nil {
+			t.Fatalf("failed to create tag: %q", err)
+		}
+
+		got, err := ts.TagByUUID(ctx, testUser.UUID, tags[0].UUID)
+		if err != nil {
+			t.Fatalf("failed to retrieve tag: %q", err)
+		}
+		if got.Name != name {
+			t.Errorf("want tag name %q, got %q", name, got.Name)
+		}
+
+		if err := ts.DeleteTag(ctx, taxonomy.TagDeleteQuery{UserUUID: testUser.UUID, Name: name}); err != nil {
+			t.Fatalf("failed to delete tag: %q", err)
+		}
+
+		_, err = ts.TagByUUID(ctx, testUser.UUID, tags[0].UUID)
+		if !errors.Is(err, taxonomy.ErrNotFound) {
+			t.Fatalf("want %q, got %q", taxonomy.ErrNotFound, err)
+		}
+	})
+
 	t.Run("rename a tag", func(t *testing.T) {
 		ctx := t.Context()
 		currentName := fake.Lorem().Word()
@@ -76,7 +103,7 @@ func TestTaxonomyService(t *testing.T) {
 			t.Fatalf("failed to create tag: %q", err)
 		}
 
-		if err := ts.RenameTag(ctx, taxonomy.TagUpdateQuery{UserUUID: testUser.UUID, CurrentName: currentName, NewName: newName}); err != nil {
+		if _, err := ts.RenameTag(ctx, taxonomy.TagUpdateQuery{UserUUID: testUser.UUID, CurrentName: currentName, NewName: newName}); err != nil {
 			t.Fatalf("failed to rename tag: %q", err)
 		}
 

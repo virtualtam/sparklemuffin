@@ -27,6 +27,12 @@ func NewService(r Repository) *Service {
 	}
 }
 
+// SubscriptionCountsByTag returns the number of feed subscriptions for a
+// given user, grouped by tag name.
+func (s *Service) SubscriptionCountsByTag(ctx context.Context, userUUID string) (map[string]uint, error) {
+	return s.r.FeedSubscriptionGetCountsByTag(ctx, userUUID)
+}
+
 type (
 	getCountFn              func() (uint, error)
 	subscriptionEntryGetNFn func(offset uint) ([]SubscribedFeedEntry, error)

@@ -262,10 +262,17 @@ html:not([data-bs-theme="dark"]) .btn-primary {
   color: #eceff4 !important; /* nord6 */
 }
 
-/* Bookmarks */
+/* Tags */
+.btn-xs {
+  --bs-btn-padding-y: 0.1rem;
+  --bs-btn-padding-x: 0.35rem;
+  --bs-btn-font-size: 0.75rem;
+  --bs-btn-border-radius: var(--bs-border-radius-sm);
+}
+
 .tag-count {
   display: inline-block;
-  min-width: 2.5em;
+  min-width: 4.5em;
 }
 
 .tag-row:hover {

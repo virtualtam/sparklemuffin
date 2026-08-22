@@ -862,3 +862,76 @@ func TestFeedQueryingServiceSearchMatchesSubscriptionTag(t *testing.T) {
 
 	querying.AssertPageEquals(t, gotPage, wantPage)
 }
+
+func TestFeedQueryingServiceSubscriptionCountsByTag(t *testing.T) {
+	pool := pgbase.CreateAndMigrateTestDatabase(t)
+
+	r := pgfeed.NewRepository(pool)
+	qs := querying.NewService(r)
+
+	ur := pguser.NewRepository(pool)
+	us := user.NewService(ur)
+
+	fake := faker.New()
+
+	u := user.FakeUser(t, &fake)
+	if err := us.Add(t.Context(), u); err != nil {
+		t.Fatalf("failed to create user: %q", err)
+	}
+
+	testUser, err := us.ByNickName(t.Context(), u.NickName)
+	if err != nil {
+		t.Fatalf("failed to retrieve user: %q", err)
+	}
+
+	now := time.Now().UTC()
+	countTag := "zzzcountbytag"
+
+	category := generateFakeCategory(t, &fake, testUser.UUID, "Count Test")
+	if err := r.FeedCategoryCreate(t.Context(), category); err != nil {
+		t.Fatalf("failed to create category: %q", err)
+	}
+
+	feed1 := generateFakeFeed(t, &fake, "Feed 1", "", now)
+	if err := r.FeedCreate(t.Context(), feed1); err != nil {
+		t.Fatalf("failed to create feed: %q", err)
+	}
+
+	subscription1 := feed.Subscription{
+		UUID:         fake.UUID().V4(),
+		FeedUUID:     feed1.UUID,
+		CategoryUUID: category.UUID,
+		UserUUID:     testUser.UUID,
+		Tags:         []string{countTag},
+	}
+	if _, err := r.FeedSubscriptionCreate(t.Context(), subscription1); err != nil {
+		t.Fatalf("failed to create subscription: %q", err)
+	}
+
+	feed2 := generateFakeFeed(t, &fake, "Feed 2", "", now)
+	if err := r.FeedCreate(t.Context(), feed2); err != nil {
+		t.Fatalf("failed to create feed: %q", err)
+	}
+
+	subscription2 := feed.Subscription{
+		UUID:         fake.UUID().V4(),
+		FeedUUID:     feed2.UUID,
+		CategoryUUID: category.UUID,
+		UserUUID:     testUser.UUID,
+		Tags:         []string{countTag, "other"},
+	}
+	if _, err := r.FeedSubscriptionCreate(t.Context(), subscription2); err != nil {
+		t.Fatalf("failed to create subscription: %q", err)
+	}
+
+	got, err := qs.SubscriptionCountsByTag(t.Context(), testUser.UUID)
+	if err != nil {
+		t.Fatalf("failed to count subscriptions by tag: %q", err)
+	}
+	if got[countTag] != 2 {
+		t.Errorf("want 2 subscriptions for tag %q, got %d", countTag, got[countTag])
+	}
+	if got["unknown-tag"] != 0 {
+		t.Errorf("want 0 subscriptions for tag %q, got %d", "unknown-tag", got["unknown-tag"])
+	}
+}

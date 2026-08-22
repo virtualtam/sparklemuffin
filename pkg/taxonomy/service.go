@@ -12,20 +12,15 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
-// OnTagMergeFn reassigns a domain's tag associations from one tag UUID to another.
-type OnTagMergeFn func(ctx context.Context, userUUID, oldTagUUID, newTagUUID string) error
-
 // Service handles operations related to managing Tags.
 type Service struct {
-	r             Repository
-	onTagMergeFns []OnTagMergeFn
+	r Repository
 }
 
 // NewService initializes and returns a new Service.
-func NewService(r Repository, onTagMergeFns ...OnTagMergeFn) *Service {
+func NewService(r Repository) *Service {
 	return &Service{
-		r:             r,
-		onTagMergeFns: onTagMergeFns,
+		r: r,
 	}
 }
 
@@ -45,6 +40,19 @@ func (s *Service) AddTag(ctx context.Context, userUUID, name string) (Tag, error
 	}
 
 	return tag, nil
+}
+
+// AllTags returns every tag for a given user, unpaginated.
+func (s *Service) AllTags(ctx context.Context, userUUID string) ([]Tag, error) {
+	count, err := s.r.TagGetCount(ctx, userUUID)
+	if err != nil {
+		return nil, err
+	}
+	if count == 0 {
+		return []Tag{}, nil
+	}
+
+	return s.r.TagGetN(ctx, userUUID, count, 0)
 }
 
 // DeleteTag deletes a tag for a given user.
@@ -115,50 +123,47 @@ func (s *Service) ListTags(ctx context.Context, userUUID string, number uint) (T
 	return NewTagPage(number, totalPages, tagCount, tags), nil
 }
 
-// RenameTag renames a tag for a given user.
-//
-// If a tag with the new name already exists, the two tags are merged: every
-// registered OnTagMergeFn is called to move its associations from the
-// current tag to the existing one, which is then deleted.
-func (s *Service) RenameTag(ctx context.Context, uq TagUpdateQuery) error {
+// RenameTag renames a tag for a given user, and returns the resulting tag:
+// the renamed tag itself, or, if a tag with the new name already existed and
+// the two were merged via Repository.MergeTag, that existing tag.
+func (s *Service) RenameTag(ctx context.Context, uq TagUpdateQuery) (Tag, error) {
 	uq.Normalize()
 
 	if err := uq.Validate(); err != nil {
-		return err
-	}
-
-	if uq.NewName == uq.CurrentName {
-		return nil
+		return Tag{}, err
 	}
 
 	currentTag, err := s.r.TagGetByName(ctx, uq.UserUUID, uq.CurrentName)
 	if errors.Is(err, ErrNotFound) {
-		return nil
+		return Tag{}, nil
 	}
 	if err != nil {
-		return err
+		return Tag{}, err
+	}
+
+	if uq.NewName == uq.CurrentName {
+		return currentTag, nil
 	}
 
 	existingTag, err := s.r.TagGetByName(ctx, uq.UserUUID, uq.NewName)
 	if err != nil && !errors.Is(err, ErrNotFound) {
-		return err
+		return Tag{}, err
 	}
 
 	if err == nil {
-		// The new name matches the name of an existing tag.
-
-		// 1. Update all references to point to its UUID.
-		for _, onTagMergeFn := range s.onTagMergeFns {
-			if err := onTagMergeFn(ctx, uq.UserUUID, currentTag.UUID, existingTag.UUID); err != nil {
-				return err
-			}
+		// The new name matches the name of an existing tag: merge them.
+		if err := s.r.MergeTag(ctx, uq.UserUUID, currentTag.UUID, existingTag.UUID); err != nil {
+			return Tag{}, err
 		}
-
-		// 2. Delete the old tag.
-		return s.r.TagDelete(ctx, uq.UserUUID, uq.CurrentName)
+		return existingTag, nil
 	}
 
-	return s.r.TagRename(ctx, uq.UserUUID, currentTag.UUID, uq.NewName)
+	if err := s.r.TagRename(ctx, uq.UserUUID, currentTag.UUID, uq.NewName); err != nil {
+		return Tag{}, err
+	}
+
+	currentTag.Name = uq.NewName
+	return currentTag, nil
 }
 
 // SearchTags returns a Page containing a limited and offset number of tags
@@ -191,4 +196,15 @@ func (s *Service) SearchTags(ctx context.Context, userUUID, searchTerms string, 
 	}
 
 	return NewTagSearchResultPage(searchTerms, tagCount, number, totalPages, tags), nil
+}
+
+// TagByUUID returns the tag with a given UUID for a given user.
+func (s *Service) TagByUUID(ctx context.Context, userUUID, tagUUID string) (Tag, error) {
+	tag := Tag{UUID: tagUUID}
+
+	if err := tag.validateUUID(); err != nil {
+		return Tag{}, err
+	}
+
+	return s.r.TagGetByUUID(ctx, userUUID, tagUUID)
 }

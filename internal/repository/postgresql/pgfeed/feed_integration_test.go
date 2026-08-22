@@ -400,10 +400,10 @@ func TestFeedService(t *testing.T) {
 			t.Fatalf("failed to create subscription: %q", err)
 		}
 
-		taxonomyRepo := pgtaxonomy.NewRepository(pool)
-		taxonomyService := taxonomy.NewService(taxonomyRepo, r.OnTagMerge)
+		taxonomyRepo := pgtaxonomy.NewRepository(pool, r.OnTagMerge)
+		taxonomyService := taxonomy.NewService(taxonomyRepo)
 
-		if err := taxonomyService.RenameTag(ctx, taxonomy.TagUpdateQuery{
+		if _, err := taxonomyService.RenameTag(ctx, taxonomy.TagUpdateQuery{
 			UserUUID:    testUser.UUID,
 			CurrentName: oldTag,
 			NewName:     newTag,

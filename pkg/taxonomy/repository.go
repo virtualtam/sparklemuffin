@@ -24,11 +24,19 @@ type Repository interface {
 	// TagGetByName returns the tag with a given name for a given user.
 	TagGetByName(ctx context.Context, userUUID, name string) (Tag, error)
 
+	// TagGetByUUID returns the tag with a given UUID for a given user.
+	TagGetByUUID(ctx context.Context, userUUID, tagUUID string) (Tag, error)
+
 	// TagGetCount returns the number of tags for a given user.
 	TagGetCount(ctx context.Context, userUUID string) (uint, error)
 
 	// TagGetN returns at most n tags for a given user, starting at a given offset.
 	TagGetN(ctx context.Context, userUUID string, n, offset uint) ([]Tag, error)
+
+	// MergeTag merges the tag with the given old UUID into the tag with the
+	// given new UUID for a given user: every reference to the old tag is
+	// reassigned to the new one, and the old tag is then deleted.
+	MergeTag(ctx context.Context, userUUID, oldTagUUID, newTagUUID string) error
 
 	// TagRename renames the tag with a given UUID for a given user.
 	TagRename(ctx context.Context, userUUID, tagUUID, newName string) error

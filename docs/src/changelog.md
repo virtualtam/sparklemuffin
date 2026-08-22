@@ -19,6 +19,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Feed
 - Tag feed subscriptions
 
+#### Taxonomy
+- Add new domain package to manage tags
+
 #### WWW
 - Feed: bookmark an entry
 - Feed: tag subscriptions
@@ -33,8 +36,16 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Packaging and automation
 - Disable SQLFluff rule for excessive PostgreSQL logs (PG01)
 
+#### Bookmarks
+- Normalize tags using the new taxonomy domain package
+
+#### Feed
+- Normalize subscription tags using the new taxonomy domain package
+
 #### WWW
 - Feed: move entry actions to a dropdown menu
+- Relocate tag management to a dedicated section and page
+- Update tag counters to display the corresponding count of bookmarks and feed subscriptions
 
 ## v0.7.1 - 2026-08-16
 

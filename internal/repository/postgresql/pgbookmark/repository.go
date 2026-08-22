@@ -292,6 +292,36 @@ func (r *Repository) BookmarkGetCount(ctx context.Context, userUUID string, visi
 	return count, nil
 }
 
+// BookmarkGetCountsByTag returns the number of bookmarks for a given user,
+// grouped by tag name, in a single query.
+func (r *Repository) BookmarkGetCountsByTag(ctx context.Context, userUUID string) (map[string]uint, error) {
+	query := `
+	SELECT tt.tag_name, COUNT(*) AS count
+	FROM   bookmark_tags bt
+	JOIN   taxonomy_tags tt ON tt.tag_uuid = bt.tag_uuid
+	WHERE  bt.user_uuid=$1
+	GROUP BY tt.tag_name`
+
+	rows, err := r.Pool.Query(ctx, query, userUUID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var dbTagCounts []DBTagCount
+
+	if err := pgxscan.ScanAll(&dbTagCounts, rows); err != nil {
+		return nil, err
+	}
+
+	counts := make(map[string]uint, len(dbTagCounts))
+	for _, dbTagCount := range dbTagCounts {
+		counts[dbTagCount.Name] = dbTagCount.Count
+	}
+
+	return counts, nil
+}
+
 func (r *Repository) BookmarkGetN(ctx context.Context, userUUID string, visibility bookmarkquerying.Visibility, n uint, offset uint) ([]bookmark.Bookmark, error) {
 	var query string
 
@@ -557,9 +587,10 @@ func (r *Repository) OwnerGetByUUID(ctx context.Context, userUUID string) (bookm
 	}, nil
 }
 
-// OnTagMerge provides a taxonomy.OnTagMergeFn to update bookmark references when a tag is renamed,
-// and the new name matches an existing tag.
-func (r *Repository) OnTagMerge(ctx context.Context, userUUID, oldTagUUID, newTagUUID string) error {
+// OnTagMerge provides a pgtaxonomy.OnTagMergeFn to update bookmark references when a tag is
+// renamed, and the new name matches an existing tag. It runs using q, so it participates in the
+// same transaction as the taxonomy_tags deletion that completes the merge.
+func (r *Repository) OnTagMerge(ctx context.Context, q pgbase.Querier, userUUID, oldTagUUID, newTagUUID string) error {
 	query := `
 	INSERT INTO bookmark_tags(user_uuid, bookmark_uid, tag_uuid)
 	SELECT user_uuid, bookmark_uid, $3
@@ -568,6 +599,6 @@ func (r *Repository) OnTagMerge(ctx context.Context, userUUID, oldTagUUID, newTa
 	AND    tag_uuid=$2
 	ON CONFLICT DO NOTHING`
 
-	_, err := r.Pool.Exec(ctx, query, userUUID, oldTagUUID, newTagUUID)
+	_, err := q.Exec(ctx, query, userUUID, oldTagUUID, newTagUUID)
 	return err
 }

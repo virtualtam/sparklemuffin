@@ -55,6 +55,21 @@ func (r *FakeRepository) FeedGetByUUID(_ context.Context, feedUUID string) (feed
 	return feed.Feed{}, feed.ErrFeedNotFound
 }
 
+func (r *FakeRepository) FeedSubscriptionGetCountsByTag(_ context.Context, userUUID string) (map[string]uint, error) {
+	counts := map[string]uint{}
+
+	for _, s := range r.Subscriptions {
+		if s.UserUUID != userUUID {
+			continue
+		}
+		for _, tag := range s.Tags {
+			counts[tag]++
+		}
+	}
+
+	return counts, nil
+}
+
 func (r *FakeRepository) FeedSubscriptionCategoryGetAll(_ context.Context, userUUID string) ([]SubscribedFeedsByCategory, error) {
 	var subscriptionCategories []SubscribedFeedsByCategory
 

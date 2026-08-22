@@ -4,6 +4,7 @@
 package pgbookmark_test
 
 import (
+	"context"
 	"errors"
 	"math/rand"
 	"slices"
@@ -422,10 +423,10 @@ func TestBookmarkService(t *testing.T) {
 			t.Fatalf("failed to create bookmark: %q", err)
 		}
 
-		taxonomyRepo := pgtaxonomy.NewRepository(pool)
-		taxonomyService := taxonomy.NewService(taxonomyRepo, r.OnTagMerge)
+		taxonomyRepo := pgtaxonomy.NewRepository(pool, r.OnTagMerge)
+		taxonomyService := taxonomy.NewService(taxonomyRepo)
 
-		if err := taxonomyService.RenameTag(ctx, taxonomy.TagUpdateQuery{
+		if _, err := taxonomyService.RenameTag(ctx, taxonomy.TagUpdateQuery{
 			UserUUID:    testUser.UUID,
 			CurrentName: oldTag,
 			NewName:     newTag,
@@ -459,6 +460,74 @@ func TestBookmarkService(t *testing.T) {
 			t.Fatalf("failed to delete bookmark: %q", err)
 		}
 	})
+
+	t.Run("renaming a tag into an existing one rolls back bookmark_tags if a later merge callback fails", func(t *testing.T) {
+		ctx := t.Context()
+
+		oldTag := "merge-rollback/old"
+		newTag := "merge-rollback/new"
+
+		bkm := bookmark.NewBookmark(testUser.UUID)
+		bkm.URL = fake.Internet().URL()
+		bkm.Title = fake.Lorem().Sentence(5)
+		bkm.Tags = []string{oldTag}
+		bkm.Normalize()
+
+		if err := bs.Add(ctx, *bkm); err != nil {
+			t.Fatalf("failed to create bookmark: %q", err)
+		}
+
+		taxonomyRepoForSeed := pgtaxonomy.NewRepository(pool)
+		if err := taxonomyRepoForSeed.TagAdd(ctx, mustNewTag(t, testUser.UUID, newTag)); err != nil {
+			t.Fatalf("failed to seed the merge target tag: %q", err)
+		}
+
+		failingOnTagMerge := func(_ context.Context, _ pgbase.Querier, _, _, _ string) error {
+			return errors.New("simulated second-domain merge failure")
+		}
+		taxonomyRepo := pgtaxonomy.NewRepository(pool, r.OnTagMerge, failingOnTagMerge)
+		taxonomyService := taxonomy.NewService(taxonomyRepo)
+
+		_, err := taxonomyService.RenameTag(ctx, taxonomy.TagUpdateQuery{
+			UserUUID:    testUser.UUID,
+			CurrentName: oldTag,
+			NewName:     newTag,
+		})
+		if err == nil {
+			t.Fatal("want an error from the failing merge callback, got nil")
+		}
+
+		gotBookmark, err := bs.ByURL(ctx, testUser.UUID, bkm.URL)
+		if err != nil {
+			t.Fatalf("failed to retrieve bookmark: %q", err)
+		}
+		assertBookmarkTagNames(t, pool, testUser.UUID, gotBookmark.UID, []string{oldTag})
+
+		if got := countTaxonomyTagsByName(t, pool, testUser.UUID, oldTag); got != 1 {
+			t.Errorf("want the old tag %q to still exist after a rolled-back merge, got %d rows", oldTag, got)
+		}
+		if got := countTaxonomyTagsByName(t, pool, testUser.UUID, newTag); got != 1 {
+			t.Errorf("want exactly 1 taxonomy_tags row for %q, got %d", newTag, got)
+		}
+
+		if err := bs.Delete(ctx, testUser.UUID, gotBookmark.UID); err != nil {
+			t.Fatalf("failed to delete bookmark: %q", err)
+		}
+		if err := taxonomyRepoForSeed.TagDelete(ctx, testUser.UUID, newTag); err != nil {
+			t.Fatalf("failed to delete merge target tag: %q", err)
+		}
+	})
+}
+
+func mustNewTag(t *testing.T, userUUID, name string) taxonomy.Tag {
+	t.Helper()
+
+	tag, err := taxonomy.NewTag(userUUID, name)
+	if err != nil {
+		t.Fatalf("failed to build tag: %q", err)
+	}
+
+	return tag
 }
 
 func assertBookmarkTagNames(t *testing.T, pool *pgxpool.Pool, userUUID, bookmarkUID string, want []string) {

@@ -13,6 +13,7 @@ var (
 	ErrTagAlreadyRegistered      = errors.New("taxonomy: tag already registered")
 	ErrTagNameContainsWhitespace = errors.New("taxonomy: tag name contains whitespace")
 	ErrTagNameRequired           = errors.New("taxonomy: tag name required")
+	ErrTagUUIDInvalid            = errors.New("taxonomy: invalid tag UUID")
 )
 
 func newValidationError(field string, e error) error {

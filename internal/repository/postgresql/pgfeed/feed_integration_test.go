@@ -12,16 +12,19 @@ import (
 	"time"
 
 	"github.com/cespare/xxhash/v2"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jaswdr/faker/v2"
 
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgtaxonomy"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
 	"github.com/virtualtam/sparklemuffin/internal/test/assert"
 	"github.com/virtualtam/sparklemuffin/internal/test/feedtest"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/fetching"
 	"github.com/virtualtam/sparklemuffin/pkg/feed/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/taxonomy"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -352,4 +355,140 @@ func TestFeedService(t *testing.T) {
 		now := time.Now().UTC()
 		assert.TimeAlmostEquals(t, "UpdatedAt", gotPreferences.UpdatedAt, now, assert.TimeComparisonDelta)
 	})
+
+	t.Run("renaming a tag into an existing one reassigns feed_subscription_tags instead of losing them", func(t *testing.T) {
+		ctx := t.Context()
+		fake := faker.New()
+
+		oldTag := "merge/old"
+		newTag := "merge/new"
+
+		category := generateFakeCategory(t, &fake, testUser.UUID, "Merge Test")
+		if err := r.FeedCategoryCreate(ctx, category); err != nil {
+			t.Fatalf("failed to create category: %q", err)
+		}
+
+		onlyOldFeed := generateFakeFeed(t, &fake, "Only Old", "", now)
+		if err := r.FeedCreate(ctx, onlyOldFeed); err != nil {
+			t.Fatalf("failed to create feed: %q", err)
+		}
+
+		onlyOld := feed.Subscription{
+			UUID:         fake.UUID().V4(),
+			FeedUUID:     onlyOldFeed.UUID,
+			CategoryUUID: category.UUID,
+			UserUUID:     testUser.UUID,
+			Tags:         []string{oldTag},
+		}
+		if _, err := r.FeedSubscriptionCreate(ctx, onlyOld); err != nil {
+			t.Fatalf("failed to create subscription: %q", err)
+		}
+
+		bothFeed := generateFakeFeed(t, &fake, "Both", "", now)
+		if err := r.FeedCreate(ctx, bothFeed); err != nil {
+			t.Fatalf("failed to create feed: %q", err)
+		}
+
+		both := feed.Subscription{
+			UUID:         fake.UUID().V4(),
+			FeedUUID:     bothFeed.UUID,
+			CategoryUUID: category.UUID,
+			UserUUID:     testUser.UUID,
+			Tags:         []string{oldTag, newTag},
+		}
+		if _, err := r.FeedSubscriptionCreate(ctx, both); err != nil {
+			t.Fatalf("failed to create subscription: %q", err)
+		}
+
+		taxonomyRepo := pgtaxonomy.NewRepository(pool)
+		taxonomyService := taxonomy.NewService(taxonomyRepo, r.OnTagMerge)
+
+		if err := taxonomyService.RenameTag(ctx, taxonomy.TagUpdateQuery{
+			UserUUID:    testUser.UUID,
+			CurrentName: oldTag,
+			NewName:     newTag,
+		}); err != nil {
+			t.Fatalf("failed to rename tag: %q", err)
+		}
+
+		gotOnlyOld, err := r.FeedSubscriptionGetByUUID(ctx, testUser.UUID, onlyOld.UUID)
+		if err != nil {
+			t.Fatalf("failed to retrieve subscription: %q", err)
+		}
+		if len(gotOnlyOld.Tags) != 1 || gotOnlyOld.Tags[0] != newTag {
+			t.Errorf("want tags [%s], got %v", newTag, gotOnlyOld.Tags)
+		}
+
+		gotBoth, err := r.FeedSubscriptionGetByUUID(ctx, testUser.UUID, both.UUID)
+		if err != nil {
+			t.Fatalf("failed to retrieve subscription: %q", err)
+		}
+		if len(gotBoth.Tags) != 1 || gotBoth.Tags[0] != newTag {
+			t.Errorf("want tags [%s], got %v", newTag, gotBoth.Tags)
+		}
+
+		if got := countTaxonomyTagsByName(t, pool, testUser.UUID, oldTag); got != 0 {
+			t.Errorf("want the merged-away tag %q gone from taxonomy_tags, got %d rows", oldTag, got)
+		}
+		if got := countTaxonomyTagsByName(t, pool, testUser.UUID, newTag); got != 1 {
+			t.Errorf("want exactly 1 taxonomy_tags row for %q, got %d", newTag, got)
+		}
+
+		if err := r.FeedSubscriptionDelete(ctx, testUser.UUID, onlyOld.UUID); err != nil {
+			t.Fatalf("failed to delete subscription: %q", err)
+		}
+		if err := r.FeedSubscriptionDelete(ctx, testUser.UUID, both.UUID); err != nil {
+			t.Fatalf("failed to delete subscription: %q", err)
+		}
+	})
+
+	t.Run("creating a subscription rejects a tag name containing whitespace", func(t *testing.T) {
+		ctx := t.Context()
+		fake := faker.New()
+
+		category := generateFakeCategory(t, &fake, testUser.UUID, "Invalid Tag Test")
+		if err := r.FeedCategoryCreate(ctx, category); err != nil {
+			t.Fatalf("failed to create category: %q", err)
+		}
+
+		invalidTagFeed := generateFakeFeed(t, &fake, "Invalid Tag Feed", "", now)
+		if err := r.FeedCreate(ctx, invalidTagFeed); err != nil {
+			t.Fatalf("failed to create feed: %q", err)
+		}
+
+		subscription := feed.Subscription{
+			UUID:         fake.UUID().V4(),
+			FeedUUID:     invalidTagFeed.UUID,
+			CategoryUUID: category.UUID,
+			UserUUID:     testUser.UUID,
+			Tags:         []string{"not a valid tag"},
+		}
+
+		_, err := r.FeedSubscriptionCreate(ctx, subscription)
+		if !errors.Is(err, taxonomy.ErrTagNameContainsWhitespace) {
+			t.Fatalf("want %q, got %q", taxonomy.ErrTagNameContainsWhitespace, err)
+		}
+
+		if _, err := r.FeedSubscriptionGetByUUID(ctx, testUser.UUID, subscription.UUID); !errors.Is(err, feed.ErrSubscriptionNotFound) {
+			t.Fatalf("want the subscription not to have been created, got %q", err)
+		}
+	})
+}
+
+func countTaxonomyTagsByName(t *testing.T, pool *pgxpool.Pool, userUUID, name string) int {
+	t.Helper()
+
+	var count int
+
+	err := pool.QueryRow(
+		t.Context(),
+		"SELECT COUNT(*) FROM taxonomy_tags WHERE user_uuid=$1 AND tag_name=$2",
+		userUUID,
+		name,
+	).Scan(&count)
+	if err != nil {
+		t.Fatalf("failed to count taxonomy_tags: %q", err)
+	}
+
+	return count
 }

@@ -12,20 +12,20 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
-// OnTagRenameFn reassigns a domain's tag associations from one tag UUID to another.
-type OnTagRenameFn func(ctx context.Context, userUUID, oldTagUUID, newTagUUID string) error
+// OnTagMergeFn reassigns a domain's tag associations from one tag UUID to another.
+type OnTagMergeFn func(ctx context.Context, userUUID, oldTagUUID, newTagUUID string) error
 
 // Service handles operations related to managing Tags.
 type Service struct {
-	r              Repository
-	onTagRenameFns []OnTagRenameFn
+	r             Repository
+	onTagMergeFns []OnTagMergeFn
 }
 
 // NewService initializes and returns a new Service.
-func NewService(r Repository, onTagRenameFns ...OnTagRenameFn) *Service {
+func NewService(r Repository, onTagMergeFns ...OnTagMergeFn) *Service {
 	return &Service{
-		r:              r,
-		onTagRenameFns: onTagRenameFns,
+		r:             r,
+		onTagMergeFns: onTagMergeFns,
 	}
 }
 
@@ -118,7 +118,7 @@ func (s *Service) ListTags(ctx context.Context, userUUID string, number uint) (T
 // RenameTag renames a tag for a given user.
 //
 // If a tag with the new name already exists, the two tags are merged: every
-// registered OnTagRenameFn is called to move its associations from the
+// registered OnTagMergeFn is called to move its associations from the
 // current tag to the existing one, which is then deleted.
 func (s *Service) RenameTag(ctx context.Context, uq TagUpdateQuery) error {
 	uq.Normalize()
@@ -145,12 +145,16 @@ func (s *Service) RenameTag(ctx context.Context, uq TagUpdateQuery) error {
 	}
 
 	if err == nil {
-		for _, onTagRenameFn := range s.onTagRenameFns {
-			if err := onTagRenameFn(ctx, uq.UserUUID, currentTag.UUID, existingTag.UUID); err != nil {
+		// The new name matches the name of an existing tag.
+
+		// 1. Update all references to point to its UUID.
+		for _, onTagMergeFn := range s.onTagMergeFns {
+			if err := onTagMergeFn(ctx, uq.UserUUID, currentTag.UUID, existingTag.UUID); err != nil {
 				return err
 			}
 		}
 
+		// 2. Delete the old tag.
 		return s.r.TagDelete(ctx, uq.UserUUID, uq.CurrentName)
 	}
 

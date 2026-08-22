@@ -8,7 +8,6 @@ import (
 	"errors"
 	"slices"
 	"sort"
-	"strings"
 
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 )
@@ -467,78 +466,4 @@ func (r *FakeRepository) FeedQueryingSubscriptionsByCategory(_ context.Context, 
 	}
 
 	return result, nil
-}
-
-func (r *FakeRepository) aggregateSubscriptionTags(userUUID string) []Tag {
-	counts := map[string]uint{}
-
-	for _, s := range r.Subscriptions {
-		if s.UserUUID != userUUID {
-			continue
-		}
-		for _, tag := range s.Tags {
-			counts[tag]++
-		}
-	}
-
-	tags := make([]Tag, 0, len(counts))
-	for name, count := range counts {
-		tags = append(tags, NewTag(name, count))
-	}
-
-	sort.Slice(tags, func(i, j int) bool {
-		if tags[i].Count != tags[j].Count {
-			return tags[i].Count > tags[j].Count
-		}
-		return tags[i].Name < tags[j].Name
-	})
-
-	return tags
-}
-
-func (r *FakeRepository) FeedSubscriptionTagGetAll(_ context.Context, userUUID string) ([]Tag, error) {
-	return r.aggregateSubscriptionTags(userUUID), nil
-}
-
-func (r *FakeRepository) FeedSubscriptionTagGetCount(_ context.Context, userUUID string) (uint, error) {
-	return uint(len(r.aggregateSubscriptionTags(userUUID))), nil
-}
-
-func (r *FakeRepository) FeedSubscriptionTagGetN(_ context.Context, userUUID string, n uint, offset uint) ([]Tag, error) {
-	tags := r.aggregateSubscriptionTags(userUUID)
-
-	if offset >= uint(len(tags)) {
-		return []Tag{}, nil
-	}
-
-	end := min(offset+n, uint(len(tags)))
-	return tags[offset:end], nil
-}
-
-func (r *FakeRepository) subscriptionTagSearchMatches(userUUID string, searchTerms string) []Tag {
-	all := r.aggregateSubscriptionTags(userUUID)
-
-	filtered := all[:0]
-	for _, tag := range all {
-		if strings.Contains(strings.ToLower(tag.Name), strings.ToLower(searchTerms)) {
-			filtered = append(filtered, tag)
-		}
-	}
-
-	return filtered
-}
-
-func (r *FakeRepository) FeedSubscriptionTagSearchCount(_ context.Context, userUUID string, searchTerms string) (uint, error) {
-	return uint(len(r.subscriptionTagSearchMatches(userUUID, searchTerms))), nil
-}
-
-func (r *FakeRepository) FeedSubscriptionTagSearchN(_ context.Context, userUUID string, searchTerms string, n uint, offset uint) ([]Tag, error) {
-	tags := r.subscriptionTagSearchMatches(userUUID, searchTerms)
-
-	if offset >= uint(len(tags)) {
-		return []Tag{}, nil
-	}
-
-	end := min(offset+n, uint(len(tags)))
-	return tags[offset:end], nil
 }

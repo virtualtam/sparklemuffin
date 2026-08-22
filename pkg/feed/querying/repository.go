@@ -67,21 +67,4 @@ type Repository interface {
 
 	// FeedQueryingSubscriptionsByCategory returns a list of feed Subscription titles, sorted by Category.
 	FeedQueryingSubscriptionsByCategory(ctx context.Context, userUUID string) ([]SubscriptionsByCategory, error)
-
-	// FeedSubscriptionTagGetAll returns all Feed subscription tags for a given user.
-	FeedSubscriptionTagGetAll(ctx context.Context, userUUID string) ([]Tag, error)
-
-	// FeedSubscriptionTagGetCount returns the number of Feed subscription tags for a given user.
-	FeedSubscriptionTagGetCount(ctx context.Context, userUUID string) (uint, error)
-
-	// FeedSubscriptionTagGetN returns at most n Feed subscription tags, starting at a given offset.
-	FeedSubscriptionTagGetN(ctx context.Context, userUUID string, n uint, offset uint) ([]Tag, error)
-
-	// FeedSubscriptionTagSearchCount returns the number of Feed subscription tags for a given user,
-	// matching a search query.
-	FeedSubscriptionTagSearchCount(ctx context.Context, userUUID string, searchTerms string) (uint, error)
-
-	// FeedSubscriptionTagSearchN returns at most n Feed subscription tags matching a search query,
-	// starting at a given offset.
-	FeedSubscriptionTagSearchN(ctx context.Context, userUUID string, searchTerms string, n uint, offset uint) ([]Tag, error)
 }

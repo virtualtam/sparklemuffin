@@ -7,7 +7,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -27,6 +26,7 @@ import (
 	feedexporting "github.com/virtualtam/sparklemuffin/pkg/feed/exporting"
 	feedimporting "github.com/virtualtam/sparklemuffin/pkg/feed/importing"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/taxonomy"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -38,6 +38,7 @@ func RegisterFeedHandlers(
 	importingService *feedimporting.Service,
 	queryingService *feedquerying.Service,
 	userService *user.Service,
+	taxonomyService *taxonomy.Service,
 ) {
 	fc := feedController{
 		feedService:      feedService,
@@ -45,6 +46,7 @@ func RegisterFeedHandlers(
 		importingService: importingService,
 		queryingService:  queryingService,
 		userService:      userService,
+		taxonomyService:  taxonomyService,
 
 		feedListView: view.New("feed/feed_list.gohtml"),
 
@@ -56,10 +58,6 @@ func RegisterFeedHandlers(
 		feedSubscriptionDeleteView: view.New("feed/subscription_delete.gohtml"),
 		feedSubscriptionEditView:   view.New("feed/subscription_edit.gohtml"),
 		feedSubscriptionListView:   view.New("feed/subscription_list.gohtml"),
-
-		feedSubscriptionTagDeleteView: view.New("feed/tag_delete.gohtml"),
-		feedSubscriptionTagEditView:   view.New("feed/tag_edit.gohtml"),
-		feedSubscriptionTagListView:   view.New("feed/tag_list.gohtml"),
 
 		feedExportView: view.New("feed/feed_export.gohtml"),
 		feedImportView: view.New("feed/feed_import.gohtml"),
@@ -111,14 +109,6 @@ func RegisterFeedHandlers(
 			sr.Get("/{uuid}/edit", fc.handleFeedSubscriptionEditView())
 			sr.Post("/{uuid}/edit", fc.handleFeedSubscriptionEdit())
 
-			sr.Route("/tags", func(tr chi.Router) {
-				tr.Get("/", fc.handleFeedSubscriptionTagListView())
-				tr.Get("/{name}/delete", fc.handleFeedSubscriptionTagDeleteView())
-				tr.Post("/{name}/delete", fc.handleFeedSubscriptionTagDelete())
-				tr.Get("/{name}/edit", fc.handleFeedSubscriptionTagEditView())
-				tr.Post("/{name}/edit", fc.handleFeedSubscriptionTagEdit())
-			})
-
 			sr.Get("/{slug}", fc.handleFeedListBySubscriptionView())
 			sr.Post("/{slug}/entries/mark-all-read", fc.handleHxEntryMetadataMarkAllAsReadByFeed())
 		})
@@ -131,6 +121,7 @@ type feedController struct {
 	importingService *feedimporting.Service
 	queryingService  *feedquerying.Service
 	userService      *user.Service
+	taxonomyService  *taxonomy.Service
 
 	feedSubscriptionAddView *view.View
 	feedListView            *view.View
@@ -142,10 +133,6 @@ type feedController struct {
 	feedSubscriptionDeleteView *view.View
 	feedSubscriptionEditView   *view.View
 	feedSubscriptionListView   *view.View
-
-	feedSubscriptionTagDeleteView *view.View
-	feedSubscriptionTagEditView   *view.View
-	feedSubscriptionTagListView   *view.View
 
 	feedExportView *view.View
 	feedImportView *view.View
@@ -804,7 +791,7 @@ func (fc *feedController) handleFeedSubscriptionAddView() func(w http.ResponseWr
 			return
 		}
 
-		tags, err := fc.queryingService.TagNamesByCount(ctx, ctxUser.UUID)
+		tags, err := autocompleteTagNames(ctx, fc.taxonomyService, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
 			view.PutFlashError(w, "failed to retrieve existing tags")
@@ -957,7 +944,7 @@ func (fc *feedController) handleFeedSubscriptionEditView() func(w http.ResponseW
 			return
 		}
 
-		tags, err := fc.queryingService.TagNamesByCount(ctx, ctxUser.UUID)
+		tags, err := autocompleteTagNames(ctx, fc.taxonomyService, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve tags")
 			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve existing tags")
@@ -1066,278 +1053,6 @@ func (fc *feedController) handleFeedSubscriptionEdit() func(w http.ResponseWrite
 		}
 
 		http.Redirect(w, r, "/feeds/subscriptions", http.StatusSeeOther)
-	}
-}
-
-// handleFeedSubscriptionTagDeleteView renders the subscription tag deletion form.
-//
-// On an htmx request, it responds with only the form fragment, meant to be
-// loaded into the tag list page's delete modal. On a plain request, it
-// renders the full page as usual, so the URL stays independently navigable.
-func (fc *feedController) handleFeedSubscriptionTagDeleteView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		nameBase64 := chi.URLParam(r, "name")
-
-		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
-		if err != nil {
-			log.Error().Err(err).Msg("invalid tag")
-			view.RedirectOnError(w, r, r.URL.Path, "invalid tag")
-			return
-		}
-
-		name := string(nameBytes)
-		tag := feedquerying.NewTag(name, 0)
-
-		if r.Header.Get(htmx.HeaderRequest) == "true" {
-			formData := map[string]any{"Tag": tag, "InModal": true}
-			if err := fc.feedSubscriptionTagDeleteView.RenderTemplate(w, "tagDeleteForm", formData); err != nil {
-				log.Error().Err(err).Msg("failed to render tag delete form fragment")
-				http.Error(w, "Something went wrong", http.StatusInternalServerError)
-			}
-			return
-		}
-
-		viewData := view.Data{
-			Content: tag,
-			Title:   fmt.Sprintf("Delete tag: %s", name),
-		}
-
-		fc.feedSubscriptionTagDeleteView.Render(w, r, viewData)
-	}
-}
-
-// handleFeedSubscriptionTagDelete processes the subscription tag deletion form.
-//
-// On success:
-//   - htmx request: retargets/reswaps an empty response into the tag's row
-//     (outerHTML), removing it, and fires a "modal:close" client-side event
-//     so the tag list page's delete modal closes.
-//   - plain request: flash + redirect to the tag list, as before.
-//
-// On error, it falls back to the same flash+redirect (or HX-Redirect, for
-// htmx requests) behavior used throughout this file.
-func (fc *feedController) handleFeedSubscriptionTagDelete() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		nameBase64 := chi.URLParam(r, "name")
-
-		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
-		if err != nil {
-			log.Error().Err(err).Msg("invalid tag")
-			view.RedirectOnError(w, r, r.URL.Path, "invalid tag")
-			return
-		}
-
-		name := string(nameBytes)
-
-		ctx := r.Context()
-		ctxUser := httpcontext.UserValue(ctx)
-
-		tagDelete := feed.TagDeleteQuery{
-			UserUUID: ctxUser.UUID,
-			Name:     name,
-		}
-
-		updated, err := fc.feedService.DeleteTag(ctx, tagDelete)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to delete tag")
-			view.RedirectOnError(w, r, r.URL.Path, "failed to delete tag")
-			return
-		}
-
-		if r.Header.Get(htmx.HeaderRequest) == "true" {
-			w.Header().Set(htmx.HeaderRetarget, fmt.Sprintf("[id='tag-row-%s']", nameBase64))
-			w.Header().Set(htmx.HeaderReswap, "outerHTML")
-			w.Header().Set(htmx.HeaderTrigger, "modal:close")
-			return
-		}
-
-		view.PutFlashSuccess(w, fmt.Sprintf("Tag deleted from %d subscriptions", updated))
-		http.Redirect(w, r, "/feeds/subscriptions/tags", http.StatusSeeOther)
-	}
-}
-
-// handleFeedSubscriptionTagEditView renders the subscription tag edition form.
-//
-// On an htmx request, it responds with only the form fragment, meant to be
-// loaded into the tag list page's edit modal. On a plain request, it renders
-// the full page as usual, so the URL stays independently navigable.
-func (fc *feedController) handleFeedSubscriptionTagEditView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		nameBase64 := chi.URLParam(r, "name")
-
-		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
-		if err != nil {
-			log.Error().Err(err).Msg("invalid tag")
-			view.RedirectOnError(w, r, r.URL.Path, "invalid tag")
-			return
-		}
-
-		name := string(nameBytes)
-		tag := feedquerying.NewTag(name, 0)
-
-		if r.Header.Get(htmx.HeaderRequest) == "true" {
-			formData := map[string]any{"Tag": tag, "InModal": true}
-			if err := fc.feedSubscriptionTagEditView.RenderTemplate(w, "tagEditForm", formData); err != nil {
-				log.Error().Err(err).Msg("failed to render tag edit form fragment")
-				http.Error(w, "Something went wrong", http.StatusInternalServerError)
-			}
-			return
-		}
-
-		viewData := view.Data{
-			Content: tag,
-			Title:   fmt.Sprintf("Edit tag: %s", name),
-		}
-
-		fc.feedSubscriptionTagEditView.Render(w, r, viewData)
-	}
-}
-
-// handleFeedSubscriptionTagEdit processes the subscription tag edition form.
-//
-// On success:
-//   - htmx request: re-renders the tag's row and retargets/reswaps the
-//     response into it (outerHTML), and fires a "modal:close" client-side
-//     event so the tag list page's edit modal closes.
-//   - plain request: flash + redirect to the tag list, as before.
-//
-// On error, it falls back to the same flash+redirect (or HX-Redirect, for
-// htmx requests) behavior used throughout this file.
-func (fc *feedController) handleFeedSubscriptionTagEdit() func(w http.ResponseWriter, r *http.Request) {
-	type tagEditForm struct {
-		Name string `schema:"name"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		var form tagEditForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse tag edition form")
-			view.RedirectOnError(w, r, r.URL.Path, "failed to process form")
-			return
-		}
-
-		nameBase64 := chi.URLParam(r, "name")
-
-		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
-		if err != nil {
-			log.Error().Err(err).Msg("invalid tag")
-			view.RedirectOnError(w, r, r.URL.Path, "invalid tag")
-			return
-		}
-
-		name := string(nameBytes)
-
-		ctx := r.Context()
-		ctxUser := httpcontext.UserValue(ctx)
-
-		tagNameUpdate := feed.TagUpdateQuery{
-			UserUUID:    ctxUser.UUID,
-			CurrentName: name,
-			NewName:     form.Name,
-		}
-
-		updated, err := fc.feedService.UpdateTag(ctx, tagNameUpdate)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to rename tag")
-			view.RedirectOnError(w, r, r.URL.Path, "failed to rename tag")
-			return
-		}
-
-		if r.Header.Get(htmx.HeaderRequest) == "true" {
-			updatedTag := feedquerying.NewTag(form.Name, uint(updated))
-
-			// nameBase64 (pre-rename) identifies the row still in the DOM;
-			// an attribute selector tolerates the "=" padding base64 may add.
-			w.Header().Set(htmx.HeaderRetarget, fmt.Sprintf("[id='tag-row-%s']", nameBase64))
-			w.Header().Set(htmx.HeaderReswap, "outerHTML")
-			w.Header().Set(htmx.HeaderTrigger, "modal:close")
-
-			if err := fc.feedSubscriptionTagListView.RenderTemplate(w, "tagRow", updatedTag); err != nil {
-				log.Error().Err(err).Msg("failed to render tag row fragment")
-				http.Error(w, "Something went wrong", http.StatusInternalServerError)
-			}
-			return
-		}
-
-		view.PutFlashSuccess(w, fmt.Sprintf("Tag updated for %d subscriptions", updated))
-		http.Redirect(w, r, "/feeds/subscriptions/tags", http.StatusSeeOther)
-	}
-}
-
-// handleFeedSubscriptionTagListView renders the subscription tag list for the current authenticated user.
-//
-// On an htmx request, it responds with only the list content fragment
-// (search form, tags, pagination), so that searching or paginating swaps the
-// list in place instead of reloading the full page. On a plain request, it
-// renders the full page as usual.
-func (fc *feedController) handleFeedSubscriptionTagListView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var viewData view.Data
-
-		ctx := r.Context()
-		ctxUser := httpcontext.UserValue(ctx)
-
-		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
-		if err != nil {
-			log.Warn().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
-			view.RedirectOnError(w, r, "/feeds/subscriptions/tags", fmt.Sprintf("invalid page number: %q", pageNumberStr))
-			return
-		}
-
-		searchTermsParam := r.URL.Query().Get("search")
-		if searchTermsParam != "" {
-			tagSearchPage, err := fc.queryingService.TagsBySearchQueryAndPage(
-				ctx,
-				ctxUser.UUID,
-				searchTermsParam,
-				pageNumber,
-			)
-
-			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
-				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
-				log.Error().Err(err).Msg(msg)
-				view.RedirectOnError(w, r, "/feeds/subscriptions/tags", msg)
-				return
-			} else if err != nil {
-				log.Error().Err(err).Msg("failed to retrieve tags")
-				view.RedirectOnError(w, r, "/feeds/subscriptions/tags", "failed to retrieve tags")
-				return
-			}
-
-			viewData.Title = fmt.Sprintf("Tag search: %s", searchTermsParam)
-			viewData.Content = tagSearchPage
-
-		} else {
-			tagPage, err := fc.queryingService.TagsByPage(
-				ctx,
-				ctxUser.UUID,
-				pageNumber,
-			)
-
-			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
-				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
-				log.Error().Err(err).Msg(msg)
-				view.RedirectOnError(w, r, "/feeds/subscriptions/tags", msg)
-				return
-			} else if err != nil {
-				log.Error().Err(err).Msg("failed to retrieve tags")
-				view.RedirectOnError(w, r, "/feeds/subscriptions/tags", "failed to retrieve tags")
-				return
-			}
-
-			viewData.Title = "Tags"
-			viewData.Content = tagPage
-		}
-
-		if r.Header.Get(htmx.HeaderRequest) == "true" {
-			if err := fc.feedSubscriptionTagListView.RenderTemplate(w, "content", viewData.Content); err != nil {
-				log.Error().Err(err).Msg("failed to render tag list fragment")
-				http.Error(w, "Something went wrong", http.StatusInternalServerError)
-			}
-			return
-		}
-
-		fc.feedSubscriptionTagListView.Render(w, r, viewData)
 	}
 }
 

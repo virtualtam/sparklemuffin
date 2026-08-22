@@ -556,3 +556,18 @@ func (r *Repository) OwnerGetByUUID(ctx context.Context, userUUID string) (bookm
 		DisplayName: dbUser.DisplayName,
 	}, nil
 }
+
+// OnTagMerge provides a taxonomy.OnTagMergeFn to update bookmark references when a tag is renamed,
+// and the new name matches an existing tag.
+func (r *Repository) OnTagMerge(ctx context.Context, userUUID, oldTagUUID, newTagUUID string) error {
+	query := `
+	INSERT INTO bookmark_tags(user_uuid, bookmark_uid, tag_uuid)
+	SELECT user_uuid, bookmark_uid, $3
+	FROM   bookmark_tags
+	WHERE  user_uuid=$1
+	AND    tag_uuid=$2
+	ON CONFLICT DO NOTHING`
+
+	_, err := r.Pool.Exec(ctx, query, userUUID, oldTagUUID, newTagUUID)
+	return err
+}

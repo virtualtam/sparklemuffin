@@ -659,9 +659,9 @@ type reassignCall struct {
 	oldTagUUID, newTagUUID string
 }
 
-// recordingOnTagRenameFn returns an OnTagRenameFn that appends each call it
+// recordingOnTagRenameFn returns an OnTagMergeFn that appends each call it
 // receives to calls, and returns err.
-func recordingOnTagRenameFn(calls *[]reassignCall, err error) OnTagRenameFn {
+func recordingOnTagRenameFn(calls *[]reassignCall, err error) OnTagMergeFn {
 	return func(_ context.Context, userUUID, oldTagUUID, newTagUUID string) error {
 		*calls = append(*calls, reassignCall{userUUID: userUUID, oldTagUUID: oldTagUUID, newTagUUID: newTagUUID})
 		return err

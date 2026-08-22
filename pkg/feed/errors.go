@@ -5,7 +5,6 @@ package feed
 
 import (
 	"errors"
-	"fmt"
 )
 
 var (
@@ -51,11 +50,4 @@ var (
 	ErrSubscriptionAlreadyRegistered = errors.New("subscription: already registered")
 	ErrSubscriptionNotFound          = errors.New("subscription: not found")
 	ErrSubscriptionUUIDRequired      = errors.New("subscription: UUID required")
-
-	ErrTagNameContainsWhitespace = errors.New("tag: name contains whitespace")
-	ErrTagNameRequired           = errors.New("tag: name required")
 )
-
-func newValidationError(field string, e error) error {
-	return fmt.Errorf("%s: %w", field, e)
-}

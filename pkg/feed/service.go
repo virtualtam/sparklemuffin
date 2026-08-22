@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"time"
 
 	"github.com/mmcdole/gofeed"
@@ -267,91 +266,6 @@ func (s *Service) UpdateSubscription(ctx context.Context, subscription Subscript
 	subscriptionToUpdate.Normalize()
 
 	return s.r.FeedSubscriptionUpdate(ctx, subscriptionToUpdate)
-}
-
-// DeleteTag deletes a given tag from all Feed subscriptions for a given user.
-func (s *Service) DeleteTag(ctx context.Context, dq TagDeleteQuery) (int64, error) {
-	now := time.Now().UTC()
-
-	dq.normalize()
-
-	fns := []func() error{
-		dq.requireUserUUID,
-		dq.requireName,
-		dq.ensureNameHasNoWhitespace,
-	}
-
-	for _, fn := range fns {
-		if err := fn(); err != nil {
-			return 0, err
-		}
-	}
-
-	subscriptions, err := s.r.FeedSubscriptionGetByTag(ctx, dq.UserUUID, dq.Name)
-	if err != nil {
-		return 0, err
-	}
-
-	for i, subscription := range subscriptions {
-		for j, tag := range subscription.Tags {
-			if tag == dq.Name {
-				subscription.Tags = slices.Delete(subscription.Tags, j, j+1)
-				break
-			}
-		}
-
-		subscription.UpdatedAt = now
-
-		subscriptions[i] = subscription
-	}
-
-	return s.r.FeedSubscriptionTagUpdateMany(ctx, subscriptions)
-}
-
-// UpdateTag updates a given tag for all Feed subscriptions for a given user.
-func (s *Service) UpdateTag(ctx context.Context, uq TagUpdateQuery) (int64, error) {
-	now := time.Now().UTC()
-
-	uq.normalize()
-
-	fns := []func() error{
-		uq.requireUserUUID,
-		uq.requireCurrentName,
-		uq.ensureCurrentNameHasNoWhitespace,
-		uq.requireNewName,
-		uq.ensureNewNameHasNoWhitespace,
-	}
-
-	for _, fn := range fns {
-		if err := fn(); err != nil {
-			return 0, err
-		}
-	}
-
-	subscriptions, err := s.r.FeedSubscriptionGetByTag(ctx, uq.UserUUID, uq.CurrentName)
-	if err != nil {
-		return 0, err
-	}
-
-	if uq.NewName == uq.CurrentName {
-		return int64(len(subscriptions)), nil
-	}
-
-	for i, subscription := range subscriptions {
-		for j, tag := range subscription.Tags {
-			if tag == uq.CurrentName {
-				subscription.Tags[j] = uq.NewName
-			}
-		}
-
-		subscription.deduplicateTags()
-		subscription.sortTags()
-		subscription.UpdatedAt = now
-
-		subscriptions[i] = subscription
-	}
-
-	return s.r.FeedSubscriptionTagUpdateMany(ctx, subscriptions)
 }
 
 func (s *Service) createEntries(ctx context.Context, feedUUID, feedURL string, items []*gofeed.Item) error {

@@ -196,11 +196,7 @@ type DBPreferences struct {
 }
 
 func feedSubscriptionToFullTextSearchString(s feed.Subscription) string {
-	return fmt.Sprintf(
-		"%s %s",
-		pgbase.FullTextSearchReplacer.Replace(s.Alias),
-		pgbase.FullTextSearchReplacer.Replace(strings.Join(s.Tags, " ")),
-	)
+	return pgbase.FullTextSearchReplacer.Replace(s.Alias)
 }
 
 type DBSubscription struct {
@@ -248,9 +244,4 @@ func (s *DBQueryingSubscription) asQueryingSubscription() feedquerying.Subscript
 		FeedTitle:       s.FeedTitle,
 		FeedDescription: s.FeedDescription,
 	}
-}
-
-type DBTag struct {
-	Name  string `db:"name"`
-	Count uint   `db:"count"`
 }

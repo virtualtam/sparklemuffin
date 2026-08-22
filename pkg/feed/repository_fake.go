@@ -389,22 +389,6 @@ func (r *FakeRepository) FeedSubscriptionGetByFeed(_ context.Context, userUUID s
 	return Subscription{}, ErrSubscriptionNotFound
 }
 
-func (r *FakeRepository) FeedSubscriptionGetByTag(_ context.Context, userUUID string, tag string) ([]Subscription, error) {
-	var subscriptions []Subscription
-
-	for _, s := range r.Subscriptions {
-		if s.UserUUID != userUUID {
-			continue
-		}
-
-		if slices.Contains(s.Tags, tag) {
-			subscriptions = append(subscriptions, s)
-		}
-	}
-
-	return subscriptions, nil
-}
-
 func (r *FakeRepository) FeedSubscriptionGetByUUID(_ context.Context, userUUID string, subscriptionUUID string) (Subscription, error) {
 	for _, subscription := range r.Subscriptions {
 		if subscription.UserUUID == userUUID && subscription.UUID == subscriptionUUID {
@@ -413,18 +397,6 @@ func (r *FakeRepository) FeedSubscriptionGetByUUID(_ context.Context, userUUID s
 	}
 
 	return Subscription{}, ErrSubscriptionNotFound
-}
-
-func (r *FakeRepository) FeedSubscriptionTagUpdateMany(_ context.Context, subscriptions []Subscription) (int64, error) {
-	for _, subscription := range subscriptions {
-		for index, s := range r.Subscriptions {
-			if s.UserUUID == subscription.UserUUID && s.UUID == subscription.UUID {
-				r.Subscriptions[index] = subscription
-			}
-		}
-	}
-
-	return int64(len(subscriptions)), nil
 }
 
 func (r *FakeRepository) FeedSubscriptionUpdate(_ context.Context, subscription Subscription) error {

@@ -15,8 +15,10 @@ import (
 
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbookmark"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgtaxonomy"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
+	"github.com/virtualtam/sparklemuffin/pkg/taxonomy"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -390,6 +392,70 @@ func TestBookmarkService(t *testing.T) {
 		assertBookmarkTagNames(t, pool, testUser.UUID, gotUpdated.UID, []string{newTag})
 
 		if err := bs.Delete(ctx, testUser.UUID, gotUpdated.UID); err != nil {
+			t.Fatalf("failed to delete bookmark: %q", err)
+		}
+	})
+
+	t.Run("renaming a tag into an existing one reassigns bookmark_tags instead of losing them", func(t *testing.T) {
+		ctx := t.Context()
+
+		oldTag := "merge/old"
+		newTag := "merge/new"
+
+		onlyOld := bookmark.NewBookmark(testUser.UUID)
+		onlyOld.URL = fake.Internet().URL()
+		onlyOld.Title = fake.Lorem().Sentence(5)
+		onlyOld.Tags = []string{oldTag}
+		onlyOld.Normalize()
+
+		if err := bs.Add(ctx, *onlyOld); err != nil {
+			t.Fatalf("failed to create bookmark: %q", err)
+		}
+
+		both := bookmark.NewBookmark(testUser.UUID)
+		both.URL = fake.Internet().URL()
+		both.Title = fake.Lorem().Sentence(5)
+		both.Tags = []string{oldTag, newTag}
+		both.Normalize()
+
+		if err := bs.Add(ctx, *both); err != nil {
+			t.Fatalf("failed to create bookmark: %q", err)
+		}
+
+		taxonomyRepo := pgtaxonomy.NewRepository(pool)
+		taxonomyService := taxonomy.NewService(taxonomyRepo, r.OnTagMerge)
+
+		if err := taxonomyService.RenameTag(ctx, taxonomy.TagUpdateQuery{
+			UserUUID:    testUser.UUID,
+			CurrentName: oldTag,
+			NewName:     newTag,
+		}); err != nil {
+			t.Fatalf("failed to rename tag: %q", err)
+		}
+
+		gotOnlyOld, err := bs.ByURL(ctx, testUser.UUID, onlyOld.URL)
+		if err != nil {
+			t.Fatalf("failed to retrieve bookmark: %q", err)
+		}
+		assertBookmarkTagNames(t, pool, testUser.UUID, gotOnlyOld.UID, []string{newTag})
+
+		gotBoth, err := bs.ByURL(ctx, testUser.UUID, both.URL)
+		if err != nil {
+			t.Fatalf("failed to retrieve bookmark: %q", err)
+		}
+		assertBookmarkTagNames(t, pool, testUser.UUID, gotBoth.UID, []string{newTag})
+
+		if got := countTaxonomyTagsByName(t, pool, testUser.UUID, oldTag); got != 0 {
+			t.Errorf("want the merged-away tag %q gone from taxonomy_tags, got %d rows", oldTag, got)
+		}
+		if got := countTaxonomyTagsByName(t, pool, testUser.UUID, newTag); got != 1 {
+			t.Errorf("want exactly 1 taxonomy_tags row for %q, got %d", newTag, got)
+		}
+
+		if err := bs.Delete(ctx, testUser.UUID, gotOnlyOld.UID); err != nil {
+			t.Fatalf("failed to delete bookmark: %q", err)
+		}
+		if err := bs.Delete(ctx, testUser.UUID, gotBoth.UID); err != nil {
 			t.Fatalf("failed to delete bookmark: %q", err)
 		}
 	})

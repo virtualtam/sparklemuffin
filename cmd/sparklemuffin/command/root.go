@@ -207,9 +207,6 @@ func NewRootCommand() *cobra.Command {
 			}
 
 			// SparkleMuffin services
-			taxonomyRepository := pgtaxonomy.NewRepository(pgxPool)
-			taxonomyService = taxonomy.NewService(taxonomyRepository)
-
 			bookmarkRepository := pgbookmark.NewRepository(pgxPool)
 			bookmarkService = bookmark.NewService(bookmarkRepository)
 			bookmarkExportingService = bookmarkexporting.NewService(bookmarkRepository)
@@ -222,6 +219,9 @@ func NewRootCommand() *cobra.Command {
 			feedQueryingService = feedquerying.NewService(feedRepository)
 			feedImportingService = feedimporting.NewService(feedService)
 			feedSynchronizingService = feedsynchronizing.NewService(feedRepository, feedClient, rootCmdName)
+
+			taxonomyRepository := pgtaxonomy.NewRepository(pgxPool)
+			taxonomyService = taxonomy.NewService(taxonomyRepository, bookmarkRepository.OnTagMerge, feedRepository.OnTagMerge)
 
 			sessionRepository := pgsession.NewRepository(ctx, pgxPool, quartz.NewReal())
 			sessionService, err = session.NewService(sessionRepository, hmacKey)

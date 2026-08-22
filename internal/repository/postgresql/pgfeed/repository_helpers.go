@@ -12,9 +12,62 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
 
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/taxonomy"
 )
+
+// getOrCreateTagsTx resolves a set of tag names to Tags for a given user,
+// creating any tag that does not already exist, all within the transaction
+// carried by q.
+func (r *Repository) getOrCreateTagsTx(ctx context.Context, q pgbase.Querier, userUUID string, names []string) ([]taxonomy.Tag, error) {
+	tags := make([]taxonomy.Tag, 0, len(names))
+
+	for _, name := range names {
+		tag, err := r.taxonomyRepo.TagGetByNameTx(ctx, q, userUUID, name)
+
+		if errors.Is(err, taxonomy.ErrNotFound) {
+			tag, err = taxonomy.NewTag(userUUID, name)
+			if err != nil {
+				return nil, err
+			}
+
+			if err := tag.Validate(); err != nil {
+				return nil, err
+			}
+
+			if err := r.taxonomyRepo.TagAddTx(ctx, q, tag); err != nil {
+				return nil, err
+			}
+		} else if err != nil {
+			return nil, err
+		}
+
+		tags = append(tags, tag)
+	}
+
+	return tags, nil
+}
+
+// insertFeedSubscriptionTagsTx inserts one feed_subscription_tags row per
+// tag, within the transaction carried by q.
+func insertFeedSubscriptionTagsTx(ctx context.Context, q pgbase.Querier, userUUID, subscriptionUUID string, tags []taxonomy.Tag) error {
+	for _, tag := range tags {
+		_, err := q.Exec(
+			ctx,
+			"INSERT INTO feed_subscription_tags(user_uuid, subscription_uuid, tag_uuid) VALUES($1, $2, $3)",
+			userUUID,
+			subscriptionUUID,
+			tag.UUID,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func (r *Repository) feedGetQuery(ctx context.Context, query string, queryParams ...any) (feed.Feed, error) {
 	rows, err := r.Pool.Query(ctx, query, queryParams...)
@@ -225,7 +278,7 @@ func (r *Repository) feedSubscriptionEntryGetN(ctx context.Context, where string
 			fe.published_at,
 			fe.updated_at,
 			fs.alias AS subscription_alias,
-			fs.tags AS subscription_tags,
+			` + feedSubscriptionTagsSubquery + ` AS subscription_tags,
 			f.uuid AS feed_uuid,
 			f.title AS feed_title,
 			f.slug AS feed_slug,
@@ -329,28 +382,6 @@ func (r *Repository) feedSubscriptionGetQuery(ctx context.Context, query string,
 	return dbSubscription.asSubscription(), nil
 }
 
-func (r *Repository) feedSubscriptionGetManyQuery(ctx context.Context, query string, queryParams ...any) ([]feed.Subscription, error) {
-	rows, err := r.Pool.Query(ctx, query, queryParams...)
-	if err != nil {
-		return []feed.Subscription{}, err
-	}
-	defer rows.Close()
-
-	var dbSubscriptions []DBSubscription
-
-	if err := pgxscan.ScanAll(&dbSubscriptions, rows); err != nil {
-		return []feed.Subscription{}, err
-	}
-
-	subscriptions := make([]feed.Subscription, len(dbSubscriptions))
-
-	for i, dbSubscription := range dbSubscriptions {
-		subscriptions[i] = dbSubscription.asSubscription()
-	}
-
-	return subscriptions, nil
-}
-
 func (r *Repository) feedSubscriptionTitleGetQuery(ctx context.Context, query string, queryParams ...any) (feedquerying.Subscription, error) {
 	rows, err := r.Pool.Query(ctx, query, queryParams...)
 	if err != nil {
@@ -402,26 +433,4 @@ ORDER BY
 	}
 
 	return dbSubscriptionTitles, nil
-}
-
-func (r *Repository) feedSubscriptionTagGetQuery(ctx context.Context, query string, queryParams ...any) ([]feedquerying.Tag, error) {
-	rows, err := r.Pool.Query(ctx, query, queryParams...)
-	if err != nil {
-		return []feedquerying.Tag{}, err
-	}
-	defer rows.Close()
-
-	var dbTags []DBTag
-
-	if err := pgxscan.ScanAll(&dbTags, rows); err != nil {
-		return []feedquerying.Tag{}, err
-	}
-
-	var tags []feedquerying.Tag
-
-	for _, dbTag := range dbTags {
-		tags = append(tags, feedquerying.NewTag(dbTag.Name, dbTag.Count))
-	}
-
-	return tags, nil
 }

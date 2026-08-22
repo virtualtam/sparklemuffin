@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgtaxonomy"
 	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedexporting "github.com/virtualtam/sparklemuffin/pkg/feed/exporting"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
@@ -27,16 +28,40 @@ var _ feedsynchronizing.Repository = &Repository{}
 
 type Repository struct {
 	*pgbase.Repository
+
+	taxonomyRepo *pgtaxonomy.Repository
 }
 
 func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{
-		Repository: pgbase.NewRepository(pool),
+		Repository:   pgbase.NewRepository(pool),
+		taxonomyRepo: pgtaxonomy.NewRepository(pool),
 	}
 }
 
 const (
 	domain = "feeds"
+
+	feedSubscriptionTagsSubquery = `
+	(
+		SELECT COALESCE(ARRAY_AGG(tt.tag_name ORDER BY tt.tag_name), '{}')
+		FROM feed_subscription_tags fst
+		JOIN taxonomy_tags tt ON tt.tag_uuid = fst.tag_uuid
+		WHERE fst.user_uuid = fs.user_uuid
+		AND   fst.subscription_uuid = fs.uuid
+	)
+	`
+
+	feedSubscriptionTagsSearchCondition = `
+	EXISTS (
+		SELECT 1
+		FROM feed_subscription_tags fst
+		JOIN taxonomy_tags tt ON tt.tag_uuid = fst.tag_uuid
+		WHERE fst.user_uuid = fs.user_uuid
+		AND   fst.subscription_uuid = fs.uuid
+		AND   tt.tag_name_tsv @@ websearch_to_tsquery(@search_terms)
+	)
+	`
 )
 
 func (r *Repository) FeedCreate(ctx context.Context, f feed.Feed) error {
@@ -403,7 +428,7 @@ func (r *Repository) FeedEntryGetCountBySubscription(ctx context.Context, userUU
 }
 
 func (r *Repository) FeedEntryGetCountByQuery(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, searchTerms string) (uint, error) {
-	const and = `AND (f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+	const and = `AND ((f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms) OR ` + feedSubscriptionTagsSearchCondition + `)`
 
 	args := pgx.NamedArgs{
 		"user_uuid":    userUUID,
@@ -416,7 +441,7 @@ func (r *Repository) FeedEntryGetCountByQuery(ctx context.Context, userUUID stri
 func (r *Repository) FeedEntryGetCountByCategoryAndQuery(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, categoryUUID string, searchTerms string) (uint, error) {
 	const and = `
 		AND fs.category_uuid=@category_uuid
-		AND (f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+		AND ((f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms) OR ` + feedSubscriptionTagsSearchCondition + `)`
 
 	args := pgx.NamedArgs{
 		"user_uuid":     userUUID,
@@ -430,7 +455,7 @@ func (r *Repository) FeedEntryGetCountByCategoryAndQuery(ctx context.Context, us
 func (r *Repository) FeedEntryGetCountBySubscriptionAndQuery(ctx context.Context, userUUID string, showEntries feed.EntryVisibility, subscriptionUUID string, searchTerms string) (uint, error) {
 	const and = `
 		AND fs.uuid=@subscription_uuid
-		AND (f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+		AND ((f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms) OR ` + feedSubscriptionTagsSearchCondition + `)`
 
 	args := pgx.NamedArgs{
 		"user_uuid":         userUUID,
@@ -707,7 +732,7 @@ func (r *Repository) FeedSubscriptionEntryGetByUID(ctx context.Context, userUUID
 		fe.published_at,
 		fe.updated_at,
 		fs.alias AS subscription_alias,
-		fs.tags AS subscription_tags,
+		` + feedSubscriptionTagsSubquery + ` AS subscription_tags,
 		f.uuid AS feed_uuid,
 		f.title AS feed_title,
 		f.slug AS feed_slug,
@@ -791,7 +816,7 @@ func (r *Repository) FeedSubscriptionEntryGetNByQuery(ctx context.Context, userU
 	const (
 		where = `
 		WHERE fs.user_uuid=@user_uuid
-		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+		AND   ((f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms) OR ` + feedSubscriptionTagsSearchCondition + `)`
 	)
 
 	args := pgx.NamedArgs{
@@ -809,7 +834,7 @@ func (r *Repository) FeedSubscriptionEntryGetNByCategoryAndQuery(ctx context.Con
 		where = `
 		WHERE fs.user_uuid=@user_uuid
 		AND   fs.category_uuid=@category_uuid
-		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+		AND   ((f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms) OR ` + feedSubscriptionTagsSearchCondition + `)`
 	)
 
 	args := pgx.NamedArgs{
@@ -828,7 +853,7 @@ func (r *Repository) FeedSubscriptionEntryGetNBySubscriptionAndQuery(ctx context
 		where = `
 		WHERE fs.user_uuid=@user_uuid
 		AND   fs.uuid=@subscription_uuid
-		AND   (f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms)`
+		AND   ((f.fulltextsearch_tsv || fe.fulltextsearch_tsv || fs.fulltextsearch_tsv) @@ websearch_to_tsquery(@search_terms) OR ` + feedSubscriptionTagsSearchCondition + `)`
 	)
 
 	args := pgx.NamedArgs{
@@ -851,6 +876,18 @@ func (r *Repository) FeedSubscriptionIsRegistered(ctx context.Context, userUUID 
 }
 
 func (r *Repository) FeedSubscriptionCreate(ctx context.Context, s feed.Subscription) (feed.Subscription, error) {
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return feed.Subscription{}, err
+	}
+
+	defer r.Rollback(ctx, tx, domain, "FeedSubscriptionCreate")
+
+	tags, err := r.getOrCreateTagsTx(ctx, tx, s.UserUUID, s.Tags)
+	if err != nil {
+		return feed.Subscription{}, err
+	}
+
 	query := `
 	INSERT INTO feed_subscriptions(
 		uuid,
@@ -858,7 +895,6 @@ func (r *Repository) FeedSubscriptionCreate(ctx context.Context, s feed.Subscrip
 		category_uuid,
 		user_uuid,
 		alias,
-		tags,
 		fulltextsearch_tsv,
 		created_at,
 		updated_at
@@ -869,7 +905,6 @@ func (r *Repository) FeedSubscriptionCreate(ctx context.Context, s feed.Subscrip
 		@category_uuid,
 		@user_uuid,
 		@alias,
-		@tags,
 		TO_TSVECTOR(@fulltextsearch_string),
 		@created_at,
 		@updated_at
@@ -881,13 +916,20 @@ func (r *Repository) FeedSubscriptionCreate(ctx context.Context, s feed.Subscrip
 		"category_uuid":         s.CategoryUUID,
 		"user_uuid":             s.UserUUID,
 		"alias":                 s.Alias,
-		"tags":                  s.Tags,
 		"fulltextsearch_string": feedSubscriptionToFullTextSearchString(s),
 		"created_at":            s.CreatedAt,
 		"updated_at":            s.UpdatedAt,
 	}
 
-	if err := r.QueryTx(ctx, domain, "FeedSubscriptionCreate", query, args); err != nil {
+	if _, err := tx.Exec(ctx, query, args); err != nil {
+		return feed.Subscription{}, err
+	}
+
+	if err := insertFeedSubscriptionTagsTx(ctx, tx, s.UserUUID, s.UUID, tags); err != nil {
+		return feed.Subscription{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
 		return feed.Subscription{}, err
 	}
 
@@ -938,85 +980,43 @@ func (r *Repository) FeedSubscriptionDelete(ctx context.Context, userUUID string
 
 func (r *Repository) FeedSubscriptionGetByFeed(ctx context.Context, userUUID string, feedUUID string) (feed.Subscription, error) {
 	query := `
-	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, tags, created_at, updated_at
-	  FROM feed_subscriptions
+	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, ` + feedSubscriptionTagsSubquery + ` AS tags, created_at, updated_at
+	  FROM feed_subscriptions fs
 	 WHERE user_uuid=$1
 	   AND feed_uuid=$2`
 
 	return r.feedSubscriptionGetQuery(ctx, query, userUUID, feedUUID)
 }
 
-func (r *Repository) FeedSubscriptionGetByTag(ctx context.Context, userUUID string, tag string) ([]feed.Subscription, error) {
-	query := `
-	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, tags, created_at, updated_at
-	  FROM feed_subscriptions
-	 WHERE user_uuid=$1
-	   AND $2=ANY(tags)`
-
-	return r.feedSubscriptionGetManyQuery(ctx, query, userUUID, tag)
-}
-
 func (r *Repository) FeedSubscriptionGetByUUID(ctx context.Context, userUUID string, subscriptionUUID string) (feed.Subscription, error) {
 	query := `
-	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, tags, created_at, updated_at
-	  FROM feed_subscriptions
+	SELECT uuid, category_uuid, feed_uuid, user_uuid, alias, ` + feedSubscriptionTagsSubquery + ` AS tags, created_at, updated_at
+	  FROM feed_subscriptions fs
 	 WHERE user_uuid=$1
 	   AND uuid=$2`
 
 	return r.feedSubscriptionGetQuery(ctx, query, userUUID, subscriptionUUID)
 }
 
-func (r *Repository) FeedSubscriptionTagUpdateMany(ctx context.Context, subscriptions []feed.Subscription) (int64, error) {
+func (r *Repository) FeedSubscriptionUpdate(ctx context.Context, s feed.Subscription) error {
 	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	defer r.Rollback(ctx, tx, domain, "FeedSubscriptionTagUpdateMany")
+	defer r.Rollback(ctx, tx, domain, "FeedSubscriptionUpdate")
 
-	query := `
-	UPDATE feed_subscriptions
-	SET
-		tags=@tags,
-		fulltextsearch_tsv=TO_TSVECTOR(@fulltextsearch_string),
-		updated_at=@updated_at
-	WHERE user_uuid=@user_uuid
-	AND uuid=@uuid`
-
-	var updated int64
-
-	for _, s := range subscriptions {
-		args := pgx.NamedArgs{
-			"user_uuid":             s.UserUUID,
-			"uuid":                  s.UUID,
-			"tags":                  s.Tags,
-			"fulltextsearch_string": feedSubscriptionToFullTextSearchString(s),
-			"updated_at":            s.UpdatedAt,
-		}
-
-		commandTag, err := tx.Exec(ctx, query, args)
-		if err != nil {
-			return 0, err
-		}
-
-		updated += commandTag.RowsAffected()
+	tags, err := r.getOrCreateTagsTx(ctx, tx, s.UserUUID, s.Tags)
+	if err != nil {
+		return err
 	}
 
-	if err := tx.Commit(ctx); err != nil {
-		return 0, err
-	}
-
-	return updated, nil
-}
-
-func (r *Repository) FeedSubscriptionUpdate(ctx context.Context, s feed.Subscription) error {
 	query := `
 	UPDATE feed_subscriptions
 	SET
 		category_uuid=@category_uuid,
 		updated_at=@updated_at,
 		alias=@alias,
-		tags=@tags,
 		fulltextsearch_tsv=TO_TSVECTOR(@fulltextsearch_string)
 	WHERE user_uuid=@user_uuid
 	AND uuid=@uuid`
@@ -1026,17 +1026,28 @@ func (r *Repository) FeedSubscriptionUpdate(ctx context.Context, s feed.Subscrip
 		"uuid":                  s.UUID,
 		"category_uuid":         s.CategoryUUID,
 		"alias":                 s.Alias,
-		"tags":                  s.Tags,
 		"fulltextsearch_string": feedSubscriptionToFullTextSearchString(s),
 		"updated_at":            s.UpdatedAt,
 	}
 
-	return r.QueryTx(ctx, domain, "FeedSubscriptionUpdate", query, args)
+	if _, err := tx.Exec(ctx, query, args); err != nil {
+		return err
+	}
+
+	if _, err := tx.Exec(ctx, "DELETE FROM feed_subscription_tags WHERE user_uuid=$1 AND subscription_uuid=$2", s.UserUUID, s.UUID); err != nil {
+		return err
+	}
+
+	if err := insertFeedSubscriptionTagsTx(ctx, tx, s.UserUUID, s.UUID, tags); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *Repository) FeedQueryingSubscriptionByUUID(ctx context.Context, userUUID string, subscriptionUUID string) (feedquerying.Subscription, error) {
 	query := `
-	SELECT fs.uuid, fs.alias, fs.tags, fs.category_uuid, f.title, f.description
+	SELECT fs.uuid, fs.alias, ` + feedSubscriptionTagsSubquery + ` AS tags, fs.category_uuid, f.title, f.description
 	FROM   feed_subscriptions fs
 	JOIN   feed_feeds f ON f.uuid = fs.feed_uuid
 	WHERE  fs.user_uuid=$1
@@ -1076,86 +1087,17 @@ func (r *Repository) FeedQueryingSubscriptionsByCategory(ctx context.Context, us
 	return categories, nil
 }
 
-func (r *Repository) FeedSubscriptionTagGetCount(ctx context.Context, userUUID string) (uint, error) {
+// OnTagMerge provides a taxonomy.OnTagMergeFn to update subscription references when a tag is renamed,
+// and the new name matches an existing tag.
+func (r *Repository) OnTagMerge(ctx context.Context, userUUID, oldTagUUID, newTagUUID string) error {
 	query := `
-	SELECT COUNT(DISTINCT name)
-	FROM (
-		SELECT UNNEST(tags) AS name
-		FROM feed_subscriptions
-		WHERE user_uuid=$1
-	) s`
+	INSERT INTO feed_subscription_tags(user_uuid, subscription_uuid, tag_uuid)
+	SELECT user_uuid, subscription_uuid, $3
+	FROM   feed_subscription_tags
+	WHERE  user_uuid=$1
+	AND    tag_uuid=$2
+	ON CONFLICT DO NOTHING`
 
-	var count uint
-
-	err := r.Pool.QueryRow(ctx, query, userUUID).Scan(&count)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
-func (r *Repository) FeedSubscriptionTagGetAll(ctx context.Context, userUUID string) ([]feedquerying.Tag, error) {
-	query := `
-	SELECT name, COUNT(name) AS count
-	FROM (
-		SELECT UNNEST(tags) AS name
-		FROM  feed_subscriptions
-		WHERE user_uuid=$1
-	) s
-	GROUP BY name
-	ORDER BY count DESC, name`
-
-	return r.feedSubscriptionTagGetQuery(ctx, query, userUUID)
-}
-
-func (r *Repository) FeedSubscriptionTagGetN(ctx context.Context, userUUID string, n uint, offset uint) ([]feedquerying.Tag, error) {
-	query := `
-	SELECT name, COUNT(name) AS count
-	FROM (
-		SELECT UNNEST(tags) AS name
-		FROM  feed_subscriptions
-		WHERE user_uuid=$1
-	) s
-	GROUP BY name
-	ORDER BY count DESC, name
-	LIMIT $2 OFFSET $3`
-
-	return r.feedSubscriptionTagGetQuery(ctx, query, userUUID, n, offset)
-}
-
-func (r *Repository) FeedSubscriptionTagSearchCount(ctx context.Context, userUUID string, searchTerms string) (uint, error) {
-	query := `
-	SELECT COUNT(DISTINCT name)
-	FROM (
-		SELECT UNNEST(tags) AS name
-		FROM feed_subscriptions
-		WHERE user_uuid=$1
-	) s
-	WHERE name ILIKE $2`
-
-	var count uint
-
-	err := r.Pool.QueryRow(ctx, query, userUUID, "%"+searchTerms+"%").Scan(&count)
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
-func (r *Repository) FeedSubscriptionTagSearchN(ctx context.Context, userUUID string, searchTerms string, n uint, offset uint) ([]feedquerying.Tag, error) {
-	query := `
-	SELECT name, COUNT(name) AS count
-	FROM (
-		SELECT UNNEST(tags) AS name
-		FROM  feed_subscriptions
-		WHERE user_uuid=$1
-	) s
-	WHERE name ILIKE $2
-	GROUP BY name
-	ORDER BY count DESC, name
-	LIMIT $3 OFFSET $4`
-
-	return r.feedSubscriptionTagGetQuery(ctx, query, userUUID, "%"+searchTerms+"%", n, offset)
+	_, err := r.Pool.Exec(ctx, query, userUUID, oldTagUUID, newTagUUID)
+	return err
 }

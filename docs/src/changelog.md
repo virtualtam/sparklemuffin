@@ -18,6 +18,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 #### Documentation
 - Automatically expand and collapse the changelog page's headings in the sidebar when scrolling through the page
 
+#### Packaging and automation
+- Disable SQLFluff rule for excessive PostgreSQL logs (PG01)
+
 ## v0.7.1 - 2026-08-16
 
 Release: [v0.7.1](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.7.1)

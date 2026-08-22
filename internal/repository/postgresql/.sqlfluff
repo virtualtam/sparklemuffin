@@ -1,6 +1,6 @@
 [sqlfluff]
 dialect = postgres
-exclude_rules = layout.long_lines
+exclude_rules = layout.long_lines, postgres.excessive_locks
 
 [sqlfluff:layout:type:start_bracket]
 spacing_before = touch

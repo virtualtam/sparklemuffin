@@ -17,6 +17,7 @@ import (
 	feedimporting "github.com/virtualtam/sparklemuffin/pkg/feed/importing"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
+	"github.com/virtualtam/sparklemuffin/pkg/taxonomy"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -145,6 +146,18 @@ func WithUserService(userService *user.Service) OptionFunc {
 		}
 
 		s.userService = userService
+		return nil
+	}
+}
+
+// WithTaxonomyService sets the tag taxonomy management service.
+func WithTaxonomyService(taxonomyService *taxonomy.Service) OptionFunc {
+	return func(s *Server) error {
+		if taxonomyService == nil {
+			return ErrServerTaxonomyServiceRequired
+		}
+
+		s.taxonomyService = taxonomyService
 		return nil
 	}
 }

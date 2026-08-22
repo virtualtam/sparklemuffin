@@ -20,6 +20,7 @@ var (
 	ErrServerFeedImportingServiceRequired = errors.New("server: feed importing service required")
 	ErrServerFeedQueryingServiceRequired  = errors.New("server: feed querying service required")
 
-	ErrServerSessionServiceRequired = errors.New("server: session service required")
-	ErrServerUserServiceRequired    = errors.New("server: user service required")
+	ErrServerSessionServiceRequired  = errors.New("server: session service required")
+	ErrServerUserServiceRequired     = errors.New("server: user service required")
+	ErrServerTaxonomyServiceRequired = errors.New("server: taxonomy service required")
 )

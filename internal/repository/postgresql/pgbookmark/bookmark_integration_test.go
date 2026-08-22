@@ -10,6 +10,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jaswdr/faker/v2"
 
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
@@ -186,137 +187,266 @@ func TestBookmarkService(t *testing.T) {
 		}
 	})
 
-	t.Run("update tag", func(t *testing.T) {
+	t.Run("bookmark_tags and taxonomy_tags are populated on add and update", func(t *testing.T) {
 		ctx := t.Context()
 
-		oldTagName := "common/tag2"
-		newTagName := "common/renamed"
-		commonTags := []string{"common/tag1", oldTagName}
-		nBookmarks := 10
-		nRandomTags := 10
-		nTags := nRandomTags + len(commonTags)
+		tagA := "integration/tag-a"
+		tagB := "integration/tag-b"
 
-		for range nBookmarks {
-			tags := commonTags
-			tags = append(tags, generateUniqueSortedTags(&fake, nRandomTags)...)
-			sort.Strings(tags)
-
-			bkm := bookmark.Bookmark{
-				UserUUID:    testUser.UUID,
-				URL:         fake.Internet().URL(),
-				Title:       fake.Lorem().Sentence(5),
-				Description: fake.Lorem().Text(500),
-				Tags:        tags,
-			}
-
-			if err := bs.Add(ctx, bkm); err != nil {
-				t.Fatalf("failed to create bookmark: %q", err)
-			}
-		}
-
-		uq := bookmark.TagUpdateQuery{
-			UserUUID:    testUser.UUID,
-			CurrentName: oldTagName,
-			NewName:     newTagName,
-		}
-
-		got, err := bs.UpdateTag(ctx, uq)
-		if err != nil {
-			t.Fatalf("failed to update tag: %q", err)
-		}
-
-		if got != int64(nBookmarks) {
-			t.Errorf("want %d updated bookmarks, got %d", nBookmarks, got)
-		}
-
-		allBookmarks, err := bs.All(ctx, testUser.UUID)
-		if err != nil {
-			t.Fatalf("failed to retrieve all bookmarks: %q", err)
-		}
-
-		for i, b := range allBookmarks {
-			if len(b.Tags) != nTags {
-				t.Errorf("want bookmark %d to have %d tags, got %d", i, nTags, len(b.Tags))
-			}
-
-			if slices.Contains(b.Tags, oldTagName) {
-				t.Errorf("want bookmark %d not to have tag %s", i, oldTagName)
-			}
-
-			if !slices.Contains(b.Tags, newTagName) {
-				t.Errorf("want bookmark %d to have tag %s", i, newTagName)
-			}
-		}
-
-		for _, b := range allBookmarks {
-			if err := bs.Delete(ctx, testUser.UUID, b.UID); err != nil {
-				t.Fatalf("failed to delete bookmark: %q", err)
-			}
-		}
-	})
-
-	t.Run("delete tag", func(t *testing.T) {
-		ctx := t.Context()
-
-		deletedTagName := "common/tag1"
-		commonTags := []string{deletedTagName, "common/tag2"}
-		nBookmarks := 10
-		nRandomTags := 10
-		nTags := nRandomTags + len(commonTags)
-
-		for range nBookmarks {
-			tags := commonTags
-			tags = append(tags, generateUniqueSortedTags(&fake, nRandomTags)...)
-			sort.Strings(tags)
-
-			bkm := bookmark.Bookmark{
-				UserUUID:    testUser.UUID,
-				URL:         fake.Internet().URL(),
-				Title:       fake.Lorem().Sentence(5),
-				Description: fake.Lorem().Text(500),
-				Tags:        tags,
-			}
-
-			if err := bs.Add(ctx, bkm); err != nil {
-				t.Fatalf("failed to create bookmark: %q", err)
-			}
-		}
-
-		dq := bookmark.TagDeleteQuery{
+		bkm := bookmark.Bookmark{
 			UserUUID: testUser.UUID,
-			Name:     deletedTagName,
+			URL:      fake.Internet().URL(),
+			Title:    fake.Lorem().Sentence(5),
+			Tags:     []string{tagA, tagB},
 		}
 
-		got, err := bs.DeleteTag(ctx, dq)
+		if err := bs.Add(ctx, bkm); err != nil {
+			t.Fatalf("failed to create bookmark: %q", err)
+		}
+
+		gotBookmark, err := bs.ByURL(ctx, testUser.UUID, bkm.URL)
 		if err != nil {
-			t.Fatalf("failed to update tag: %q", err)
+			t.Fatalf("failed to retrieve bookmark: %q", err)
 		}
 
-		if got != int64(nBookmarks) {
-			t.Errorf("want %d updated bookmarks, got %d", nBookmarks, got)
+		assertBookmarkTagNames(t, pool, testUser.UUID, gotBookmark.UID, []string{tagA, tagB})
+
+		// A second bookmark reusing tagA must reuse the same taxonomy_tags row.
+		bkm2 := bookmark.Bookmark{
+			UserUUID: testUser.UUID,
+			URL:      fake.Internet().URL(),
+			Title:    fake.Lorem().Sentence(5),
+			Tags:     []string{tagA},
 		}
 
-		allBookmarks, err := bs.All(ctx, testUser.UUID)
+		if err := bs.Add(ctx, bkm2); err != nil {
+			t.Fatalf("failed to create second bookmark: %q", err)
+		}
+
+		gotBookmark2, err := bs.ByURL(ctx, testUser.UUID, bkm2.URL)
 		if err != nil {
-			t.Fatalf("failed to retrieve all bookmarks: %q", err)
+			t.Fatalf("failed to retrieve second bookmark: %q", err)
 		}
 
-		wantNTags := nTags - 1
-
-		for i, b := range allBookmarks {
-			if len(b.Tags) != wantNTags {
-				t.Errorf("want bookmark %d to have %d tags, got %d", i, wantNTags, len(b.Tags))
-			}
-
-			if slices.Contains(b.Tags, deletedTagName) {
-				t.Errorf("want bookmark %d not to have tag %s", i, deletedTagName)
-			}
+		if got := countTaxonomyTagsByName(t, pool, testUser.UUID, tagA); got != 1 {
+			t.Errorf("want exactly 1 taxonomy_tags row for %q, got %d", tagA, got)
 		}
 
-		for _, b := range allBookmarks {
-			if err := bs.Delete(ctx, testUser.UUID, b.UID); err != nil {
-				t.Fatalf("failed to delete bookmark: %q", err)
-			}
+		// Updating the first bookmark replaces its tag set.
+		updatedBookmark := bookmark.Bookmark{
+			UserUUID: gotBookmark.UserUUID,
+			UID:      gotBookmark.UID,
+			URL:      gotBookmark.URL,
+			Title:    gotBookmark.Title,
+			Tags:     []string{tagB},
+		}
+
+		if err := bs.Update(ctx, updatedBookmark); err != nil {
+			t.Fatalf("failed to update bookmark: %q", err)
+		}
+
+		assertBookmarkTagNames(t, pool, testUser.UUID, gotBookmark.UID, []string{tagB})
+
+		if err := bs.Delete(ctx, testUser.UUID, gotBookmark.UID); err != nil {
+			t.Fatalf("failed to delete bookmark: %q", err)
+		}
+		if err := bs.Delete(ctx, testUser.UUID, gotBookmark2.UID); err != nil {
+			t.Fatalf("failed to delete second bookmark: %q", err)
 		}
 	})
+
+	t.Run("adding a bookmark rejects a tag name containing whitespace", func(t *testing.T) {
+		ctx := t.Context()
+
+		bkm := bookmark.Bookmark{
+			UserUUID: testUser.UUID,
+			URL:      fake.Internet().URL(),
+			Title:    fake.Lorem().Sentence(5),
+			Tags:     []string{"not a valid tag"},
+		}
+
+		err := bs.Add(ctx, bkm)
+		if !errors.Is(err, taxonomy.ErrTagNameContainsWhitespace) {
+			t.Fatalf("want %q, got %q", taxonomy.ErrTagNameContainsWhitespace, err)
+		}
+
+		if _, err := bs.ByURL(ctx, testUser.UUID, bkm.URL); !errors.Is(err, bookmark.ErrNotFound) {
+			t.Fatalf("want the bookmark not to have been created, got %q", err)
+		}
+	})
+
+	t.Run("bulk add populates bookmark_tags and skips conflicting URLs untouched", func(t *testing.T) {
+		ctx := t.Context()
+
+		sharedTag := "bulk/shared"
+
+		existing := bookmark.NewBookmark(testUser.UUID)
+		existing.URL = fake.Internet().URL()
+		existing.Title = fake.Lorem().Sentence(5)
+		existing.Tags = []string{"bulk/existing-only"}
+		existing.Normalize()
+
+		if err := bs.Add(ctx, *existing); err != nil {
+			t.Fatalf("failed to create existing bookmark: %q", err)
+		}
+
+		gotExisting, err := bs.ByURL(ctx, testUser.UUID, existing.URL)
+		if err != nil {
+			t.Fatalf("failed to retrieve existing bookmark: %q", err)
+		}
+
+		conflicting := bookmark.NewBookmark(testUser.UUID)
+		conflicting.URL = existing.URL
+		conflicting.Title = fake.Lorem().Sentence(5)
+		conflicting.Tags = []string{sharedTag, "bulk/should-not-apply"}
+		conflicting.Normalize()
+
+		fresh := bookmark.NewBookmark(testUser.UUID)
+		fresh.URL = fake.Internet().URL()
+		fresh.Title = fake.Lorem().Sentence(5)
+		fresh.Tags = []string{sharedTag}
+		fresh.Normalize()
+
+		rowsAffected, err := r.BookmarkAddMany(ctx, []bookmark.Bookmark{*conflicting, *fresh})
+		if err != nil {
+			t.Fatalf("failed to bulk add bookmarks: %q", err)
+		}
+		if rowsAffected != 1 {
+			t.Errorf("want 1 row affected (fresh only), got %d", rowsAffected)
+		}
+
+		assertBookmarkTagNames(t, pool, testUser.UUID, gotExisting.UID, []string{"bulk/existing-only"})
+
+		gotFresh, err := bs.ByURL(ctx, testUser.UUID, fresh.URL)
+		if err != nil {
+			t.Fatalf("failed to retrieve fresh bookmark: %q", err)
+		}
+
+		assertBookmarkTagNames(t, pool, testUser.UUID, gotFresh.UID, []string{sharedTag})
+
+		if got := countTaxonomyTagsByName(t, pool, testUser.UUID, "bulk/should-not-apply"); got != 0 {
+			t.Errorf("want no orphaned taxonomy_tags row for a tag exclusive to the skipped bookmark, got %d", got)
+		}
+
+		if err := bs.Delete(ctx, testUser.UUID, gotExisting.UID); err != nil {
+			t.Fatalf("failed to delete existing bookmark: %q", err)
+		}
+		if err := bs.Delete(ctx, testUser.UUID, gotFresh.UID); err != nil {
+			t.Fatalf("failed to delete fresh bookmark: %q", err)
+		}
+	})
+
+	t.Run("bulk upsert replaces bookmark_tags using the existing row's UID", func(t *testing.T) {
+		ctx := t.Context()
+
+		oldTag := "bulk/old"
+		newTag := "bulk/new"
+
+		existing := bookmark.NewBookmark(testUser.UUID)
+		existing.URL = fake.Internet().URL()
+		existing.Title = fake.Lorem().Sentence(5)
+		existing.Tags = []string{oldTag}
+		existing.Normalize()
+
+		if err := bs.Add(ctx, *existing); err != nil {
+			t.Fatalf("failed to create bookmark: %q", err)
+		}
+
+		gotExisting, err := bs.ByURL(ctx, testUser.UUID, existing.URL)
+		if err != nil {
+			t.Fatalf("failed to retrieve bookmark: %q", err)
+		}
+
+		// A freshly generated bookmark deliberately carries a different UID
+		// than the existing row: on conflict, the update must keep the
+		// existing row's UID rather than the payload's.
+		updated := bookmark.NewBookmark(testUser.UUID)
+		updated.URL = existing.URL
+		updated.Title = fake.Lorem().Sentence(5)
+		updated.Tags = []string{newTag}
+		updated.Normalize()
+
+		if updated.UID == gotExisting.UID {
+			t.Fatalf("test setup invariant violated: expected different generated UIDs")
+		}
+
+		rowsAffected, err := r.BookmarkUpsertMany(ctx, []bookmark.Bookmark{*updated})
+		if err != nil {
+			t.Fatalf("failed to bulk upsert bookmark: %q", err)
+		}
+		if rowsAffected != 1 {
+			t.Errorf("want 1 row affected, got %d", rowsAffected)
+		}
+
+		gotUpdated, err := bs.ByURL(ctx, testUser.UUID, existing.URL)
+		if err != nil {
+			t.Fatalf("failed to retrieve updated bookmark: %q", err)
+		}
+
+		if gotUpdated.UID != gotExisting.UID {
+			t.Fatalf("want the pre-existing UID %q to be preserved, got %q", gotExisting.UID, gotUpdated.UID)
+		}
+
+		assertBookmarkTagNames(t, pool, testUser.UUID, gotUpdated.UID, []string{newTag})
+
+		if err := bs.Delete(ctx, testUser.UUID, gotUpdated.UID); err != nil {
+			t.Fatalf("failed to delete bookmark: %q", err)
+		}
+	})
+}
+
+func assertBookmarkTagNames(t *testing.T, pool *pgxpool.Pool, userUUID, bookmarkUID string, want []string) {
+	t.Helper()
+
+	rows, err := pool.Query(
+		t.Context(),
+		`
+		SELECT tt.tag_name
+		FROM bookmark_tags bt
+		JOIN taxonomy_tags tt ON tt.tag_uuid = bt.tag_uuid
+		WHERE bt.user_uuid=$1
+		AND   bt.bookmark_uid=$2
+		ORDER BY tt.tag_name`,
+		userUUID,
+		bookmarkUID,
+	)
+	if err != nil {
+		t.Fatalf("failed to query bookmark_tags: %q", err)
+	}
+	defer rows.Close()
+
+	var got []string
+
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			t.Fatalf("failed to scan tag name: %q", err)
+		}
+		got = append(got, name)
+	}
+
+	wantSorted := slices.Clone(want)
+	sort.Strings(wantSorted)
+
+	if !slices.Equal(got, wantSorted) {
+		t.Errorf("want bookmark_tags names %v, got %v", wantSorted, got)
+	}
+}
+
+func countTaxonomyTagsByName(t *testing.T, pool *pgxpool.Pool, userUUID, name string) int {
+	t.Helper()
+
+	var count int
+
+	err := pool.QueryRow(
+		t.Context(),
+		"SELECT COUNT(*) FROM taxonomy_tags WHERE user_uuid=$1 AND tag_name=$2",
+		userUUID,
+		name,
+	).Scan(&count)
+	if err != nil {
+		t.Fatalf("failed to count taxonomy_tags: %q", err)
+	}
+
+	return count
 }

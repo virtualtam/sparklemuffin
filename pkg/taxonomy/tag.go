@@ -55,13 +55,12 @@ func (t *Tag) Normalize() {
 	t.Name = strings.TrimSpace(t.Name)
 }
 
-// ValidateForAddition ensures mandatory fields are properly set when adding a Tag.
-func (t *Tag) ValidateForAddition(ctx context.Context, v ValidationRepository) error {
+// Validate ensures mandatory fields are properly set.
+func (t *Tag) Validate() error {
 	fns := []func() error{
 		t.requireUserUUID,
 		t.requireName,
 		t.ensureNameHasNoWhitespace,
-		t.ensureNameIsNotRegistered(ctx, v),
 	}
 
 	for _, fn := range fns {
@@ -71,6 +70,16 @@ func (t *Tag) ValidateForAddition(ctx context.Context, v ValidationRepository) e
 	}
 
 	return nil
+}
+
+// ValidateForAddition ensures mandatory fields are properly set, and that no
+// other tag is already registered under the same name, when adding a Tag.
+func (t *Tag) ValidateForAddition(ctx context.Context, v ValidationRepository) error {
+	if err := t.Validate(); err != nil {
+		return err
+	}
+
+	return t.ensureNameIsNotRegistered(ctx, v)()
 }
 
 func (t *Tag) requireUserUUID() error {

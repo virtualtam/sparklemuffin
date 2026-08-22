@@ -11,10 +11,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
 )
 
-const (
-	bookmarksPerPage uint = 20
-	tagsPerPage      uint = 90
-)
+const bookmarksPerPage uint = 20
 
 // Service handles operations related to displaying and paginating bookmarks.
 type Service struct {
@@ -129,91 +126,4 @@ func (s *Service) PublicBookmarksByPage(ctx context.Context, ownerUUID string, n
 // number of bookmarks for a given set of search terms.
 func (s *Service) PublicBookmarksBySearchQueryAndPage(ctx context.Context, ownerUUID string, searchTerms string, number uint) (BookmarkPage, error) {
 	return s.BookmarksBySearchQueryAndPage(ctx, ownerUUID, VisibilityPublic, searchTerms, number)
-}
-
-// Tags return all tags for a given user.
-func (s *Service) Tags(ctx context.Context, userUUID string, visibility Visibility) ([]Tag, error) {
-	return s.r.BookmarkTagGetAll(ctx, userUUID, visibility)
-}
-
-// TagNamesByCount returns all tag names for a given user,
-// sorted by count in descending order.
-func (s *Service) TagNamesByCount(ctx context.Context, userUUID string, visibility Visibility) ([]string, error) {
-	tags, err := s.r.BookmarkTagGetAll(ctx, userUUID, visibility)
-	if err != nil {
-		return []string{}, err
-	}
-
-	tagNames := make([]string, len(tags))
-
-	for i, tag := range tags {
-		tagNames[i] = tag.Name
-	}
-
-	return tagNames, nil
-}
-
-// TagsByPage returns a Page containing a limited and offset number of tags.
-func (s *Service) TagsByPage(ctx context.Context, ownerUUID string, visibility Visibility, number uint) (TagPage, error) {
-	if number < 1 {
-		return TagPage{}, paginate.ErrPageNumberOutOfBounds
-	}
-
-	tagCount, err := s.r.BookmarkTagGetCount(ctx, ownerUUID, visibility)
-	if err != nil {
-		return TagPage{}, err
-	}
-
-	totalPages := paginate.PageCount(tagCount, tagsPerPage)
-
-	if number > totalPages {
-		return TagPage{}, paginate.ErrPageNumberOutOfBounds
-	}
-
-	if tagCount == 0 {
-		// early return: nothing to display
-		return NewTagPage(1, 1, 0, []Tag{}), nil
-	}
-
-	dbOffset := (number - 1) * tagsPerPage
-
-	tags, err := s.r.BookmarkTagGetN(ctx, ownerUUID, visibility, tagsPerPage, dbOffset)
-	if err != nil {
-		return TagPage{}, err
-	}
-
-	return NewTagPage(number, totalPages, tagCount, tags), nil
-}
-
-// TagsBySearchQueryAndPage returns a TagSearchPage containing a limited and offset
-// number of tags for a given set of search terms.
-func (s *Service) TagsBySearchQueryAndPage(ctx context.Context, ownerUUID string, visibility Visibility, searchTerms string, number uint) (TagPage, error) {
-	if number < 1 {
-		return TagPage{}, paginate.ErrPageNumberOutOfBounds
-	}
-
-	tagCount, err := s.r.BookmarkTagSearchCount(ctx, ownerUUID, visibility, searchTerms)
-	if err != nil {
-		return TagPage{}, err
-	}
-
-	totalPages := paginate.PageCount(tagCount, tagsPerPage)
-
-	if number > totalPages {
-		return TagPage{}, paginate.ErrPageNumberOutOfBounds
-	}
-
-	if tagCount == 0 {
-		// early return: nothing to display
-		return NewTagSearchResultPage(searchTerms, 0, 1, 1, []Tag{}), nil
-	}
-
-	dbOffset := (number - 1) * tagsPerPage
-
-	tags, err := s.r.BookmarkTagSearchN(ctx, ownerUUID, visibility, searchTerms, tagsPerPage, dbOffset)
-	if err != nil {
-		return TagPage{}, err
-	}
-
-	return NewTagSearchResultPage(searchTerms, tagCount, number, totalPages, tags), nil
 }

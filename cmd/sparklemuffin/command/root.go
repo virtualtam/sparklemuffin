@@ -29,6 +29,7 @@ import (
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbookmark"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgsession"
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgtaxonomy"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
 	"github.com/virtualtam/sparklemuffin/internal/version"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
@@ -42,6 +43,7 @@ import (
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	feedsynchronizing "github.com/virtualtam/sparklemuffin/pkg/feed/synchronizing"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
+	"github.com/virtualtam/sparklemuffin/pkg/taxonomy"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -79,8 +81,9 @@ var (
 	feedQueryingService      *feedquerying.Service
 	feedSynchronizingService *feedsynchronizing.Service
 
-	sessionService *session.Service
-	userService    *user.Service
+	sessionService  *session.Service
+	userService     *user.Service
+	taxonomyService *taxonomy.Service
 )
 
 // NewRootCommand initializes the main CLI entrypoint and common command flags.
@@ -204,6 +207,9 @@ func NewRootCommand() *cobra.Command {
 			}
 
 			// SparkleMuffin services
+			taxonomyRepository := pgtaxonomy.NewRepository(pgxPool)
+			taxonomyService = taxonomy.NewService(taxonomyRepository)
+
 			bookmarkRepository := pgbookmark.NewRepository(pgxPool)
 			bookmarkService = bookmark.NewService(bookmarkRepository)
 			bookmarkExportingService = bookmarkexporting.NewService(bookmarkRepository)

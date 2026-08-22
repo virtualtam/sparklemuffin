@@ -31,17 +31,11 @@ type Repository interface {
 	// BookmarkGetAll returns all bookmarks for a given user UUID.
 	BookmarkGetAll(ctx context.Context, userUUID string) ([]Bookmark, error)
 
-	// BookmarkGetByTag returns all bookmarks for a given user UUID and tag.
-	BookmarkGetByTag(ctx context.Context, userUUID string, tag string) ([]Bookmark, error)
-
 	// BookmarkGetByUID returns the bookmark for a given user UUID and UID.
 	BookmarkGetByUID(ctx context.Context, userUUID, uid string) (Bookmark, error)
 
 	// BookmarkGetByURL returns the bookmark for a given user UUID and URL.
 	BookmarkGetByURL(ctx context.Context, userUUID, u string) (Bookmark, error)
-
-	// BookmarkTagUpdateMany updates a tag for collection of existing bookmarks.
-	BookmarkTagUpdateMany(ctx context.Context, bookmarks []Bookmark) (int64, error)
 
 	// BookmarkUpdate updates an existing bookmark for the logged-in user.
 	BookmarkUpdate(ctx context.Context, bookmark Bookmark) error

@@ -9,11 +9,62 @@ import (
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
-	"github.com/rs/zerolog/log"
 
+	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/taxonomy"
 )
+
+// getOrCreateTagsTx resolves a set of tag names to Tags for a given user,
+// creating any tag that does not already exist, all within the transaction
+// carried by q.
+func (r *Repository) getOrCreateTagsTx(ctx context.Context, q pgbase.Querier, userUUID string, names []string) ([]taxonomy.Tag, error) {
+	tags := make([]taxonomy.Tag, 0, len(names))
+
+	for _, name := range names {
+		tag, err := r.taxonomyRepo.TagGetByNameTx(ctx, q, userUUID, name)
+
+		if errors.Is(err, taxonomy.ErrNotFound) {
+			tag, err = taxonomy.NewTag(userUUID, name)
+			if err != nil {
+				return nil, err
+			}
+
+			if err := tag.Validate(); err != nil {
+				return nil, err
+			}
+
+			if err := r.taxonomyRepo.TagAddTx(ctx, q, tag); err != nil {
+				return nil, err
+			}
+		} else if err != nil {
+			return nil, err
+		}
+
+		tags = append(tags, tag)
+	}
+
+	return tags, nil
+}
+
+// insertBookmarkTagsTx inserts one bookmark_tags row per tag, within the
+// transaction carried by q.
+func insertBookmarkTagsTx(ctx context.Context, q pgbase.Querier, userUUID, bookmarkUID string, tags []taxonomy.Tag) error {
+	for _, tag := range tags {
+		_, err := q.Exec(
+			ctx,
+			"INSERT INTO bookmark_tags(user_uuid, bookmark_uid, tag_uuid) VALUES($1, $2, $3)",
+			userUUID,
+			bookmarkUID,
+			tag.UUID,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func (r *Repository) bookmarkGetQuery(ctx context.Context, query string, queryParams ...any) (bookmark.Bookmark, error) {
 	rows, err := r.Pool.Query(ctx, query, queryParams...)
@@ -79,7 +130,16 @@ func (r *Repository) bookmarkGetManyQuery(ctx context.Context, query string, que
 	return bookmarks, nil
 }
 
+// bookmarkUpsertMany upserts a batch of bookmarks and their tags within a
+// single transaction.
 func (r *Repository) bookmarkUpsertMany(ctx context.Context, onConflictStmt string, bookmarks []bookmark.Bookmark) (int64, error) {
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	defer r.Rollback(ctx, tx, domain, "bookmarkUpsertMany")
+
 	insertQuery := `
 	INSERT INTO bookmarks(
 		uid,
@@ -88,7 +148,6 @@ func (r *Repository) bookmarkUpsertMany(ctx context.Context, onConflictStmt stri
 		title,
 		description,
 		private,
-		tags,
 		fulltextsearch_tsv,
 		created_at,
 		updated_at
@@ -100,13 +159,12 @@ func (r *Repository) bookmarkUpsertMany(ctx context.Context, onConflictStmt stri
 		@title,
 		@description,
 		@private,
-		@tags,
 		TO_TSVECTOR(@fulltextsearch_string),
 		@created_at,
 		@updated_at
 	)`
 
-	query := insertQuery + onConflictStmt
+	query := insertQuery + onConflictStmt + "\nRETURNING uid"
 
 	batch := &pgx.Batch{}
 
@@ -120,7 +178,6 @@ func (r *Repository) bookmarkUpsertMany(ctx context.Context, onConflictStmt stri
 			"title":                 b.Title,
 			"description":           b.Description,
 			"private":               b.Private,
-			"tags":                  b.Tags,
 			"fulltextsearch_string": fullTextSearchString,
 			"created_at":            b.CreatedAt,
 			"updated_at":            b.UpdatedAt,
@@ -129,50 +186,73 @@ func (r *Repository) bookmarkUpsertMany(ctx context.Context, onConflictStmt stri
 		batch.Queue(query, args)
 	}
 
-	batchResults := r.Pool.SendBatch(ctx, batch)
-	defer func() {
-		if err := batchResults.Close(); err != nil {
-			log.Error().
-				Err(err).
-				Str("domain", "bookmarks").
-				Str("operation", "upsert_many").
-				Msg("failed to close batch results")
-		}
-	}()
+	batchResults := tx.SendBatch(ctx, batch)
 
 	var rowsAffected int64
+	upsertedUIDs := make([]string, len(bookmarks))
 
-	for range bookmarks {
-		commandTag, qerr := batchResults.Exec()
-		if qerr != nil {
-			return 0, qerr
+	for i := range bookmarks {
+		var uid string
+
+		err := batchResults.QueryRow().Scan(&uid)
+		if errors.Is(err, pgx.ErrNoRows) {
+			// ON CONFLICT DO NOTHING skipped this bookmark.
+			continue
+		}
+		if err != nil {
+			_ = batchResults.Close()
+			return 0, err
 		}
 
-		rowsAffected += commandTag.RowsAffected()
+		upsertedUIDs[i] = uid
+		rowsAffected++
 	}
 
-	return rowsAffected, nil
-}
-
-func (r *Repository) tagGetQuery(ctx context.Context, query string, queryParams ...any) ([]bookmarkquerying.Tag, error) {
-	rows, err := r.Pool.Query(ctx, query, queryParams...)
-	if err != nil {
-		return []bookmarkquerying.Tag{}, err
-	}
-	defer rows.Close()
-
-	var dbTags []DBTag
-
-	if err := pgxscan.ScanAll(&dbTags, rows); err != nil {
-		return []bookmarkquerying.Tag{}, err
+	if err := batchResults.Close(); err != nil {
+		return 0, err
 	}
 
-	var tags []bookmarkquerying.Tag
+	tagsBatch := &pgx.Batch{}
 
-	for _, dbTag := range dbTags {
-		tag := bookmarkquerying.NewTag(dbTag.Name, dbTag.Count)
-		tags = append(tags, tag)
+	for i, uid := range upsertedUIDs {
+		if uid == "" {
+			// ON CONFLICT DO NOTHING skipped this bookmark: resolving its
+			// tags now would create taxonomy_tags rows that never get
+			// attached to anything.
+			continue
+		}
+
+		tags, err := r.getOrCreateTagsTx(ctx, tx, bookmarks[i].UserUUID, bookmarks[i].Tags)
+		if err != nil {
+			return 0, err
+		}
+
+		tagsBatch.Queue("DELETE FROM bookmark_tags WHERE user_uuid=$1 AND bookmark_uid=$2", bookmarks[i].UserUUID, uid)
+
+		for _, tag := range tags {
+			tagsBatch.Queue(
+				"INSERT INTO bookmark_tags(user_uuid, bookmark_uid, tag_uuid) VALUES($1, $2, $3)",
+				bookmarks[i].UserUUID,
+				uid,
+				tag.UUID,
+			)
+		}
 	}
 
-	return tags, nil
+	if tagsBatch.Len() > 0 {
+		tagsBatchResults := tx.SendBatch(ctx, tagsBatch)
+
+		for range tagsBatch.Len() {
+			if _, err := tagsBatchResults.Exec(); err != nil {
+				_ = tagsBatchResults.Close()
+				return 0, err
+			}
+		}
+
+		if err := tagsBatchResults.Close(); err != nil {
+			return 0, err
+		}
+	}
+
+	return rowsAffected, tx.Commit(ctx)
 }

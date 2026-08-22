@@ -6,7 +6,7 @@ package controller
 import (
 	"bufio"
 	"bytes"
-	"encoding/base64"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,6 +28,7 @@ import (
 	bookmarkexporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/exporting"
 	bookmarkimporting "github.com/virtualtam/sparklemuffin/pkg/bookmark/importing"
 	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/taxonomy"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -40,6 +41,7 @@ func RegisterBookmarkHandlers(
 	importingService *bookmarkimporting.Service,
 	queryingService *bookmarkquerying.Service,
 	userService *user.Service,
+	taxonomyService *taxonomy.Service,
 ) {
 	bc := bookmarkController{
 		publicURL: publicURL,
@@ -49,6 +51,7 @@ func RegisterBookmarkHandlers(
 		importingService: importingService,
 		queryingService:  queryingService,
 		userService:      userService,
+		taxonomyService:  taxonomyService,
 
 		bookmarkAddView:    view.New("bookmark/bookmark_add.gohtml"),
 		bookmarkDeleteView: view.New("bookmark/bookmark_delete.gohtml"),
@@ -59,10 +62,6 @@ func RegisterBookmarkHandlers(
 		bookmarkImportView: view.New("bookmark/bookmark_import.gohtml"),
 
 		publicBookmarkListView: view.New("public/bookmark_list.gohtml", "bookmark/bookmark_row.gohtml"),
-
-		tagDeleteView: view.New("bookmark/tag_delete.gohtml"),
-		tagEditView:   view.New("bookmark/tag_edit.gohtml"),
-		tagListView:   view.New("bookmark/tag_list.gohtml"),
 	}
 
 	// bookmarks
@@ -83,14 +82,6 @@ func RegisterBookmarkHandlers(
 		r.Post("/export", bc.handleBookmarkExport())
 		r.Get("/import", bc.handleBookmarkImportView())
 		r.Post("/import", bc.handleBookmarkImport())
-
-		r.Route("/tags", func(sr chi.Router) {
-			sr.Get("/", bc.handleTagListView())
-			sr.Get("/{name}/delete", bc.handleTagDeleteView())
-			sr.Post("/{name}/delete", bc.handleTagDelete())
-			sr.Get("/{name}/edit", bc.handleTagEditView())
-			sr.Post("/{name}/edit", bc.handleTagEdit())
-		})
 	})
 
 	// public bookmarks
@@ -109,6 +100,7 @@ type bookmarkController struct {
 	importingService *bookmarkimporting.Service
 	queryingService  *bookmarkquerying.Service
 	userService      *user.Service
+	taxonomyService  *taxonomy.Service
 
 	bookmarkAddView    *view.View
 	bookmarkDeleteView *view.View
@@ -119,10 +111,6 @@ type bookmarkController struct {
 	bookmarkImportView *view.View
 
 	publicBookmarkListView *view.View
-
-	tagDeleteView *view.View
-	tagEditView   *view.View
-	tagListView   *view.View
 }
 
 type bookmarkFormContent struct {
@@ -143,13 +131,29 @@ type bookmarkFormConflict struct {
 	NewDescriptionRows int
 }
 
+// autocompleteTagNames returns a user's tag names, to populate the tag
+// autocomplete suggestions on bookmark and feed entry bookmark forms.
+func autocompleteTagNames(ctx context.Context, taxonomyService *taxonomy.Service, userUUID string) ([]string, error) {
+	tagPage, err := taxonomyService.ListTags(ctx, userUUID, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	names := make([]string, len(tagPage.Tags))
+	for i, tag := range tagPage.Tags {
+		names[i] = tag.Name
+	}
+
+	return names, nil
+}
+
 // handleBookmarkAddView renders the bookmark addition form.
 func (bc *bookmarkController) handleBookmarkAddView() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 
-		tags, err := bc.queryingService.TagNamesByCount(ctx, ctxUser.UUID, bookmarkquerying.VisibilityAll)
+		tags, err := autocompleteTagNames(ctx, bc.taxonomyService, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
 			view.PutFlashError(w, "failed to retrieve existing tags")
@@ -235,7 +239,7 @@ func (bc *bookmarkController) renderBookmarkAddConflict(w http.ResponseWriter, r
 		return
 	}
 
-	tags, err := bc.queryingService.TagNamesByCount(ctx, ctxUser.UUID, bookmarkquerying.VisibilityAll)
+	tags, err := autocompleteTagNames(ctx, bc.taxonomyService, ctxUser.UUID)
 	if err != nil {
 		log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
 		view.PutFlashError(w, "failed to add bookmark")
@@ -349,7 +353,7 @@ func (bc *bookmarkController) handleBookmarkEditView() func(w http.ResponseWrite
 		ctx := r.Context()
 		ctxUser := httpcontext.UserValue(ctx)
 
-		tags, err := bc.queryingService.TagNamesByCount(ctx, ctxUser.UUID, bookmarkquerying.VisibilityAll)
+		tags, err := autocompleteTagNames(ctx, bc.taxonomyService, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Str("user_uuid", ctxUser.UUID).Msg("failed to retrieve tags")
 			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve existing tags")
@@ -876,279 +880,5 @@ func (bc *bookmarkController) handlePublicBookmarkFeedAtom() func(w http.Respons
 			log.Error().Err(err).Msg("failed to marshal Atom feed")
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
-	}
-}
-
-// handleTagDeleteView renders the tag deletion form.
-//
-// On an htmx request, it responds with only the form fragment, meant to be
-// loaded into the tag list page's delete modal. On a plain request, it
-// renders the full page as usual, so the URL stays independently navigable.
-func (bc *bookmarkController) handleTagDeleteView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		nameBase64 := chi.URLParam(r, "name")
-
-		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
-		if err != nil {
-			log.Error().Err(err).Msg("invalid tag")
-			view.RedirectOnError(w, r, r.URL.Path, "invalid tag")
-			return
-		}
-
-		name := string(nameBytes)
-		tag := bookmarkquerying.NewTag(name, 0)
-
-		if r.Header.Get(htmx.HeaderRequest) == "true" {
-			formData := map[string]any{"Tag": tag, "InModal": true}
-			if err := bc.tagDeleteView.RenderTemplate(w, "tagDeleteForm", formData); err != nil {
-				log.Error().Err(err).Msg("failed to render tag delete form fragment")
-				http.Error(w, "Something went wrong", http.StatusInternalServerError)
-			}
-			return
-		}
-
-		viewData := view.Data{
-			Content: tag,
-			Title:   fmt.Sprintf("Delete tag: %s", name),
-		}
-
-		bc.tagDeleteView.Render(w, r, viewData)
-	}
-}
-
-// handleTagDelete processes the tag deletion form.
-//
-// On success:
-//   - htmx request: retargets/reswaps an empty response into the tag's row
-//     (outerHTML), removing it, and fires a "modal:close" client-side event
-//     so the tag list page's delete modal closes.
-//   - plain request: flash + redirect to the tag list, as before.
-//
-// On error, it falls back to the same flash+redirect (or HX-Redirect, for
-// htmx requests) behavior used throughout this file.
-func (bc *bookmarkController) handleTagDelete() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		nameBase64 := chi.URLParam(r, "name")
-
-		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
-		if err != nil {
-			log.Error().Err(err).Msg("invalid tag")
-			view.RedirectOnError(w, r, r.URL.Path, "invalid tag")
-			return
-		}
-
-		name := string(nameBytes)
-
-		ctx := r.Context()
-		ctxUser := httpcontext.UserValue(ctx)
-
-		tagDelete := bookmark.TagDeleteQuery{
-			UserUUID: ctxUser.UUID,
-			Name:     name,
-		}
-
-		updated, err := bc.bookmarkService.DeleteTag(ctx, tagDelete)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to delete tag")
-			view.RedirectOnError(w, r, r.URL.Path, "failed to delete tag")
-			return
-		}
-
-		if r.Header.Get(htmx.HeaderRequest) == "true" {
-			w.Header().Set(htmx.HeaderRetarget, fmt.Sprintf("[id='tag-row-%s']", nameBase64))
-			w.Header().Set(htmx.HeaderReswap, "outerHTML")
-			w.Header().Set(htmx.HeaderTrigger, "modal:close")
-			return
-		}
-
-		view.PutFlashSuccess(w, fmt.Sprintf("Tag deleted from %d bookmarks", updated))
-		http.Redirect(w, r, "/bookmarks/tags", http.StatusSeeOther)
-	}
-}
-
-// handleTagEditView renders the tag edition form.
-//
-// On an htmx request, it responds with only the form fragment, meant to be
-// loaded into the tag list page's edit modal. On a plain request, it renders
-// the full page as usual, so the URL stays independently navigable.
-func (bc *bookmarkController) handleTagEditView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		nameBase64 := chi.URLParam(r, "name")
-
-		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
-		if err != nil {
-			log.Error().Err(err).Msg("invalid tag")
-			view.RedirectOnError(w, r, r.URL.Path, "invalid tag")
-			return
-		}
-
-		name := string(nameBytes)
-		tag := bookmarkquerying.NewTag(name, 0)
-
-		if r.Header.Get(htmx.HeaderRequest) == "true" {
-			formData := map[string]any{"Tag": tag, "InModal": true}
-			if err := bc.tagEditView.RenderTemplate(w, "tagEditForm", formData); err != nil {
-				log.Error().Err(err).Msg("failed to render tag edit form fragment")
-				http.Error(w, "Something went wrong", http.StatusInternalServerError)
-			}
-			return
-		}
-
-		viewData := view.Data{
-			Content: tag,
-			Title:   fmt.Sprintf("Edit tag: %s", name),
-		}
-
-		bc.tagEditView.Render(w, r, viewData)
-	}
-}
-
-// handleTagEdit processes the tag edition form.
-//
-// On success:
-//   - htmx request: re-renders the tag's row and retargets/reswaps the
-//     response into it (outerHTML), and fires a "modal:close" client-side
-//     event so the tag list page's edit modal closes.
-//   - plain request: flash + redirect to the tag list, as before.
-//
-// On error, it falls back to the same flash+redirect (or HX-Redirect, for
-// htmx requests) behavior used throughout this file.
-func (bc *bookmarkController) handleTagEdit() func(w http.ResponseWriter, r *http.Request) {
-	type tagEditForm struct {
-		Name string `schema:"name"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		var form tagEditForm
-		if err := decodeForm(r, &form); err != nil {
-			log.Error().Err(err).Msg("failed to parse tag edition form")
-			view.RedirectOnError(w, r, r.URL.Path, "failed to process form")
-			return
-		}
-
-		nameBase64 := chi.URLParam(r, "name")
-
-		nameBytes, err := base64.URLEncoding.DecodeString(nameBase64)
-		if err != nil {
-			log.Error().Err(err).Msg("invalid tag")
-			view.RedirectOnError(w, r, r.URL.Path, "invalid tag")
-			return
-		}
-
-		name := string(nameBytes)
-
-		ctx := r.Context()
-		ctxUser := httpcontext.UserValue(ctx)
-
-		tagNameUpdate := bookmark.TagUpdateQuery{
-			UserUUID:    ctxUser.UUID,
-			CurrentName: name,
-			NewName:     form.Name,
-		}
-
-		updated, err := bc.bookmarkService.UpdateTag(ctx, tagNameUpdate)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to rename tag")
-			view.RedirectOnError(w, r, r.URL.Path, "failed to rename tag")
-			return
-		}
-
-		if r.Header.Get(htmx.HeaderRequest) == "true" {
-			updatedTag := bookmarkquerying.NewTag(form.Name, uint(updated))
-
-			// nameBase64 (pre-rename) identifies the row still in the DOM;
-			// an attribute selector tolerates the "=" padding base64 may add.
-			w.Header().Set(htmx.HeaderRetarget, fmt.Sprintf("[id='tag-row-%s']", nameBase64))
-			w.Header().Set(htmx.HeaderReswap, "outerHTML")
-			w.Header().Set(htmx.HeaderTrigger, "modal:close")
-
-			if err := bc.tagListView.RenderTemplate(w, "tagRow", updatedTag); err != nil {
-				log.Error().Err(err).Msg("failed to render tag row fragment")
-				http.Error(w, "Something went wrong", http.StatusInternalServerError)
-			}
-			return
-		}
-
-		view.PutFlashSuccess(w, fmt.Sprintf("Tag updated for %d bookmarks", updated))
-		http.Redirect(w, r, "/bookmarks/tags", http.StatusSeeOther)
-	}
-}
-
-// handleTagListView renders the tag list for the current authenticated user.
-//
-// On an htmx request, it responds with only the list content fragment
-// (search form, tags, pagination), so that searching or paginating swaps the
-// list in place instead of reloading the full page. On a plain request, it
-// renders the full page as usual.
-func (bc *bookmarkController) handleTagListView() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var viewData view.Data
-
-		ctx := r.Context()
-		ctxUser := httpcontext.UserValue(ctx)
-
-		pageNumber, pageNumberStr, err := paginate.GetPageNumber(r.URL.Query())
-		if err != nil {
-			log.Warn().Err(err).Str("page_number", pageNumberStr).Msg("invalid page number")
-			view.RedirectOnError(w, r, "/bookmarks/tags", fmt.Sprintf("invalid page number: %q", pageNumberStr))
-			return
-		}
-
-		searchTermsParam := r.URL.Query().Get("search")
-		if searchTermsParam != "" {
-			tagSearchPage, err := bc.queryingService.TagsBySearchQueryAndPage(
-				ctx,
-				ctxUser.UUID,
-				bookmarkquerying.VisibilityAll,
-				searchTermsParam,
-				pageNumber,
-			)
-
-			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
-				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
-				log.Error().Err(err).Msg(msg)
-				view.RedirectOnError(w, r, "/bookmarks/tags", msg)
-				return
-			} else if err != nil {
-				log.Error().Err(err).Msg("failed to retrieve tags")
-				view.RedirectOnError(w, r, "/bookmarks/tags", "failed to retrieve tags")
-				return
-			}
-
-			viewData.Title = fmt.Sprintf("Tag search: %s", searchTermsParam)
-			viewData.Content = tagSearchPage
-
-		} else {
-			tagPage, err := bc.queryingService.TagsByPage(
-				ctx,
-				ctxUser.UUID,
-				bookmarkquerying.VisibilityAll,
-				pageNumber,
-			)
-
-			if errors.Is(err, paginate.ErrPageNumberOutOfBounds) {
-				msg := fmt.Sprintf("invalid page number: %d", pageNumber)
-				log.Error().Err(err).Msg(msg)
-				view.RedirectOnError(w, r, "/bookmarks/tags", msg)
-				return
-			} else if err != nil {
-				log.Error().Err(err).Msg("failed to retrieve tags")
-				view.RedirectOnError(w, r, "/bookmarks/tags", "failed to retrieve tags")
-				return
-			}
-
-			viewData.Title = "Tags"
-			viewData.Content = tagPage
-		}
-
-		if r.Header.Get(htmx.HeaderRequest) == "true" {
-			if err := bc.tagListView.RenderTemplate(w, "content", viewData.Content); err != nil {
-				log.Error().Err(err).Msg("failed to render tag list fragment")
-				http.Error(w, "Something went wrong", http.StatusInternalServerError)
-			}
-			return
-		}
-
-		bc.tagListView.Render(w, r, viewData)
 	}
 }

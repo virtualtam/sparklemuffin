@@ -5,7 +5,6 @@ package pgbookmark
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
@@ -31,14 +30,8 @@ type DBBookmark struct {
 
 func bookmarkToFullTextSearchString(b bookmark.Bookmark) string {
 	return fmt.Sprintf(
-		"%s %s %s",
+		"%s %s",
 		b.Title,
 		pgbase.FullTextSearchReplacer.Replace(b.Description),
-		pgbase.FullTextSearchReplacer.Replace(strings.Join(b.Tags, " ")),
 	)
-}
-
-type DBTag struct {
-	Name  string `db:"name"`
-	Count uint   `db:"count"`
 }

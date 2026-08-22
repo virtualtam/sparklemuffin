@@ -33,6 +33,7 @@ import (
 	feedimporting "github.com/virtualtam/sparklemuffin/pkg/feed/importing"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 	"github.com/virtualtam/sparklemuffin/pkg/session"
+	"github.com/virtualtam/sparklemuffin/pkg/taxonomy"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
@@ -63,6 +64,10 @@ type Server struct {
 	sessionService *session.Service
 	userService    *user.Service
 
+	// Taxonomy services
+	taxonomyService *taxonomy.Service
+
+	// Generic views
 	homeView  *view.View
 	errorView *view.ErrorView
 }
@@ -159,9 +164,9 @@ func (s *Server) registerHandlers() {
 	controller.RegisterSessionHandlers(s.router, secure, s.sessionService, s.userService)
 	controller.RegisterAdminHandlers(s.router, s.sessionService, s.userService)
 	controller.RegisterAccountHandlers(s.router, s.feedService, s.sessionService, s.userService)
-	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.bookmarkExportingService, s.bookmarkImportingService, s.bookmarkQueryingService, s.userService)
+	controller.RegisterBookmarkHandlers(s.router, s.publicURL, s.bookmarkService, s.bookmarkExportingService, s.bookmarkImportingService, s.bookmarkQueryingService, s.userService, s.taxonomyService)
 	controller.RegisterFeedHandlers(s.router, s.feedService, s.feedExportingService, s.feedImportingService, s.feedQueryingService, s.userService)
-	controller.RegisterFeedBookmarkHandlers(s.router, s.feedQueryingService, s.bookmarkService, s.bookmarkQueryingService)
+	controller.RegisterFeedBookmarkHandlers(s.router, s.feedQueryingService, s.bookmarkService, s.taxonomyService)
 
 	// 404 handler
 	s.router.NotFound(s.handleNotFound())

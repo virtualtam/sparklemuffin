@@ -31,21 +31,4 @@ type Repository interface {
 
 	// OwnerGetByUUID returns the Owner corresponding to a given UUID.
 	OwnerGetByUUID(ctx context.Context, uuid string) (Owner, error)
-
-	// BookmarkTagGetAll returns all tags for a given user.
-	BookmarkTagGetAll(ctx context.Context, userUUID string, visibility Visibility) ([]Tag, error)
-
-	// BookmarkTagGetCount returns the number of tags for a given user.
-	BookmarkTagGetCount(ctx context.Context, userUUID string, visibility Visibility) (uint, error)
-
-	// BookmarkTagGetN returns at most n tags for a given user, starting at
-	// a given offset.
-	BookmarkTagGetN(ctx context.Context, userUUID string, visibility Visibility, n uint, offset uint) ([]Tag, error)
-
-	// BookmarkTagSearchCount returns the number of tags for a given user and
-	// search terms.
-	BookmarkTagSearchCount(ctx context.Context, userUUID string, visibility Visibility, searchTerms string) (uint, error)
-
-	// BookmarkTagSearchN returns at most n tags for a given user and search terms, starting at a given offset.
-	BookmarkTagSearchN(ctx context.Context, userUUID string, visibility Visibility, searchTerms string, n uint, offset uint) ([]Tag, error)
 }

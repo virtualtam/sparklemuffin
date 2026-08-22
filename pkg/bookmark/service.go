@@ -5,7 +5,6 @@ package bookmark
 
 import (
 	"context"
-	"slices"
 	"time"
 )
 
@@ -122,89 +121,4 @@ func (s *Service) Update(ctx context.Context, bookmark Bookmark) error {
 	}
 
 	return s.r.BookmarkUpdate(ctx, bookmark)
-}
-
-// DeleteTag deletes a given tag from all bookmarks for a given user.
-func (s *Service) DeleteTag(ctx context.Context, dq TagDeleteQuery) (int64, error) {
-	now := time.Now().UTC()
-
-	dq.normalize()
-
-	fns := []func() error{
-		dq.requireUserUUID,
-		dq.requireName,
-		dq.ensureNameHasNoWhitespace,
-	}
-
-	for _, fn := range fns {
-		if err := fn(); err != nil {
-			return 0, err
-		}
-	}
-
-	bookmarks, err := s.r.BookmarkGetByTag(ctx, dq.UserUUID, dq.Name)
-	if err != nil {
-		return 0, err
-	}
-
-	for i, bookmark := range bookmarks {
-		for j, bookmarkTag := range bookmark.Tags {
-			if bookmarkTag == dq.Name {
-				bookmark.Tags = slices.Delete(bookmark.Tags, j, j+1)
-				break
-			}
-		}
-
-		bookmark.UpdatedAt = now
-
-		bookmarks[i] = bookmark
-	}
-
-	return s.r.BookmarkTagUpdateMany(ctx, bookmarks)
-}
-
-// UpdateTag updates a given tag for all bookmarks for a given user.
-func (s *Service) UpdateTag(ctx context.Context, uq TagUpdateQuery) (int64, error) {
-	now := time.Now().UTC()
-
-	uq.normalize()
-
-	fns := []func() error{
-		uq.requireUserUUID,
-		uq.requireCurrentName,
-		uq.ensureCurrentNameHasNoWhitespace,
-		uq.requireNewName,
-		uq.ensureNewNameHasNoWhitespace,
-	}
-
-	for _, fn := range fns {
-		if err := fn(); err != nil {
-			return 0, err
-		}
-	}
-
-	bookmarks, err := s.r.BookmarkGetByTag(ctx, uq.UserUUID, uq.CurrentName)
-	if err != nil {
-		return 0, err
-	}
-
-	if uq.NewName == uq.CurrentName {
-		return int64(len(bookmarks)), nil
-	}
-
-	for i, bookmark := range bookmarks {
-		for j, bookmarkTag := range bookmark.Tags {
-			if bookmarkTag == uq.CurrentName {
-				bookmark.Tags[j] = uq.NewName
-			}
-		}
-
-		bookmark.deduplicateTags()
-		bookmark.sortTags()
-		bookmark.UpdatedAt = now
-
-		bookmarks[i] = bookmark
-	}
-
-	return s.r.BookmarkTagUpdateMany(ctx, bookmarks)
 }

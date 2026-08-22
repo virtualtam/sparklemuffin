@@ -4,7 +4,6 @@
 package pgbookmark_test
 
 import (
-	"sort"
 	"testing"
 
 	"github.com/jaswdr/faker/v2"
@@ -91,64 +90,32 @@ func TestQueryingService(t *testing.T) {
 		}
 	})
 
-	t.Run("all tags", func(t *testing.T) {
+	t.Run("search matches a tag name that appears in neither the title nor the description", func(t *testing.T) {
 		ctx := t.Context()
 
-		tagMap := make(map[string]uint)
+		distinctiveTag := "zzzsearchbytagonly"
 
-		for _, b := range bookmarks {
-			for _, tag := range b.Tags {
-				_, ok := tagMap[tag]
-				if !ok {
-					tagMap[tag] = 1
-					continue
-				}
+		taggedBookmark := generateFakeBookmark(&fake, testUser.UUID, false)
+		taggedBookmark.Tags = append(taggedBookmark.Tags, distinctiveTag)
 
-				tagMap[tag]++
-			}
+		if err := bs.Add(ctx, taggedBookmark); err != nil {
+			t.Fatalf("failed to add bookmark: %q", err)
 		}
 
-		var tags []bookmarkquerying.Tag
-		for name, count := range tagMap {
-			tag := bookmarkquerying.NewTag(name, count)
-			tags = append(tags, tag)
-		}
-
-		sort.Slice(tags, func(i, j int) bool {
-			if tags[i].Count != tags[j].Count {
-				return tags[i].Count > tags[j].Count
-			}
-			return tags[i].Name < tags[j].Name
-		})
-
-		gotTags, err := qs.Tags(ctx, testUser.UUID, bookmarkquerying.VisibilityAll)
+		gotPage, err := qs.BookmarksBySearchQueryAndPage(ctx, testUser.UUID, bookmarkquerying.VisibilityAll, distinctiveTag, 1)
 		if err != nil {
-			t.Fatalf("failed to get tags: %q", err)
+			t.Fatalf("failed to search bookmarks: %q", err)
 		}
 
-		gotTagNames, err := qs.TagNamesByCount(ctx, testUser.UUID, bookmarkquerying.VisibilityAll)
-		if err != nil {
-			t.Fatalf("failed to get tag names: %q", err)
+		if len(gotPage.Bookmarks) != 1 {
+			t.Fatalf("want 1 matching bookmark, got %d", len(gotPage.Bookmarks))
+		}
+		if gotPage.Bookmarks[0].URL != taggedBookmark.URL {
+			t.Errorf("want matching bookmark %q, got %q", taggedBookmark.URL, gotPage.Bookmarks[0].URL)
 		}
 
-		if len(gotTags) != len(tags) {
-			t.Fatalf("want %d tags, got %d", len(tags), len(gotTags))
-		}
-		if len(gotTagNames) != len(tags) {
-			t.Fatalf("want %d tag names, got %d", len(tags), len(gotTagNames))
-		}
-
-		for i, wantTag := range tags {
-			if gotTags[i].Name != wantTag.Name {
-				t.Errorf("want tag %d name %q, got %q", i, wantTag.Name, gotTags[i].Name)
-			}
-			if gotTags[i].Count != wantTag.Count {
-				t.Errorf("want tag %d count %d, got %d", i, wantTag.Count, gotTags[i].Count)
-			}
-
-			if gotTagNames[i] != wantTag.Name {
-				t.Errorf("want tagname %d value %q, got %q", i, wantTag.Name, gotTagNames[i])
-			}
+		if err := bs.Delete(ctx, testUser.UUID, gotPage.Bookmarks[0].UID); err != nil {
+			t.Fatalf("failed to delete bookmark: %q", err)
 		}
 	})
 }

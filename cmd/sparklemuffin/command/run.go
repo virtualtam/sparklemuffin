@@ -89,6 +89,7 @@ func NewRunCommand() *cobra.Command {
 				),
 				www.WithSessionService(sessionService),
 				www.WithUserService(userService),
+				www.WithTaxonomyService(taxonomyService),
 			)
 			if err != nil {
 				return fmt.Errorf("%s: failed to create server: %w", rootCmdName, err)

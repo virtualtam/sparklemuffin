@@ -17,8 +17,8 @@ import (
 	"github.com/virtualtam/sparklemuffin/internal/http/www/middleware"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 	"github.com/virtualtam/sparklemuffin/pkg/bookmark"
-	bookmarkquerying "github.com/virtualtam/sparklemuffin/pkg/bookmark/querying"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
+	"github.com/virtualtam/sparklemuffin/pkg/taxonomy"
 )
 
 // RegisterFeedBookmarkHandlers registers HTTP handlers bridging the feed and
@@ -31,12 +31,12 @@ func RegisterFeedBookmarkHandlers(
 	r *chi.Mux,
 	feedQueryingService *feedquerying.Service,
 	bookmarkService *bookmark.Service,
-	bookmarkQueryingService *bookmarkquerying.Service,
+	taxonomyService *taxonomy.Service,
 ) {
 	fbc := feedBookmarkController{
-		feedQueryingService:     feedQueryingService,
-		bookmarkService:         bookmarkService,
-		bookmarkQueryingService: bookmarkQueryingService,
+		feedQueryingService: feedQueryingService,
+		bookmarkService:     bookmarkService,
+		taxonomyService:     taxonomyService,
 
 		entryBookmarkView: view.New("feed/entry_bookmark.gohtml"),
 	}
@@ -46,9 +46,9 @@ func RegisterFeedBookmarkHandlers(
 }
 
 type feedBookmarkController struct {
-	feedQueryingService     *feedquerying.Service
-	bookmarkService         *bookmark.Service
-	bookmarkQueryingService *bookmarkquerying.Service
+	feedQueryingService *feedquerying.Service
+	bookmarkService     *bookmark.Service
+	taxonomyService     *taxonomy.Service
 
 	entryBookmarkView *view.View
 }
@@ -79,7 +79,7 @@ func (fbc *feedBookmarkController) handleFeedEntryBookmarkView() func(w http.Res
 			return
 		}
 
-		tags, err := fbc.bookmarkQueryingService.TagNamesByCount(ctx, ctxUser.UUID, bookmarkquerying.VisibilityAll)
+		tags, err := autocompleteTagNames(ctx, fbc.taxonomyService, ctxUser.UUID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to retrieve tags")
 			view.RedirectOnError(w, r, r.URL.Path, "failed to retrieve existing tags")

@@ -36,19 +36,31 @@ const (
 func CreateAndMigrateTestDatabase(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 
-	databaseURI, db := createTestDatabase(t)
+	pool, migrater := CreateTestDatabaseAndMigrater(t)
 
-	migrater := getDatabaseMigrater(t, db)
 	if err := migrater.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		t.Fatalf("failed to apply database migrations (up): %q", err)
 	}
+
+	return pool
+}
+
+// CreateTestDatabaseAndMigrater creates a new database and returns it alongside its Migrate
+// instance, without applying any migration, so a test can step through migrations one at a
+// time (e.g. to inject legacy data between two versions and exercise a backfill migration).
+func CreateTestDatabaseAndMigrater(t *testing.T) (*pgxpool.Pool, *migrate.Migrate) {
+	t.Helper()
+
+	databaseURI, db := createTestDatabase(t)
+
+	migrater := getDatabaseMigrater(t, db)
 
 	pool, err := pgxpool.New(t.Context(), databaseURI)
 	if err != nil {
 		t.Fatalf("failed to open database connection: %q", err)
 	}
 
-	return pool
+	return pool, migrater
 }
 
 // createTestDatabase creates a PostgreSQL container and returns the connection string and database connection.

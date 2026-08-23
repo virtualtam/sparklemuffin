@@ -37,6 +37,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Automatically expand and collapse the changelog page's headings in the sidebar when scrolling through the page
 
 #### Packaging and automation
+- Bump to Go 1.27
+- Update direct and transitive dependencies
 - Disable SQLFluff rule for excessive PostgreSQL logs (PG01)
 
 #### Bookmarks

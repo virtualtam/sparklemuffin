@@ -9,7 +9,6 @@ import (
 
 	"github.com/jaswdr/faker/v2"
 
-	"github.com/virtualtam/sparklemuffin/internal/paginate"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgbase"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pgfeed"
 	"github.com/virtualtam/sparklemuffin/internal/repository/postgresql/pguser"
@@ -78,14 +77,12 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByPage - All", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          5,
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          5,
 
 			PageTitle:   querying.PageHeaderAll,
 			Description: "",
@@ -132,14 +129,12 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByPage - Read", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          2,
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          2,
 
 			PageTitle:   querying.PageHeaderAll,
 			Description: "",
@@ -171,14 +166,12 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByPage - Unread", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          3,
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          3,
 
 			PageTitle:   querying.PageHeaderAll,
 			Description: "",
@@ -213,14 +206,12 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByCategoryAndPage - All", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          5,
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          5,
 
 			PageTitle:   fakeData.categories[0].Name,
 			Description: "",
@@ -267,14 +258,12 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByCategoryAndPage - Read", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          2,
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          2,
 
 			PageTitle:   fakeData.categories[0].Name,
 			Description: "",
@@ -306,14 +295,12 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByCategoryAndPage - Unread", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          3,
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          3,
 
 			PageTitle:   fakeData.categories[0].Name,
 			Description: "",
@@ -348,14 +335,12 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsBySubscriptionAndPage - All", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          2,
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          2,
 
 			PageTitle:   fakeData.feeds[1].Title,
 			Description: fakeData.feeds[1].Description,
@@ -386,14 +371,12 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsBySubscriptionAndPage - Read", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          1,
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          1,
 
 			PageTitle:   fakeData.feeds[1].Title,
 			Description: fakeData.feeds[1].Description,
@@ -419,14 +402,12 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsBySubscriptionAndPage - Unread", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          1,
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          1,
 
 			PageTitle:   fakeData.feeds[1].Title,
 			Description: fakeData.feeds[1].Description,
@@ -451,15 +432,13 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByQueryAndPage - All", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          2,
-				SearchTerms:        "authentic production",
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          2,
+			SearchTerms:        "authentic production",
 
 			PageTitle:  querying.PageHeaderAll,
 			Unread:     3,
@@ -489,15 +468,13 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByQueryAndPage - Read", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          1,
-				SearchTerms:        "authentic production",
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          1,
+			SearchTerms:        "authentic production",
 
 			PageTitle:  querying.PageHeaderAll,
 			Unread:     3,
@@ -522,15 +499,13 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByQueryAndPage - Unread", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          1,
-				SearchTerms:        "authentic production",
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          1,
+			SearchTerms:        "authentic production",
 
 			PageTitle:  querying.PageHeaderAll,
 			Unread:     3,
@@ -554,15 +529,13 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByCategoryAndQueryAndPage - All", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          2,
-				SearchTerms:        "authentic production",
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          2,
+			SearchTerms:        "authentic production",
 
 			PageTitle:   fakeData.categories[0].Name,
 			Description: "",
@@ -593,15 +566,13 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByCategoryAndQueryAndPage - Read", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          1,
-				SearchTerms:        "authentic production",
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          1,
+			SearchTerms:        "authentic production",
 
 			PageTitle:   fakeData.categories[0].Name,
 			Description: "",
@@ -627,15 +598,13 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsByCategoryAndQueryAndPage - Unread", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          1,
-				SearchTerms:        "authentic production",
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          1,
+			SearchTerms:        "authentic production",
 
 			PageTitle:   fakeData.categories[0].Name,
 			Description: "",
@@ -660,15 +629,13 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsBySubscriptionAndQueryAndPage - All", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          2,
-				SearchTerms:        "authentic production",
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          2,
+			SearchTerms:        "authentic production",
 
 			PageTitle:   fakeData.feeds[1].Title,
 			Description: fakeData.feeds[1].Description,
@@ -699,15 +666,13 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsBySubscriptionAndQueryAndPage - Read", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          1,
-				SearchTerms:        "authentic production",
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          1,
+			SearchTerms:        "authentic production",
 
 			PageTitle:   fakeData.feeds[1].Title,
 			Description: fakeData.feeds[1].Description,
@@ -733,15 +698,13 @@ func TestFeedQueryingService(t *testing.T) {
 
 	t.Run("FeedsBySubscriptionAndQueryAndPage - Unread", func(t *testing.T) {
 		wantPage := querying.FeedPage{
-			Page: paginate.Page{
-				PageNumber:         1,
-				PreviousPageNumber: 1,
-				NextPageNumber:     1,
-				TotalPages:         1,
-				ItemOffset:         1,
-				ItemCount:          1,
-				SearchTerms:        "authentic production",
-			},
+			PageNumber:         1,
+			PreviousPageNumber: 1,
+			NextPageNumber:     1,
+			TotalPages:         1,
+			ItemOffset:         1,
+			ItemCount:          1,
+			SearchTerms:        "authentic production",
 
 			PageTitle:   fakeData.feeds[1].Title,
 			Description: fakeData.feeds[1].Description,
@@ -824,15 +787,13 @@ func TestFeedQueryingServiceSearchMatchesSubscriptionTag(t *testing.T) {
 	}
 
 	wantPage := querying.FeedPage{
-		Page: paginate.Page{
-			PageNumber:         1,
-			PreviousPageNumber: 1,
-			NextPageNumber:     1,
-			TotalPages:         1,
-			ItemOffset:         1,
-			ItemCount:          1,
-			SearchTerms:        "golang",
-		},
+		PageNumber:         1,
+		PreviousPageNumber: 1,
+		NextPageNumber:     1,
+		TotalPages:         1,
+		ItemOffset:         1,
+		ItemCount:          1,
+		SearchTerms:        "golang",
 
 		PageTitle: querying.PageHeaderAll,
 		Unread:    1,

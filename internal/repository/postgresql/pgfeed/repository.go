@@ -737,11 +737,9 @@ func (r *Repository) FeedSubscriptionCategoryGetAll(ctx context.Context, userUUI
 		}
 
 		category := feedquerying.SubscribedFeedsByCategory{
-			Category: feed.Category{
-				UUID: dbCategory.UUID,
-				Name: dbCategory.Name,
-				Slug: dbCategory.Slug,
-			},
+			UUID:            dbCategory.UUID,
+			Name:            dbCategory.Name,
+			Slug:            dbCategory.Slug,
 			Unread:          unread,
 			SubscribedFeeds: subscribedFeeds,
 		}

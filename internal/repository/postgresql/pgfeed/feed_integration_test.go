@@ -218,25 +218,21 @@ func TestFeedService(t *testing.T) {
 
 		wantEntries := []querying.SubscribedFeedEntry{
 			{
-				Entry: feed.Entry{
-					FeedUUID:    gotFeed.UUID,
-					URL:         "http://test.local/first-post",
-					Title:       "First post!",
-					Summary:     "First post!\n\nThis is the first post!",
-					PublishedAt: now,
-					UpdatedAt:   now,
-				},
-				FeedTitle: wantFeed.Title,
+				FeedUUID:    gotFeed.UUID,
+				URL:         "http://test.local/first-post",
+				Title:       "First post!",
+				Summary:     "First post!\n\nThis is the first post!",
+				PublishedAt: now,
+				UpdatedAt:   now,
+				FeedTitle:   wantFeed.Title,
 			},
 			{
-				Entry: feed.Entry{
-					FeedUUID:    gotFeed.UUID,
-					URL:         "http://test.local/hello-world",
-					Title:       "Hello World",
-					PublishedAt: yesterday,
-					UpdatedAt:   yesterday,
-				},
-				FeedTitle: wantFeed.Title,
+				FeedUUID:    gotFeed.UUID,
+				URL:         "http://test.local/hello-world",
+				Title:       "Hello World",
+				PublishedAt: yesterday,
+				UpdatedAt:   yesterday,
+				FeedTitle:   wantFeed.Title,
 			},
 		}
 		wantNEntries := uint(len(wantEntries))

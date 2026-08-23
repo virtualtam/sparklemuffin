@@ -174,17 +174,15 @@ type DBSubscribedFeed struct {
 
 func (f *DBSubscribedFeed) asSubscribedFeed() feedquerying.SubscribedFeed {
 	return feedquerying.SubscribedFeed{
-		Feed: feed.Feed{
-			UUID:      f.UUID,
-			FeedURL:   f.FeedURL,
-			Title:     f.Title,
-			Slug:      f.Slug,
-			CreatedAt: f.CreatedAt,
-			UpdatedAt: f.UpdatedAt,
-			FetchedAt: f.FetchedAt,
-		},
-		Alias:  f.Alias,
-		Unread: f.Unread,
+		UUID:      f.UUID,
+		FeedURL:   f.FeedURL,
+		Title:     f.Title,
+		Slug:      f.Slug,
+		CreatedAt: f.CreatedAt,
+		UpdatedAt: f.UpdatedAt,
+		FetchedAt: f.FetchedAt,
+		Alias:     f.Alias,
+		Unread:    f.Unread,
 	}
 }
 

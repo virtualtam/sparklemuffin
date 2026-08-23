@@ -47,9 +47,7 @@ func TestServiceExportAsOPMLDocument(t *testing.T) {
 			tname: "categorized subscriptions",
 			categoriesSubscriptions: []CategorySubscriptions{
 				{
-					Category: feed.Category{
-						Name: "Category 1",
-					},
+					Name: "Category 1",
 					SubscribedFeeds: []feed.Feed{
 						{
 							Title:   "Test Feed 1",

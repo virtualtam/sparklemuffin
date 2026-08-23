@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
-	"github.com/virtualtam/sparklemuffin/pkg/feed"
 	feedquerying "github.com/virtualtam/sparklemuffin/pkg/feed/querying"
 )
 
@@ -18,16 +17,14 @@ func TestFeedEntryTemplate(t *testing.T) {
 	v := view.New("feed/feed_list.gohtml")
 
 	unreadEntry := feedquerying.SubscribedFeedEntry{
-		Entry: feed.Entry{
-			UID:         "entry-uid-1",
-			URL:         "https://example.com/posts/1",
-			Title:       "First Post",
-			Summary:     "A short summary",
-			PublishedAt: time.Date(2026, time.July, 1, 0, 0, 0, 0, time.UTC),
-		},
-		FeedSlug:  "example-feed",
-		FeedTitle: "Example Feed",
-		Read:      false,
+		UID:         "entry-uid-1",
+		URL:         "https://example.com/posts/1",
+		Title:       "First Post",
+		Summary:     "A short summary",
+		PublishedAt: time.Date(2026, time.July, 1, 0, 0, 0, 0, time.UTC),
+		FeedSlug:    "example-feed",
+		FeedTitle:   "Example Feed",
+		Read:        false,
 	}
 
 	readEntry := unreadEntry
@@ -128,25 +125,21 @@ func TestEntryListTemplate(t *testing.T) {
 	v := view.New("feed/feed_list.gohtml")
 
 	entry1 := feedquerying.SubscribedFeedEntry{
-		Entry: feed.Entry{
-			UID:         "entry-uid-1",
-			URL:         "https://example.com/posts/1",
-			Title:       "First Post",
-			PublishedAt: time.Date(2026, time.July, 1, 0, 0, 0, 0, time.UTC),
-		},
-		FeedSlug:  "example-feed",
-		FeedTitle: "Example Feed",
+		UID:         "entry-uid-1",
+		URL:         "https://example.com/posts/1",
+		Title:       "First Post",
+		PublishedAt: time.Date(2026, time.July, 1, 0, 0, 0, 0, time.UTC),
+		FeedSlug:    "example-feed",
+		FeedTitle:   "Example Feed",
 	}
 
 	entry2 := feedquerying.SubscribedFeedEntry{
-		Entry: feed.Entry{
-			UID:         "entry-uid-2",
-			URL:         "https://example.com/posts/2",
-			Title:       "Second Post",
-			PublishedAt: time.Date(2026, time.July, 2, 0, 0, 0, 0, time.UTC),
-		},
-		FeedSlug:  "example-feed",
-		FeedTitle: "Example Feed",
+		UID:         "entry-uid-2",
+		URL:         "https://example.com/posts/2",
+		Title:       "Second Post",
+		PublishedAt: time.Date(2026, time.July, 2, 0, 0, 0, 0, time.UTC),
+		FeedSlug:    "example-feed",
+		FeedTitle:   "Example Feed",
 	}
 
 	data := map[string]any{

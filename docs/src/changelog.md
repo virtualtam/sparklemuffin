@@ -16,6 +16,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - Feed: re-render the list of entries when toggling an entry's read/unread status
 
 ### Added
+#### Bookmark
+- Add benchmarks for bulk bookmark creation (importing) and retrieval (exporting)
+
 #### Feed
 - Tag feed subscriptions
 

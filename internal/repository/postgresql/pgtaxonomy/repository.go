@@ -5,6 +5,7 @@ package pgtaxonomy
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -59,6 +60,48 @@ func (r *Repository) TagAddTx(ctx context.Context, q pgbase.Querier, tag taxonom
 	return err
 }
 
+// TagAddManyTx adds a batch of tags in a single round trip, using q so
+// callers can participate in an existing transaction. Tags whose name is
+// already registered for their user are silently skipped, keeping the
+// existing tag (and its UUID) unchanged.
+func (r *Repository) TagAddManyTx(ctx context.Context, q pgbase.Querier, tags []taxonomy.Tag) error {
+	if len(tags) == 0 {
+		return nil
+	}
+
+	tagUUIDs := make([]string, len(tags))
+	userUUIDs := make([]string, len(tags))
+	tagNames := make([]string, len(tags))
+	createdAts := make([]time.Time, len(tags))
+	updatedAts := make([]time.Time, len(tags))
+
+	for i, tag := range tags {
+		tagUUIDs[i] = tag.UUID
+		userUUIDs[i] = tag.UserUUID
+		tagNames[i] = tag.Name
+		createdAts[i] = tag.CreatedAt
+		updatedAts[i] = tag.UpdatedAt
+	}
+
+	query := `
+	INSERT INTO taxonomy_tags(tag_uuid, user_uuid, tag_name, tag_name_tsv, created_at, updated_at)
+	SELECT tag_uuid, user_uuid, tag_name, TO_TSVECTOR(tag_name), created_at, updated_at
+	FROM UNNEST(@tag_uuids::UUID[], @user_uuids::UUID[], @tag_names::TEXT[], @created_ats::TIMESTAMPTZ[], @updated_ats::TIMESTAMPTZ[])
+		AS t(tag_uuid, user_uuid, tag_name, created_at, updated_at)
+	ON CONFLICT (user_uuid, tag_name) DO NOTHING`
+
+	args := pgx.NamedArgs{
+		"tag_uuids":   tagUUIDs,
+		"user_uuids":  userUUIDs,
+		"tag_names":   tagNames,
+		"created_ats": createdAts,
+		"updated_ats": updatedAts,
+	}
+
+	_, err := q.Exec(ctx, query, args)
+	return err
+}
+
 // TagDelete deletes the tag with a given name for a given user, if it exists.
 func (r *Repository) TagDelete(ctx context.Context, userUUID, name string) error {
 	_, err := r.Pool.Exec(
@@ -88,6 +131,22 @@ func (r *Repository) TagGetByNameTx(ctx context.Context, q pgbase.Querier, userU
 	AND   tag_name=$2`
 
 	return tagGetQuery(ctx, q, query, userUUID, name)
+}
+
+// TagGetManyByNameTx returns the tags with the given names for a given user,
+// using q. Names with no matching tag are simply absent from the result.
+func (r *Repository) TagGetManyByNameTx(ctx context.Context, q pgbase.Querier, userUUID string, names []string) ([]taxonomy.Tag, error) {
+	if len(names) == 0 {
+		return nil, nil
+	}
+
+	query := `
+	SELECT tag_uuid, user_uuid, tag_name, created_at, updated_at
+	FROM taxonomy_tags
+	WHERE user_uuid=$1
+	AND   tag_name = ANY($2)`
+
+	return tagGetManyQuery(ctx, q, query, userUUID, names)
 }
 
 // TagGetByUUID returns the tag with a given UUID for a given user.

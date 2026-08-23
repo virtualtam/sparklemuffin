@@ -10,8 +10,8 @@ import (
 )
 
 // GenerateFakeUser generates a new user for testing.
-func FakeUser(t *testing.T, fake *faker.Faker) User {
-	t.Helper()
+func FakeUser(tb testing.TB, fake *faker.Faker) User {
+	tb.Helper()
 
 	person := fake.Person()
 	internet := fake.Internet()
@@ -24,13 +24,13 @@ func FakeUser(t *testing.T, fake *faker.Faker) User {
 		Email:       person.Contact().Email,
 		NickName:    nick,
 		DisplayName: person.Name(),
-		Password:    FakePassword(t, fake),
+		Password:    FakePassword(tb, fake),
 	}
 }
 
 // FakePassword returns a generated password matching security requirements.
-func FakePassword(t *testing.T, fake *faker.Faker) string {
-	t.Helper()
+func FakePassword(tb testing.TB, fake *faker.Faker) string {
+	tb.Helper()
 	pattern := strings.Repeat("*", fake.IntBetween(MinPasswordLength, 2*MinPasswordLength))
 	return fake.Asciify(pattern)
 }

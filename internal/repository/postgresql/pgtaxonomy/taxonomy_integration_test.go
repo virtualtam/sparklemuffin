@@ -195,4 +195,69 @@ func TestTaxonomyService(t *testing.T) {
 			t.Errorf("want tag UUID %q after commit, got %q", tag.UUID, gotAfterCommit.UUID)
 		}
 	})
+
+	t.Run("TagAddManyTx and TagGetManyByNameTx resolve a mix of existing and new tags", func(t *testing.T) {
+		ctx := t.Context()
+
+		existingName := fake.Lorem().Word()
+		newName1 := fake.Lorem().Word()
+		newName2 := fake.Lorem().Word()
+
+		existingTags, err := ts.GetOrCreateTags(ctx, testUser.UUID, []string{existingName})
+		if err != nil {
+			t.Fatalf("failed to create existing tag: %q", err)
+		}
+		existingTag := existingTags[0]
+
+		names := []string{existingName, newName1, newName2}
+
+		var tags []taxonomy.Tag
+		for _, name := range names {
+			tag, err := taxonomy.NewTag(testUser.UUID, name)
+			if err != nil {
+				t.Fatalf("failed to build tag: %q", err)
+			}
+			tags = append(tags, tag)
+		}
+
+		tx, err := pool.Begin(ctx)
+		if err != nil {
+			t.Fatalf("failed to begin transaction: %q", err)
+		}
+
+		if err := r.TagAddManyTx(ctx, tx, tags); err != nil {
+			t.Fatalf("failed to add tags within the transaction: %q", err)
+		}
+
+		got, err := r.TagGetManyByNameTx(ctx, tx, testUser.UUID, names)
+		if err != nil {
+			t.Fatalf("failed to retrieve tags within the transaction: %q", err)
+		}
+		if len(got) != len(names) {
+			t.Fatalf("want %d tags, got %d", len(names), len(got))
+		}
+
+		gotByName := make(map[string]taxonomy.Tag, len(got))
+		for _, tag := range got {
+			gotByName[tag.Name] = tag
+		}
+
+		if gotByName[existingName].UUID != existingTag.UUID {
+			t.Errorf("want existing tag %q to keep UUID %q, got %q", existingName, existingTag.UUID, gotByName[existingName].UUID)
+		}
+
+		if err := tx.Commit(ctx); err != nil {
+			t.Fatalf("failed to commit transaction: %q", err)
+		}
+
+		for _, name := range []string{newName1, newName2} {
+			gotAfterCommit, err := r.TagGetByName(ctx, testUser.UUID, name)
+			if err != nil {
+				t.Fatalf("failed to retrieve tag %q after commit: %q", name, err)
+			}
+			if gotAfterCommit.Name != name {
+				t.Errorf("want tag name %q after commit, got %q", name, gotAfterCommit.Name)
+			}
+		}
+	})
 }

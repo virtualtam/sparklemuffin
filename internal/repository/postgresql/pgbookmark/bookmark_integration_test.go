@@ -339,6 +339,55 @@ func TestBookmarkService(t *testing.T) {
 		}
 	})
 
+	t.Run("bulk add resolves a tag shared by multiple bookmarks to a single taxonomy_tags row", func(t *testing.T) {
+		ctx := t.Context()
+
+		sharedTag := "bulk/shared-across-many"
+
+		first := bookmark.NewBookmark(testUser.UUID)
+		first.URL = fake.Internet().URL()
+		first.Title = fake.Lorem().Sentence(5)
+		first.Tags = []string{sharedTag}
+		first.Normalize()
+
+		second := bookmark.NewBookmark(testUser.UUID)
+		second.URL = fake.Internet().URL()
+		second.Title = fake.Lorem().Sentence(5)
+		second.Tags = []string{sharedTag}
+		second.Normalize()
+
+		rowsAffected, err := r.BookmarkAddMany(ctx, []bookmark.Bookmark{*first, *second})
+		if err != nil {
+			t.Fatalf("failed to bulk add bookmarks: %q", err)
+		}
+		if rowsAffected != 2 {
+			t.Fatalf("want 2 rows affected, got %d", rowsAffected)
+		}
+
+		if got := countTaxonomyTagsByName(t, pool, testUser.UUID, sharedTag); got != 1 {
+			t.Errorf("want exactly 1 taxonomy_tags row for a tag shared by 2 bookmarks in the same batch, got %d", got)
+		}
+
+		gotFirst, err := bs.ByURL(ctx, testUser.UUID, first.URL)
+		if err != nil {
+			t.Fatalf("failed to retrieve first bookmark: %q", err)
+		}
+		gotSecond, err := bs.ByURL(ctx, testUser.UUID, second.URL)
+		if err != nil {
+			t.Fatalf("failed to retrieve second bookmark: %q", err)
+		}
+
+		assertBookmarkTagNames(t, pool, testUser.UUID, gotFirst.UID, []string{sharedTag})
+		assertBookmarkTagNames(t, pool, testUser.UUID, gotSecond.UID, []string{sharedTag})
+
+		if err := bs.Delete(ctx, testUser.UUID, gotFirst.UID); err != nil {
+			t.Fatalf("failed to delete first bookmark: %q", err)
+		}
+		if err := bs.Delete(ctx, testUser.UUID, gotSecond.UID); err != nil {
+			t.Fatalf("failed to delete second bookmark: %q", err)
+		}
+	})
+
 	t.Run("bulk upsert replaces bookmark_tags using the existing row's UID", func(t *testing.T) {
 		ctx := t.Context()
 

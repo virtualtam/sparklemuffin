@@ -47,6 +47,43 @@ func (r *Repository) getOrCreateTagsTx(ctx context.Context, q pgbase.Querier, us
 	return tags, nil
 }
 
+// getOrCreateTagsManyTx resolves a set of distinct tag names to Tags for a
+// given user in a single round trip pair, creating any tag that does not
+// already exist, all within the transaction carried by q. The returned map
+// is keyed by tag name.
+func (r *Repository) getOrCreateTagsManyTx(ctx context.Context, q pgbase.Querier, userUUID string, names []string) (map[string]taxonomy.Tag, error) {
+	tags := make([]taxonomy.Tag, 0, len(names))
+
+	for _, name := range names {
+		tag, err := taxonomy.NewTag(userUUID, name)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := tag.Validate(); err != nil {
+			return nil, err
+		}
+
+		tags = append(tags, tag)
+	}
+
+	if err := r.taxonomyRepo.TagAddManyTx(ctx, q, tags); err != nil {
+		return nil, err
+	}
+
+	resolved, err := r.taxonomyRepo.TagGetManyByNameTx(ctx, q, userUUID, names)
+	if err != nil {
+		return nil, err
+	}
+
+	tagsByName := make(map[string]taxonomy.Tag, len(resolved))
+	for _, tag := range resolved {
+		tagsByName[tag.Name] = tag
+	}
+
+	return tagsByName, nil
+}
+
 // insertBookmarkTagsTx inserts one bookmark_tags row per tag, within the
 // transaction carried by q.
 func insertBookmarkTagsTx(ctx context.Context, q pgbase.Querier, userUUID, bookmarkUID string, tags []taxonomy.Tag) error {
@@ -109,7 +146,7 @@ func (r *Repository) bookmarkGetManyQuery(ctx context.Context, query string, que
 		return []bookmark.Bookmark{}, err
 	}
 
-	var bookmarks []bookmark.Bookmark
+	bookmarks := make([]bookmark.Bookmark, 0, len(dbBookmarks))
 
 	for _, dbBookmark := range dbBookmarks {
 		b := bookmark.Bookmark{
@@ -133,6 +170,10 @@ func (r *Repository) bookmarkGetManyQuery(ctx context.Context, query string, que
 // bookmarkUpsertMany upserts a batch of bookmarks and their tags within a
 // single transaction.
 func (r *Repository) bookmarkUpsertMany(ctx context.Context, onConflictStmt string, bookmarks []bookmark.Bookmark) (int64, error) {
+	if len(bookmarks) == 0 {
+		return 0, nil
+	}
+
 	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
 		return 0, err
@@ -212,7 +253,7 @@ func (r *Repository) bookmarkUpsertMany(ctx context.Context, onConflictStmt stri
 		return 0, err
 	}
 
-	tagsBatch := &pgx.Batch{}
+	distinctTagNames := map[string]bool{}
 
 	for i, uid := range upsertedUIDs {
 		if uid == "" {
@@ -222,19 +263,36 @@ func (r *Repository) bookmarkUpsertMany(ctx context.Context, onConflictStmt stri
 			continue
 		}
 
-		tags, err := r.getOrCreateTagsTx(ctx, tx, bookmarks[i].UserUUID, bookmarks[i].Tags)
-		if err != nil {
-			return 0, err
+		for _, name := range bookmarks[i].Tags {
+			distinctTagNames[name] = true
+		}
+	}
+
+	tagNames := make([]string, 0, len(distinctTagNames))
+	for name := range distinctTagNames {
+		tagNames = append(tagNames, name)
+	}
+
+	tagsByName, err := r.getOrCreateTagsManyTx(ctx, tx, bookmarks[0].UserUUID, tagNames)
+	if err != nil {
+		return 0, err
+	}
+
+	tagsBatch := &pgx.Batch{}
+
+	for i, uid := range upsertedUIDs {
+		if uid == "" {
+			continue
 		}
 
 		tagsBatch.Queue("DELETE FROM bookmark_tags WHERE user_uuid=$1 AND bookmark_uid=$2", bookmarks[i].UserUUID, uid)
 
-		for _, tag := range tags {
+		for _, name := range bookmarks[i].Tags {
 			tagsBatch.Queue(
 				"INSERT INTO bookmark_tags(user_uuid, bookmark_uid, tag_uuid) VALUES($1, $2, $3)",
 				bookmarks[i].UserUUID,
 				uid,
-				tag.UUID,
+				tagsByName[name].UUID,
 			)
 		}
 	}

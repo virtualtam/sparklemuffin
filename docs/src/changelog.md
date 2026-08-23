@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## UNRELEASED
+## v0.8.0 - 2026-08-23
+
+Release: [v0.8.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.8.0)
+
 ### Fixed
 #### Documentation
 - Workaround a mdBook limitation resulting in headings containing links not being shown in the table of contents

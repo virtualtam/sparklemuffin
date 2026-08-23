@@ -208,7 +208,7 @@ func (tc *tagsController) handleTagListView() func(w http.ResponseWriter, r *htt
 		}
 
 		offset := (pageNumber - 1) * tagsPerPage
-		pageRows := []tagRow{}
+		var pageRows []tagRow
 		if offset < itemCount {
 			end := min(offset+tagsPerPage, itemCount)
 			pageRows = rows[offset:end]

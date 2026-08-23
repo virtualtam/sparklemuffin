@@ -1,7 +1,8 @@
 // Copyright VirtualTam 2022, 2026
 // SPDX-License-Identifier: MIT
 
-package user // Password returns a fake password for Internet
+package user
+
 import (
 	"strings"
 	"testing"
@@ -9,7 +10,7 @@ import (
 	"github.com/jaswdr/faker/v2"
 )
 
-// GenerateFakeUser generates a new user for testing.
+// FakeUser generates a new user for testing.
 func FakeUser(tb testing.TB, fake *faker.Faker) User {
 	tb.Helper()
 

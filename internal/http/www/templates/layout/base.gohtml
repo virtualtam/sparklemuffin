@@ -11,7 +11,7 @@
     {{if not .Theme}}
     <script nonce="{{.CSP.Nonce}}">
       (function () {
-        var theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        const theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         document.documentElement.setAttribute("data-bs-theme", theme);
         document.cookie = "theme=" + theme + ";path=/;max-age=31536000;samesite=lax";
       })();

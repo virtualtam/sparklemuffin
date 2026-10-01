@@ -17,7 +17,7 @@ require (
 	github.com/gorilla/feeds v1.2.0
 	github.com/gorilla/schema v1.4.1
 	github.com/gosimple/slug v1.15.0
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/jaswdr/faker/v2 v2.9.1
 	github.com/k3a/html2text v1.4.0
 	github.com/mmcdole/gofeed v1.4.2

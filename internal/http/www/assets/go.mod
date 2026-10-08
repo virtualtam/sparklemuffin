@@ -9,7 +9,7 @@ require (
 )
 
 require (
-	github.com/dlclark/regexp2/v2 v2.7.1 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	github.com/dlclark/regexp2/v2 v2.8.4 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )

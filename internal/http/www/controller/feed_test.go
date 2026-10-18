@@ -1040,6 +1040,11 @@ func TestHandleFeedCategoryEdit(t *testing.T) {
 		category := feed.Category{UUID: fake.UUID().V4(), UserUUID: ctxUser.UUID, Name: fake.Lorem().Text(10)}
 		fc := newTestFeedControllerForCategoryEdit(category)
 		newName := fake.Lorem().Text(10)
+		renamed := category
+		renamed.Name = newName
+		fc.queryingService = feedquerying.NewService(&feedquerying.FakeRepository{
+			Categories: []feed.Category{renamed},
+		})
 		form := url.Values{"name": {newName}}
 		r := newCategoryEditPostRequest(t, ctxUser, category.UUID, form, true)
 		w := httptest.NewRecorder()

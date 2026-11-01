@@ -10,7 +10,7 @@ require (
 	github.com/coder/quartz v0.3.1
 	github.com/earthboundkid/versioninfo/v2 v2.24.1
 	github.com/georgysavva/scany/v2 v2.1.4
-	github.com/go-chi/chi/v5 v5.3.2
+	github.com/go-chi/chi/v5 v5.5.0
 	github.com/go-chi/httprate v0.16.1
 	github.com/golang-migrate/migrate/v4 v4.20.1
 	github.com/google/uuid v1.6.0

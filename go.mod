@@ -19,7 +19,7 @@ require (
 	github.com/gosimple/slug v1.15.0
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/jaswdr/faker/v2 v2.10.0
-	github.com/k3a/html2text v1.5.0
+	github.com/k3a/html2text v1.5.1
 	github.com/mmcdole/gofeed v1.5.0
 	github.com/moby/moby/api v1.56.1
 	github.com/prometheus/client_golang v1.24.1

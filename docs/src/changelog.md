@@ -13,6 +13,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - When performing a HTMX call and the session has expired, redirect to the login page
 - When a session has expired and a user refreshes the page, redirect to the login page
 
+#### Packaging and automation
+- Fix a segfault happening when interrupting live development servers
+
 ### Changed
 #### Packaging and automation
 - Bump direct and transitive dependencies

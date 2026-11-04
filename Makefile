@@ -93,10 +93,11 @@ live:
 	docker compose -f docker-compose.dev.yml up --remove-orphans -d
 	@make build-assets
 	@echo "== Watching for changes... (hit Ctrl+C when done)"
-	@bash -c 'trap "kill 0" INT TERM; \
+	@bash -c 'trap "kill \$$(jobs -p) 2>/dev/null; wait; exit 0" INT TERM; \
 		make watch-assets & \
 		watchexec \
 			--restart \
+			--stop-timeout 2s \
 			--exts css,go,gohtml,js \
 			--ignore "internal/http/www/assets/**" \
 			--no-vcs-ignore \
@@ -114,10 +115,11 @@ live-race:
 	docker compose -f docker-compose.dev.yml up --remove-orphans -d
 	@make build-assets
 	@echo "== Watching for changes... (hit Ctrl+C when done)"
-	@bash -c 'trap "kill 0" INT TERM; \
+	@bash -c 'trap "kill \$$(jobs -p) 2>/dev/null; wait; exit 0" INT TERM; \
 		make watch-assets & \
 		watchexec \
 			--restart \
+			--stop-timeout 2s \
 			--exts css,go,gohtml \
 			--ignore "internal/http/www/assets/**" \
 			--no-vcs-ignore \

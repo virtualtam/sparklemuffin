@@ -14,6 +14,7 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/hlog"
 
+	"github.com/virtualtam/sparklemuffin/internal/http/www/htmx"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/view"
 )
@@ -48,7 +49,7 @@ func AdminUser(h http.HandlerFunc) http.HandlerFunc {
 		user := httpcontext.UserValue(r.Context())
 
 		if user == nil {
-			errorView.Render(w, r, http.StatusNotFound)
+			redirectToLogin(w, r)
 			return
 		}
 
@@ -67,12 +68,23 @@ func AuthenticatedUser(h http.HandlerFunc) http.HandlerFunc {
 		user := httpcontext.UserValue(r.Context())
 
 		if user == nil {
-			errorView.Render(w, r, http.StatusNotFound)
+			redirectToLogin(w, r)
 			return
 		}
 
 		h(w, r)
 	}
+}
+
+// redirectToLogin sends an anonymous user to the login page, with HX-Redirect for HTMX requests.
+func redirectToLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get(htmx.HeaderRequest) == "true" {
+		w.Header().Set(htmx.HeaderRedirect, "/login")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 // StaticCacheControl sets the Cache-Control header for static assets.

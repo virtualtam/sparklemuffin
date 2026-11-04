@@ -8,21 +8,33 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/virtualtam/sparklemuffin/internal/http/www/htmx"
 	"github.com/virtualtam/sparklemuffin/internal/http/www/httpcontext"
 	"github.com/virtualtam/sparklemuffin/pkg/user"
 )
 
 func TestAdminUser(t *testing.T) {
 	cases := []struct {
-		tname      string
-		user       *user.User
-		wantCalls  int
-		wantStatus uint
+		tname        string
+		user         *user.User
+		htmx         bool
+		wantCalls    int
+		wantStatus   uint
+		wantLocation string
+		wantRedirect string
 	}{
 		{
-			tname:      "anonymous",
-			wantCalls:  0,
-			wantStatus: http.StatusNotFound,
+			tname:        "anonymous",
+			wantCalls:    0,
+			wantStatus:   http.StatusSeeOther,
+			wantLocation: "/login",
+		},
+		{
+			tname:        "anonymous, HTMX request",
+			htmx:         true,
+			wantCalls:    0,
+			wantStatus:   http.StatusUnauthorized,
+			wantRedirect: "/login",
 		},
 		{
 			tname:      "authenticated, not admin",
@@ -51,6 +63,9 @@ func TestAdminUser(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
+			if tc.htmx {
+				r.Header.Set(htmx.HeaderRequest, "true")
+			}
 			if tc.user != nil {
 				ctx := httpcontext.WithUser(r.Context(), *tc.user)
 				r = r.WithContext(ctx)
@@ -61,6 +76,12 @@ func TestAdminUser(t *testing.T) {
 			if uint(w.Code) != tc.wantStatus {
 				t.Errorf("want response status %d, got %d", tc.wantStatus, w.Code)
 			}
+			if gotLocation := w.Header().Get("Location"); gotLocation != tc.wantLocation {
+				t.Errorf("want Location %q, got %q", tc.wantLocation, gotLocation)
+			}
+			if gotRedirect := w.Header().Get(htmx.HeaderRedirect); gotRedirect != tc.wantRedirect {
+				t.Errorf("want HX-Redirect %q, got %q", tc.wantRedirect, gotRedirect)
+			}
 			if gotCalls != tc.wantCalls {
 				t.Errorf("want %d handler calls, got %d", tc.wantCalls, gotCalls)
 			}
@@ -70,15 +91,26 @@ func TestAdminUser(t *testing.T) {
 
 func TestAuthenticatedUser(t *testing.T) {
 	cases := []struct {
-		tname      string
-		user       *user.User
-		wantCalls  int
-		wantStatus uint
+		tname        string
+		user         *user.User
+		htmx         bool
+		wantCalls    int
+		wantStatus   uint
+		wantLocation string
+		wantRedirect string
 	}{
 		{
-			tname:      "anonymous",
-			wantCalls:  0,
-			wantStatus: http.StatusNotFound,
+			tname:        "anonymous",
+			wantCalls:    0,
+			wantStatus:   http.StatusSeeOther,
+			wantLocation: "/login",
+		},
+		{
+			tname:        "anonymous, HTMX request",
+			htmx:         true,
+			wantCalls:    0,
+			wantStatus:   http.StatusUnauthorized,
+			wantRedirect: "/login",
 		},
 		{
 			tname:      "authenticated, not admin",
@@ -107,6 +139,9 @@ func TestAuthenticatedUser(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
+			if tc.htmx {
+				r.Header.Set(htmx.HeaderRequest, "true")
+			}
 			if tc.user != nil {
 				ctx := httpcontext.WithUser(r.Context(), *tc.user)
 				r = r.WithContext(ctx)
@@ -116,6 +151,12 @@ func TestAuthenticatedUser(t *testing.T) {
 
 			if uint(w.Code) != tc.wantStatus {
 				t.Errorf("want response status %d, got %d", tc.wantStatus, w.Code)
+			}
+			if gotLocation := w.Header().Get("Location"); gotLocation != tc.wantLocation {
+				t.Errorf("want Location %q, got %q", tc.wantLocation, gotLocation)
+			}
+			if gotRedirect := w.Header().Get(htmx.HeaderRedirect); gotRedirect != tc.wantRedirect {
+				t.Errorf("want HX-Redirect %q, got %q", tc.wantRedirect, gotRedirect)
 			}
 			if gotCalls != tc.wantCalls {
 				t.Errorf("want %d handler calls, got %d", tc.wantCalls, gotCalls)

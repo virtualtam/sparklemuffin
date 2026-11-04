@@ -10,6 +10,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 #### WWW
 - Fix burger menu icon on mobile
+- When performing a HTMX call and the session has expired, redirect to the login page
+- When a session has expired and a user refreshes the page, redirect to the login page
 
 ### Changed
 #### Packaging and automation

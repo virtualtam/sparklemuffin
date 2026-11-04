@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## UNRELEASED
+
+### Fixed
+#### WWW
+- Fix burger menu icon on mobile
+
+### Changed
+#### Packaging and automation
+- Bump direct and transitive dependencies
+
 ## v0.8.0 - 2026-08-23
 
 Release: [v0.8.0](https://github.com/virtualtam/sparklemuffin/releases/tag/v0.8.0)
